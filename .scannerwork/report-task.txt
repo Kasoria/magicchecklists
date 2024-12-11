@@ -2,5 +2,5 @@ projectKey=MagicChecklists
 serverUrl=http://localhost:9000
 serverVersion=24.12.0.100206
 dashboardUrl=http://localhost:9000/dashboard?id=MagicChecklists
-ceTaskId=5077c0c6-65ad-411f-b2a3-53d8c416d40e
-ceTaskUrl=http://localhost:9000/api/ce/task?id=5077c0c6-65ad-411f-b2a3-53d8c416d40e
+ceTaskId=bf9cf61a-2f4a-42b3-8f88-dc64f415a907
+ceTaskUrl=http://localhost:9000/api/ce/task?id=bf9cf61a-2f4a-42b3-8f88-dc64f415a907
