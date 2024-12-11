@@ -237,26 +237,6 @@ class MagicChecklistDrawer {
         return `${prefix}${checklistId}`;
     }
 
-    initChecklistStorage(checklistId) {
-        if (!checklistId || !this.isRateLimitEnabled()) return;
-    
-        const drawerKey = this.getChecklistStorageKey(this.DRAWER_STORAGE_PREFIX, checklistId);
-        const actionKey = this.getChecklistStorageKey(this.ACTION_STORAGE_PREFIX, checklistId);
-    
-        const defaultState = {
-            count: 0,
-            lastReset: Date.now()
-        };
-    
-        if (!localStorage.getItem(drawerKey)) {
-            localStorage.setItem(drawerKey, JSON.stringify(defaultState));
-        }
-    
-        if (!localStorage.getItem(actionKey)) {
-            localStorage.setItem(actionKey, JSON.stringify(defaultState));
-        }
-    }
-
     checkActionRateLimit() {
         const actionCheck = this.canPerformAction();
         if (!actionCheck.allowed) {
@@ -366,7 +346,6 @@ class MagicChecklistDrawer {
             this.getChecklistStorageKey(this.ACTION_STORAGE_PREFIX, this.currentChecklistId);
         
         const state = this.getRateLimitState(storageKey);
-        const now = Date.now();
         const resetTime = state.lastReset + this.TIMEOUT_DURATION;
         
         // Show error immediately
@@ -382,7 +361,7 @@ class MagicChecklistDrawer {
             }
             
             // Update message with current countdown
-            const countdownMessage = message.replace(/\d+ second[s]?/, `${remaining} second${remaining !== 1 ? 's' : ''}`);
+            const countdownMessage = message.replace(/\d{1,5}\s+second(?:s)?/, `${remaining} second${remaining !== 1 ? 's' : ''}`);
             messageElement.textContent = countdownMessage;
         };
     
@@ -603,7 +582,6 @@ class MagicChecklistDrawer {
                 await this.renderChecklist(checklistData.data);
                 this.openDrawer();
                 this.updateNavigationButtons();
-            } else {
             }
         } catch (error) {
             console.error('Error loading checklist:', error);
@@ -850,10 +828,7 @@ class MagicChecklistDrawer {
         } catch (error) {
             console.error('Error saving checklist:', error);
             // Don't fail on save errors for public checklists
-            if (this.currentChecklistData?.is_public) {
-                return true;
-            }
-            return false;
+            return this.currentChecklistData?.is_public || false;
         }
     }
 
@@ -905,10 +880,11 @@ class MagicChecklistDrawer {
     
                 let content = contentDiv.innerHTML;
                 content = content
-                    .replace(/(<br\s*\/?>\s*){3,}/g, '<br><br>')
-                    .replace(/<p>(\s|&nbsp;|<br\s*\/?>)*<\/p>/g, '')
+                    .replace(/(?:<br\s*\/?>\s*?){3,}/g, '<br><br>')
+                    .replace(/<p>(?:(?:\s|&nbsp;|<br\s*\/?>))*<\/p>/g, '')
                     .replace(/\u200B/g, '')
-                    .replace(/^\s+|\s+$/g, '');
+                    .replace(/^\s+/, '')
+                    .replace(/\s+$/, '');
     
                 items.push({
                     id: itemId,
@@ -942,19 +918,6 @@ class MagicChecklistDrawer {
         }
     }
     
-    addNewItemAfterCurrent(currentItem) {
-        const itemId = 'item_' + Date.now();
-        const li = this.createListItem(itemId);
-        
-        currentItem.parentNode.insertBefore(li, currentItem.nextSibling);
-        this.scrollToNewItem(li);
-        
-        li.querySelector('[contenteditable="true"]').focus();
-        
-        this.saveChecklistData();
-        this.updateRemoveButtons();
-    }
-    
     createListItem(itemId) {
         const li = document.createElement('li');
         li.setAttribute('data-item-id', itemId);
@@ -979,7 +942,6 @@ class MagicChecklistDrawer {
         const drawerContent = this.drawerContent;
         const addItemButton = drawerContent.querySelector('#mcl-add-item');
         
-        const newItemRect = newItem.getBoundingClientRect();
         const buttonRect = addItemButton.getBoundingClientRect();
         const containerRect = drawerContent.getBoundingClientRect();
     
@@ -1026,23 +988,6 @@ class MagicChecklistDrawer {
         } catch (error) {
             console.error('Error removing item:', error);
         }
-    }
-    
-    getCheckedState() {
-        const data = this.currentChecklistData;
-        if (!data) return [];
-    
-        if (data.is_public && data.checked_state_handling === 'per_user') {
-            try {
-                const stored = localStorage.getItem(`mcl_checklist_${this.currentChecklistId}`);
-                return stored ? JSON.parse(stored) : [];
-            } catch (error) {
-                console.error('Error reading from local storage:', error);
-                return [];
-            }
-        }
-    
-        return data.checked_state || [];
     }
 
     async renderChecklist(data) {
@@ -1533,8 +1478,6 @@ class MagicChecklistDrawer {
         // Bind uncheck all if user can interact with checkboxes
         if (checklistData?.can_check) {
             this.elements.uncheckAllButton?.addEventListener('click', this.handleUncheckAll);
-            if (!this.elements.itemsList.sortableInstance) {
-            }
         }
     }
     
@@ -1624,13 +1567,7 @@ class MagicChecklistDrawer {
             processedContent = this.sanitizeContent(cleanedHtml);
         } else {
             // For plain text, check if it's a URL
-            const urlRegex = /^(https?:\/\/[^\s<>]+)$/;
-            if (urlRegex.test(plainText.trim())) {
-                processedContent = this.convertUrlsToLinks(plainText);
-            } else {
-                // Regular text, convert any URLs within it
-                processedContent = this.convertUrlsToLinks(plainText);
-            }
+            processedContent = this.convertUrlsToLinks(plainText);
         }
     
         // Insert at current selection
@@ -1692,20 +1629,6 @@ class MagicChecklistDrawer {
         });
     }
     
-    isValidUrl(url) {
-        try {
-            const parsedUrl = new URL(url);
-            // Check for dangerous protocols
-            const safeProtocols = ['http:', 'https:'];
-            if (!safeProtocols.includes(parsedUrl.protocol)) {
-                return false;
-            }
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-    
     sanitizeContent(content) {
         // Create a safe div in memory
         const tempDiv = document.createElement('div');
@@ -1761,11 +1684,6 @@ class MagicChecklistDrawer {
     
         // Whitelist of allowed tags and attributes
         const allowedTags = ['a', 'b', 'strong', 'i', 'em', 'u', 'span', 'br'];
-        const allowedAttributes = {
-            'a': ['href', 'target', 'rel'],
-            'span': ['class'],
-            '*': ['class'] // Global attributes
-        };
     
         function cleanNode(node) {
             // Handle text nodes
@@ -1784,9 +1702,6 @@ class MagicChecklistDrawer {
     
                 // Create new clean element
                 const cleanEl = document.createElement(tagName);
-    
-                // Copy allowed attributes
-                const validAttrs = [...(allowedAttributes[tagName] || []), ...(allowedAttributes['*'] || [])];
     
                 // Special handling for links
                 if (tagName === 'a') {
@@ -1858,7 +1773,6 @@ class MagicChecklistDrawer {
             window.open(target.href, '_blank', 'noopener,noreferrer');
             e.preventDefault();
             e.stopPropagation();
-            return;
         }
     }
 
@@ -2234,32 +2148,6 @@ class MagicChecklistDrawer {
         this.currentLinkElement = null;
     }
     
-    removeLink(linkElement) {
-        if (!linkElement) return;
-    
-        // Create range and selection
-        const range = document.createRange();
-        const selection = window.getSelection();
-    
-        // Select the link content
-        range.selectNodeContents(linkElement);
-        selection.removeAllRanges();
-        selection.addRange(range);
-    
-        // Extract text content
-        const textContent = linkElement.textContent;
-    
-        // Replace link with text node
-        const textNode = document.createTextNode(textContent);
-        linkElement.parentNode.replaceChild(textNode, linkElement);
-    
-        // Clear selection
-        selection.removeAllRanges();
-    
-        // Remove the indicator
-        this.removeRemoveLinkIndicator();
-    }
-    
     showRemoveLinkIndicator(linkElement) {
         // Remove any existing indicators
         this.removeRemoveLinkIndicator();
@@ -2569,13 +2457,9 @@ class MagicChecklistDrawer {
         // Remove whitespace
         url = url.trim();
         
-        // If no protocol specified, consider if we should add https://
         if (!/^https?:\/\//i.test(url)) {
             // Check if it looks like a valid domain
-            if (/^([a-z0-9-]+\.)+[a-z]{2,}$/i.test(url)) {
-                return true; // We'll add https:// later when creating the link
-            }
-            return false;
+            return !!(/^([a-z0-9-]+\.)+[a-z]{2,}$/i.test(url));
         }
         
         try {
@@ -2689,10 +2573,10 @@ class MagicChecklistDrawer {
         const rect = range.getBoundingClientRect();
         const containerRect = this.container.getBoundingClientRect();
         const containerScroll = this.container.scrollTop || 0;
-        const documentScroll = window.pageYOffset || document.documentElement.scrollTop;
+        const documentScroll = window.scrollY || document.documentElement.scrollTop;
     
         // Calculate position relative to container
-        const top = rect.top - containerRect.top + containerScroll + (documentScroll - (this.drawer === document ? documentScroll : 0));
+        const top = rect.top - containerRect.top + containerScroll + (documentScroll - (this.drawer == document ? documentScroll : 0));
         const left = rect.left - containerRect.left;
     
         // Keep toolbar within bounds
@@ -2715,8 +2599,8 @@ class MagicChecklistDrawer {
         
         // Store current scroll position before showing toolbar
         const currentScroll = {
-            x: window.pageXOffset,
-            y: window.pageYOffset
+            x: window.scrollX,
+            y: window.scrollY
         };
     
         // Show toolbar
@@ -2726,7 +2610,7 @@ class MagicChecklistDrawer {
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 // Prevent scroll
-                if (this.container === document) {
+                if (this.container == document) {
                     window.scrollTo(currentScroll.x, currentScroll.y);
                 } else {
                     this.container.scrollTop = containerScroll;
@@ -3254,16 +3138,13 @@ class MagicChecklistDrawer {
                 const storedResetCounter = sessionStorage.getItem(`mcl_reset_counter_${checklistData.checklist_id}`);
                 
                 if (storedResetCounter !== reset_info.reset_counter.toString()) {
-                    // For global state, directly update the checklist data
-                    if (checklistData.is_public) {
-                        checklistData.checked_state = []; // Reset public global checked state
-                    } else {
-                        checklistData.checked_state = []; // Reset private global checked state
-                    }
+                    // Reset global checked state for both public and private
+                    checklistData.checked_state = [];
                     
                     sessionStorage.setItem(`mcl_reset_counter_${checklistData.checklist_id}`, reset_info.reset_counter);
                     this.uncheckAllItems();
                 }
+                
             } catch (error) {
                 console.error('Error handling reset for global state:', error);
             }
