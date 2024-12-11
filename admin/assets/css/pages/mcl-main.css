@@ -1,0 +1,206 @@
+/* ============================================================
+   Main Admin Page (Checklists Overview)
+   ============================================================ */
+
+/* Info Section */
+.mcl-info {
+  margin-bottom: var(--mcl-spacing-xl);
+}
+
+.mcl-subtitle {
+  font-size: var(--mcl-font-size-lg);
+  font-weight: 600;
+  color: var(--mcl-text-primary);
+  margin-bottom: var(--mcl-spacing-sm);
+}
+
+/* Empty State */
+.mcl-empty-state {
+  text-align: center;
+  padding: var(--mcl-spacing-2xl);
+  background: var(--mcl-surface);
+  border-radius: var(--mcl-radius-lg);
+}
+
+/* Table Specific Styles */
+.mcl-table th.sortable:hover {
+  background-color: var(--mcl-primary-light);
+}
+
+.mcl-table th.sortable:hover .sort-indicator {
+  opacity: 0.8;
+}
+
+/* Toggle Cell */
+.mcl-toggle-cell {
+  text-align: center;
+}
+
+/* Action Buttons */
+.mcl-action-button {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--mcl-spacing-xs) var(--mcl-spacing-sm);
+  margin-right: var(--mcl-spacing-xs);
+  border-radius: var(--mcl-radius-sm);
+  font-size: var(--mcl-font-size-sm);
+  text-decoration: none;
+  transition: var(--mcl-transition);
+}
+
+.mcl-edit {
+  background: var(--mcl-accent);
+  color: var(--mcl-primary);
+}
+
+.mcl-edit:hover {
+  background: var(--mcl-accent-light);
+  color: var(--mcl-primary);
+}
+
+.mcl-delete {
+  background: var(--mcl-danger);
+  color: white;
+}
+
+.mcl-delete:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.mcl-clone {
+  background: var(--mcl-surface);
+  color: var(--mcl-text-primary);
+  border: 1px solid var(--mcl-border);
+}
+
+.mcl-clone:hover {
+  background: var(--mcl-primary);
+  color: white;
+}
+
+/* Priority Badge Enhancements */
+.mcl-table .mcl-priority-badge {
+  min-width: 80px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .mcl-action-button {
+      padding: var(--mcl-spacing-xs);
+      margin-bottom: var(--mcl-spacing-xs);
+  }
+  
+  .mcl-table td {
+      white-space: nowrap;
+  }
+
+  .mcl-table-wrapper {
+      margin: 0 calc(var(--mcl-spacing-md) * -1);
+      border-radius: 0;
+  }
+}
+
+.mcl-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--mcl-background);
+  border-radius: 25px;
+  color: white;
+  margin: 5px;
+}
+
+/* Tag Filter Styles */
+.mcl-table-filters {
+  margin-bottom: 20px;
+}
+
+.mcl-filter-group {
+  max-width: 400px;
+}
+
+/* Choices overrides for tags */
+.choices-mcl-tag-choices {
+  margin-bottom: 1rem;
+}
+
+.choices-mcl-tag-choices .choices__inner {
+  padding: 4px 7.5px;
+  border-radius: var(--mcl-radius-md);
+  border-color: var(--mcl-border);
+}
+
+.choices-mcl-tag-choices .choices__input {
+  background-color: transparent;
+  margin-bottom: 0;
+}
+
+.choices-mcl-tag-choices .choices__list--multiple .choices__item {
+  border: none;
+  margin: 0 3px 3px 0;
+  padding: 2px 8px;
+  background: none;
+}
+
+.choices-mcl-tag-choices .choices__list--dropdown .choices__item--selectable {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.choices-mcl-tag-choices .choices__list--dropdown .choices__item--selectable:after {
+  display: none;
+}
+
+/* Style for tag badges in the filter */
+.choices-mcl-tag-choices .mcl-tag-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--mcl-font-size-sm);
+  color: white;
+  display: inline-block;
+}
+
+.mcl-table-filters {
+  margin-bottom: 20px;
+}
+
+.mcl-filter-group {
+  max-width: 400px;
+}
+
+.mcl-filter-group.mcl-form-group .choices__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: auto;
+}
+
+.mcl-table-filters {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.mcl-filter-group {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+/* Ensure Choices.js dropdowns don't overflow */
+.choices[data-type*="select-multiple"] .choices__inner {
+  padding: 4px 7.5px;
+}
+
+.choices__list--multiple .choices__item {
+  margin-bottom: 0;
+  margin-top: 2px;
+}
+
+.choices__list.choices__list--multiple .choices__item {
+  background-color: var(--mcl-primary);
+}

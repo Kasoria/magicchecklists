@@ -1,0 +1,38 @@
+/* ============================================================
+   Import Page
+   ============================================================ */
+
+   .mcl-import-form .mcl-textarea {
+    min-height: 200px;
+    font-family: monospace;
+    line-height: 1.6;
+    white-space: pre;
+}
+
+.mcl-import-form .mcl-description {
+    color: var(--mcl-text-secondary);
+    font-style: italic;
+}
+
+/* Enhanced focus state for import textarea */
+.mcl-import-form .mcl-textarea:focus {
+    border-color: var(--mcl-accent);
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.2);
+}
+
+/* Import button enhancement */
+.mcl-import-form .mcl-button-primary {
+    min-width: 150px;
+}
+
+/* Placeholder text styling */
+.mcl-import-form .mcl-textarea::placeholder {
+    color: var(--mcl-text-secondary);
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .mcl-import-form .mcl-textarea {
+        min-height: 150px;
+    }
+}

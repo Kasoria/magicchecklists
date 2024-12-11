@@ -1,0 +1,237 @@
+/* ============================================================
+   Floating Button Styles
+   ============================================================ */
+
+.mcl-floating-buttons {
+    position: fixed;
+    z-index: 999998;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    pointer-events: none;
+}
+
+.mcl-floating-button {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+    background: var(--mcl-background, #ffffff);
+    border: 2px solid var(--mcl-border, #e2e8f0);
+    border-radius: var(--mcl-radius, 20px);
+    box-shadow: var(--mcl-shadow-md, 0 2px 4px rgba(0, 0, 0, 0.1));
+    cursor: pointer;
+    font-family: var(--mcl-font-family);
+    max-width: 300px;
+    transition: all 0.2s ease;
+    text-align: left;
+    gap: 10px;
+}
+
+
+
+.mcl-floating-button.draggable.initializing {
+    visibility: hidden;
+    transition: none !important; 
+}
+
+.mcl-floating-button.draggable {
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    align-self: start !important;
+    margin: 0 !important;
+    will-change: transform;
+}
+
+.mcl-floating-button {
+    pointer-events: auto;
+}
+
+.mcl-floating-button.position-bottom-right {
+    align-self: flex-end;
+}
+
+.mcl-floating-button.position-bottom-left {
+    align-self: flex-start;
+}
+
+.mcl-floating-button.position-top-right {
+    position: fixed;
+    top: 20px;
+    align-self: flex-end;
+}
+
+.mcl-floating-button.position-top-left {
+    position: fixed;
+    top: 20px;
+    align-self: flex-start;
+}
+
+/* Container positioning */
+.mcl-floating-buttons {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    margin: 0 auto;
+}
+
+/* Admin bar offset adjustments */
+body.admin-bar .mcl-floating-button.position-top-left,
+body.admin-bar .mcl-floating-button.position-top-right {
+    margin-top: 32px; /* Standard admin bar height */
+}
+
+body.admin-bar .mcl-floating-button.draggable {
+    margin-top: 0 !important;
+}
+
+.mcl-floating-buttons.has-draggable {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 999998;
+    pointer-events: none;
+}
+
+.mcl-floating-buttons.has-draggable .mcl-floating-button {
+    pointer-events: auto;
+}
+
+/* Theme-specific styles */
+.mcl-floating-button.mcl-theme-light {
+    background: var(--mcl-light-bg, #ffffff);
+    color: var(--mcl-primary);
+}
+
+.mcl-floating-button.mcl-theme-light .mcl-floating-button-svg {
+    filter: brightness(0) saturate(100%) invert(10%) sepia(38%) saturate(2695%) hue-rotate(186deg) brightness(95%) contrast(104%);
+}
+
+.mcl-floating-button.mcl-theme-dark {
+    background: var(--mcl-dark-bg, #001F3D);
+    color: var(--mcl-dark-text, #ffffff);
+}
+
+.mcl-floating-button.mcl-theme-dark .mcl-floating-button-svg {
+    filter: brightness(0) saturate(100%) invert(95%) sepia(40%) saturate(7490%) hue-rotate(339deg) brightness(100%) contrast(90%);
+}
+
+/* Button components */
+.mcl-floating-button-head {
+    display: flex;
+    gap: 10px;
+}
+
+.mcl-floating-button-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.mcl-floating-button-text {
+    font-weight: 600;
+    font-size: var(--mcl-font-size-base, 16px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Priority badge styles */
+body .mcl-floating-button .mcl-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+  line-height: 1.2;
+  color: #1a1a1a;
+}
+
+/* Priority-specific text colors */
+body .mcl-floating-button .mcl-priority-badge[data-priority="critical"],
+body .mcl-floating-button .mcl-priority-badge[data-priority="none"],
+body .mcl-floating-button .mcl-priority-badge[data-priority="low"]
+ {
+  color: white;
+}
+
+/* Explicitly set dark text for medium and high */
+body .mcl-floating-button .mcl-priority-badge[data-priority="medium"],
+body .mcl-floating-button .mcl-priority-badge[data-priority="high"] {
+  color: #1a1a1a;
+}
+
+/* Hover effects */
+.mcl-floating-button:hover {
+    box-shadow: var(--mcl-shadow-lg, 0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* Focus styles for accessibility */
+.mcl-floating-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 31, 61, 0.3);
+}
+
+/* Dark theme hover adjustments */
+.mcl-floating-button.mcl-theme-dark:hover {
+    background: var(--mcl-dark-surface, #002b56);
+}
+
+.mcl-theme-dark .mcl-priority-badge {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mcl-floating-buttons {
+        bottom: 10px;
+        right: 10px;
+        left: auto;
+        max-width: 200px;
+    }
+    
+    .mcl-floating-button {
+        width: 100%;
+        max-width: 200px;
+        padding: 8px 12px;
+    }
+
+}
+
+@media screen and (max-width: 782px) {
+    body.admin-bar .mcl-floating-buttons.position-top-left,
+    body.admin-bar .mcl-floating-buttons.position-top-right {
+        top: 46px;
+    }
+}
+
+.mcl-floating-button {
+    touch-action: none;
+    user-select: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mcl-floating-button.mcl-dragging {
+    opacity: 0.8;
+    cursor: grabbing !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transition: none;
+}
+
+.mcl-floating-button:hover {
+    cursor: grab;
+}
+
+.mcl-floating-buttons button:nth-child(1) { animation-delay: 0s; }
+.mcl-floating-buttons button:nth-child(2) { animation-delay: 0.1s; }
+.mcl-floating-buttons button:nth-child(3) { animation-delay: 0.2s; }
+.mcl-floating-buttons button:nth-child(4) { animation-delay: 0.3s; }
+.mcl-floating-buttons button:nth-child(5) { animation-delay: 0.4s; }
