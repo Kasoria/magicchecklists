@@ -24,6 +24,15 @@ class MCL_Shortcode {
     }
 
     public function register_assets() {
+
+        wp_register_script(
+            'sortablejs',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/sortable.min.js',
+            array(),
+            MAGIC_CHECKLISTS_VERSION,
+            true
+        );
+
         wp_register_style(
             'mcl-shortcode-style',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-shortcode.css',
@@ -43,6 +52,7 @@ class MCL_Shortcode {
         wp_localize_script('mcl-shortcode', 'mclShortcode', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('mcl_shortcode_nonce'),
+            'user_logged_in' => is_user_logged_in(),
             'i18n' => array(
                 'errorLoading' => __('Error loading checklist', 'magic-checklists'),
                 'errorSaving' => __('Error saving state', 'magic-checklists')
