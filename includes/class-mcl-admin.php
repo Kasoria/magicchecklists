@@ -577,7 +577,7 @@ class MCL_Admin {
                 'disable_drawer' => isset($_POST['shortcode_disable_drawer']) ? 1 : 0,
                 'enable_reorder' => isset($_POST['shortcode_enable_reorder']) ? 1 : 0,
                 'check_state'    => sanitize_text_field($_POST['shortcode_check_state'] ?? 'session')
-            );            
+            );
     
             // Custom width validation
             if ($shortcode_settings['width'] === 'custom') {
