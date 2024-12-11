@@ -29,3 +29,5 @@ Thumbs.db
 
 # Keep release.json for updates
 !release.json
+.scannerwork/report-task.txt
+.scannerwork/.sonar_lock
