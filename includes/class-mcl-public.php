@@ -92,7 +92,6 @@ class MCL_Public {
             // Check WordPress admin pages
             $allowed_pages = get_post_meta($checklist->ID, '_mcl_allowed_pages', true) ?: array();
             if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
-                // If this checklist is allowed on this admin page, we need the assets
                 return true;
             }
     
