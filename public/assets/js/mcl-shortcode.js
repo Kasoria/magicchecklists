@@ -141,9 +141,6 @@ class MCLShortcodeHandler {
               await this.saveToServer(checkedArray);
               break;
       }
-
-      // Check if all items are checked
-      this.checkCompletion();
   }
 
   async saveToServer(checkedItems) {
@@ -205,36 +202,6 @@ class MCLShortcodeHandler {
               el.textContent = `${index + 1}.`;
           });
       }
-  }
-
-  checkCompletion() {
-      const totalItems = this.items.querySelectorAll('.mcl-shortcode-item').length;
-      const checkedCount = this.checkedItems.size;
-
-      if (totalItems > 0 && checkedCount === totalItems) {
-          this.showCompletionMessage();
-      }
-  }
-
-  showCompletionMessage() {
-      // Remove any existing message
-      const existing = this.container.querySelector('.mcl-completion-message');
-      if (existing) {
-          existing.remove();
-      }
-
-      // Create new message
-      const message = document.createElement('div');
-      message.className = 'mcl-completion-message';
-      message.textContent = 'All items completed!';
-
-      // Add to container
-      this.container.appendChild(message);
-
-      // Remove after delay
-      setTimeout(() => {
-          message.remove();
-      }, 3000);
   }
 
   initCountdown() {
