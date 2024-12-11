@@ -2005,18 +2005,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.showError('mcl_email_recipients', mclAdmin.i18n.emailRequired);
                 return false;
             }
-
+        
             const emailList = emails.split(',').map(email => email.trim());
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
-            const invalidEmails = emailList.filter(email => !emailRegex.test(email));
+            // Limits total length and uses atomic groups where possible
+            const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]{1,64}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+            
+            const MAX_EMAIL_LENGTH = 254;
+            
+            const invalidEmails = emailList.filter(email => {
+                if (email.length > MAX_EMAIL_LENGTH) {
+                    return true;
+                }
+                return !emailRegex.test(email);
+            });
             
             if (invalidEmails.length > 0) {
                 this.showError('mcl_email_recipients', 
                     mclAdmin.i18n.invalidEmails + invalidEmails.join(', '));
                 return false;
             }
-
+        
             this.clearError('mcl_email_recipients');
             return true;
         },
