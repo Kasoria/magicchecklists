@@ -1,0 +1,101 @@
+/* ============================================================
+   Table Styles
+   ============================================================ */
+   .mcl-table-wrapper {
+    background: var(--mcl-surface);
+    border-radius: var(--mcl-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--mcl-shadow-sm);
+    margin-top: var(--mcl-spacing-lg);
+}
+
+.mcl-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.mcl-table th {
+    background: var(--mcl-primary);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    padding: var(--mcl-spacing-md);
+}
+
+.mcl-table td {
+    padding: var(--mcl-spacing-md);
+    border-bottom: 1px solid var(--mcl-border);
+}
+
+.mcl-table tr:hover {
+    background: rgba(0, 31, 61, 0.02);
+}
+
+.mcl-table td.mcl-toggle-cell {
+    width: 100px;
+}
+
+/* Priority Badge */
+.mcl-priority-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: white;
+    font-size: var(--mcl-font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Priority badge text colors */
+.mcl-priority-badge[data-priority="critical"],
+.mcl-priority-badge[data-priority="none"],
+.mcl-priority-badge[data-priority="low"] {
+    color: white !important;
+}
+
+/* Dark text for medium and high priorities */
+.mcl-priority-badge[data-priority="medium"],
+.mcl-priority-badge[data-priority="high"] {
+    color: #1a1a1a !important;
+}
+
+/* Additional hover state handling */
+.mcl-priority-badge:hover {
+    opacity: 0.9;
+}
+
+/* Sortable Table Headers */
+.mcl-table th.sortable {
+    cursor: pointer;
+    position: relative;
+    padding-right: 25px;
+}
+
+.sort-indicator {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+}
+
+.sort-asc .sort-indicator {
+    border-bottom: 5px solid var(--mcl-accent);
+    border-top: none;
+}
+
+.sort-desc .sort-indicator {
+    border-top: 5px solid var(--mcl-accent);
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .mcl-table-wrapper {
+        overflow-x: auto;
+    }
+}

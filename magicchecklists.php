@@ -1,0 +1,206 @@
+<?php
+/**
+ * MagicChecklists
+ *
+ * @package           MagicChecklists
+ * @author            Christian Wenterodt
+ * @copyright         2024 Christian Wenterodt
+ * @license           GPL-2.0-or-later
+ *
+ * @wordpress-plugin
+ * Plugin Name:       MagicChecklists
+ * Plugin URI:        https://magicplugins.io
+ * Description:       Allows the creation of custom checklists in the WordPress backend.
+ * Version:           1.3.5
+ * Requires at least: 6.5
+ * Requires PHP:      7.4
+ * Author:            Christian Wenterodt
+ * Author URI:        https://magicplugins.io
+ * Text Domain:       magic-checklists
+ * Domain Path:       /languages
+ * License:           GPL v2 or later
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+if ( ! class_exists( 'MagicChecklists' ) ) {
+
+    class MagicChecklists {
+
+        public function __construct() {
+            $this->define_constants();
+            $this->includes();
+            $this->init_hooks();
+        }
+
+        /**
+         * Define plugin constants
+         */
+        private function define_constants() {
+            define('MAGIC_CHECKLISTS_VERSION', '1.3.5');
+            define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
+            define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
+            define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
+            define('MAGIC_CHECKLISTS_ADMIN_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'admin/');
+            define('MAGIC_CHECKLISTS_PUBLIC_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/');
+            define('MAGIC_CHECKLISTS_PUBLIC_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'public/');
+            define('MAGIC_CHECKLISTS_TEXT_DOMAIN', 'magic-checklists');
+        }
+
+        /**
+         * Include required files
+         */
+        private function includes() {
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-db-manager.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-sanitization.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-settings.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-priority-utils.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-cpt.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-admin.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-public.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-rest-controller.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-api-integration.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-manager.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-ajax-manager.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-image-handler.php';
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-export-handler.php';
+
+            // Include SureCart Licensing
+            if ( ! class_exists( 'SureCart\Licensing\Client' ) ) {
+                // Include the autoloader if SureCart uses Composer
+                if ( file_exists( MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php' ) ) {
+                    require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php';
+                } else {
+                    // Fallback to direct inclusion if autoloader is not present
+                    require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/src/Client.php';
+                }
+            }
+
+            register_activation_hook(__FILE__, array($this, 'activate'));
+        }
+
+        /**
+         * Initialize hooks
+         */
+        private function init_hooks() {
+            add_action('plugins_loaded', array($this, 'load_textdomain'));
+            add_action('init', array($this, 'init'));
+            add_action('plugins_loaded', array($this, 'check_version'));
+        }
+
+        /**
+         * Load plugin textdomain
+         */
+        public function load_textdomain() {
+            load_plugin_textdomain(
+                'magic-checklists',
+                false,
+                dirname(plugin_basename(__FILE__)) . '/languages/'
+            );
+        }
+
+        /**
+         * Initialize the plugin
+         */
+        public function init() {
+            new MCL_CPT();
+            new MCL_Public();
+            MCL_Settings::get_instance();
+            MCL_Export_Handler::get_instance();
+
+            if ( is_admin() ) {
+                new MCL_Admin();
+            }
+
+            // Initialize SureCart Licensing
+            $this->init_licensing();
+        }
+
+        public function activate() {
+            MCL_DB_Manager::get_instance()->install();
+        }
+        
+        
+
+        public function check_version() {
+            if (version_compare(get_option('mcl_version', '1.2'), MAGIC_CHECKLISTS_VERSION, '<')) {
+                // Run database updates
+                MCL_DB_Manager::get_instance()->install();
+                
+                // Update version
+                update_option('mcl_version', MAGIC_CHECKLISTS_VERSION);
+            }
+
+            $plugin_data_version = get_option('mcl_plugin_data_version', '1.0');
+            if (version_compare($plugin_data_version, '1.2.1', '<')) {
+                // Run the upgrade routine for load_everywhere meta
+                global $wpdb;
+                
+                // Get all checklist IDs that DON'T have the _mcl_load_everywhere meta key
+                $checklist_ids = $wpdb->get_col("
+                    SELECT p.ID 
+                    FROM {$wpdb->posts} p 
+                    LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_mcl_load_everywhere'
+                    WHERE p.post_type = 'mcl_checklist' 
+                    AND pm.meta_id IS NULL
+                ");
+
+                // Bulk insert the meta values for all these checklists
+                if (!empty($checklist_ids)) {
+                    $values = array();
+                    $placeholders = array();
+                    
+                    foreach ($checklist_ids as $checklist_id) {
+                        $values[] = $checklist_id;
+                        $values[] = '_mcl_load_everywhere';
+                        $values[] = '1';
+                        $placeholders[] = '(%d, %s, %s)';
+                    }
+
+                    $query = $wpdb->prepare(
+                        "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " . 
+                        implode(', ', $placeholders),
+                        $values
+                    );
+                    
+                    $wpdb->query($query);
+                }
+                
+                // Update the plugin data version
+                update_option('mcl_plugin_data_version', '1.2.1');
+            }
+        }
+
+        /**
+         * Initialize SureCart Licensing
+         */
+        private function init_licensing() {
+            // Replace 'YOUR_PUBLIC_TOKEN' with your actual public token from SureCart
+            $client = new \SureCart\Licensing\Client( 'MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', __FILE__ );
+
+            // Set your text domain
+            $client->set_textdomain( MAGIC_CHECKLISTS_TEXT_DOMAIN );
+
+            // Add the pre-built license settings page
+            $client->settings()->add_page( array(
+                'type'                 => 'submenu',
+                'parent_slug'          => 'mcl_checklists',
+                'page_title'           => 'Manage License',
+                'menu_title'           => 'Manage License',
+                'capability'           => 'manage_options',
+                'menu_slug'            => 'mcl_manage_license',
+                'icon_url'             => '',
+                'position'             => null,
+                'activated_redirect'   => admin_url( 'admin.php?page=mcl_checklists' ),
+                'deactivated_redirect' => admin_url( 'admin.php?page=mcl_checklists' ),
+            ) );
+        }
+    }
+
+    new MagicChecklists();
+    new MCL_API_Integration();
+}
