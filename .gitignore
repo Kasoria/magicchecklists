@@ -31,11 +31,6 @@ Thumbs.db
 !release.json
 .scannerwork/report-task.txt
 .scannerwork/.sonar_lock
-admin/.DS_Store
-admin/assets/css/.DS_Store
-admin/assets/js/.DS_Store
-public/.DS_Store
-public/assets/.DS_Store
 instructions.md
 .cursorrules
 .DS_Store
