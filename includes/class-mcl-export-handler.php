@@ -110,33 +110,25 @@ class MCL_Export_Handler {
   }
 
   public function handle_pdf_export() {
-    error_log('==== PDF Export Start ====');
     
     if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_pdf')) {
-        error_log('Security check failed');
         wp_die(__('Security check failed', 'magic-checklists'));
     }
 
-    error_log('POST data received: ' . print_r($_POST, true));
-
     $export_id = isset($_POST['export_id']) ? sanitize_text_field($_POST['export_id']) : '';
-    error_log('Export ID from POST: ' . $export_id);
 
     if (!$export_id) {
-        error_log('No export ID provided');
         wp_die(__('Export ID missing', 'magic-checklists'));
     }
 
     // Try to get the transient
     $settings = get_transient($export_id);
-    error_log('Retrieved settings from transient: ' . ($settings ? print_r($settings, true) : 'no settings found'));
 
     if (!$settings) {
         // Test if transients are working at all
         $test_transient = 'mcl_test_' . time();
         set_transient($test_transient, 'test', 60);
         $test_result = get_transient($test_transient);
-        error_log('Transient system test: ' . ($test_result ? 'working' : 'not working'));
         
         wp_die(__('Export settings have expired or are invalid. Please try again.', 'magic-checklists'));
     }
@@ -145,8 +137,6 @@ class MCL_Export_Handler {
     $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
     $checklist = get_post($checklist_id);
     $items = get_post_meta($checklist_id, '_mcl_items', true);
-
-    error_log('Generating PDF HTML with settings...');
     
     if (ob_get_level()) {
         ob_end_clean();
@@ -159,7 +149,6 @@ class MCL_Export_Handler {
     
     echo $this->generate_pdf_html($checklist, $items, $settings);
     
-    error_log('==== PDF Export Complete ====');
     exit;
   }
 
