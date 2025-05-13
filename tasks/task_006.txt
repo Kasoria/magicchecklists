@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Refactor Settings Page
+# Status: pending
+# Dependencies: 4
+# Priority: medium
+# Description: Rebuild the plugin settings page using Svelte components while maintaining integration with MCL_Settings.
+# Details:
+Analyze the existing settings page structure and options managed by MCL_Settings. Create Svelte components for different settings sections. Implement form handling and validation for settings submission. Use Flowbite-Svelte form components and Tailwind CSS for styling. Ensure settings are properly saved to and retrieved from the WordPress options API via REST endpoints. Maintain any existing settings validation logic.
+
+# Test Strategy:
+Test each settings section to ensure values are correctly saved and retrieved. Verify form validation works as expected. Test settings with various input types (text, checkboxes, selects, etc.). Ensure settings changes are reflected in the plugin's behavior after saving.

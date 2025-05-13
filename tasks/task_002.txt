@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Configure Vite, Tailwind, and Project Structure
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Set up Vite configuration for Svelte and Tailwind, configure the development server, and establish the project folder structure.
+# Details:
+Create vite.config.js to configure Svelte plugin, set dev server to port 3005, enable HMR, and configure build output to dist/ with manifest generation. Create tailwind.config.js and postcss.config.js with Flowbite integration. Set up the project folder structure as specified in the PRD, including src/admin/, src/public/, and src/lib/ directories. Create placeholder files for main entry points (src/admin/main.js, src/public/main.js) and root components (App.svelte files).
+
+# Test Strategy:
+Run 'npm run dev' to verify Vite server starts on port 3005. Check that the project structure matches the PRD specifications. Validate that Tailwind CSS is properly configured by testing a simple component with Tailwind classes.

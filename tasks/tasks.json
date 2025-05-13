@@ -1,0 +1,188 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Initialize Node.js Project and Install Dependencies",
+      "description": "Set up the Node.js project with package.json and install all required dependencies for the Svelte 5, Tailwind CSS 4, and Flowbite integration.",
+      "status": "pending",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create package.json with npm init. Install the following dependencies: Svelte 5, Vite, Tailwind CSS 4, Flowbite, Flowbite-Svelte, PostCSS, Autoprefixer, and relevant Vite/Svelte plugins. Set up scripts for development ('npm run dev') and production builds ('npm run build'). Ensure all dependencies are compatible with each other, especially considering Svelte 5's Runes API and Tailwind CSS 4.",
+      "testStrategy": "Verify package.json contains all required dependencies. Run 'npm install' to ensure all packages install without conflicts. Test that basic npm scripts execute without errors.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create basic Node.js project structure with package.json",
+          "description": "Initialize the Node.js project with npm init and create the basic folder structure for a Svelte project",
+          "dependencies": [],
+          "details": "1. Create a new project directory\n2. Run `npm init -y` to create a default package.json\n3. Modify package.json to include project name, description, and author\n4. Create basic folder structure: src/, public/, and tests/\n5. Create a .gitignore file with node_modules/, dist/, .DS_Store, and other common exclusions\n6. Test by verifying package.json has been created correctly with proper project metadata",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 2,
+          "title": "Install Svelte 5 and Vite with required plugins",
+          "description": "Set up Svelte 5 with Vite as the build tool and install necessary Svelte-related plugins",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Install Svelte 5: `npm install svelte@next`\n2. Install Vite: `npm install vite --save-dev`\n3. Install Svelte plugin for Vite: `npm install @sveltejs/vite-plugin-svelte --save-dev`\n4. Create a vite.config.js file with Svelte plugin configuration\n5. Update package.json scripts to include:\n   - \"dev\": \"vite\"\n   - \"build\": \"vite build\"\n   - \"preview\": \"vite preview\"\n6. Create a basic src/main.js and src/App.svelte to test the setup\n7. Test by running `npm run dev` and verifying the development server starts without errors",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 3,
+          "title": "Install and configure Tailwind CSS 4 with PostCSS",
+          "description": "Set up Tailwind CSS 4 with PostCSS and Autoprefixer for styling the Svelte application",
+          "dependencies": [
+            2
+          ],
+          "details": "1. Install Tailwind CSS 4: `npm install tailwindcss@latest postcss autoprefixer --save-dev`\n2. Create configuration files:\n   - Run `npx tailwindcss init -p` to create tailwind.config.js and postcss.config.js\n3. Configure tailwind.config.js to scan Svelte files:\n   - Add `content: ['./src/**/*.{html,js,svelte}']`\n4. Create src/app.css with Tailwind directives:\n   ```css\n   @tailwind base;\n   @tailwind components;\n   @tailwind utilities;\n   ```\n5. Import app.css in src/main.js\n6. Test by adding some Tailwind classes to App.svelte and verifying they work correctly when running `npm run dev`",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 4,
+          "title": "Install and integrate Flowbite and Flowbite-Svelte",
+          "description": "Add Flowbite and Flowbite-Svelte components to the project for UI components",
+          "dependencies": [
+            3
+          ],
+          "details": "1. Install Flowbite: `npm install flowbite`\n2. Install Flowbite-Svelte: `npm install flowbite-svelte`\n3. Update tailwind.config.js to include Flowbite plugin and content paths:\n   ```js\n   plugins: [require('flowbite/plugin')],\n   content: [\n     './src/**/*.{html,js,svelte}',\n     './node_modules/flowbite-svelte/**/*.{html,js,svelte}'\n   ]\n   ```\n4. Create a simple test component using Flowbite-Svelte (e.g., a button or card)\n5. Import and use the test component in App.svelte\n6. Test by running `npm run dev` and verifying the Flowbite component renders correctly",
+          "status": "pending",
+          "parentTaskId": 1
+        },
+        {
+          "id": 5,
+          "title": "Verify compatibility and create example component with Svelte 5 Runes",
+          "description": "Ensure all dependencies work together and create an example component using Svelte 5's Runes API with Flowbite styling",
+          "dependencies": [
+            2,
+            4
+          ],
+          "details": "1. Create a new component in src/components/ExampleRunes.svelte using Svelte 5 Runes API:\n   ```svelte\n   <script>\n     import { Button } from 'flowbite-svelte';\n     let count = $state(0);\n     \n     function increment() {\n       count++;\n     }\n   </script>\n   \n   <div class=\"p-4 max-w-md mx-auto bg-white rounded-xl shadow-md\">\n     <h2 class=\"text-xl font-bold mb-2\">Svelte 5 Runes Example</h2>\n     <p class=\"mb-4\">Current count: {count}</p>\n     <Button color=\"blue\" on:click={increment}>Increment</Button>\n   </div>\n   ```\n2. Import and use this component in App.svelte\n3. Test the complete integration by:\n   - Running `npm run dev` to verify development mode works\n   - Testing the Runes reactivity by clicking the button\n   - Running `npm run build` to verify production build completes successfully\n4. Document any compatibility issues or workarounds needed for Svelte 5 with other dependencies",
+          "status": "pending",
+          "parentTaskId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Configure Vite, Tailwind, and Project Structure",
+      "description": "Set up Vite configuration for Svelte and Tailwind, configure the development server, and establish the project folder structure.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Create vite.config.js to configure Svelte plugin, set dev server to port 3005, enable HMR, and configure build output to dist/ with manifest generation. Create tailwind.config.js and postcss.config.js with Flowbite integration. Set up the project folder structure as specified in the PRD, including src/admin/, src/public/, and src/lib/ directories. Create placeholder files for main entry points (src/admin/main.js, src/public/main.js) and root components (App.svelte files).",
+      "testStrategy": "Run 'npm run dev' to verify Vite server starts on port 3005. Check that the project structure matches the PRD specifications. Validate that Tailwind CSS is properly configured by testing a simple component with Tailwind classes."
+    },
+    {
+      "id": 3,
+      "title": "Implement PHP Dev Mode Integration",
+      "description": "Modify the PHP plugin to conditionally load assets from the Vite dev server or production build based on a development mode constant.",
+      "status": "pending",
+      "dependencies": [
+        2
+      ],
+      "priority": "high",
+      "details": "Add MCL_DEV_MODE constant to magicchecklists.php. Modify asset enqueueing logic in MCL_Admin and MCL_Public classes to conditionally load assets: from http://localhost:3005 when in dev mode, or from the dist/ directory using Vite's manifest.json when in production mode. Create a helper function to parse Vite's manifest for production asset loading. Ensure WordPress nonces and localized data are properly passed to the Svelte applications.",
+      "testStrategy": "Test asset loading in both development and production modes. Verify that setting MCL_DEV_MODE to true loads assets from the Vite dev server. Build the project with 'npm run build' and verify that with MCL_DEV_MODE set to false, the plugin correctly loads the built assets from the dist/ directory."
+    },
+    {
+      "id": 4,
+      "title": "Create Proof of Concept Admin Component",
+      "description": "Develop a simple Svelte component for a non-critical admin UI element to validate the integration approach.",
+      "status": "pending",
+      "dependencies": [
+        3
+      ],
+      "priority": "high",
+      "details": "Choose a simple admin UI element (e.g., a settings section or info panel). Create a basic Svelte component using Flowbite-Svelte components and Tailwind CSS. Set up the admin/main.js entry point to mount this component to a designated DOM element. Modify the corresponding PHP template to include the mounting point (e.g., <div id=\"mcl-admin-app\"></div>). Implement basic REST API interaction if applicable, using fetch or a simple API client in src/lib/.",
+      "testStrategy": "Load the admin page in WordPress with MCL_DEV_MODE enabled. Verify the Svelte component renders correctly. Test Hot Module Replacement by making changes to the component. If applicable, test data fetching from the REST API. Ensure the component styling with Tailwind and Flowbite works as expected."
+    },
+    {
+      "id": 5,
+      "title": "Refactor Checklist Editor UI",
+      "description": "Rebuild the core checklist editor interface using Svelte components, Flowbite, and Tailwind CSS.",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "high",
+      "details": "Analyze the existing checklist editor UI and functionality. Create reusable Svelte components for tasks, items, and other UI elements. Implement state management using Svelte stores for the checklist data. Build the editor interface using Flowbite-Svelte components and Tailwind CSS. Ensure all interactions with the REST API for saving, updating, and retrieving checklist data. Focus on maintaining feature parity with the existing editor while improving the UX where possible.",
+      "testStrategy": "Test the checklist editor with various operations: creating new checklists, adding/editing/removing tasks, reordering items, and saving changes. Verify all data is correctly saved to and retrieved from the WordPress backend. Test edge cases like validation errors and long checklists. Compare functionality with the original editor to ensure feature parity."
+    },
+    {
+      "id": 6,
+      "title": "Refactor Settings Page",
+      "description": "Rebuild the plugin settings page using Svelte components while maintaining integration with MCL_Settings.",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "medium",
+      "details": "Analyze the existing settings page structure and options managed by MCL_Settings. Create Svelte components for different settings sections. Implement form handling and validation for settings submission. Use Flowbite-Svelte form components and Tailwind CSS for styling. Ensure settings are properly saved to and retrieved from the WordPress options API via REST endpoints. Maintain any existing settings validation logic.",
+      "testStrategy": "Test each settings section to ensure values are correctly saved and retrieved. Verify form validation works as expected. Test settings with various input types (text, checkboxes, selects, etc.). Ensure settings changes are reflected in the plugin's behavior after saving."
+    },
+    {
+      "id": 7,
+      "title": "Implement License Management UI",
+      "description": "Create a new Svelte-based UI for license management that interacts with the existing SureCart licensing PHP logic.",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "medium",
+      "details": "Design and implement a Svelte UI for license activation, deactivation, and status checking. Create new REST API endpoints in PHP that wrap the SureCart\\Licensing\\Client methods (activate_license(), deactivate_license(), get_license()). Build Svelte components to interact with these endpoints. Use Flowbite-Svelte components for the UI elements. Implement proper error handling and success messaging. Ensure the UI provides clear feedback on license status and actions.",
+      "testStrategy": "Test license activation with valid and invalid license keys. Verify license deactivation works correctly. Check that license status is accurately displayed. Test error handling for network issues or API failures. Ensure the UI provides clear feedback for all operations."
+    },
+    {
+      "id": 8,
+      "title": "Refactor All Checklists List View",
+      "description": "Rebuild the 'All Checklists' admin list table using Svelte components and Flowbite.",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "medium",
+      "details": "Analyze the existing list table functionality for displaying all checklists. Create a Svelte component that replicates the WordPress list table functionality. Implement sorting, filtering, and pagination. Add action buttons for edit, delete, duplicate, etc. Use Flowbite-Svelte table components and Tailwind CSS for styling. Ensure proper REST API interaction for retrieving checklist data and performing actions.",
+      "testStrategy": "Test the list view with various numbers of checklists. Verify sorting, filtering, and pagination work correctly. Test all action buttons (edit, delete, duplicate, etc.). Ensure proper handling of empty states and error conditions. Check that the UI is responsive and works well on different screen sizes."
+    },
+    {
+      "id": 9,
+      "title": "Refactor Public-Facing Shortcode Output",
+      "description": "Rebuild the public-facing checklist display for shortcodes using Svelte components.",
+      "status": "pending",
+      "dependencies": [
+        4
+      ],
+      "priority": "medium",
+      "details": "Analyze the existing shortcode output from MCL_Shortcode. Create Svelte components for rendering checklists on the frontend. Set up the public/main.js entry point to mount these components. Modify the PHP shortcode handler to provide the mounting point and initial data. Implement any interactive features (checking items, progress tracking, etc.). Use Flowbite components and Tailwind CSS for styling, ensuring the public UI is responsive and user-friendly.",
+      "testStrategy": "Test shortcode rendering in various WordPress themes and posts/pages. Verify all interactive features work correctly. Test on different devices and screen sizes to ensure responsive design. Check accessibility of the public-facing components. Verify that checklist data is correctly loaded and displayed."
+    },
+    {
+      "id": 10,
+      "title": "Finalize Production Build and Documentation",
+      "description": "Optimize the production build process, perform comprehensive testing, and create documentation for the new frontend architecture.",
+      "status": "pending",
+      "dependencies": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "priority": "low",
+      "details": "Optimize the Vite build configuration for production. Implement code splitting and lazy loading where appropriate. Perform performance optimization on Svelte components. Conduct thorough cross-browser and cross-device testing. Create developer documentation covering: the new frontend architecture, build process, component structure, and guidelines for creating/modifying Svelte components. Document the interaction between Svelte and the PHP backend. Create a troubleshooting guide for common issues.",
+      "testStrategy": "Run performance audits using tools like Lighthouse. Test the production build in various browsers and devices. Verify all features work correctly in the production build. Have team members review the documentation for clarity and completeness. Test the build process on different development environments to ensure consistency."
+    }
+  ],
+  "metadata": {
+    "projectName": "MagicChecklists Frontend Refactoring",
+    "totalTasks": 10,
+    "sourceFile": "scripts/prd.txt",
+    "generatedAt": "2023-05-15"
+  }
+}

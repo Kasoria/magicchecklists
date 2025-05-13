@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Create Proof of Concept Admin Component
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Develop a simple Svelte component for a non-critical admin UI element to validate the integration approach.
+# Details:
+Choose a simple admin UI element (e.g., a settings section or info panel). Create a basic Svelte component using Flowbite-Svelte components and Tailwind CSS. Set up the admin/main.js entry point to mount this component to a designated DOM element. Modify the corresponding PHP template to include the mounting point (e.g., <div id="mcl-admin-app"></div>). Implement basic REST API interaction if applicable, using fetch or a simple API client in src/lib/.
+
+# Test Strategy:
+Load the admin page in WordPress with MCL_DEV_MODE enabled. Verify the Svelte component renders correctly. Test Hot Module Replacement by making changes to the component. If applicable, test data fetching from the REST API. Ensure the component styling with Tailwind and Flowbite works as expected.

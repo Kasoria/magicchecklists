@@ -1,0 +1,11 @@
+# Task ID: 3
+# Title: Implement PHP Dev Mode Integration
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Modify the PHP plugin to conditionally load assets from the Vite dev server or production build based on a development mode constant.
+# Details:
+Add MCL_DEV_MODE constant to magicchecklists.php. Modify asset enqueueing logic in MCL_Admin and MCL_Public classes to conditionally load assets: from http://localhost:3005 when in dev mode, or from the dist/ directory using Vite's manifest.json when in production mode. Create a helper function to parse Vite's manifest for production asset loading. Ensure WordPress nonces and localized data are properly passed to the Svelte applications.
+
+# Test Strategy:
+Test asset loading in both development and production modes. Verify that setting MCL_DEV_MODE to true loads assets from the Vite dev server. Build the project with 'npm run build' and verify that with MCL_DEV_MODE set to false, the plugin correctly loads the built assets from the dist/ directory.
