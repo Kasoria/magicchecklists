@@ -184,8 +184,8 @@
 }
 
 .mcl-filter-group.mcl-form-group .choices__inner input[type="search"] {
-  padding: .5rem .75rem;
-  min-height: 50px;
+  padding: .25rem .5rem;
+  min-height: 40px;
   margin: 0;
   line-height: 2;
   border: 1px solid var(--mcl-border);
@@ -224,7 +224,7 @@
 /* Search input specific styles */
 #mcl-search {
   width: 100%;
-  padding: 0.5rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--mcl-radius-md);
   border: 1px solid var(--mcl-border);
   transition: var(--mcl-transition);

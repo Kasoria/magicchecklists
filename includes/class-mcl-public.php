@@ -820,11 +820,19 @@ class MCL_Public {
             true
         );
     
+        // Enqueue Nunito Sans font
+        wp_enqueue_style(
+            'mcl-fonts',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-fonts.css',
+            array(),
+            MAGIC_CHECKLISTS_VERSION
+        );
+        
         // CSS files
         wp_enqueue_style(
             'mcl-drawer',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-drawer.css',
-            array(),
+            array('mcl-fonts'),
             MAGIC_CHECKLISTS_VERSION
         );
     

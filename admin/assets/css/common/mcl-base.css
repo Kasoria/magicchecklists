@@ -21,7 +21,7 @@
     --mcl-danger: #B30000;
 
     /* Typography */
-    --mcl-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --mcl-font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     --mcl-font-size-xs: 13px;
     --mcl-font-size-sm: 14px;
     --mcl-font-size-base: 16px;
@@ -146,15 +146,15 @@ h1.mcl-title {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.5rem;
     border-radius: var(--mcl-radius-md);
     font-weight: 500;
     transition: var(--mcl-transition);
     border: 2px solid transparent;
     cursor: pointer;
-    font-size: var(--mcl-font-size-base);
+    font-size: var(--mcl-font-size-sm);
     text-decoration: none;
-    gap: var(--mcl-spacing-sm);
+    gap: 5px;
     line-height: 1.4;
     height: 2rem;
 }

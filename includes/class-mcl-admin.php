@@ -168,11 +168,19 @@ class MCL_Admin {
             true
         );
         
+        // Enqueue Nunito Sans font
+        wp_enqueue_style(
+            'mcl-fonts',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-fonts.css',
+            array(),
+            MAGIC_CHECKLISTS_VERSION
+        );
+        
         // Common CSS first
         wp_enqueue_style(
             'mcl-admin-base', 
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/common/mcl-base.css',
-            array(),
+            array('mcl-fonts'),
             MAGIC_CHECKLISTS_VERSION
         );
     
