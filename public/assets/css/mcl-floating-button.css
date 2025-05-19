@@ -9,11 +9,98 @@
     flex-direction: column;
     gap: 12px;
     padding: 20px;
-    pointer-events: none;
+    /* Default to none, specific states will enable pointer events */
+    pointer-events: none; 
 }
 
+
+/* FAB Trigger Button */
+.mcl-multi-fab-trigger {
+    pointer-events: auto; /* Always allow clicks on the trigger */
+    background-color: var(--mcl-primary, #001f3d);
+    color: var(--mcl-light-bg, #ffffff);
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--mcl-shadow-lg, 0 4px 8px rgba(0, 0, 0, 0.15));
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+    position: relative; 
+    z-index: 2; 
+}
+
+.mcl-multi-fab-trigger:hover {
+    background-color: var(--mcl-primary-dark, #001429);
+}
+
+.mcl-multi-fab-trigger svg {
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    position: absolute;
+}
+
+.mcl-fab-open-icon {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+.mcl-fab-close-icon {
+    opacity: 0;
+    transform: scale(0.5) rotate(-45deg);
+}
+
+.mcl-multi-fab-trigger[aria-expanded="true"] .mcl-fab-open-icon {
+    opacity: 0;
+    transform: scale(0.5) rotate(45deg);
+}
+
+.mcl-multi-fab-trigger[aria-expanded="true"] .mcl-fab-close-icon {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+/* FAB List of Buttons */
+.mcl-fab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute; 
+    bottom: 75px; 
+    right: 0; 
+    opacity: 0;
+    visibility: hidden; /* Use visibility to prevent interaction when hidden */
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s;
+    pointer-events: none; /* Default to none */
+    z-index: 1; 
+}
+
+.mcl-multi-fab-trigger[aria-expanded="true"] + .mcl-fab-list {
+    opacity: 1;
+    visibility: visible; /* Make visible */
+    transform: translateY(0) scale(1);
+    pointer-events: auto; /* Enable pointer events for the list container */
+    transition-delay: 0s; /* Apply visibility change immediately on expand */
+}
+
+/* Individual checklist buttons inside the FAB list */
+.mcl-fab-list .mcl-floating-button {
+    position: relative !important; 
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    align-self: flex-end !important; 
+    margin: 0 !important;
+    pointer-events: auto; /* Ensure buttons in the list are always clickable when list is visible */
+}
+
+/* Individual checklist buttons when single */
 .mcl-floating-button {
-    pointer-events: auto;
+    pointer-events: auto; /* Individual buttons always interactive */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -30,86 +117,114 @@
     gap: 10px;
 }
 
-
-
-.mcl-floating-button.draggable.initializing {
+.mcl-floating-button.draggable.initializing,
+.mcl-floating-buttons.mcl-fab-group-draggable.initializing {
     visibility: hidden;
     transition: none !important; 
 }
 
 .mcl-floating-button.draggable {
-    position: relative !important;
+    position: relative !important; 
     top: auto !important;
     bottom: auto !important;
     left: auto !important;
     right: auto !important;
-    align-self: start !important;
+    align-self: start !important; 
     margin: 0 !important;
     will-change: transform;
 }
 
-.mcl-floating-button {
-    pointer-events: auto;
-}
-
-.mcl-floating-button.position-bottom-right {
-    align-self: flex-end;
-}
-
-.mcl-floating-button.position-bottom-left {
-    align-self: flex-start;
-}
-
-.mcl-floating-button.position-top-right {
-    position: fixed;
-    top: 20px;
-    align-self: flex-end;
-}
-
-.mcl-floating-button.position-top-left {
-    position: fixed;
-    top: 20px;
-    align-self: flex-start;
-}
-
 /* Container positioning */
-.mcl-floating-buttons {
+.mcl-floating-buttons.position-bottom-right {
     bottom: 0;
     right: 0;
+    align-items: flex-end; 
+}
+
+.mcl-floating-buttons.position-bottom-left {
+    bottom: 0;
     left: 0;
-    margin: 0 auto;
+    align-items: flex-start; 
 }
 
-/* Admin bar offset adjustments */
-body.admin-bar .mcl-floating-button.position-top-left,
-body.admin-bar .mcl-floating-button.position-top-right {
-    margin-top: 32px; /* Standard admin bar height */
+.mcl-floating-buttons.position-top-right {
+    top: 0; 
+    right: 0;
+    /* padding-top: 20px; /* Padding is on the container itself */
+    flex-direction: column-reverse; 
+    align-items: flex-end;
+}
+.mcl-floating-buttons.position-top-right .mcl-fab-list {
+    bottom: auto; 
+    top: 75px; 
 }
 
-body.admin-bar .mcl-floating-button.draggable {
-    margin-top: 0 !important;
+
+.mcl-floating-buttons.position-top-left {
+    top: 0; 
+    left: 0;
+    /* padding-top: 20px; */
+    flex-direction: column-reverse; 
+    align-items: flex-start;
 }
+.mcl-floating-buttons.position-top-left .mcl-fab-list {
+    bottom: auto; 
+    top: 75px; 
+    right: auto; 
+    left: 0;
+}
+
+
+/* Single Button Positioning Classes (applied directly to the button if not in FAB context) */
+.mcl-floating-buttons.mcl-is-single > .mcl-floating-button.position-bottom-right,
+.mcl-floating-buttons.mcl-is-single > .mcl-floating-button.position-bottom-left,
+.mcl-floating-buttons.mcl-is-single > .mcl-floating-button.position-top-right,
+.mcl-floating-buttons.mcl-is-single > .mcl-floating-button.position-top-left {
+    position: relative; 
+}
+
+/* Admin bar offset adjustments for the CONTAINER */
+body.admin-bar .mcl-floating-buttons.position-top-left,
+body.admin-bar .mcl-floating-buttons.position-top-right {
+    margin-top: 32px; 
+}
+
 
 .mcl-floating-buttons.has-draggable {
-    position: fixed;
-    width: 100%;
+    width: 100%; 
     height: 100%;
-    z-index: 999998;
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    /* Ensure that any accidental bottom/right from other rules don't interfere 
+       when has-draggable is supposed to make it full screen from top-left */
+    bottom: auto;
+    right: auto;
+    /* The align-items and justify-content of the flex container itself 
+       should not cause it to shrink if width/height are 100%. 
+       These are for child alignment. Defaults are usually fine (stretch/flex-start)*/
 }
 
+/* If the container has .has-draggable, it implies something *inside* it might be draggable, 
+   or the container itself (.mcl-fab-group-draggable) is. 
+   The FAB trigger and individual buttons must always be interactive. */
+.mcl-floating-buttons.has-draggable .mcl-multi-fab-trigger,
 .mcl-floating-buttons.has-draggable .mcl-floating-button {
     pointer-events: auto;
 }
+/* Ensure draggable FAB group container itself is interactive */
+.mcl-floating-buttons.mcl-fab-group-draggable {
+    pointer-events: auto;
+}
 
-/* Theme-specific styles */
+
+/* Theme-specific styles for individual buttons */
 .mcl-floating-button.mcl-theme-light {
     background: var(--mcl-light-bg, #ffffff);
     color: var(--mcl-primary);
 }
 
-.mcl-floating-button.mcl-theme-light .mcl-floating-button-svg {
-    filter: brightness(0) saturate(100%) invert(10%) sepia(38%) saturate(2695%) hue-rotate(186deg) brightness(95%) contrast(104%);
+.mcl-floating-button.mcl-theme-light .mcl-floating-button-svg path {
+    fill: var(--mcl-primary); 
 }
 
 .mcl-floating-button.mcl-theme-dark {
@@ -117,19 +232,18 @@ body.admin-bar .mcl-floating-button.draggable {
     color: var(--mcl-dark-text, #ffffff);
 }
 
-.mcl-floating-button.mcl-theme-dark .mcl-floating-button-svg {
-    filter: brightness(0) saturate(100%) invert(95%) sepia(40%) saturate(7490%) hue-rotate(339deg) brightness(100%) contrast(90%);
+.mcl-floating-button.mcl-theme-dark .mcl-floating-button-svg path {
+    fill: var(--mcl-dark-text, #ffffff); 
 }
 
 /* Button components */
 .mcl-floating-button-head {
     display: flex;
     gap: 10px;
+    align-items: center; 
 }
 
-.mcl-floating-button-icon {
-    font-size: 20px;
-    flex-shrink: 0;
+.mcl-floating-button-svg {
 }
 
 .mcl-floating-button-text {
@@ -175,7 +289,8 @@ body .mcl-floating-button .mcl-priority-badge[data-priority="high"] {
 }
 
 /* Focus styles for accessibility */
-.mcl-floating-button:focus-visible {
+.mcl-floating-button:focus-visible,
+.mcl-multi-fab-trigger:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(0, 31, 61, 0.3);
 }
@@ -192,24 +307,33 @@ body .mcl-floating-button .mcl-priority-badge[data-priority="high"] {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .mcl-floating-buttons {
-        bottom: 10px;
-        right: 10px;
-        left: auto;
-        max-width: 200px;
+        padding: 10px;
+    }
+    .mcl-multi-fab-trigger {
+        width: 48px;
+        height: 48px;
+    }
+    .mcl-fab-list {
+        bottom: 60px; 
+    }
+    .mcl-floating-buttons.position-top-right .mcl-fab-list,
+    .mcl-floating-buttons.position-top-left .mcl-fab-list {
+        top: 60px; 
+    }
+
+    .mcl-floating-buttons.mcl-is-single {
+        max-width: none; 
     }
     
     .mcl-floating-button {
-        width: 100%;
-        max-width: 200px;
         padding: 8px 12px;
     }
-
 }
 
 @media screen and (max-width: 782px) {
     body.admin-bar .mcl-floating-buttons.position-top-left,
     body.admin-bar .mcl-floating-buttons.position-top-right {
-        top: 46px;
+        margin-top: 46px; 
     }
 }
 
@@ -219,7 +343,8 @@ body .mcl-floating-button .mcl-priority-badge[data-priority="high"] {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.mcl-floating-button.mcl-dragging {
+.mcl-floating-button.mcl-dragging,
+.mcl-floating-buttons.mcl-fab-group-draggable.mcl-dragging {
     opacity: 0.8;
     cursor: grabbing !important;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
@@ -230,8 +355,41 @@ body .mcl-floating-button .mcl-priority-badge[data-priority="high"] {
     cursor: grab;
 }
 
-.mcl-floating-buttons button:nth-child(1) { animation-delay: 0s; }
-.mcl-floating-buttons button:nth-child(2) { animation-delay: 0.1s; }
-.mcl-floating-buttons button:nth-child(3) { animation-delay: 0.2s; }
-.mcl-floating-buttons button:nth-child(4) { animation-delay: 0.3s; }
-.mcl-floating-buttons button:nth-child(5) { animation-delay: 0.4s; }
+.mcl-floating-buttons.mcl-fab-group-draggable .mcl-multi-fab-trigger:hover {
+    cursor: grab;
+}
+
+/* Animation delay for list items - optional nice-to-have */
+.mcl-multi-fab-trigger[aria-expanded="true"] + .mcl-fab-list .mcl-floating-button {
+    animation: mcl-fab-item-appear 0.3s ease-out forwards;
+}
+
+@keyframes mcl-fab-item-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mcl-fab-list .mcl-floating-button:nth-child(1) { animation-delay: 0.05s; }
+.mcl-fab-list .mcl-floating-button:nth-child(2) { animation-delay: 0.1s; }
+.mcl-fab-list .mcl-floating-button:nth-child(3) { animation-delay: 0.15s; }
+.mcl-fab-list .mcl-floating-button:nth-child(4) { animation-delay: 0.2s; }
+.mcl-fab-list .mcl-floating-button:nth-child(5) { animation-delay: 0.25s; }
+
+/* Screen reader only utility */
+.mcl-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}

@@ -468,29 +468,110 @@ class MagicChecklistDrawer {
     }
 
     bindFloatingButtons() {
-        document.addEventListener('click', async (e) => {
-            const button = e.target.closest('.mcl-floating-button');
-            if (!button) return;
+        const floatingButtons = document.querySelectorAll('.mcl-floating-button:not(.mcl-fab-list .mcl-floating-button), .mcl-multi-fab-trigger');
+        
+        floatingButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
 
-            if (button.getAttribute('data-just-dragged') === 'true') {
-                button.removeAttribute('data-just-dragged');
-                return;
-            }
+                const fabTriggerButton = event.currentTarget;
 
-            const drawerCheck = this.canPerformDrawerOperation();
-            if (!drawerCheck.allowed) {
-                this.showGlobalError(
-                    `Rate limit reached. Please wait ${drawerCheck.remainingTime} before opening the checklist again.`
-                );
-                return;
-            }
-            
-            const checklistId = button.dataset.checklistId;
-            if (!checklistId) return;
-            
-            // Handle the toggle
-            await this.toggleChecklist(checklistId);
+                // For FAB trigger, check if it was just dragged
+                if (fabTriggerButton.classList.contains('mcl-multi-fab-trigger')) {
+                    const fabContainer = fabTriggerButton.closest('.mcl-floating-buttons');
+                    if (fabContainer && fabContainer.getAttribute('data-just-dragged') === 'true') {
+                        fabContainer.removeAttribute('data-just-dragged');
+                        return; // Don't toggle the list if it was just dragged
+                    }
+                    this.toggleFabList(fabTriggerButton);
+                    return; // FAB trigger click handled
+                }
+
+                // For regular single floating buttons, check if it was just dragged
+                // The data-just-dragged attribute is set directly on the button itself for single draggables
+                if (button.getAttribute('data-just-dragged') === 'true') {
+                    button.removeAttribute('data-just-dragged');
+                    return; // Don't open drawer if it was just dragged
+                }
+
+                // Existing logic for single floating buttons to open the drawer
+                const checklistId = button.dataset.checklistId;
+                if (checklistId) {
+                    if (this.drawer.classList.contains('mcl-drawer-open') && this.currentChecklistId === checklistId) {
+                        this.closeDrawer();
+                    } else {
+                        await this.toggleChecklist(checklistId);
+                    }
+                }
+            });
         });
+
+        // Handling clicks inside the FAB list to open checklists
+        const fabListButtons = document.querySelectorAll('.mcl-fab-list .mcl-floating-button');
+        fabListButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // If a button inside the FAB list is clicked, it should always try to open the checklist
+                // and also close the FAB list itself.
+                const checklistId = button.dataset.checklistId;
+                if (checklistId) {
+                    // Close the FAB list first
+                    const fabTrigger = button.closest('.mcl-floating-buttons').querySelector('.mcl-multi-fab-trigger');
+                    if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
+                        this.toggleFabList(fabTrigger, false); // Force close
+                    }
+
+                    // Then toggle the checklist (open or switch)
+                    if (this.drawer.classList.contains('mcl-drawer-open') && this.currentChecklistId === checklistId) {
+                        // If it's the same checklist and drawer is open, maybe do nothing or re-focus?
+                        // For now, let's allow it to re-fetch if it's already open and same ID.
+                         await this.toggleChecklist(checklistId);
+                    } else {
+                        await this.toggleChecklist(checklistId);
+                    }
+                }
+            });
+        });
+
+        // Close FAB list if clicking outside
+        document.addEventListener('click', (event) => {
+            const fabContainer = document.querySelector('.mcl-floating-buttons.mcl-is-multi-trigger');
+            if (fabContainer && !fabContainer.contains(event.target)) {
+                const fabTrigger = fabContainer.querySelector('.mcl-multi-fab-trigger');
+                if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
+                    this.toggleFabList(fabTrigger, false); // Force close
+                }
+            }
+        });
+    }
+
+    toggleFabList(fabTrigger, forceState = null) {
+        const fabList = fabTrigger.nextElementSibling;
+        if (!fabList || !fabList.classList.contains('mcl-fab-list')) return;
+
+        const isExpanded = fabTrigger.getAttribute('aria-expanded') === 'true';
+        const newState = forceState !== null ? forceState : !isExpanded;
+
+        fabTrigger.setAttribute('aria-expanded', newState.toString());
+        if (newState) {
+            fabList.hidden = false;
+            // Focus the first item in the list for accessibility, or the list itself
+            const firstButton = fabList.querySelector('.mcl-floating-button');
+            if (firstButton) {
+                // setTimeout(() => firstButton.focus(), 0); // Allow transition to complete
+            } else {
+                // setTimeout(() => fabList.focus(), 0); 
+            }
+        } else {
+            // Add a delay to allow animation before setting hidden
+            // This depends on the CSS transition duration
+            setTimeout(() => {
+                fabList.hidden = true;
+            }, 200); // Match opacity transition duration from CSS
+        }
     }
 
     matchesShortcut(event, shortcut) {
@@ -556,6 +637,9 @@ class MagicChecklistDrawer {
             if (checklistData.success) {
                 this.currentChecklistData = checklistData.data;
                 this.currentChecklistId = checklistId;
+                
+                // Track the checklist view
+                this.trackChecklistView(checklistId);
     
                 if (!this.drawerEventsBound) {
                     this.bindDrawerEvents();
@@ -719,40 +803,58 @@ class MagicChecklistDrawer {
     }       
 
     async fetchChecklistData(checklistId) {
-        const formData = new FormData();
-        formData.append('action', 'mcl_get_checklist');
-        formData.append('checklist_id', checklistId);
-        
-        if (window.mcl_checklists?.nonce) {
-            formData.append('nonce', window.mcl_checklists.nonce);
-        }
-    
-        const storedToken = this.getStoredToken();
-        if (storedToken) {
-            formData.append('stored_token', storedToken);
-        }
-    
         try {
             const response = await fetch(window.mcl_checklists.ajax_url, {
                 method: 'POST',
-                body: formData,
-                credentials: 'same-origin'
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'mcl_get_checklist',
+                    checklist_id: checklistId,
+                    nonce: window.mcl_checklists.nonce || '',
+                    stored_token: this.getStoredToken() || ''
+                })
             });
-    
-            const data = await response.json();
+
+            const result = await response.json();
             
-            if (!data.success) {
-                console.error('Server returned error:', data);
-                if (data.data?.debug) {
-                    console.log('Debug info:', data.data.debug);
+            if (result.success) {
+                // Check if there's invite token data in the response and store it
+                if (result.data?.invite_token) {
+                    this.storeInviteToken(result.data.invite_token);
                 }
+                return result;  // Return the full response object with success: true and data property
+            } else {
+                this.showError('drawer', result.data?.message || 'Error loading checklist');
+                return { success: false };  // Return object with success: false
             }
-            
-            return data;
         } catch (error) {
-            console.error('Error fetching checklist:', error);
-            throw error;
+            console.error('Error fetching checklist data:', error);
+            this.showError('drawer', 'Network error when loading checklist');
+            return { success: false };  // Return object with success: false
         }
+    }
+
+    // Add new method for tracking views
+    trackChecklistView(checklistId) {
+        // Skip tracking if no checklist ID
+        if (!checklistId) return;
+        
+        // Send analytics data
+        fetch(window.mcl_checklists.ajax_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'mcl_track_view',
+                checklist_id: checklistId
+            })
+        }).catch(error => {
+            // Silently fail tracking - don't disrupt user experience
+            console.error('Analytics tracking error:', error);
+        });
     }
 
     async saveChecklistData() {
@@ -1321,6 +1423,9 @@ class MagicChecklistDrawer {
             // Save to server
             this.saveCheckedState(checklistId, checkedItems);
         }
+    
+        // Note: We removed the direct tracking call here to prevent double-counting
+        // The tracking is already handled server-side via WordPress hooks
     
         // If user can check items, reorder the item with its children
         if (checklistData.can_check) {
@@ -3938,6 +4043,29 @@ class MagicChecklistDrawer {
                 lastInsertedElement = child;
             });
         }
+    }
+
+    // Add new method for tracking item checks
+    trackItemCheck(checklistId, itemId, isChecked) {
+        // Skip tracking if missing data
+        if (!checklistId || !itemId) return;
+        
+        // Send analytics data
+        fetch(window.mcl_checklists.ajax_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'mcl_track_item_check',
+                checklist_id: checklistId,
+                item_id: itemId,
+                checked: isChecked
+            })
+        }).catch(error => {
+            // Silently fail tracking - don't disrupt user experience
+            console.error('Analytics tracking error:', error);
+        });
     }
 }
 

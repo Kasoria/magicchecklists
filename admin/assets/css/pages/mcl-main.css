@@ -24,7 +24,8 @@
 
 /* Table Specific Styles */
 .mcl-table th.sortable:hover {
-  background-color: var(--mcl-primary-light);
+  background-color: var(--mcl-accent);
+  color: var(--mcl-text-primary);
 }
 
 .mcl-table th.sortable:hover .sort-indicator {
@@ -176,6 +177,26 @@
   flex-wrap: wrap;
   align-items: center;
   width: auto;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  min-height: 0;
+}
+
+.mcl-filter-group.mcl-form-group .choices__inner input[type="search"] {
+  padding: .5rem .75rem;
+  min-height: 50px;
+  margin: 0;
+  line-height: 2;
+  border: 1px solid var(--mcl-border);
+  border-radius: var(--mcl-radius-md);
+  font-size: 1rem;
+  color: var(--mcl-text-primary);
+}
+
+.mcl-filter-group.mcl-form-group .choices__inner input[type="search"]::placeholder {
+  color: var(--mcl-text-secondary);
+  opacity: 0.7;
 }
 
 .mcl-table-filters {
@@ -191,11 +212,6 @@
   max-width: 300px;
 }
 
-/* Ensure Choices.js dropdowns don't overflow */
-.choices[data-type*="select-multiple"] .choices__inner {
-  padding: 4px 7.5px;
-}
-
 .choices__list--multiple .choices__item {
   margin-bottom: 0;
   margin-top: 2px;
@@ -203,4 +219,30 @@
 
 .choices__list.choices__list--multiple .choices__item {
   background-color: var(--mcl-primary);
+}
+
+/* Search input specific styles */
+#mcl-search {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--mcl-radius-md);
+  border: 1px solid var(--mcl-border);
+  transition: var(--mcl-transition);
+}
+
+#mcl-search:focus {
+  outline: none;
+  border-color: var(--mcl-accent);
+  box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.2);
+}
+
+/* No results message styling */
+.mcl-no-results-row td {
+  background-color: var(--mcl-surface);
+  color: var(--mcl-text-secondary);
+  font-size: var(--mcl-font-size-base);
+  font-style: italic;
+  text-align: center;
+  padding: var(--mcl-spacing-xl) !important;
+  border-bottom: none;
 }
