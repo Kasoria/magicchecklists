@@ -35,22 +35,24 @@ $theme_class = match($theme) {
         </div>
     </div>
     <div class="mcl-drawer-header">
-      <?php if (MCL_Settings::get_setting('enable_checklist_navigation', false)): ?>
-        <div class="mcl-title-navigation">
-          <button class="mcl-nav-arrow mcl-nav-prev" aria-label="<?php esc_attr_e('Previous checklist', 'magic-checklists'); ?>">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="mcl-nav-arrow mcl-nav-next" aria-label="<?php esc_attr_e('Next checklist', 'magic-checklists'); ?>">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+      <div class="mcl-drawer-header__top-wrapper">
+        <div class="mcl-drawer-tags" style="display: none;">
+            <!-- Tags will be dynamically inserted here -->
         </div>
-      <?php endif; ?>
-      <div class="mcl-drawer-tags" style="display: none;">
-          <!-- Tags will be dynamically inserted here -->
+        <?php if (MCL_Settings::get_setting('enable_checklist_navigation', false)): ?>
+          <div class="mcl-title-navigation">
+            <button class="mcl-nav-arrow mcl-nav-prev" aria-label="<?php esc_attr_e('Previous checklist', 'magic-checklists'); ?>">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button class="mcl-nav-arrow mcl-nav-next" aria-label="<?php esc_attr_e('Next checklist', 'magic-checklists'); ?>">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        <?php endif; ?>
       </div>
       <h2 contenteditable="true" class="mcl-drawer-title mcl-item-heading"></h2>
       <div class="mcl-access-indicator" style="display: none;">

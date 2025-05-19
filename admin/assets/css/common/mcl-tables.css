@@ -23,7 +23,7 @@
     color: var(--mcl-text-primary);
     font-weight: 600;
     text-align: left;
-    padding: var(--mcl-spacing-md);
+    padding: var(--mcl-spacing-sm);
     border-bottom: 1px solid var(--mcl-border);
     transition: all 0.2s ease;
 }
@@ -34,7 +34,7 @@
 }
 
 .mcl-table td {
-    padding: var(--mcl-spacing-md);
+    padding: var(--mcl-spacing-sm);
 }
 
 .mcl-table tr:nth-child(even) {
@@ -63,6 +63,7 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    transition: all 0.2s ease;
 }
 
 /* Priority badge text colors */
@@ -87,7 +88,6 @@
 .mcl-table th.sortable {
     cursor: pointer;
     position: relative;
-    padding-right: 25px;
 }
 
 .sort-indicator {

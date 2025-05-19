@@ -1006,7 +1006,7 @@ class MagicChecklistDrawer {
             <div class="mcl-item-content" contenteditable="true"></div>
             <div class="mcl-list-item-actions">
                 <button type="button" class="mcl-in-progress-btn" title="Toggle in progress">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M11.27 20.38L14.458 14H6.253a2.249 2.249 0 0 0-2.25 2.249v.92c0 .572.18 1.13.511 1.596c1.396 1.958 3.595 3.023 6.536 3.207a2.471 2.471 0 0 1 .22-1.591ZM12 2.006a5 5 0 1 1 0 10a5 5 0 0 1 0-10Zm4.161 10.825l-3.997 7.998A1.5 1.5 0 0 0 13.507 23h7.994a1.5 1.5 0 0 0 1.343-2.172l-3.997-7.998c-.553-1.107-2.133-1.107-2.686 0Zm1.843 2.666v3.001a.5.5 0 0 1-1 0v-3.001a.5.5 0 0 1 1 0Zm-.5 5.503a.5.5 0 1 1 0-1.001a.5.5 0 0 1 0 1Z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
                 </button>
                 <button type="button" class="mcl-item-deadline-btn" title="Set a deadline for this item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><mask id="ipSTimer0"><g fill="none" stroke-width="4"><circle cx="24" cy="28" r="16" fill="#fff" stroke="#fff"/><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" d="M28 4h-8m4 0v8m11 4l3-3"/><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M24 28v-6m0 6h-6"/></g></mask><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipSTimer0)"/></svg>
@@ -1298,7 +1298,7 @@ class MagicChecklistDrawer {
             inProgressButton.className = 'mcl-in-progress-btn';
             inProgressButton.setAttribute('title', 'Toggle in progress');
             inProgressButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M11.27 20.38L14.458 14H6.253a2.249 2.249 0 0 0-2.25 2.249v.92c0 .572.18 1.13.511 1.596c1.396 1.958 3.595 3.023 6.536 3.207a2.471 2.471 0 0 1 .22-1.591ZM12 2.006a5 5 0 1 1 0 10a5 5 0 0 1 0-10Zm4.161 10.825l-3.997 7.998A1.5 1.5 0 0 0 13.507 23h7.994a1.5 1.5 0 0 0 1.343-2.172l-3.997-7.998c-.553-1.107-2.133-1.107-2.686 0Zm1.843 2.666v3.001a.5.5 0 0 1-1 0v-3.001a.5.5 0 0 1 1 0Zm-.5 5.503a.5.5 0 1 1 0-1.001a.5.5 0 0 1 0 1Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
             `;
 
             const deadlineButton = document.createElement('button');
@@ -3506,9 +3506,12 @@ class MagicChecklistDrawer {
             const resetInfo = document.createElement('div');
             resetInfo.className = 'mcl-reset-info';
             
-            // Convert timestamp to local date/time
-            const resetDate = new Date(reset_info.next_reset * 1000);
-            const formattedDate = resetDate.toUTCString();
+            // Calculate time remaining until reset
+            const now = Math.floor(Date.now() / 1000);
+            const timeRemaining = reset_info.next_reset - now;
+            
+            // Format time remaining
+            const formattedTime = this.formatTimeRemaining(timeRemaining);
             
             resetInfo.innerHTML = `
                 <span class="mcl-reset-info-icon">
@@ -3518,7 +3521,7 @@ class MagicChecklistDrawer {
                     </svg>
                 </span>
                 <span class="mcl-reset-info-text">
-                    Next reset: ${formattedDate}
+                    Resets in: ${formattedTime}
                 </span>
             `;
     
@@ -3528,8 +3531,63 @@ class MagicChecklistDrawer {
                 headerActions.appendChild(resetInfo);
             }
         }
-    }  
+    }
+
+    /**
+     * Format time remaining in hours and minutes
+     * @param {number} seconds - Time remaining in seconds
+     * @return {string} Formatted time string
+     */
+    formatTimeRemaining(seconds) {
+        if (seconds <= 0) {
+            return 'Soon';
+        }
+        
+        // Calculate days, hours, and minutes
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        // Format the string based on how much time is left
+        if (days > 0) {
+            return `${days}d ${hours}h`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        } else {
+            return `${minutes}m`;
+        }
+    }
+
+    updateNextResetDisplay(nextReset) {
+        const resetInfo = document.createElement('div');
+        resetInfo.className = 'mcl-reset-info';
+        
+        // Calculate time remaining until reset
+        const now = Math.floor(Date.now() / 1000);
+        const timeRemaining = nextReset - now;
+        
+        // Format time remaining
+        const formattedTime = this.formatTimeRemaining(timeRemaining);
+        
+        resetInfo.innerHTML = `
+            <span class="mcl-reset-info-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </span>
+            <span class="mcl-reset-info-text">
+                Resets in: ${formattedTime}
+            </span>
+        `;
     
+        // Add to drawer header
+        const headerActions = this.drawerContent.querySelector('.mcl-drawer-actions');
+        if (headerActions) {
+            headerActions.appendChild(resetInfo);
+        }
+    }
+
     showResetNotification() {
         const notification = document.createElement('div');
         notification.className = 'mcl-notification mcl-reset-notification';
@@ -3564,33 +3622,6 @@ class MagicChecklistDrawer {
                 setTimeout(() => notification.remove(), 300);
             }
         }, 5000);
-    }
-    
-    updateNextResetDisplay(nextReset) {
-        const resetInfo = document.createElement('div');
-        resetInfo.className = 'mcl-reset-info';
-        
-        // Convert timestamp to local date/time
-        const resetDate = new Date(nextReset * 1000);
-        const formattedDate = resetDate.toUTCString();
-        
-        resetInfo.innerHTML = `
-            <span class="mcl-reset-info-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </span>
-            <span class="mcl-reset-info-text">
-                Next reset: ${formattedDate}
-            </span>
-        `;
-    
-        // Add to drawer header
-        const headerActions = this.drawerContent.querySelector('.mcl-drawer-actions');
-        if (headerActions) {
-            headerActions.appendChild(resetInfo);
-        }
     }
 
     initInProgressState() {

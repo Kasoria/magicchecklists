@@ -34,7 +34,7 @@
     --mcl-spacing-xl: 30px;
 
     /* Typography */
-    --mcl-font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --mcl-font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     --mcl-font-size-xs: 13px;
     --mcl-font-size-sm: 14px;
     --mcl-font-size-base: 16px;
@@ -92,6 +92,7 @@
     z-index: 999999;
     visibility: hidden;
     transition: transform 0.3s ease, visibility 0s linear 0.3s;
+    font-family: var(--mcl-font-family);
 }
 
 #mcl-drawer.mcl-open {
@@ -105,9 +106,10 @@
     --interaction-transition: 0.2s ease;
     display: flex;
     flex-direction: column;
+    gap: var(--mcl-spacing-sm);
     max-height: 600px;
     height: auto;
-    padding: var(--mcl-spacing-lg);
+    padding: var(--mcl-spacing-md);
     color: var(--drawer-text);
     background: var(--drawer-bg);
 }
@@ -119,13 +121,11 @@
     flex: 1;
     min-height: 50px;
     overflow-y: auto;
-    margin: var(--mcl-spacing-md) 0;
 }
 
 .mcl-items-list {
     list-style: none;
     margin: 0;
-    padding: var(--mcl-spacing-sm) 0;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -309,12 +309,26 @@ body #mcl-drawer input[type=checkbox]:checked::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--mcl-spacing-sm);
+}
+
+.mcl-drawer-header__top-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--mcl-spacing-sm);
+}
+
+.mcl-drawer-tags {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--mcl-spacing-sm);
+    flex-shrink: 0;
 }
 
 body #mcl-drawer .mcl-drawer-header .mcl-drawer-title {
     font-size: var(--mcl-font-size-xl);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1;
     color: var(--drawer-text);
     margin: 0;
@@ -363,9 +377,8 @@ body #mcl-drawer .mcl-drawer-header .mcl-drawer-title {
    ============================================================ */
 .mcl-deadline {
     background: var(--drawer-surface);
-    padding: var(--mcl-spacing-md);
+    padding: var(--mcl-spacing-sm);
     border-radius: var(--mcl-spacing-sm);
-    margin-bottom: var(--mcl-spacing-md);
 }
 
 .mcl-deadline-info {
@@ -387,7 +400,7 @@ body #mcl-drawer .mcl-drawer-header .mcl-drawer-title {
 
 /* Deadline States */
 #mcl-drawer.mcl-deadline-24h #mcl-deadline-container {
-    background-color: var(--mcl-accent) !important;
+    background-color: rgb(255, 255, 157) !important;
 }
 
 #mcl-drawer.mcl-deadline-24h #mcl-deadline-container .mcl-deadline-info .mcl-deadline-label,
@@ -397,7 +410,7 @@ body #mcl-drawer .mcl-drawer-header .mcl-drawer-title {
 
 #mcl-drawer.mcl-deadline-2h #mcl-deadline-container,
 #mcl-drawer.mcl-deadline-passed #mcl-deadline-container {
-    background-color: var(--mcl-danger) !important;
+    background-color: rgb(204, 95, 95) !important;
 }
 
 #mcl-drawer.mcl-deadline-2h #mcl-deadline-container .mcl-deadline-info .mcl-deadline-label,
@@ -551,7 +564,7 @@ body #mcl-drawer .mcl-drawer-header .mcl-drawer-title {
     justify-content: center;
     flex-shrink: 0;
     gap: var(--mcl-spacing-xs);
-    padding: var(--mcl-spacing-sm) var(--mcl-spacing-md);
+    padding: 0.25rem 0.5rem;
     border: none;
     border-radius: var(--mcl-spacing-xs);
     font-size: var(--mcl-font-size-base);
@@ -784,7 +797,6 @@ body #mcl-drawer .mcl-congratulations.active .mcl-confetti {
     flex-direction: column;
     align-items: start;
     gap: var(--mcl-spacing-sm);
-    margin-bottom: var(--mcl-spacing-sm);
 }
 
 .mcl-drawer-title-row {
@@ -1313,11 +1325,11 @@ body #mcl-drawer .mcl-congratulations.active .mcl-confetti {
     justify-content: center;
     background: none;
     border: none;
-    padding: 4px;
     cursor: pointer;
     opacity: 0.6;
     transition: opacity 0.2s ease;
     color: inherit;
+    padding: 0;
 }
 
 .mcl-nav-arrow:hover {
@@ -1821,8 +1833,7 @@ body #mcl-drawer .mcl-congratulations.active .mcl-confetti {
 }
 
 .mcl-progress-counter {
-    margin: var(--mcl-spacing-md) 0;
-    padding: var(--mcl-spacing-md);
+    padding: var(--mcl-spacing-sm);
     background: var(--drawer-surface);
     border-radius: var(--mcl-radius-md);
 }
@@ -1878,7 +1889,6 @@ body #mcl-drawer .mcl-congratulations.active .mcl-confetti {
 /* Theme-specific adjustments */
 .mcl-theme-dark .mcl-drawer-description,
 .mcl-theme-dark .mcl-public-description {
-    background: var(--drawer-surface);
     color: var(--drawer-text);
 }
 

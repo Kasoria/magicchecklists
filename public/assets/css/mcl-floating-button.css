@@ -68,8 +68,8 @@
     flex-direction: column;
     gap: 10px;
     position: absolute; 
-    bottom: 75px; 
-    right: 0; 
+    bottom: 85px; 
+    right: 20px; 
     opacity: 0;
     visibility: hidden; /* Use visibility to prevent interaction when hidden */
     transform: translateY(10px) scale(0.95);
