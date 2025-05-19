@@ -13,19 +13,36 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    border-radius: var(--mcl-radius-md);
+    border: 1px solid var(--mcl-border);
+    overflow: hidden;
 }
 
 .mcl-table th {
-    background: var(--mcl-primary);
-    color: white;
+    background: var(--mcl-surface);
+    color: var(--mcl-text-primary);
     font-weight: 600;
     text-align: left;
     padding: var(--mcl-spacing-md);
+    border-bottom: 1px solid var(--mcl-border);
+    transition: all 0.2s ease;
+}
+
+.mcl-table-main th {
+    background: var(--mcl-primary);
+    color: white;
 }
 
 .mcl-table td {
     padding: var(--mcl-spacing-md);
-    border-bottom: 1px solid var(--mcl-border);
+}
+
+.mcl-table tr:nth-child(even) {
+    background: var(--mcl-surface);
+}
+
+.mcl-table tr:nth-child(odd) {
+    background: #fff;
 }
 
 .mcl-table tr:hover {

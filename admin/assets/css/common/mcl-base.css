@@ -3,7 +3,7 @@
    ============================================================ */
    :root {
     /* Brand Colors */
-    --mcl-primary: #001F3D;
+    --mcl-primary: #011326;
     --mcl-primary-light: #002b56;
     --mcl-primary-dark: #001529;
     --mcl-accent: #f2da22;
@@ -56,17 +56,24 @@
 /* ============================================================
    2. Base Layout
    ============================================================ */
-.mcl-wrap {
-    margin: 20px auto;
-    padding: var(--mcl-spacing-xl);
-    background: var(--mcl-background);
-    border-radius: var(--mcl-radius-lg);
-    box-shadow: var(--mcl-shadow-md);
-    font-family: var(--mcl-font-family);
-}
 
 #wpcontent {
-    padding-right: 20px;
+    padding: 0;
+}
+
+#wpbody-content {
+padding-bottom: 0;
+}
+
+#wpfooter {
+    display: none;
+}
+
+.mcl-wrap {
+    margin: 0 auto;
+    padding: var(--mcl-spacing-xl);
+    background: var(--mcl-background);
+    font-family: var(--mcl-font-family);
 }
 
 .wp-core-ui .notice.is-dismissible {
@@ -117,7 +124,6 @@ h1.mcl-title {
     margin: calc(var(--mcl-spacing-xl) * -1);
     margin-bottom: var(--mcl-spacing-xl);
     padding: var(--mcl-spacing-xl);
-    border-radius: var(--mcl-radius-lg) var(--mcl-radius-lg) 0 0;
     color: white;
 }
 
@@ -219,7 +225,47 @@ h1.mcl-title {
 }
 
 /* ============================================================
-   7. Responsive Base
+   7. Form Elements
+   ============================================================ */
+.mcl-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--mcl-border);
+    border-radius: var(--mcl-radius-md);
+    font-size: var(--mcl-font-size-base);
+    background-color: var(--mcl-background);
+    color: var(--mcl-text-primary);
+    transition: var(--mcl-transition);
+}
+
+.mcl-input:focus {
+    outline: none;
+    border-color: var(--mcl-accent);
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.2);
+}
+
+.mcl-input::placeholder {
+    color: var(--mcl-text-secondary);
+    opacity: 0.7;
+}
+
+.mcl-label {
+    display: block;
+    margin-bottom: var(--mcl-spacing-xs);
+    font-weight: 500;
+    color: var(--mcl-text-primary);
+}
+
+.mcl-label-dark {
+    color: var(--mcl-text-primary);
+}
+
+.mcl-label-small {
+    font-size: var(--mcl-font-size-sm);
+}
+
+/* ============================================================
+   8. Responsive Base
    ============================================================ */
 @media (max-width: 768px) {
     .mcl-wrap {
