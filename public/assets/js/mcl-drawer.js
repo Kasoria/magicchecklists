@@ -3634,6 +3634,10 @@ class MagicChecklistDrawer {
             const btn = listItem.querySelector('.mcl-in-progress-btn');
             if (btn) {
                 btn.classList.remove('active');
+                // Make sure play icon is displayed
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
+                `;
             }
         });
     
@@ -3645,6 +3649,10 @@ class MagicChecklistDrawer {
                 const btn = listItem.querySelector('.mcl-in-progress-btn');
                 if (btn) {
                     btn.classList.add('active');
+                    // Set to pause icon for in-progress items
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1025 1024"><path fill="currentColor" d="M896.428 1024h-128q-53 0-90.5-37.5t-37.5-90.5V128q0-53 37.5-90.5t90.5-37.5h128q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5zm-640 0h-128q-53 0-90.5-37.5T.428 896V128q0-53 37.5-90.5t90.5-37.5h128q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5z"/></svg>
+                    `;
                 }
             }
         });
@@ -3657,6 +3665,19 @@ class MagicChecklistDrawer {
         
         if (btn) {
             btn.classList.toggle('active');
+            
+            // Toggle between play and pause icons
+            if (btn.classList.contains('active')) {
+                // Change to pause icon
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1025 1024"><path fill="currentColor" d="M896.428 1024h-128q-53 0-90.5-37.5t-37.5-90.5V128q0-53 37.5-90.5t90.5-37.5h128q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5zm-640 0h-128q-53 0-90.5-37.5T.428 896V128q0-53 37.5-90.5t90.5-37.5h128q53 0 90.5 37.5t37.5 90.5v768q0 53-37.5 90.5t-90.5 37.5z"/></svg>
+                `;
+            } else {
+                // Change back to play icon
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
+                `;
+            }
         }
         
         listItem.classList.toggle('mcl-item-in-progress');
