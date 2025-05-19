@@ -136,6 +136,15 @@ class MCL_Admin {
             'mcl_import',
             array($this, 'import_checklist_page')
         );
+        
+        add_submenu_page(
+            'mcl_checklists',
+            __('Analytics', 'magic-checklists'),
+            __('Analytics', 'magic-checklists'),
+            'manage_options',
+            'mcl_analytics',
+            array($this, 'render_analytics_page')
+        );
     }
     
     public function import_checklist_page() {
@@ -190,6 +199,14 @@ class MCL_Admin {
             true
         );
     
+        // Analytics CSS for dashboard and analytics page
+        wp_enqueue_style(
+            'mcl-analytics', 
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-analytics.css',
+            array('mcl-admin-base'),
+            MAGIC_CHECKLISTS_VERSION
+        );
+
         // Page-specific assets
         switch ($hook) {
             case 'toplevel_page_mcl_checklists':
@@ -198,6 +215,15 @@ class MCL_Admin {
                     MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/pages/mcl-main.css',
                     array('mcl-admin-base', 'mcl-admin-tables'),
                     MAGIC_CHECKLISTS_VERSION
+                );
+                
+                // Enqueue the search functionality
+                wp_enqueue_script(
+                    'mcl-search',
+                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-search.js',
+                    array(),
+                    MAGIC_CHECKLISTS_VERSION,
+                    true
                 );
                 
                 wp_enqueue_script(
@@ -521,6 +547,9 @@ class MCL_Admin {
     }
 
     public function checklists_page() {
+        // Fire action before loading the main admin page
+        do_action('mcl_admin_init');
+        
         include MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/views/admin-page.php';
     }
 
@@ -1568,5 +1597,13 @@ class MCL_Admin {
         }
         
         return false;
+    }
+
+    /**
+     * Render analytics page
+     */
+    public function render_analytics_page() {
+        $analytics = MCL_Analytics::get_instance();
+        $analytics->render_analytics_page();
     }
 }

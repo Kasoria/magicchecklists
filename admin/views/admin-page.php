@@ -33,17 +33,11 @@ $checklists = get_posts( array(
         </div>
     </div>
 
-    <div class="mcl-content">
-        <div class="mcl-info">
-            <p class="mcl-subtitle">
-                <?php esc_html_e( 'Your Active Checklists', 'magic-checklists' ); ?>
-            </p>
-            <p class="mcl-description">
-                <?php esc_html_e( 'Use keyboard shortcuts to quickly access your checklists from anywhere on your site.', 'magic-checklists' ); ?>
-            </p>
-    </div>
-
     <div class="mcl-table-filters">
+        <div class="mcl-filter-group mcl-form-group">
+            <label for="mcl-search" class="mcl-label mcl-label-dark mcl-label-small"><?php esc_html_e('Search Checklists', 'magic-checklists'); ?></label>
+            <input type="text" id="mcl-search" class="mcl-input" placeholder="<?php esc_attr_e('Search by title, description...', 'magic-checklists'); ?>">
+        </div>
         <div class="mcl-filter-group mcl-form-group">
             <label for="mcl-tag-filter" class="mcl-label mcl-label-dark mcl-label-small"><?php esc_html_e('Filter by Tags', 'magic-checklists'); ?></label>
             <select id="mcl-tag-filter" class="mcl-select" multiple>
@@ -71,7 +65,7 @@ $checklists = get_posts( array(
 
     <?php if ( $checklists ) : ?>
         <div class="mcl-table-wrapper">
-            <table class="mcl-table">
+            <table class="mcl-table mcl-table-main">
                 <thead>
                     <tr>
                         <th class="sortable" data-sort="title"><?php esc_html_e( 'Title', 'magic-checklists' ); ?></th>
@@ -150,4 +144,6 @@ $checklists = get_posts( array(
                 </a>
             </div>
         <?php endif; ?>
+
+    <?php do_action('mcl_after_checklist_table'); ?>
 </div>

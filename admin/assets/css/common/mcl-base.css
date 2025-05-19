@@ -223,7 +223,6 @@ h1.mcl-title {
    ============================================================ */
 @media (max-width: 768px) {
     .mcl-wrap {
-        margin: var(--mcl-spacing-md);
         padding: var(--mcl-spacing-md);
     }
     
