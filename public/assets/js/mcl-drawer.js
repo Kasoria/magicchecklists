@@ -1237,31 +1237,34 @@ class MagicChecklistDrawer {
         }
     
         // Render items with correct order and checked state
-        orderedItems.forEach(item => {
+                orderedItems.forEach(item => {
             const isChecked = finalCheckedState.includes(item.id);
             const li = document.createElement('li');
+            // Determine if this item is locked (cannot be edited or deleted)
+            const itemLocked = Boolean(item.locked);
+            if (itemLocked) {
+                li.classList.add('mcl-item-locked');
+            }
             li.setAttribute('data-item-id', item.id);
-    
+
             // Add parent-child relationship if exists
             if (item.parent_id) {
                 li.setAttribute('data-parent-id', item.parent_id);
                 li.classList.add('mcl-child-item');
             }
-    
-            // Add drag handle only if user can actually edit
+
             const dragHandle = document.createElement('span');
             dragHandle.className = 'drag-handle';
             dragHandle.textContent = '☰';
             li.appendChild(dragHandle);
             
-    
             // Create checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'mcl-item-checkbox';
             checkbox.checked = isChecked;
             li.appendChild(checkbox);
-    
+
             // Add priority indicator if enabled
             if (enablePriority) {
                 // Use stored priority for per-user handling
@@ -1276,9 +1279,8 @@ class MagicChecklistDrawer {
                 );
                 li.appendChild(priorityIndicator);
             }
-    
-            const contentEditable = canEdit ? 'true' : 'false';
-            // Create content div instead of span
+
+            const contentEditable = (canEdit && !itemLocked) ? 'true' : 'false';
             const content = document.createElement('div');
             content.setAttribute('contenteditable', contentEditable);
             content.className = 'mcl-item-content';
@@ -1293,55 +1295,50 @@ class MagicChecklistDrawer {
             }
             li.appendChild(content);
 
-            const inProgressButton = document.createElement('button');
-            inProgressButton.type = 'button';
-            inProgressButton.className = 'mcl-in-progress-btn';
-            inProgressButton.setAttribute('title', 'Toggle in progress');
-            inProgressButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
-            `;
+            // Only add action buttons if item is not locked and user can edit
+            if (canEdit && !itemLocked) {
+                const inProgressButton = document.createElement('button');
+                inProgressButton.type = 'button';
+                inProgressButton.className = 'mcl-in-progress-btn';
+                inProgressButton.setAttribute('title', 'Toggle in progress');
+                inProgressButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440Z"/></svg>
+                `;
 
-            const deadlineButton = document.createElement('button');
-            deadlineButton.type = 'button';
-            deadlineButton.className = 'mcl-item-deadline-btn';
-            deadlineButton.setAttribute('title', 'Set a deadline for this item');
-            deadlineButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><mask id="ipSTimer0"><g fill="none" stroke-width="4"><circle cx="24" cy="28" r="16" fill="#fff" stroke="#fff"/><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" d="M28 4h-8m4 0v8m11 4l3-3"/><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M24 28v-6m0 6h-6"/></g></mask><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipSTimer0)"/></svg>
-            `;
+                const deadlineButton = document.createElement('button');
+                deadlineButton.type = 'button';
+                deadlineButton.className = 'mcl-item-deadline-btn';
+                deadlineButton.setAttribute('title', 'Set a deadline for this item');
+                deadlineButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><mask id="ipSTimer0"><g fill="none" stroke-width="4"><circle cx="24" cy="28" r="16" fill="#fff" stroke="#fff"/><path stroke="#fff" stroke-linecap="round" stroke-linejoin="round" d="M28 4h-8m4 0v8m11 4l3-3"/><path stroke="#000" stroke-linecap="round" stroke-linejoin="round" d="M24 28v-6m0 6h-6"/></g></mask><path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipSTimer0)"/></svg>
+                `;
 
-             // Create Add Image Button
-            const addImageButton = document.createElement('button');
-            addImageButton.type = 'button';
-            addImageButton.className = 'mcl-add-image-btn';
-            addImageButton.setAttribute('title', 'Add image');
-            addImageButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                    <path fill="currentColor" d="M416 64H96a64.07 64.07 0 0 0-64 64v256a64.07 64.07 0 0 0 64 64h320a64.07 64.07 0 0 0 64-64V128a64.07 64.07 0 0 0-64-64Zm-80 64a48 48 0 1 1-48 48a48.05 48.05 0 0 1 48-48ZM96 416a32 32 0 0 1-32-32v-67.63l94.84-84.3a48.06 48.06 0 0 1 65.8 1.9l64.95 64.81L172.37 416Zm352-32a32 32 0 0 1-32 32H217.63l121.42-121.42a47.72 47.72 0 0 1 61.64-.16L448 333.84Z"/>
-                </svg>
-            `;
+                // Create Add Image Button
+                const addImageButton = document.createElement('button');
+                addImageButton.type = 'button';
+                addImageButton.className = 'mcl-add-image-btn';
+                addImageButton.setAttribute('title', 'Add image');
+                addImageButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path fill="currentColor" d="M416 64H96a64.07 64.07 0 0 0-64 64v256a64.07 64.07 0 0 0 64 64h320a64.07 64.07 0 0 0 64-64V128a64.07 64.07 0 0 0-64-64Zm-80 64a48 48 0 1 1-48 48a48.05 48.05 0 0 1 48-48ZM96 416a32 32 0 0 1-32-32v-67.63l94.84-84.3a48.06 48.06 0 0 1 65.8 1.9l64.95 64.81L172.37 416Zm352-32a32 32 0 0 1-32 32H217.63l121.42-121.42a47.72 47.72 0 0 1 61.64-.16L448 333.84Z"/>
+                    </svg>
+                `;
 
-            // Create Remove Button if the user can edit
-            let removeButton = null;
-            if (canEdit) {
-                removeButton = document.createElement('button');
+                // Create Remove Button
+                const removeButton = document.createElement('button');
                 removeButton.type = 'button';
                 removeButton.className = 'mcl-remove-item mcl-remove-icon';
                 removeButton.textContent = '×';
-            }
 
-            // Create the parent div for action buttons
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'mcl-list-item-actions';
-            actionsDiv.appendChild(inProgressButton);
-            actionsDiv.appendChild(deadlineButton);
-            actionsDiv.appendChild(addImageButton);
-
-            if (removeButton) {
+                // Create the parent div for action buttons
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'mcl-list-item-actions';
+                actionsDiv.appendChild(inProgressButton);
+                actionsDiv.appendChild(deadlineButton);
+                actionsDiv.appendChild(addImageButton);
                 actionsDiv.appendChild(removeButton);
-            }
 
-            // Append the actions div to the list item
-            if (canEdit) {
+                // Append the actions div to the list item
                 li.appendChild(actionsDiv);
             }
 
