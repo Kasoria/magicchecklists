@@ -69,7 +69,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-image-handler.php';
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-export-handler.php';
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-analytics.php';
-
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-permissions.php';
             // Include SureCart Licensing
             if ( ! class_exists( 'SureCart\Licensing\Client' ) ) {
                 // Include the autoloader if SureCart uses Composer
