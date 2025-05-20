@@ -36,9 +36,6 @@ $theme_class = match($theme) {
     </div>
     <div class="mcl-drawer-header">
       <div class="mcl-drawer-header__top-wrapper">
-        <div class="mcl-drawer-tags" style="display: none;">
-            <!-- Tags will be dynamically inserted here -->
-        </div>
         <?php if (MCL_Settings::get_setting('enable_checklist_navigation', false)): ?>
           <div class="mcl-title-navigation">
             <button class="mcl-nav-arrow mcl-nav-prev" aria-label="<?php esc_attr_e('Previous checklist', 'magic-checklists'); ?>">
@@ -53,6 +50,9 @@ $theme_class = match($theme) {
             </button>
           </div>
         <?php endif; ?>
+        <div class="mcl-drawer-tags" style="display: none;">
+            <!-- Tags will be dynamically inserted here -->
+        </div>
       </div>
       <h2 contenteditable="true" class="mcl-drawer-title mcl-item-heading"></h2>
       <div class="mcl-access-indicator" style="display: none;">
