@@ -608,6 +608,8 @@ class MCL_Admin {
         }
         $enable_rate_limit = isset($_POST['enable_rate_limit']) ? 1 : 0;
 
+        $enable_item_locking = isset($_POST['enable_item_locking']) ? 1 : 0;
+
         // Process items with priorities and parent relationships
         $items = isset($_POST['items']) ? $_POST['items'] : array();
         $processed_items = array();
@@ -618,6 +620,7 @@ class MCL_Admin {
                     'content' => MCL_Sanitization::sanitize_item_content($item['content']),
                     'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                     'parent_id' => isset($item['parent_id']) ? sanitize_text_field($item['parent_id']) : '',
+                    'locked' => !empty($item['locked']) ? 1 : 0,
                 );
             }
         }
@@ -743,6 +746,7 @@ class MCL_Admin {
             } else {
                 delete_post_meta($checklist_id, '_mcl_tags');
             }
+            update_post_meta($checklist_id, '_mcl_enable_item_locking', $enable_item_locking);
             update_post_meta( $checklist_id, '_mcl_time_date', $time_date);
             update_post_meta( $checklist_id, '_mcl_items', $processed_items );
             update_post_meta( $checklist_id, '_mcl_keyboard_shortcut', $keyboard_shortcut );

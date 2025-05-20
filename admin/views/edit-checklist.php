@@ -850,6 +850,23 @@ if ( $checklist_id ) {
                             </div>
                         </div>
                         </div>
+                        
+                        <!-- Item Locking Setting -->
+                        <div class="mcl-form-inner-wrapper">
+                            <label for="mcl_enable_item_locking" class="mcl-label mcl-label-dark">
+                                <?php esc_html_e('Enable Item Locking', 'magic-checklists'); ?>
+                            </label>
+                            <div class="mcl-toggle-wrapper">
+                                <div class="mcl-toggle-switch">
+                                    <input name="enable_item_locking" type="checkbox" id="mcl_enable_item_locking" value="1" <?php checked(get_post_meta($checklist_id, '_mcl_enable_item_locking', true), 1); ?> >
+                                    <label for="mcl_enable_item_locking" class="mcl-switch-label"></label>
+                                </div>
+                            </div>
+                            <p class="mcl-description">
+                                <?php esc_html_e('Enable locking of individual items to prevent editing.', 'magic-checklists'); ?>
+                            </p>
+                        </div>
+                        
                         <div class="mcl-form-inner-wrapper">
     <label for="mcl_enable_shortcode" class="mcl-label mcl-label-dark">
         <?php esc_html_e('Enable Shortcode', 'magic-checklists'); ?>
@@ -1720,7 +1737,7 @@ if ( $checklist_id ) {
                 <!-- List Items Section -->
         <div class="mcl-list-items-section">
             <div class="mcl-list-header">
-                <h2 class="mcl-section-title"><?php esc_html_e('Checklist Items', 'magic-checklists'); ?></h2>
+                <h2 class="mcl-section-title mcl-light"><?php esc_html_e('Checklist Items', 'magic-checklists'); ?></h2>
                 
                 <!-- Priority Settings -->
                 <div class="mcl-list-priority-settings">
@@ -1760,7 +1777,6 @@ if ( $checklist_id ) {
                     </div>
                 </div>
             </div>
-
             <!-- List Items Container -->
             <div class="mcl-items-container">
                 <ul id="mcl-items" class="mcl-items-list">
@@ -1850,6 +1866,16 @@ if ( $checklist_id ) {
                                             <?php endforeach; ?>
                                         </select>
                                     <?php endif; ?>
+                                    <?php if ( get_post_meta( $checklist_id, '_mcl_enable_item_locking', true ) ) : ?>
+                                    <!-- Locked flag for this item -->
+                                    <label class="mcl-lock-checkbox">
+                                        <input type="checkbox"
+                                            name="items[<?php echo esc_attr($index); ?>][locked]"
+                                            value="1"
+                                            <?php checked(!empty($item['locked']), true); ?> >
+                                        <?php esc_html_e('Locked', 'magic-checklists'); ?>
+                                    </label>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="mcl-list-item-actions">
@@ -1913,6 +1939,16 @@ if ( $checklist_id ) {
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
+                                    <?php endif; ?>
+                                    <?php if ( get_post_meta( $checklist_id, '_mcl_enable_item_locking', true ) ) : ?>
+                                    <!-- Locked flag for this item -->
+                                    <label class="mcl-lock-checkbox">
+                                        <input type="checkbox"
+                                            name="items[0][locked]"
+                                            value="1"
+                                            <?php checked(!empty($item['locked']), true); ?> >
+                                        <?php esc_html_e('Locked', 'magic-checklists'); ?>
+                                    </label>
                                     <?php endif; ?>
                                 </div>
                             </div>

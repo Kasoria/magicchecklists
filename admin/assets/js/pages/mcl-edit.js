@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.initResetScheduleHandling();
             this.initTagManagement();
             this.initImageManager();
+            this.initItemLockingHandling();
             this.hasUnsavedChanges = false;
         },
 
@@ -747,6 +748,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 prioritySelect.value = 'none';
             }
             
+            // Add lock button if item locking is enabled
+            const enableItemLocking = document.getElementById('mcl_enable_item_locking')?.checked;
+            if (enableItemLocking) {
+                const actionsContainer = li.querySelector('.mcl-list-item-actions');
+                const removeBtn = actionsContainer.querySelector('.mcl-remove-item');
+                
+                // Create lock button
+                const lockBtn = document.createElement('button');
+                lockBtn.type = 'button';
+                lockBtn.className = 'mcl-lock-item-btn';
+                lockBtn.title = 'Lock item';
+                lockBtn.setAttribute('data-locked', 'false');
+                lockBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M19 10h-1V7c0-3.9-3.1-7-7-7S4 3.1 4 7v3H3c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2zM6 7c0-2.8 2.2-5 5-5s5 2.2 5 5v3H6V7zm13 15H5V12h14v10z"/>
+                        <path fill="currentColor" class="lock-inner" d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                    </svg>
+                `;
+                
+                // Add click handler
+                lockBtn.addEventListener('click', () => this.toggleItemLock(li, lockBtn));
+                
+                if (removeBtn) {
+                    actionsContainer.insertBefore(lockBtn, removeBtn);
+                }
+                
+                // Add hidden input for locked state
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = `items[${this.itemIndex}][locked]`;
+                hiddenInput.value = '0';
+                li.appendChild(hiddenInput);
+            }
+            
             // Update parent select options immediately
             this.updateParentSelects();
             
@@ -1283,6 +1318,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     priorityInput.value = prioritySelect.value;
                     item.appendChild(priorityInput);
                 }
+                
+                // Handle locked flag - now from lock button or class
+                const lockBtn = item.querySelector('.mcl-lock-item-btn');
+                if (lockBtn) {
+                    // Use the data-locked attribute from the button
+                    let lockedInput = document.createElement('input');
+                    lockedInput.type = 'hidden';
+                    lockedInput.name = `items[${index}][locked]`;
+                    lockedInput.value = lockBtn.getAttribute('data-locked') === 'true' ? '1' : '0';
+                    item.appendChild(lockedInput);
+                } else {
+                    // Fallback to the item class if no button exists
+                    let lockedInput = document.createElement('input');
+                    lockedInput.type = 'hidden';
+                    lockedInput.name = `items[${index}][locked]`;
+                    lockedInput.value = item.classList.contains('mcl-item-locked') ? '1' : '0';
+                    item.appendChild(lockedInput);
+                }
+                
+                // Add parent ID if present
+                const parentId = item.getAttribute('data-parent-id');
+                if (parentId) {
+                    let parentInput = document.createElement('input');
+                    parentInput.type = 'hidden';
+                    parentInput.name = `items[${index}][parent_id]`;
+                    parentInput.value = parentId;
+                    item.appendChild(parentInput);
+                }
             });
         },
 
@@ -1456,6 +1519,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const content = item.querySelector('.mcl-item-content');
                 const idInput = item.querySelector('input[name*="[id]"]');
                 const prioritySelect = item.querySelector('select[name*="[priority]"]');
+                const lockedInput = item.querySelector('input[name*="[locked]"]');
+                const parentSelect = item.querySelector('select[name*="[parent_id]"]');
                 
                 if (idInput) {
                     idInput.name = `items[${index}][id]`;
@@ -1465,6 +1530,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 if (prioritySelect) {
                     prioritySelect.name = `items[${index}][priority]`;
+                }
+                if (lockedInput) {
+                    lockedInput.name = `items[${index}][locked]`;
+                }
+                if (parentSelect) {
+                    parentSelect.name = `items[${index}][parent_id]`;
                 }
             });
             this.itemIndex = Math.max(items.length - 1, 0);
@@ -1746,6 +1817,128 @@ document.addEventListener('DOMContentLoaded', function() {
                         .join('')}
                 </select>
             `;
+        },
+
+        // Add method for handling item locking toggle
+        initItemLockingHandling() {
+            const enableItemLockingToggle = document.getElementById('mcl_enable_item_locking');
+            
+            if (enableItemLockingToggle) {
+                // Initial state
+                this.updateItemLockButtons(enableItemLockingToggle.checked);
+                
+                // Handle toggle change
+                enableItemLockingToggle.addEventListener('change', (e) => {
+                    const isEnabled = e.target.checked;
+                    this.updateItemLockButtons(isEnabled);
+                    this.hasUnsavedChanges = true;
+                });
+            }
+        },
+        
+        updateItemLockButtons(enabled) {
+            // Find all list items
+            const items = document.querySelectorAll('#mcl-items li');
+            
+            items.forEach((item) => {
+                // Find the actions container
+                const actionsContainer = item.querySelector('.mcl-list-item-actions');
+                if (!actionsContainer) return;
+
+                // Determine initial locked status from existing checkbox or class
+                let isLocked = false;
+                const checkboxInput = item.querySelector('.mcl-lock-checkbox input[type="checkbox"]');
+                if (checkboxInput) {
+                    isLocked = checkboxInput.checked;
+                } else if (item.classList.contains('mcl-item-locked')) {
+                    isLocked = true;
+                }
+
+                // Apply locked class to the list item for visual styling
+                if (isLocked) {
+                    item.classList.add('mcl-item-locked');
+                } else {
+                    item.classList.remove('mcl-item-locked');
+                }
+
+                // Remove any existing lock buttons
+                const existingLockBtn = actionsContainer.querySelector('.mcl-lock-item-btn');
+                if (existingLockBtn) {
+                    existingLockBtn.remove();
+                }
+                
+                // Add lock button if enabled
+                if (enabled) {
+                    // Create lock button
+                    const lockBtn = document.createElement('button');
+                    lockBtn.type = 'button';
+                    lockBtn.className = `mcl-lock-item-btn ${isLocked ? 'locked' : ''}`;
+                    lockBtn.title = isLocked ? 'Unlock item' : 'Lock item';
+                    lockBtn.setAttribute('data-locked', isLocked ? 'true' : 'false');
+                    lockBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M19 10h-1V7c0-3.9-3.1-7-7-7S4 3.1 4 7v3H3c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2zM6 7c0-2.8 2.2-5 5-5s5 2.2 5 5v3H6V7zm13 15H5V12h14v10z"/>
+                            <path fill="currentColor" class="lock-inner" d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                        </svg>
+                    `;
+                    
+                    // Add click handler
+                    lockBtn.addEventListener('click', () => this.toggleItemLock(item, lockBtn));
+                    
+                    // Insert before the remove button (which is typically the last button)
+                    const removeBtn = actionsContainer.querySelector('.mcl-remove-item');
+                    if (removeBtn) {
+                        actionsContainer.insertBefore(lockBtn, removeBtn);
+                    } else {
+                        actionsContainer.appendChild(lockBtn);
+                    }
+                    
+                    // Update hidden input for lock state if not present
+                    let index = this.getItemIndex(item);
+                    let hiddenInput = item.querySelector(`input[name="items[${index}][locked]"]`);
+                    if (!hiddenInput) {
+                        hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = `items[${index}][locked]`;
+                        hiddenInput.value = isLocked ? '1' : '0';
+                        item.appendChild(hiddenInput);
+                    }
+                }
+                
+                // Remove the checkbox UI for locking if it exists
+                const lockCheckbox = item.querySelector('.mcl-lock-checkbox');
+                if (lockCheckbox) {
+                    lockCheckbox.remove();
+                }
+            });
+        },
+        
+        toggleItemLock(item, lockBtn) {
+            // Toggle locked state
+            const isCurrentlyLocked = lockBtn.getAttribute('data-locked') === 'true';
+            const newLockedState = !isCurrentlyLocked;
+            
+            // Update button state
+            lockBtn.setAttribute('data-locked', newLockedState ? 'true' : 'false');
+            lockBtn.classList.toggle('locked', newLockedState);
+            lockBtn.title = newLockedState ? 'Unlock item' : 'Lock item';
+            
+            // Update item class for visual indication
+            item.classList.toggle('mcl-item-locked', newLockedState);
+            
+            // Update hidden input
+            let index = this.getItemIndex(item);
+            let hiddenInput = item.querySelector(`input[name="items[${index}][locked]"]`);
+            if (hiddenInput) {
+                hiddenInput.value = newLockedState ? '1' : '0';
+            }
+            
+            this.hasUnsavedChanges = true;
+        },
+        
+        getItemIndex(item) {
+            const items = Array.from(document.querySelectorAll('#mcl-items li'));
+            return items.indexOf(item);
         }
     };
 

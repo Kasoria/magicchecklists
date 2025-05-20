@@ -1816,3 +1816,46 @@ textarea.mcl-input-error {
 .mcl-items-list li.is-nesting .mcl-nesting-indicator {
     display: block;
 }
+
+/* Lock Button Styles */
+.mcl-lock-item-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    color: #888;
+    transition: all 0.2s ease-in-out;
+}
+
+.mcl-lock-item-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #555;
+}
+
+.mcl-lock-item-btn.locked {
+    color: #e67e22;
+}
+
+.mcl-lock-item-btn.locked:hover {
+    color: #d35400;
+}
+
+.mcl-lock-item-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mcl-item-locked {
+    border: 1px solid #dc3545 !important;
+    opacity: 0.7;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.mcl-item-locked .mcl-item-content {
+    border: 1px dashed #ccc !important;
+    background-color: rgba(0, 0, 0, 0.02);
+}
