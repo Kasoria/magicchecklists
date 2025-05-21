@@ -114,6 +114,9 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             MCL_Settings::get_instance();
             MCL_Export_Handler::get_instance();
             MCL_Analytics::get_instance();
+            
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
+            MCL_Shortcode::get_instance();
 
             if (is_admin()) {
                 new MCL_Admin();
