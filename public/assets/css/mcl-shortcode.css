@@ -196,6 +196,19 @@
   transition: opacity 0.2s ease;
 }
 
+/* Item content links */
+.mcl-item-content a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  background-color: transparent !important;
+  transition: color 0.2s;
+}
+
+.mcl-item-content a:hover {
+  color: #0369a1;
+  text-decoration: none;
+}
+
 /* Item Numbers */
 .mcl-item-number {
   margin-right: var(--mcl-shortcode-spacing-sm);
@@ -208,6 +221,28 @@
   height: 8px;
   border-radius: 50%;
   margin-right: var(--mcl-shortcode-spacing-sm);
+}
+
+/* Number-based priority indicators */
+.mcl-item-priority.mcl-priority-number {
+  width: auto;
+  height: auto;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: bold;
+  text-align: center;
+  color: #ffffff;
+  padding: 0 4px;
+  min-width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure numbers are visible even when the item is checked */
+.mcl-shortcode-checked .mcl-item-priority.mcl-priority-number {
+  opacity: 0.8;
 }
 
 .mcl-priority-low {

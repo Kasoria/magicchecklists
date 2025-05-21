@@ -4,6 +4,7 @@ class MCLShortcodeHandler {
         this.checklistId = container.dataset.checklistId;
         this.instanceId = container.dataset.instanceId;
         this.stateHandling = container.dataset.checkState;
+        this.priorityDisplayType = container.dataset.priorityDisplayType || 'color';
         this.items = container.querySelector('.mcl-shortcode-items');
         this.checkedItems = new Set();
         this.countdownInterval = null;
