@@ -32,7 +32,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
 
         public function __construct() {
             $this->define_constants();
-            $this->includes();
+            $this->setup_autoloader();
             $this->init_hooks();
         }
 
@@ -51,30 +51,30 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
         }
 
         /**
-         * Include required files
+         * Setup the autoloader for our plugin classes
          */
-        private function includes() {
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-db-manager.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-sanitization.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-settings.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-priority-utils.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-cpt.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-admin.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-public.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-rest-controller.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-api-integration.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-manager.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-ajax-manager.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-image-handler.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-export-handler.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-analytics.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-permissions.php';
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-theme-renderer.php';
-            // Include SureCart Licensing
-            if ( ! class_exists( 'SureCart\Licensing\Client' ) ) {
+        private function setup_autoloader() {
+            spl_autoload_register(function($class_name) {
+                // Only handle our plugin's classes
+                if (strpos($class_name, 'MCL_') !== 0) {
+                    return;
+                }
+                
+                // Convert class name to file path
+                $class_name = str_replace('MCL_', '', $class_name);
+                $file_name = 'class-mcl-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
+                $file_path = MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/' . $file_name;
+                
+                // Check if file exists and load it
+                if (file_exists($file_path)) {
+                    require_once $file_path;
+                }
+            });
+            
+            // Include SureCart Licensing (third-party, not using our autoloader)
+            if (!class_exists('SureCart\Licensing\Client')) {
                 // Include the autoloader if SureCart uses Composer
-                if ( file_exists( MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php' ) ) {
+                if (file_exists(MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php')) {
                     require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php';
                 } else {
                     // Fallback to direct inclusion if autoloader is not present
@@ -115,7 +115,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             MCL_Export_Handler::get_instance();
             MCL_Analytics::get_instance();
 
-            if ( is_admin() ) {
+            if (is_admin()) {
                 new MCL_Admin();
             }
 
@@ -128,8 +128,6 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             MCL_Analytics::get_instance()->activate();
         }
         
-        
-
         public function check_version() {
             if (version_compare(get_option('mcl_version', '1.2'), MAGIC_CHECKLISTS_VERSION, '<')) {
                 // Run database updates
@@ -184,13 +182,13 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          */
         private function init_licensing() {
             // Replace 'YOUR_PUBLIC_TOKEN' with your actual public token from SureCart
-            $client = new \SureCart\Licensing\Client( 'MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', __FILE__ );
+            $client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', __FILE__);
 
             // Set your text domain
-            $client->set_textdomain( MAGIC_CHECKLISTS_TEXT_DOMAIN );
+            $client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
 
             // Add the pre-built license settings page
-            $client->settings()->add_page( array(
+            $client->settings()->add_page(array(
                 'type'                 => 'submenu',
                 'parent_slug'          => 'mcl_checklists',
                 'page_title'           => 'Manage License',
@@ -199,9 +197,9 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                 'menu_slug'            => 'mcl_manage_license',
                 'icon_url'             => '',
                 'position'             => null,
-                'activated_redirect'   => admin_url( 'admin.php?page=mcl_checklists' ),
-                'deactivated_redirect' => admin_url( 'admin.php?page=mcl_checklists' ),
-            ) );
+                'activated_redirect'   => admin_url('admin.php?page=mcl_checklists'),
+                'deactivated_redirect' => admin_url('admin.php?page=mcl_checklists'),
+            ));
         }
     }
 
