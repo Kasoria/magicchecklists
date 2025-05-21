@@ -250,4 +250,4 @@ class MCL_Permissions {
         // get_invite_token_data will return null if no valid token is found from any source.
         return $this->get_invite_token_data() !== null;
     }
-} 
+}
