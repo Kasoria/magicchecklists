@@ -3139,25 +3139,6 @@ class MagicChecklistDrawer {
             drawerContent.classList.add('mcl-interact-only');
         }
     
-        // Update access indicator
-        const accessIndicator = drawerContent.querySelector('.mcl-access-indicator');
-        const accessText = accessIndicator.querySelector('.mcl-access-text');
-    
-        if (data.is_public) {
-            accessIndicator.style.display = 'flex';
-            let accessLevel = 'View Only';
-            if (data.can_edit && !data.locked) {
-                accessLevel = 'Edit View';
-            } else if (data.can_edit && data.locked) {
-                accessLevel = 'Locked';
-            } else if (data.can_check) {
-                accessLevel = 'Interactive';
-            }
-            accessText.textContent = `Public (${accessLevel})`;
-        } else {
-            accessIndicator.style.display = 'none';
-        }
-    
         // Update actions visibility based on permissions and locked state
         this.updateDrawerActions(data);
     }    
