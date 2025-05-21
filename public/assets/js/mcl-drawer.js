@@ -468,6 +468,7 @@ class MagicChecklistDrawer {
     }
 
     bindFloatingButtons() {
+        // Select all floating buttons that aren't in the FAB list, plus the FAB trigger button
         const floatingButtons = document.querySelectorAll('.mcl-floating-button:not(.mcl-fab-list .mcl-floating-button), .mcl-multi-fab-trigger');
         
         floatingButtons.forEach(button => {
@@ -475,28 +476,22 @@ class MagicChecklistDrawer {
                 event.preventDefault();
                 event.stopPropagation();
 
-                const fabTriggerButton = event.currentTarget;
+                const target = event.currentTarget;
 
-                // For FAB trigger, check if it was just dragged
-                if (fabTriggerButton.classList.contains('mcl-multi-fab-trigger')) {
-                    const fabContainer = fabTriggerButton.closest('.mcl-floating-buttons');
-                    if (fabContainer && fabContainer.getAttribute('data-just-dragged') === 'true') {
-                        fabContainer.removeAttribute('data-just-dragged');
-                        return; // Don't toggle the list if it was just dragged
-                    }
-                    this.toggleFabList(fabTriggerButton);
-                    return; // FAB trigger click handled
+                // Check if element was just dragged - always skip click handling in this case
+                if (target.getAttribute('data-just-dragged') === 'true') {
+                    target.removeAttribute('data-just-dragged');
+                    return;
                 }
 
-                // For regular single floating buttons, check if it was just dragged
-                // The data-just-dragged attribute is set directly on the button itself for single draggables
-                if (button.getAttribute('data-just-dragged') === 'true') {
-                    button.removeAttribute('data-just-dragged');
-                    return; // Don't open drawer if it was just dragged
+                // Handle FAB trigger button
+                if (target.classList.contains('mcl-multi-fab-trigger')) {
+                    this.toggleFabList(target);
+                    return;
                 }
 
-                // Existing logic for single floating buttons to open the drawer
-                const checklistId = button.dataset.checklistId;
+                // Handle regular floating button
+                const checklistId = target.dataset.checklistId;
                 if (checklistId) {
                     if (this.drawer.classList.contains('mcl-drawer-open') && this.currentChecklistId === checklistId) {
                         this.closeDrawer();
@@ -507,42 +502,33 @@ class MagicChecklistDrawer {
             });
         });
 
-        // Handling clicks inside the FAB list to open checklists
-        const fabListButtons = document.querySelectorAll('.mcl-fab-list .mcl-floating-button');
-        fabListButtons.forEach(button => {
+        // Handle clicks on buttons inside the FAB list
+        document.querySelectorAll('.mcl-fab-list .mcl-floating-button').forEach(button => {
             button.addEventListener('click', async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
 
-                // If a button inside the FAB list is clicked, it should always try to open the checklist
-                // and also close the FAB list itself.
                 const checklistId = button.dataset.checklistId;
-                if (checklistId) {
-                    // Close the FAB list first
-                    const fabTrigger = button.closest('.mcl-floating-buttons').querySelector('.mcl-multi-fab-trigger');
-                    if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
-                        this.toggleFabList(fabTrigger, false); // Force close
-                    }
-
-                    // Then toggle the checklist (open or switch)
-                    if (this.drawer.classList.contains('mcl-drawer-open') && this.currentChecklistId === checklistId) {
-                        // If it's the same checklist and drawer is open, maybe do nothing or re-focus?
-                        // For now, let's allow it to re-fetch if it's already open and same ID.
-                         await this.toggleChecklist(checklistId);
-                    } else {
-                        await this.toggleChecklist(checklistId);
-                    }
+                if (!checklistId) return;
+                
+                // Close the FAB list first
+                const fabTrigger = button.closest('.mcl-floating-buttons')?.querySelector('.mcl-multi-fab-trigger');
+                if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
+                    this.toggleFabList(fabTrigger, false);
                 }
+
+                // Then toggle the checklist
+                await this.toggleChecklist(checklistId);
             });
         });
 
-        // Close FAB list if clicking outside
+        // Close FAB list when clicking outside
         document.addEventListener('click', (event) => {
             const fabContainer = document.querySelector('.mcl-floating-buttons.mcl-is-multi-trigger');
             if (fabContainer && !fabContainer.contains(event.target)) {
                 const fabTrigger = fabContainer.querySelector('.mcl-multi-fab-trigger');
                 if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
-                    this.toggleFabList(fabTrigger, false); // Force close
+                    this.toggleFabList(fabTrigger, false);
                 }
             }
         });
@@ -552,25 +538,40 @@ class MagicChecklistDrawer {
         const fabList = fabTrigger.nextElementSibling;
         if (!fabList || !fabList.classList.contains('mcl-fab-list')) return;
 
+        // Get current state and determine new state
         const isExpanded = fabTrigger.getAttribute('aria-expanded') === 'true';
         const newState = forceState !== null ? forceState : !isExpanded;
 
         fabTrigger.setAttribute('aria-expanded', newState.toString());
+        
         if (newState) {
+            // Opening the list
             fabList.hidden = false;
-            // Focus the first item in the list for accessibility, or the list itself
-            const firstButton = fabList.querySelector('.mcl-floating-button');
-            if (firstButton) {
-                // setTimeout(() => firstButton.focus(), 0); // Allow transition to complete
-            } else {
-                // setTimeout(() => fabList.focus(), 0); 
-            }
+            
+            // Ensure the FAB list stays within viewport
+            requestAnimationFrame(() => {
+                const fabContainer = fabTrigger.closest('.mcl-floating-buttons');
+                const viewportWidth = document.documentElement.clientWidth;
+                const viewportHeight = document.documentElement.clientHeight;
+                const listRect = fabList.getBoundingClientRect();
+                
+                // Check if the list is outside the viewport
+                if (listRect.left < 0 || 
+                    listRect.right > viewportWidth || 
+                    listRect.top < 0 || 
+                    listRect.bottom > viewportHeight) {
+                    
+                    // Adjust the container position if draggable
+                    if (fabContainer.classList.contains('has-draggable-fab') && this.drawer.draggable) {
+                        this.drawer.draggable.adjustGroupPosition(fabContainer);
+                    }
+                }
+            });
         } else {
-            // Add a delay to allow animation before setting hidden
-            // This depends on the CSS transition duration
+            // Closing the list - wait for transition
             setTimeout(() => {
                 fabList.hidden = true;
-            }, 200); // Match opacity transition duration from CSS
+            }, 200);
         }
     }
 

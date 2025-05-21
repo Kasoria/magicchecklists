@@ -11,11 +11,11 @@ if (!defined('ABSPATH')) {
 
 $is_multi = count($active_checklists) > 1;
 $container_classes = ['mcl-floating-buttons'];
-$fab_trigger_is_draggable = false; // Flag for FAB trigger draggability
+$fab_trigger_is_draggable = false;
 
 if ($is_multi) {
     $container_classes[] = 'mcl-is-multi-trigger';
-    $container_classes[] = 'position-bottom-right'; // Always bottom-right for FAB container initial CSS position
+    $container_classes[] = 'position-bottom-right';
 
     // Check if any checklist *within* the FAB group is set to be draggable, 
     // if so, the FAB trigger itself becomes draggable.
