@@ -118,8 +118,13 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
             MCL_Shortcode::get_instance();
 
+            // Initialize tour functionality
+            new MCL_Tour_CPT();
+            new MCL_Tour_Public();
+
             if (is_admin()) {
                 new MCL_Admin();
+                new MCL_Tour_Admin();
             }
 
             // Initialize SureCart Licensing
