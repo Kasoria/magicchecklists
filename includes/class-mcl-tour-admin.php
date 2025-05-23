@@ -65,7 +65,7 @@ class MCL_Tour_Admin {
         wp_enqueue_script(
             'mcl-tour-admin',
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-tour-admin.js',
-            array('jquery', 'wp-util', 'sortable-js'),
+            array('wp-util', 'sortable-js'),
             MAGIC_CHECKLISTS_VERSION,
             true
         );
