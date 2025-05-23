@@ -1,0 +1,1778 @@
+/**
+ * Tour Public JavaScript
+ * Handles tour creation interface and tour playback using driver.js
+ */
+
+(function($) {
+    'use strict';
+
+    const TourCreator = {
+        
+        isCreatorMode: false,
+        currentMode: 'select', // 'select' or 'navigate'
+        currentTourId: 0,
+        tourSteps: [],
+        tourSettings: {},
+        checklists: [],
+        currentStep: null,
+        currentStepIndex: -1,
+        highlightElementRef: null,
+        editorInstance: null,
+        stepsSortableInstance: null,
+
+        init() {
+            this.isCreatorMode = mclTour.is_tour_mode;
+            this.currentTourId = mclTour.tour_id;
+            
+            if (this.isCreatorMode) {
+                this.initCreatorMode();
+            } else {
+                this.initTourPlayback();
+            }
+        },
+
+        initCreatorMode() {
+            console.log('Initializing tour creator mode');
+            
+            // Hide admin bar and add body class
+            $('body').addClass('mcl-tour-creator-active');
+            
+            // Load existing tour data if editing
+            if (this.currentTourId > 0) {
+                this.loadTourData(this.currentTourId, () => {
+                    // Check if we should auto-start preview after loading tour data
+                    this.checkForPreviewStart();
+                });
+            } else {
+                // For new tours, still need to check for preview start
+                // but with empty steps array
+                this.tourSteps = [];
+                this.updateStepsCounter();
+                this.checkForPreviewStart();
+            }
+            
+            this.loadChecklists();
+            this.bindCreatorEvents();
+            this.setMode('select');
+            
+            // Initialize URL preservation for navigation
+            this.initUrlPreservation();
+        },
+
+        initTourPlayback() {
+            if (mclTour.tours && mclTour.tours.length > 0) {
+                mclTour.tours.forEach(tour => {
+                    // Check if this tour should be triggered based on its trigger type
+                    if (this.shouldTriggerTour(tour)) {
+                        if (tour.autostart || tour.continue_from_step !== undefined) {
+                            // Add a small delay to ensure the page is fully loaded
+                            setTimeout(() => {
+                                console.log('Starting tour:', {
+                                    id: tour.id,
+                                    triggerType: tour.trigger_type,
+                                    autostart: tour.autostart,
+                                    continueFromStep: tour.continue_from_step
+                                });
+                                this.startTour(tour);
+                            }, 500);
+                        }
+                    }
+                });
+            }
+        },
+
+        shouldTriggerTour(tour) {
+            // Check selector-based triggers
+            if (tour.trigger_type === 'selector' && tour.trigger_value) {
+                const element = document.querySelector(tour.trigger_value);
+                if (!element) {
+                    console.log('Selector trigger not found:', tour.trigger_value);
+                    return false;
+                }
+                console.log('Selector trigger found:', tour.trigger_value);
+            }
+            
+            return true; // Other trigger types are handled server-side
+        },
+
+        initUrlPreservation() {
+            const self = this;
+            
+            // Intercept all link clicks when in creator mode
+            $(document).on('click', 'a', function(e) {
+                if (self.isCreatorMode && self.currentMode === 'navigate') {
+                    const link = $(this);
+                    const href = link.attr('href');
+                    
+                    console.log('Link clicked:', {
+                        href: href,
+                        currentUrl: window.location.href,
+                        currentMode: self.currentMode
+                    });
+                    
+                    // Skip if it's a special link or has no href
+                    if (!href || href === '#' || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) {
+                        console.log('Skipping special link:', href);
+                        return;
+                    }
+                    
+                    // Skip if it's a tour creator element
+                    if (link.closest('#mcl-tour-creator, .mcl-modal').length > 0) {
+                        console.log('Skipping tour creator element');
+                        return;
+                    }
+                    
+                    // Skip if it's an external link
+                    if (self.isExternalLink(href)) {
+                        console.log('Skipping external link:', href);
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    const newUrl = self.appendTourParams(href);
+                    console.log('Navigating to:', {
+                        original: href,
+                        modified: newUrl
+                    });
+                    window.location.href = newUrl;
+                }
+            });
+            
+            // Intercept form submissions when in creator mode
+            $(document).on('submit', 'form', function(e) {
+                if (self.isCreatorMode && self.currentMode === 'navigate') {
+                    const form = $(this);
+                    
+                    // Skip if it's a tour creator form
+                    if (form.closest('#mcl-tour-creator, .mcl-modal').length > 0) {
+                        return;
+                    }
+                    
+                    // Skip if it's a GET form (we'll handle it differently)
+                    if (form.attr('method') && form.attr('method').toLowerCase() === 'get') {
+                        e.preventDefault();
+                        self.handleGetFormSubmission(form);
+                        return;
+                    }
+                    
+                    // For POST forms, add hidden inputs for tour parameters
+                    const tourParams = self.getTourParams();
+                    Object.keys(tourParams).forEach(key => {
+                        if (!form.find(`input[name="${key}"]`).length) {
+                            form.append(`<input type="hidden" name="${key}" value="${tourParams[key]}">`);
+                        }
+                    });
+                }
+            });
+        },
+
+        handleGetFormSubmission(form) {
+            const action = form.attr('action') || window.location.pathname;
+            const formData = form.serialize();
+            const tourParams = this.getTourParams();
+            
+            // Build URL with form data and tour parameters
+            let url = action;
+            const params = new URLSearchParams(formData);
+            
+            // Add tour parameters
+            Object.keys(tourParams).forEach(key => {
+                params.set(key, tourParams[key]);
+            });
+            
+            if (params.toString()) {
+                url += (url.includes('?') ? '&' : '?') + params.toString();
+            }
+            
+            window.location.href = url;
+        },
+
+        isExternalLink(href) {
+            try {
+                // Handle absolute URLs
+                if (href.startsWith('http://') || href.startsWith('https://')) {
+                    const url = new URL(href);
+                    const isExternal = url.origin !== window.location.origin;
+                    console.log('Checking absolute URL:', { href, isExternal, urlOrigin: url.origin, currentOrigin: window.location.origin });
+                    return isExternal;
+                }
+                
+                // Handle protocol-relative URLs
+                if (href.startsWith('//')) {
+                    const url = new URL(href, window.location.protocol);
+                    const isExternal = url.origin !== window.location.origin;
+                    console.log('Checking protocol-relative URL:', { href, isExternal });
+                    return isExternal;
+                }
+                
+                // Relative URLs and absolute paths are considered internal
+                console.log('Internal URL:', href);
+                return false;
+            } catch (e) {
+                // If URL parsing fails, assume it's internal to be safe
+                console.log('URL parsing failed, assuming internal:', href, e);
+                return false;
+            }
+        },
+
+        getTourParams() {
+            const params = {
+                'mcl_tour_mode': '1'
+            };
+            
+            if (this.currentTourId > 0) {
+                params['tour_id'] = this.currentTourId;
+            }
+            
+            return params;
+        },
+
+        appendTourParams(url) {
+            try {
+                // Use current page URL as base to properly resolve relative URLs
+                // This ensures /wp-admin/ paths are preserved when resolving relative URLs
+                const urlObj = new URL(url, window.location.href);
+                const tourParams = this.getTourParams();
+                
+                Object.keys(tourParams).forEach(key => {
+                    urlObj.searchParams.set(key, tourParams[key]);
+                });
+                
+                return urlObj.toString();
+            } catch (e) {
+                // Fallback for edge cases
+                const separator = url.includes('?') ? '&' : '?';
+                const tourParams = this.getTourParams();
+                const paramString = Object.keys(tourParams)
+                    .map(key => `${key}=${encodeURIComponent(tourParams[key])}`)
+                    .join('&');
+                return url + separator + paramString;
+            }
+        },
+
+        bindCreatorEvents() {
+            // Mode toggle
+            $('#mcl-toggle-mode').on('click', () => {
+                this.toggleMode();
+            });
+
+            // Exit creator
+            $('#mcl-exit-creator').on('click', () => {
+                this.exitCreator();
+            });
+
+            // Save tour
+            $('#mcl-save-tour').on('click', () => {
+                this.saveTour();
+            });
+
+            // Preview tour
+            $('#mcl-preview-tour').on('click', () => {
+                this.previewTour();
+            });
+
+            // Panel toggle
+            $('#mcl-panel-toggle').on('click', () => {
+                this.togglePanel();
+            });
+
+            // Make panel draggable
+            this.makePanelDraggable();
+
+            // Steps list toggle
+            $('#mcl-steps-header').on('click', () => {
+                this.toggleStepsList();
+            });
+
+            // Element selection in select mode
+            const self = this;
+            $(document).on('click', '*', function(e) {
+                if (self.currentMode === 'select' && !self.isReselectingElement && !self.isModalOpen()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.selectElement(e.target);
+                }
+            });
+
+            // Element hover highlighting
+            $(document).on('mouseenter', '*', function(e) {
+                if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
+                    self.highlightElement(e.target);
+                }
+            });
+
+            $(document).on('mouseleave', '*', function(e) {
+                if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
+                    self.removeHighlight();
+                }
+            });
+
+            // Element reselection in modal
+            $(document).on('click', '*', function(e) {
+                if (self.isReselectingElement) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self.reselectElement(e.target);
+                }
+            });
+
+            // Step editor events
+            this.bindStepEditorEvents();
+        },
+
+        bindStepEditorEvents() {
+            // Close modal
+            $('#mcl-step-editor-close, #mcl-step-editor-cancel').on('click', () => {
+                this.closeStepEditor();
+            });
+
+            // Save step
+            $('#mcl-step-editor-save').on('click', () => {
+                this.saveStep();
+            });
+
+            // Checklist selection
+            $('#mcl-step-checklist').on('change', (e) => {
+                this.loadChecklistItems($(e.target).val());
+            });
+
+            // Reselect element
+            $('#mcl-reselect-element').on('click', () => {
+                this.startElementReselection();
+            });
+        },
+
+        setMode(mode) {
+            this.currentMode = mode;
+            
+            const creator = $('#mcl-tour-creator');
+            const indicator = $('.mcl-mode-indicator');
+            const toggleBtn = $('#mcl-toggle-mode');
+            const modeText = $('.mcl-mode-text');
+            
+            creator.attr('data-mode', mode);
+            indicator.attr('data-mode', mode);
+            
+            if (mode === 'select') {
+                indicator.find('.dashicons').removeClass('dashicons-move').addClass('dashicons-crosshairs');
+                modeText.text(mclTour.i18n.selectElement || 'Select Mode');
+                toggleBtn.find('.dashicons').removeClass('dashicons-crosshairs').addClass('dashicons-move');
+                toggleBtn.find('span:not(.dashicons)').text(mclTour.i18n.navigate || 'Navigate');
+            } else {
+                indicator.find('.dashicons').removeClass('dashicons-crosshairs').addClass('dashicons-move');
+                modeText.text(mclTour.i18n.navigate || 'Navigate Mode');
+                toggleBtn.find('.dashicons').removeClass('dashicons-move').addClass('dashicons-crosshairs');
+                toggleBtn.find('span:not(.dashicons)').text(mclTour.i18n.selectElement || 'Select');
+            }
+        },
+
+        toggleMode() {
+            this.setMode(this.currentMode === 'select' ? 'navigate' : 'select');
+        },
+
+        selectElement(element) {
+            // Don't select tour creator elements
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal').length > 0) {
+                return;
+            }
+
+            const selector = this.generateSelector(element);
+            const currentPageUrl = this.getCurrentPageUrl();
+            this.openStepEditor(selector, currentPageUrl);
+        },
+
+        getCurrentPageUrl() {
+            // Get current page URL without tour creator parameters
+            const url = new URL(window.location.href);
+            
+            // Remove tour creator and continuation parameters
+            url.searchParams.delete('mcl_tour_mode');
+            url.searchParams.delete('tour_id');
+            url.searchParams.delete('mcl_continue_tour');
+            url.searchParams.delete('mcl_tour_step');
+            url.searchParams.delete('mcl_preview_step');
+            
+            // Return full pathname + cleaned search params
+            let cleanUrl = url.pathname;
+            if (url.searchParams.toString()) {
+                cleanUrl += '?' + url.searchParams.toString();
+            }
+            
+            console.log('getCurrentPageUrl:', {
+                original: window.location.href,
+                pathname: url.pathname,
+                search: url.searchParams.toString(),
+                cleaned: cleanUrl
+            });
+            
+            return cleanUrl;
+        },
+
+        startElementReselection() {
+            this.isReselectingElement = true;
+            $('#mcl-step-editor-modal').addClass('reselecting');
+            
+            // Visual feedback
+            $('body').css('cursor', 'crosshair');
+            $('.mcl-tour-step-modal').css('pointer-events', 'none');
+            
+            // Show overlay message
+            if (!$('.mcl-reselect-overlay').length) {
+                $('body').append('<div class="mcl-reselect-overlay">Click on an element to select it...</div>');
+            }
+        },
+
+        reselectElement(element) {
+            // Don't select tour creator elements or modal elements
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay').length > 0) {
+                return;
+            }
+
+            const selector = this.generateSelector(element);
+            $('#mcl-step-element').val(selector);
+            
+            this.stopElementReselection();
+        },
+
+        stopElementReselection() {
+            this.isReselectingElement = false;
+            $('#mcl-step-editor-modal').removeClass('reselecting');
+            
+            // Remove visual feedback
+            $('body').css('cursor', '');
+            $('.mcl-tour-step-modal').css('pointer-events', '');
+            $('.mcl-reselect-overlay').remove();
+            this.removeHighlight();
+        },
+
+        togglePanel() {
+            const panel = $('#mcl-tour-floating-panel');
+            const toggle = $('#mcl-panel-toggle');
+            
+            if (panel.hasClass('collapsed')) {
+                panel.removeClass('collapsed');
+                toggle.find('.dashicons').removeClass('dashicons-arrow-up-alt2').addClass('dashicons-arrow-down-alt2');
+            } else {
+                panel.addClass('collapsed');
+                toggle.find('.dashicons').removeClass('dashicons-arrow-down-alt2').addClass('dashicons-arrow-up-alt2');
+            }
+        },
+
+        makePanelDraggable() {
+            const panel = $('#mcl-tour-floating-panel');
+            const header = panel.find('.mcl-panel-header');
+            let isDragging = false;
+            let dragStart = { x: 0, y: 0 };
+            let panelStart = { x: 0, y: 0 };
+
+            header.on('mousedown', (e) => {
+                if ($(e.target).closest('.mcl-panel-toggle').length) return;
+                
+                isDragging = true;
+                panel.addClass('dragging');
+                
+                dragStart.x = e.clientX;
+                dragStart.y = e.clientY;
+                
+                const panelOffset = panel.offset();
+                panelStart.x = panelOffset.left;
+                panelStart.y = panelOffset.top;
+                
+                $(document).on('mousemove', handleDrag);
+                $(document).on('mouseup', stopDrag);
+                
+                e.preventDefault();
+            });
+
+            function handleDrag(e) {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - dragStart.x;
+                const deltaY = e.clientY - dragStart.y;
+                
+                let newX = panelStart.x + deltaX;
+                let newY = panelStart.y + deltaY;
+                
+                // Keep panel within viewport
+                const panelWidth = panel.outerWidth();
+                const panelHeight = panel.outerHeight();
+                const viewportWidth = $(window).width();
+                const viewportHeight = $(window).height();
+                
+                newX = Math.max(10, Math.min(newX, viewportWidth - panelWidth - 10));
+                newY = Math.max(10, Math.min(newY, viewportHeight - panelHeight - 10));
+                
+                panel.css({
+                    position: 'fixed',
+                    left: newX + 'px',
+                    top: newY + 'px',
+                    right: 'auto'
+                });
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                panel.removeClass('dragging');
+                $(document).off('mousemove', handleDrag);
+                $(document).off('mouseup', stopDrag);
+            }
+        },
+
+        generateSelector(element) {
+            // Try to generate a good CSS selector for the element
+            let selector = '';
+            
+            if (element.id) {
+                selector = '#' + element.id;
+            } else if (element.className && element.className.trim()) {
+                const classes = element.className.trim().split(/\s+/);
+                // Use the first class as selector
+                selector = '.' + classes[0];
+            } else {
+                // Fallback to tag name
+                selector = element.tagName.toLowerCase();
+                
+                // Add nth-child if needed for uniqueness
+                const siblings = $(element).parent().children(element.tagName.toLowerCase());
+                if (siblings.length > 1) {
+                    const index = siblings.index(element) + 1;
+                    selector += ':nth-child(' + index + ')';
+                }
+            }
+            
+            return selector;
+        },
+
+        highlightElement(element) {
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal').length > 0) {
+                return;
+            }
+
+            this.removeHighlight();
+
+            const rect = element.getBoundingClientRect();
+            const highlight = $('<div class="mcl-element-highlight"></div>');
+            
+            highlight.css({
+                position: 'fixed',
+                top: rect.top + 'px',
+                left: rect.left + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px',
+                pointerEvents: 'none',
+                zIndex: 1000001
+            });
+
+            $('body').append(highlight);
+            this.highlightElementRef = highlight[0]; // Store DOM element instead of jQuery object
+        },
+
+        removeHighlight() {
+            if (this.highlightElementRef) {
+                $(this.highlightElementRef).remove(); // Use jQuery to remove
+                this.highlightElementRef = null;
+            }
+        },
+
+        openStepEditor(selector = '', pageUrl = '') {
+            this.removeHighlight();
+            
+            const modal = $('#mcl-step-editor-modal');
+            
+            // Reset form
+            $('#mcl-step-editor-form')[0].reset();
+            $('#mcl-step-element').val(selector);
+            $('#mcl-step-page-url').val(pageUrl);
+            $('#mcl-step-index').val(this.currentStepIndex);
+            
+            // Populate checklist dropdown
+            this.populateChecklistDropdown();
+            
+            modal.addClass('active');
+        },
+
+        closeStepEditor() {
+            $('#mcl-step-editor-modal').removeClass('active');
+            this.currentStepIndex = -1;
+            // Make sure to stop any reselection mode
+            if (this.isReselectingElement) {
+                this.stopElementReselection();
+            }
+        },
+
+        saveStep() {
+            const stepData = {
+                title: $('#mcl-step-title').val(),
+                content: $('#mcl-step-content').val(),
+                element: $('#mcl-step-element').val(),
+                position: $('#mcl-step-position').val(),
+                page_url: $('#mcl-step-page-url').val(),
+                checklist_id: $('#mcl-step-checklist').val(),
+                checklist_item_id: $('#mcl-step-checklist-item').val(),
+                show_buttons: $('#mcl-step-show-buttons').is(':checked')
+            };
+
+            const stepIndex = parseInt($('#mcl-step-index').val());
+            
+            if (stepIndex >= 0 && stepIndex < this.tourSteps.length) {
+                // Update existing step
+                this.tourSteps[stepIndex] = stepData;
+            } else {
+                // Add new step
+                this.tourSteps.push(stepData);
+            }
+
+            this.updateStepsCounter();
+            this.closeStepEditor();
+        },
+
+        editStep(stepIndex) {
+            if (stepIndex < 0 || stepIndex >= this.tourSteps.length) {
+                return;
+            }
+
+            const step = this.tourSteps[stepIndex];
+            this.currentStepIndex = stepIndex;
+
+            // Populate form with step data
+            $('#mcl-step-title').val(step.title || '');
+            $('#mcl-step-element').val(step.element || '');
+            $('#mcl-step-page-url').val(step.page_url || '');
+            $('#mcl-step-position').val(step.position || 'bottom');
+            $('#mcl-step-checklist').val(step.checklist_id || '');
+            $('#mcl-step-checklist-item').val(step.checklist_item_id || '');
+            $('#mcl-step-show-buttons').prop('checked', step.show_buttons !== false);
+            $('#mcl-step-index').val(stepIndex);
+
+            // Set content
+            $('#mcl-step-content').val(step.content || '');
+
+            // Load checklist items if needed
+            if (step.checklist_id) {
+                this.loadChecklistItems(step.checklist_id);
+            }
+
+            $('#mcl-step-editor-modal').addClass('active');
+        },
+
+        deleteStep(stepIndex) {
+            if (stepIndex < 0 || stepIndex >= this.tourSteps.length) {
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this step?')) {
+                this.tourSteps.splice(stepIndex, 1);
+                this.updateStepsCounter();
+                // If steps list is visible, re-render it
+                if ($('#mcl-steps-info').hasClass('expanded')) {
+                    this.renderStepsList();
+                }
+            }
+        },
+
+        previewTour() {
+            if (this.tourSteps.length === 0) {
+                alert('Please add some steps before previewing the tour.');
+                return;
+            }
+
+            // Check if driver.js is available
+            const driverFunction = this.getDriverFunction();
+            
+            if (!driverFunction) {
+                console.error('Driver.js is not available. Available on window:', Object.keys(window).filter(k => k.includes('driver')));
+                console.error('window.driver:', window.driver);
+                alert('Driver.js library is not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            // Start preview from the beginning (step 0)
+            this.startPreviewFromStep(0);
+        },
+
+        navigateToTourPreview(step) {
+            if (!step.page_url) {
+                console.log('No page URL for step, skipping navigation');
+                return;
+            }
+            
+            console.log('Navigating to tour step for preview:', {
+                stepIndex: step.originalIndex,
+                pageUrl: step.page_url,
+                currentUrl: window.location.href
+            });
+            
+            // Show loading indicator
+            this.showNavigationLoading();
+            
+            try {
+                // For preview, navigate with tour creator mode parameters
+                const url = new URL(step.page_url, window.location.href);
+                url.searchParams.set('mcl_tour_mode', '1');
+                if (this.currentTourId) {
+                    url.searchParams.set('tour_id', this.currentTourId);
+                }
+                url.searchParams.set('mcl_preview_step', step.originalIndex);
+                
+                const finalUrl = url.toString();
+                console.log('Final preview navigation URL:', finalUrl);
+                
+                // Add a small delay to ensure the loading indicator is visible
+                setTimeout(() => {
+                    window.location.href = finalUrl;
+                }, 100);
+            } catch (error) {
+                console.error('Error constructing navigation URL:', error);
+                $('.mcl-tour-navigation-loading').remove();
+            }
+        },
+
+        showNavigationLoading() {
+            // Remove any existing loading indicator
+            $('.mcl-tour-navigation-loading').remove();
+            
+            // Add loading indicator
+            const loadingHtml = `
+                <div class="mcl-tour-navigation-loading">
+                    <div class="mcl-tour-loading-content">
+                        <div class="mcl-tour-spinner"></div>
+                        <div class="mcl-tour-loading-text">Loading next page...</div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(loadingHtml);
+        },
+
+        updateStepsCounter() {
+            const count = this.tourSteps.length;
+            const countText = count === 1 ? '1 step' : `${count} steps`;
+            $('#mcl-steps-count').text(countText);
+            this.renderStepsList();
+        },
+
+        toggleStepsList() {
+            const stepsInfo = $('#mcl-steps-info');
+            const stepsList = $('#mcl-steps-list');
+            const isExpanded = stepsInfo.hasClass('expanded');
+            
+            if (isExpanded) {
+                stepsInfo.removeClass('expanded');
+                stepsList.slideUp(200);
+            } else {
+                stepsInfo.addClass('expanded');
+                stepsList.slideDown(200);
+            }
+        },
+
+        renderStepsList() {
+            const stepsList = $('#mcl-steps-list');
+            const noSteps = $('#mcl-no-steps');
+            
+            // Filter out null/undefined steps and log any issues
+            const originalCount = this.tourSteps.length;
+            this.tourSteps = this.tourSteps.filter(step => step && typeof step === 'object');
+            
+            if (this.tourSteps.length !== originalCount) {
+                console.warn('Filtered out invalid steps:', {
+                    original: originalCount,
+                    valid: this.tourSteps.length,
+                    filtered: originalCount - this.tourSteps.length
+                });
+            }
+            
+            if (this.tourSteps.length === 0) {
+                noSteps.show();
+                stepsList.find('.mcl-step-item').remove();
+                return;
+            }
+            
+            noSteps.hide();
+            stepsList.find('.mcl-step-item').remove();
+            
+            this.tourSteps.forEach((step, index) => {
+                // Additional safety check for each step
+                if (!step || typeof step !== 'object') {
+                    console.warn('Invalid step found at index', index, step);
+                    return;
+                }
+                
+                const stepItem = $(`
+                    <div class="mcl-step-item" data-step-index="${index}">
+                        <div class="mcl-step-drag-handle">
+                            <span class="dashicons dashicons-move"></span>
+                        </div>
+                        <div class="mcl-step-number">${index + 1}</div>
+                        <div class="mcl-step-content">
+                            <div class="mcl-step-title">${step.title || 'Untitled Step'}</div>
+                            <div class="mcl-step-element">${step.element || 'No element'}</div>
+                            ${step.page_url ? `<div class="mcl-step-page">${step.page_url}</div>` : ''}
+                        </div>
+                        <div class="mcl-step-actions">
+                            <button type="button" class="mcl-step-action edit" title="Edit step" data-step-index="${index}">
+                                <span class="dashicons dashicons-edit"></span>
+                            </button>
+                            <button type="button" class="mcl-step-action preview" title="Preview step" data-step-index="${index}">
+                                <span class="dashicons dashicons-visibility"></span>
+                            </button>
+                            <button type="button" class="mcl-step-action delete" title="Delete step" data-step-index="${index}">
+                                <span class="dashicons dashicons-trash"></span>
+                            </button>
+                        </div>
+                    </div>
+                `);
+                
+                stepsList.append(stepItem);
+            });
+            
+            // Initialize sortable functionality after rendering
+            this.initializeStepsSortable();
+            
+            // Bind step action events
+            stepsList.find('.mcl-step-action.edit').off('click').on('click', (e) => {
+                e.stopPropagation();
+                const stepIndex = parseInt($(e.currentTarget).data('step-index'));
+                this.editStep(stepIndex);
+            });
+            
+            stepsList.find('.mcl-step-action.preview').off('click').on('click', (e) => {
+                e.stopPropagation();
+                const stepIndex = parseInt($(e.currentTarget).data('step-index'));
+                this.previewTour();
+            });
+            
+            stepsList.find('.mcl-step-action.delete').off('click').on('click', (e) => {
+                e.stopPropagation();
+                const stepIndex = parseInt($(e.currentTarget).data('step-index'));
+                this.deleteStep(stepIndex);
+            });
+
+            console.log('Steps list rendered:', {
+                stepCount: this.tourSteps.length,
+                domElements: stepsList.find('.mcl-step-item').length
+            });
+        },
+
+        initializeStepsSortable() {
+            // Only initialize if we're in creator mode and have the Sortable library
+            if (!this.isCreatorMode || typeof Sortable === 'undefined') {
+                return;
+            }
+
+            const stepsList = document.getElementById('mcl-steps-list');
+            if (!stepsList) {
+                return;
+            }
+
+            // Clean up existing sortable instance
+            if (this.stepsSortableInstance) {
+                this.stepsSortableInstance.destroy();
+            }
+
+            this.stepsSortableInstance = new Sortable(stepsList, {
+                handle: '.mcl-step-drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: (evt) => {
+                    this.handleStepsReorder();
+                }
+            });
+        },
+
+        handleStepsReorder() {
+            // Update step numbers visually first
+            $('#mcl-steps-list .mcl-step-number').each((index, element) => {
+                $(element).text(index + 1);
+            });
+
+            // Collect the new order based on DOM elements
+            const stepItems = $('#mcl-steps-list .mcl-step-item');
+            const newOrder = [];
+            
+            stepItems.each(function(index) {
+                const stepIndex = parseInt($(this).data('step-index'));
+                if (!isNaN(stepIndex)) {
+                    newOrder.push(stepIndex);
+                }
+            });
+
+            // Validate that we have the right number of elements
+            if (newOrder.length !== this.tourSteps.length) {
+                console.error('DOM/steps mismatch:', {
+                    expectedSteps: this.tourSteps.length,
+                    domOrder: newOrder.length,
+                    newOrder: newOrder
+                });
+                // Re-render the steps list to fix any inconsistencies
+                this.renderStepsList();
+                return;
+            }
+
+            // Validate that all indices are valid
+            for (let i = 0; i < newOrder.length; i++) {
+                if (newOrder[i] < 0 || newOrder[i] >= this.tourSteps.length) {
+                    console.error('Invalid step index in new order:', {
+                        index: newOrder[i],
+                        position: i,
+                        validRange: `0-${this.tourSteps.length - 1}`
+                    });
+                    this.renderStepsList();
+                    return;
+                }
+            }
+
+            // Update data-step-index attributes immediately to reflect new positions
+            // This must be done BEFORE saving to server to prevent race conditions
+            // Use .data() consistently instead of mixing .data() and .attr()
+            stepItems.each((index, element) => {
+                // Use .data() for writing to match how we read it
+                $(element).data('step-index', index);
+                $(element).find('.mcl-step-action').data('step-index', index);
+                
+                // Also update the HTML attribute for consistency
+                $(element).attr('data-step-index', index);
+                $(element).find('.mcl-step-action').attr('data-step-index', index);
+            });
+
+            // Apply the reordering to our local array
+            this.applyStepsReorder(newOrder);
+
+            // Save to server
+            this.saveStepsOrderToServer(newOrder);
+        },
+
+        applyStepsReorder(newOrder) {
+            // Create a new array with steps in the new order
+            const reorderedSteps = [];
+            
+            for (let i = 0; i < newOrder.length; i++) {
+                const originalIndex = newOrder[i];
+                if (this.tourSteps[originalIndex]) {
+                    reorderedSteps.push(this.tourSteps[originalIndex]);
+                }
+            }
+
+            // Update our local steps array
+            this.tourSteps = reorderedSteps;
+
+            // Note: DOM indices are now updated in handleStepsReorder() before this function is called
+        },
+
+        saveStepsOrderToServer(newOrder) {
+            // Only save if we have a tour ID
+            if (this.currentTourId <= 0) {
+                console.warn('Cannot save step order: no tour ID');
+                return;
+            }
+
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_reorder_tour_steps',
+                tour_id: this.currentTourId,
+                step_order: newOrder,
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    console.log('Step order saved successfully:', response.data);
+                } else {
+                    console.error('Failed to save step order:', response.data);
+                    alert('Failed to save step order. Please try again.');
+                    // Reload tour data to ensure client-server synchronization
+                    this.loadTourData(this.currentTourId);
+                }
+            }).fail((xhr, status, error) => {
+                console.error('Ajax request failed when saving step order:', {
+                    error: error,
+                    status: status,
+                    response: xhr.responseText
+                });
+                alert('Failed to save step order. Please try again.');
+                // Reload tour data to ensure client-server synchronization
+                this.loadTourData(this.currentTourId);
+            });
+        },
+
+        reorderSteps(oldIndex, newIndex) {
+            // This method is now deprecated in favor of handleStepsReorder
+            // Keep it for backward compatibility but log a warning
+            console.warn('reorderSteps called with deprecated parameters, use handleStepsReorder instead');
+            this.handleStepsReorder();
+        },
+
+        loadChecklists() {
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_get_checklists_for_tour',
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    this.checklists = response.data;
+                    this.populateChecklistDropdown();
+                }
+            });
+        },
+
+        populateChecklistDropdown() {
+            const select = $('#mcl-step-checklist');
+            select.find('option:not(:first)').remove();
+
+            this.checklists.forEach(checklist => {
+                select.append(`<option value="${checklist.id}">${checklist.title}</option>`);
+            });
+        },
+
+        loadChecklistItems(checklistId) {
+            const itemSelect = $('#mcl-step-checklist-item');
+            itemSelect.find('option:not(:first)').remove();
+            
+            if (!checklistId) {
+                itemSelect.prop('disabled', true);
+                return;
+            }
+
+            const checklist = this.checklists.find(c => c.id == checklistId);
+            if (checklist && checklist.items) {
+                checklist.items.forEach(item => {
+                    itemSelect.append(`<option value="${item.id}">${item.content}</option>`);
+                });
+                itemSelect.prop('disabled', false);
+            }
+        },
+
+        loadTourData(tourId, callback) {
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_get_tour_data',
+                tour_id: tourId,
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    const data = response.data;
+                    
+                    // Clean and validate steps data
+                    let steps = data.steps || [];
+                    steps = steps.filter(step => step && typeof step === 'object');
+                    
+                    this.tourSteps = steps;
+                    this.tourSettings = data.settings || {};
+                    
+                    $('#mcl-tour-title').val(data.title || '');
+                    this.updateStepsCounter();
+                    this.renderStepsList();
+                    
+                    console.log('Tour data loaded successfully:', {
+                        tourId: tourId,
+                        stepCount: this.tourSteps.length,
+                        steps: this.tourSteps.map((s, i) => `${i+1}. ${s?.title || 'Untitled'}`)
+                    });
+                } else {
+                    console.error('Failed to load tour data:', response.data);
+                    this.tourSteps = [];
+                    this.tourSettings = {};
+                }
+                // Always call callback, even on error
+                callback && callback();
+            }).fail(() => {
+                console.error('Ajax request failed when loading tour data');
+                this.tourSteps = [];
+                this.tourSettings = {};
+                // Always call callback, even on failure
+                callback && callback();
+            });
+        },
+
+        saveTour() {
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_save_tour',
+                tour_id: this.currentTourId,
+                title: $('#mcl-tour-title').val() || 'Tour Steps',
+                steps: JSON.stringify(this.tourSteps),
+                settings: JSON.stringify(this.tourSettings),
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    alert('Tour steps saved successfully!');
+                    this.currentTourId = response.data.tour_id;
+                } else {
+                    alert('Error saving tour: ' + (response.data || 'Unknown error'));
+                }
+            });
+        },
+
+        exitCreator() {
+            if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
+                // Return to tour settings page
+                const tourId = this.currentTourId || '';
+                window.location.href = mclTour.ajax_url.replace('admin-ajax.php', 'admin.php?page=mcl_tours' + (tourId ? '&edit=' + tourId : ''));
+            }
+        },
+
+        // Tour playback methods
+        startTour(tourData) {
+            if (!tourData.steps || tourData.steps.length === 0) {
+                return;
+            }
+
+            // Check if driver.js is available
+            let driverFunction = null;
+            
+            // Try different possible locations for the driver function
+            if (typeof window.driver?.js?.driver === 'function') {
+                driverFunction = window.driver.js.driver;
+            } else if (typeof window.driver?.driver === 'function') {
+                driverFunction = window.driver.driver;
+            } else if (typeof window.driver === 'function') {
+                driverFunction = window.driver;
+            }
+            
+            if (!driverFunction) {
+                console.error('Driver.js is not available. Available on window:', Object.keys(window).filter(k => k.includes('driver')));
+                console.error('window.driver:', window.driver);
+                return;
+            }
+
+            // Filter steps for current page and handle navigation
+            const currentPageUrl = this.getCurrentPageUrl();
+            let currentPageSteps = [];
+            let nextPageStep = null;
+            let prevPageStep = null;
+            let startStepIndex = tourData.continue_from_step || 0;
+            
+            // Find steps for current page, next page step, and previous page step
+            for (let i = 0; i < tourData.steps.length; i++) {
+                const step = tourData.steps[i];
+                const stepPageUrl = step.page_url || currentPageUrl;
+                
+                if (stepPageUrl === currentPageUrl) {
+                    currentPageSteps.push({
+                        ...step,
+                        originalIndex: i
+                    });
+                }
+                
+                // Find next step on different page (after startStepIndex)
+                if (i > startStepIndex && !nextPageStep && stepPageUrl !== currentPageUrl) {
+                    nextPageStep = {
+                        ...step,
+                        originalIndex: i
+                    };
+                }
+                
+                // Find previous step on different page (before startStepIndex)
+                if (i < startStepIndex && stepPageUrl !== currentPageUrl) {
+                    prevPageStep = {
+                        ...step,
+                        originalIndex: i
+                    };
+                }
+            }
+            
+            // If continuing a tour, filter steps to start from the right one
+            if (tourData.continue_from_step !== undefined) {
+                currentPageSteps = currentPageSteps.filter(step => step.originalIndex >= startStepIndex);
+            }
+            
+            if (currentPageSteps.length === 0) {
+                if (nextPageStep) {
+                    // No steps on current page, navigate to next step's page
+                    this.navigateToTourStep(tourData.id, nextPageStep);
+                    return;
+                } else if (tourData.continue_from_step !== undefined) {
+                    // Tour continuation but no valid steps found
+                    console.log('No valid steps found for tour continuation');
+                    return;
+                }
+            }
+
+            const steps = currentPageSteps.map((step, index) => {
+                const isLastStepOnPage = index === currentPageSteps.length - 1;
+                let description = step.content;
+                let showButtons = step.show_buttons !== false ? ['next', 'previous', 'close'] : ['close'];
+                
+                // Modify the last step if there are more steps on other pages
+                if (isLastStepOnPage && nextPageStep) {
+                    description += `<br><br><em>Click "Continue" to go to the next page...</em>`;
+                    // Force showing next button even on last step when there are more steps
+                    showButtons = ['next', 'previous', 'close'];
+                }
+                
+                return {
+                    element: step.element,
+                    popover: {
+                        title: step.title,
+                        description: description,
+                        side: step.position || 'bottom',
+                        showButtons: showButtons
+                    }
+                };
+            });
+
+            const driver = driverFunction({
+                showProgress: true,
+                allowClose: true,
+                doneBtnText: mclTour.i18n.done || 'Done',
+                nextBtnText: nextPageStep ? 'Continue' : (mclTour.i18n.next || 'Next'),
+                prevBtnText: mclTour.i18n.prev || 'Previous',
+                steps: steps,
+                onNextClick: (element, step, options) => {
+                    const currentStepIndex = driver.getActiveIndex();
+                    const isLastStep = currentStepIndex === steps.length - 1;
+                    
+                    if (isLastStep && nextPageStep) {
+                        // Navigate to next page step
+                        console.log('Navigating to next page via Next button');
+                        driver.destroy();
+                        this.navigateToTourStep(tourData.id, nextPageStep);
+                        return;
+                    }
+                    
+                    // Default next behavior
+                    driver.moveNext();
+                },
+                onPrevClick: (element, step, options) => {
+                    const currentDriverStep = driver.getActiveIndex();
+                    const isFirstDriverStep = currentDriverStep === 0;
+                    
+                    console.log('Previous clicked:', {
+                        currentDriverStep,
+                        isFirstDriverStep,
+                        startStepIndex
+                    });
+                    
+                    if (isFirstDriverStep && startStepIndex > 0) {
+                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex);
+                        const prevGlobalIndex = currentGlobalIndex - 1;
+                        if (prevGlobalIndex >= 0) {
+                            const prevRaw = tourData.steps[prevGlobalIndex];
+                            const prevUrl = prevRaw.page_url || currentPageUrl;
+                            if (prevUrl === currentPageUrl) {
+                                console.log('Restarting tour on same page via Previous button');
+                                driver.destroy();
+                                const newTourData = Object.assign({}, tourData, { continue_from_step: prevGlobalIndex });
+                                this.startTour(newTourData);
+                            } else {
+                                console.log('Navigating to previous page via Previous button');
+                                driver.destroy();
+                                this.navigateToTourStep(tourData.id, {
+                                    page_url: prevUrl,
+                                    originalIndex: prevGlobalIndex
+                                });
+                            }
+                            return;
+                        }
+                    }
+                    
+                    // Only call movePrevious if we can move within current driver instance
+                    if (!isFirstDriverStep) {
+                        driver.movePrevious();
+                    }
+                },
+                onHighlighted: (element, step, options) => {
+                    const currentStepIndex = driver.getActiveIndex();
+                    const isLastStep = currentStepIndex === steps.length - 1;
+                    
+                    console.log('Step highlighted:', {
+                        index: currentStepIndex,
+                        isLastStep: isLastStep,
+                        hasNextPageStep: !!nextPageStep
+                    });
+                },
+                onDestroyed: () => {
+                    // Only mark as completed if there are no more steps on other pages
+                    if (!nextPageStep) {
+                        console.log('Tour completed - no more steps');
+                        this.markTourCompleted(tourData.id);
+                    } else {
+                        console.log('Tour destroyed but more steps exist on other pages');
+                    }
+                }
+            });
+
+            driver.drive();
+            
+            // Update progress and buttons after a short delay to ensure driver is initialized
+            setTimeout(() => {
+                const initialGlobalIndex = tourData.continue_from_step || 0;
+                this.updateTourProgress(initialGlobalIndex + 1, tourData.steps.length);
+                this.updateTourButtons(initialGlobalIndex, tourData.steps.length, 0);
+            }, 200);
+        },
+
+        navigateToTourStep(tourId, step) {
+            if (!step.page_url) {
+                console.log('No page URL for step, skipping navigation');
+                return;
+            }
+            
+            console.log('Navigating to tour step:', {
+                tourId: tourId,
+                stepIndex: step.originalIndex,
+                pageUrl: step.page_url,
+                currentUrl: window.location.href
+            });
+            
+            // Show loading indicator
+            this.showNavigationLoading();
+            
+            // Add tour continuation parameters
+            // Use current page as base to properly resolve relative URLs
+            const url = new URL(step.page_url, window.location.href);
+            url.searchParams.set('mcl_continue_tour', tourId);
+            url.searchParams.set('mcl_tour_step', step.originalIndex);
+            
+            const finalUrl = url.toString();
+            console.log('Final navigation URL:', finalUrl);
+            
+            window.location.href = finalUrl;
+        },
+
+        markTourCompleted(tourId) {
+            // Check if this is a first login tour
+            const tour = mclTour.tours.find(t => t.id == tourId);
+            const isFirstLoginTour = tour && tour.trigger_type === 'first_login';
+            
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_mark_tour_complete',
+                tour_id: tourId,
+                is_first_login: isFirstLoginTour,
+                nonce: mclTour.nonce
+            });
+        },
+
+        checkForPreviewStart() {
+            // Check if we should auto-start a preview
+            const urlParams = new URLSearchParams(window.location.search);
+            const previewStep = urlParams.get('mcl_preview_step');
+            
+            if (previewStep !== null) {
+                const stepIndex = parseInt(previewStep);
+                console.log('Auto-starting preview from step:', stepIndex);
+                
+                // Validate that we have tour steps loaded
+                if (!this.tourSteps || this.tourSteps.length === 0) {
+                    console.error('Cannot start preview: no tour steps loaded');
+                    return;
+                }
+                
+                // Validate step index
+                if (stepIndex < 0 || stepIndex >= this.tourSteps.length) {
+                    console.error('Invalid step index for preview:', stepIndex, 'Total steps:', this.tourSteps.length);
+                    return;
+                }
+                
+                // Small delay to ensure everything is loaded
+                setTimeout(() => {
+                    console.log('Starting preview with', this.tourSteps.length, 'total steps from step', stepIndex);
+                    this.startPreviewFromStep(stepIndex);
+                }, 500);
+            }
+        },
+
+        startPreviewFromStep(fromStepIndex) {
+            if (this.tourSteps.length === 0) {
+                console.log('No tour steps available for preview');
+                return;
+            }
+
+            const driverFunction = this.getDriverFunction();
+            if (!driverFunction) {
+                console.error('Driver.js not available for preview');
+                return;
+            }
+
+            const currentPageUrl = this.getCurrentPageUrl();
+            
+            // Convert all tour steps to driver.js format
+            const allSteps = this.tourSteps.map((step, index) => {
+                const stepPageUrl = step.page_url || currentPageUrl;
+                const isOnCurrentPage = stepPageUrl === currentPageUrl;
+                const isLastStep = index === this.tourSteps.length - 1;
+                
+                console.log(`Processing step ${index}:`, {
+                    stepPageUrl,
+                    currentPageUrl,
+                    isOnCurrentPage,
+                    fromStepIndex,
+                    shouldInclude: isOnCurrentPage && index >= fromStepIndex
+                });
+                
+                // For steps not on current page, we'll skip them in the driver
+                if (!isOnCurrentPage) {
+                    return null;
+                }
+                
+                // Also skip steps before fromStepIndex
+                if (index < fromStepIndex) {
+                    return null;
+                }
+                
+                let description = step.content;
+                
+                // Check if there are more steps after this one (on any page)
+                const hasMoreSteps = index < this.tourSteps.length - 1;
+                const isLastStepOnCurrentPage = this.isLastStepOnCurrentPage(index, currentPageUrl);
+                
+                if (isLastStepOnCurrentPage && hasMoreSteps) {
+                    description += `<br><br><em>Click "Continue" to go to the next page...</em>`;
+                }
+                
+                return {
+                    element: step.element,
+                    popover: {
+                        title: step.title,
+                        description: description,
+                        side: step.position || 'bottom',
+                        showButtons: step.show_buttons !== false ? ['next', 'previous', 'close'] : ['close']
+                    }
+                };
+            }).filter(step => step !== null); // Remove null steps (steps not on current page)
+            
+            if (allSteps.length === 0) {
+                // No steps on current page, find the next page
+                for (let i = fromStepIndex; i < this.tourSteps.length; i++) {
+                    const stepPageUrl = this.tourSteps[i].page_url || currentPageUrl;
+                    if (stepPageUrl !== currentPageUrl) {
+                        this.navigateToTourPreview({
+                            page_url: stepPageUrl,
+                            originalIndex: i
+                        });
+                        return;
+                    }
+                }
+                console.log('No steps found for preview continuation');
+                return;
+            }
+
+            console.log('Driver steps to execute:', {
+                allStepsCount: allSteps.length,
+                fromStepIndex,
+                currentPageUrl
+            });
+
+            // Calculate total step count and current position in entire tour
+            const totalSteps = this.tourSteps.length;
+            
+            // Find the last global step index that will be shown on this page
+            let lastGlobalStepOnThisPage = -1;
+            for (let i = this.tourSteps.length - 1; i >= fromStepIndex; i--) {
+                const stepPageUrl = this.tourSteps[i].page_url || currentPageUrl;
+                if (stepPageUrl === currentPageUrl) {
+                    lastGlobalStepOnThisPage = i;
+                    break;
+                }
+            }
+            
+            // Determine if there are more steps after the last step on this page
+            const hasMoreStepsAfterPage = lastGlobalStepOnThisPage < this.tourSteps.length - 1;
+            
+            console.log('Preview navigation debug:', {
+                fromStepIndex,
+                currentPageUrl,
+                lastGlobalStepOnThisPage,
+                totalSteps,
+                hasMoreStepsAfterPage,
+                allStepsCount: allSteps.length
+            });
+            
+            // Calculate the initial global step position
+            const initialGlobalPosition = fromStepIndex + 1;
+            
+            const driver = driverFunction({
+                showProgress: true,
+                allowClose: true,
+                doneBtnText: hasMoreStepsAfterPage ? 'Continue' : 'Close Preview',
+                nextBtnText: 'Next',
+                prevBtnText: 'Previous',
+                progressText: `${initialGlobalPosition} of ${totalSteps}`, // Start with correct position
+                steps: allSteps,
+                onNextClick: (element, step, options) => {
+                    const currentDriverStep = driver.getActiveIndex();
+                    const isLastDriverStep = currentDriverStep === allSteps.length - 1;
+                    
+                    console.log('Next clicked:', {
+                        currentDriverStep,
+                        isLastDriverStep,
+                        totalDriverSteps: allSteps.length
+                    });
+                    
+                    if (isLastDriverStep) {
+                        // Find the next step in the global tour
+                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
+                        const nextGlobalIndex = currentGlobalIndex + 1;
+                        
+                        console.log('Last driver step reached:', {
+                            currentGlobalIndex,
+                            nextGlobalIndex,
+                            totalGlobalSteps: this.tourSteps.length
+                        });
+                        
+                        if (nextGlobalIndex < this.tourSteps.length) {
+                            // Navigate to next step (possibly on different page)
+                            const nextStep = this.tourSteps[nextGlobalIndex];
+                            const nextStepPageUrl = nextStep.page_url || currentPageUrl;
+                            
+                            console.log('Next step found:', {
+                                nextStepPageUrl,
+                                currentPageUrl,
+                                isDifferentPage: nextStepPageUrl !== currentPageUrl
+                            });
+                            
+                            if (nextStepPageUrl !== currentPageUrl) {
+                                console.log('Navigating to next page via Next button (Preview)');
+                                driver.destroy();
+                                this.navigateToTourPreview({
+                                    page_url: nextStepPageUrl,
+                                    originalIndex: nextGlobalIndex
+                                });
+                                return;
+                            } else {
+                                // This shouldn't happen if filtering is correct
+                                console.warn('Next step is on same page but not in driver steps - this is unexpected');
+                                return;
+                            }
+                        } else {
+                            // No more steps in the entire tour - let it complete naturally
+                            console.log('Tour completed - no more steps anywhere');
+                            // Don't call moveNext(), let the tour complete naturally
+                            driver.destroy();
+                            return;
+                        }
+                    }
+                    
+                    // Only call moveNext if we're not on the last step
+                    if (!isLastDriverStep) {
+                        driver.moveNext();
+                    } else {
+                        // On last step of current page, check if it's also the last step globally
+                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
+                        if (currentGlobalIndex === this.tourSteps.length - 1) {
+                            // This is the very last step - close the preview
+                            console.log('Closing preview from last step');
+                            driver.destroy();
+                        }
+                    }
+                },
+                onPrevClick: (element, step, options) => {
+                    const currentDriverStep = driver.getActiveIndex();
+                    const isFirstDriverStep = currentDriverStep === 0;
+                    
+                    console.log('Previous clicked:', {
+                        currentDriverStep,
+                        isFirstDriverStep,
+                        fromStepIndex
+                    });
+                    
+                    if (isFirstDriverStep && fromStepIndex > 0) {
+                        // Find the previous step in the global tour
+                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
+                        const prevGlobalIndex = currentGlobalIndex - 1;
+                        
+                        console.log('First driver step reached:', {
+                            currentGlobalIndex,
+                            prevGlobalIndex
+                        });
+                        
+                        if (prevGlobalIndex >= 0) {
+                            const prevStep = this.tourSteps[prevGlobalIndex];
+                            const prevStepPageUrl = prevStep.page_url || currentPageUrl;
+                            
+                            console.log('Previous step found:', {
+                                prevStepPageUrl,
+                                currentPageUrl,
+                                isDifferentPage: prevStepPageUrl !== currentPageUrl
+                            });
+                            
+                            if (prevStepPageUrl !== currentPageUrl) {
+                                console.log('Navigating to previous page via Previous button (Preview)');
+                                driver.destroy();
+                                this.navigateToTourPreview({
+                                    page_url: prevStepPageUrl,
+                                    originalIndex: prevGlobalIndex
+                                });
+                                return;
+                            } else {
+                                // Previous step is on same page but was filtered out - need to restart tour from that step
+                                console.log('Previous step is on same page, restarting tour from step:', prevGlobalIndex);
+                                driver.destroy();
+                                this.startPreviewFromStep(prevGlobalIndex);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Only call movePrevious if we can move within current driver instance
+                    if (!isFirstDriverStep) {
+                        driver.movePrevious();
+                    }
+                },
+                onHighlighted: (element, step, options) => {
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
+                    
+                    // Update the progress text with correct global step position (with delay to ensure DOM is ready)
+                    setTimeout(() => {
+                        this.updateTourProgress(currentGlobalIndex + 1, totalSteps);
+                        this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
+                    }, 100);
+                    
+                    // Also update buttons after a longer delay to override any driver.js changes
+                    setTimeout(() => {
+                        this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
+                    }, 300);
+                    
+                    console.log('Preview step highlighted:', {
+                        driverIndex: currentDriverStep,
+                        globalIndex: currentGlobalIndex,
+                        globalPosition: currentGlobalIndex + 1,
+                        totalSteps: totalSteps
+                    });
+                },
+                onDestroyed: () => {
+                    console.log('Preview destroyed');
+                }
+            });
+
+            // Since we already filtered the steps to start from the correct index,
+            // we can just start the driver normally
+            driver.drive();
+            
+            // Update progress and buttons after a short delay to ensure driver is initialized
+            setTimeout(() => {
+                const initialGlobalIndex = fromStepIndex;
+                this.updateTourProgress(initialGlobalIndex + 1, totalSteps);
+                this.updateTourButtons(initialGlobalIndex, totalSteps, fromStepIndex);
+            }, 200);
+        },
+
+        getCurrentGlobalStepIndex(driverStepIndex, currentPageUrl, fromStepIndex) {
+            // Convert driver step index back to global step index
+            let globalIndex = fromStepIndex;
+            let currentPageStepCount = 0;
+            
+            for (let i = fromStepIndex; i < this.tourSteps.length; i++) {
+                const stepPageUrl = this.tourSteps[i].page_url || currentPageUrl;
+                if (stepPageUrl === currentPageUrl) {
+                    if (currentPageStepCount === driverStepIndex) {
+                        return i;
+                    }
+                    currentPageStepCount++;
+                }
+            }
+            
+            return fromStepIndex + driverStepIndex;
+        },
+
+        isLastStepOnCurrentPage(stepIndex, currentPageUrl) {
+            // Check if this is the last step on the current page
+            for (let i = stepIndex + 1; i < this.tourSteps.length; i++) {
+                const stepPageUrl = this.tourSteps[i].page_url || currentPageUrl;
+                if (stepPageUrl === currentPageUrl) {
+                    return false; // Found another step on current page
+                }
+            }
+            return true; // No more steps on current page
+        },
+
+        getDriverFunction() {
+            // Try different possible locations for the driver function
+            if (typeof window.driver?.js?.driver === 'function') {
+                return window.driver.js.driver;
+            } else if (typeof window.driver?.driver === 'function') {
+                return window.driver.driver;
+            } else if (typeof window.driver === 'function') {
+                return window.driver;
+            }
+            return null;
+        },
+
+        updateTourProgress(currentStep, totalSteps) {
+            // Update the progress text in driver.js
+            const progressElement = document.querySelector('.driver-popover-progress-text');
+            if (progressElement) {
+                progressElement.textContent = `${currentStep} of ${totalSteps}`;
+            }
+        },
+
+        updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex) {
+            // Enable/disable buttons based on global tour position
+            const prevButton = document.querySelector('.driver-popover-prev-btn');
+            const nextButton = document.querySelector('.driver-popover-next-btn');
+            const closeButton = document.querySelector('.driver-popover-close-btn');
+            
+            if (prevButton) {
+                // Previous button should be enabled if we're not at the very first step (global index 0)
+                const isFirstGlobalStep = currentGlobalIndex === 0;
+                
+                // Force enable/disable regardless of driver.js state
+                if (!isFirstGlobalStep) {
+                    prevButton.disabled = false;
+                    prevButton.style.opacity = '1';
+                    prevButton.style.pointerEvents = 'auto';
+                    prevButton.removeAttribute('disabled');
+                } else {
+                    prevButton.disabled = true;
+                    prevButton.style.opacity = '0.5';
+                    prevButton.style.pointerEvents = 'none';
+                }
+                
+                console.log('Previous button state:', {
+                    currentGlobalIndex,
+                    isFirstGlobalStep,
+                    disabled: isFirstGlobalStep
+                });
+            }
+            
+            if (nextButton) {
+                // Next button should be enabled if we're not at the very last step
+                const isLastGlobalStep = currentGlobalIndex === totalSteps - 1;
+                
+                if (!isLastGlobalStep) {
+                    // Enable next button for non-last steps
+                    nextButton.disabled = false;
+                    nextButton.style.opacity = '1';
+                    nextButton.style.pointerEvents = 'auto';
+                    nextButton.removeAttribute('disabled');
+                    
+                    // Check if next step is on different page
+                    const nextStepIndex = currentGlobalIndex + 1;
+                    if (nextStepIndex < this.tourSteps.length) {
+                        const currentPageUrl = this.getCurrentPageUrl();
+                        const nextStep = this.tourSteps[nextStepIndex];
+                        const nextStepPageUrl = nextStep.page_url || currentPageUrl;
+                        nextButton.textContent = nextStepPageUrl !== currentPageUrl ? 'Continue' : 'Next';
+                    }
+                } else {
+                    // On last step - convert next button to close button or hide it
+                    nextButton.textContent = 'Close Preview';
+                    nextButton.disabled = false;
+                    nextButton.style.opacity = '1';
+                    nextButton.style.pointerEvents = 'auto';
+                    nextButton.removeAttribute('disabled');
+                }
+            }
+            
+            // Ensure close button is always enabled
+            if (closeButton) {
+                closeButton.disabled = false;
+                closeButton.style.opacity = '1';
+                closeButton.style.pointerEvents = 'auto';
+                closeButton.removeAttribute('disabled');
+            }
+        },
+
+        /**
+         * Check if any modal is currently open
+         */
+        isModalOpen() {
+            return $('#mcl-step-editor-modal').hasClass('active');
+        },
+
+    };
+
+    // Initialize when document is ready
+    $(document).ready(() => {
+        TourCreator.init();
+    });
+
+    // Expose to global scope
+    window.mclTourCreator = TourCreator;
+
+})(jQuery);

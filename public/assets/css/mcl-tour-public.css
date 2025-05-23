@@ -1,0 +1,726 @@
+/**
+ * Tour Public CSS
+ * Styles for tour creator interface and tour display
+ */
+
+/* Tour Creator Interface */
+.mcl-tour-creator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999999;
+    pointer-events: none;
+}
+
+/* Floating Control Panel */
+.mcl-tour-floating-panel {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    width: 280px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    pointer-events: all;
+    z-index: 1000000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: default;
+}
+
+.mcl-panel-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: move;
+}
+
+.mcl-panel-drag-handle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: move;
+}
+
+.mcl-panel-drag-handle .dashicons {
+    color: #8c8f94;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.mcl-panel-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.mcl-panel-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: #646970;
+}
+
+.mcl-panel-toggle:hover {
+    color: #2271b1;
+}
+
+.mcl-panel-content {
+    padding: 15px;
+}
+
+.mcl-tour-floating-panel.collapsed .mcl-panel-content {
+    display: none;
+}
+
+.mcl-tour-floating-panel.collapsed .mcl-panel-toggle .dashicons {
+    transform: rotate(180deg);
+}
+
+/* Mode Section */
+.mcl-mode-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f0f6fc;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+}
+
+.mcl-mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.mcl-mode-indicator[data-mode="select"] {
+    color: #1d4ed8;
+}
+
+.mcl-mode-indicator[data-mode="navigate"] {
+    color: #166534;
+}
+
+.mcl-mode-indicator .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Actions Section */
+.mcl-actions-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.mcl-actions-section .button {
+    font-size: 12px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mcl-actions-section .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* Steps Info */
+.mcl-steps-info {
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #646970;
+}
+
+.mcl-steps-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.mcl-steps-count {
+    flex: 1;
+    text-align: center;
+    font-weight: 500;
+}
+
+.mcl-steps-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: #646970;
+    display: flex;
+    align-items: center;
+}
+
+.mcl-steps-toggle:hover {
+    color: #2271b1;
+}
+
+.mcl-steps-toggle .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s;
+}
+
+#mcl-steps-info.expanded .mcl-steps-toggle .dashicons {
+    transform: rotate(180deg);
+}
+
+.mcl-steps-list {
+    margin-top: 8px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.mcl-no-steps {
+    text-align: center;
+    color: #8c8f94;
+    font-style: italic;
+    padding: 8px;
+}
+
+.mcl-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px;
+    margin-bottom: 4px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    font-size: 11px;
+    transition: all 0.2s ease;
+    cursor: grab;
+}
+
+.mcl-step-item:hover {
+    background: #f8f9fa;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mcl-step-item.sortable-drag {
+    cursor: grabbing;
+    opacity: 0.8;
+    transform: rotate(1deg);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.mcl-step-item.sortable-ghost {
+    opacity: 0.3;
+    background: #e3f2fd;
+}
+
+.mcl-step-drag-handle {
+    color: #8c8f94;
+    cursor: grab;
+    padding: 2px;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.mcl-step-drag-handle:hover {
+    color: #2271b1;
+    background: #f0f6fc;
+}
+
+.mcl-step-drag-handle .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+.mcl-step-number {
+    background: #2271b1;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.mcl-step-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.mcl-step-title {
+    font-weight: 500;
+    color: #1d2327;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcl-step-element {
+    color: #646970;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcl-step-page {
+    color: #2271b1;
+    font-size: 10px;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.mcl-step-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mcl-step-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: #646970;
+    border-radius: 2px;
+}
+
+.mcl-step-action:hover {
+    background: #e0e0e0;
+    color: #2271b1;
+}
+
+.mcl-step-action.delete:hover {
+    color: #d63638;
+}
+
+.mcl-step-action .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+/* Navigation Mode */
+.mcl-tour-creator[data-mode="navigate"] {
+    pointer-events: none;
+}
+
+.mcl-tour-creator[data-mode="navigate"] .mcl-tour-floating-panel {
+    pointer-events: all;
+}
+
+/* Element highlighting */
+.mcl-element-highlight {
+    position: fixed;
+    border: 2px solid #2271b1;
+    background: rgba(34, 113, 177, 0.1);
+    pointer-events: none;
+    z-index: 1000001;
+    border-radius: 2px;
+}
+
+/* Modals - Fixed Full Screen */
+.mcl-tour-step-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000002;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.mcl-tour-step-modal.active {
+    display: flex;
+}
+
+.mcl-modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.mcl-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.mcl-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1d2327;
+}
+
+.mcl-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: #646970;
+    font-size: 18px;
+}
+
+.mcl-modal-close:hover {
+    color: #2271b1;
+}
+
+.mcl-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mcl-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Form Styles */
+.mcl-form-group {
+    margin-bottom: 20px;
+}
+
+.mcl-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.mcl-form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+}
+
+.mcl-form-control:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.mcl-form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.mcl-form-col {
+    flex: 1;
+}
+
+.mcl-selector-group {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.mcl-selector-group input {
+    flex: 1;
+}
+
+.mcl-selector-group .button {
+    flex-shrink: 0;
+    padding: 8px;
+    min-width: auto;
+}
+
+.description {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+/* Tour Display Buttons */
+.mcl-tour-trigger-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2271b1;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mcl-tour-trigger-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+.mcl-tour-trigger-btn .dashicons {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+}
+
+/* Driver.js customizations */
+.driver-popover {
+    max-width: 400px;
+}
+
+.driver-popover .driver-popover-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.driver-popover .driver-popover-description {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.driver-popover .driver-popover-description img {
+    max-width: 100%;
+    height: auto;
+}
+
+.driver-popover .driver-popover-description em {
+    color: #2271b1;
+    font-style: normal;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.driver-popover .driver-popover-description em:before {
+    content: "→";
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Tour progress indicator */
+.mcl-tour-progress {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 1000001;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .mcl-tour-floating-panel {
+        width: calc(100vw - 40px);
+        right: 20px;
+        left: 20px;
+        top: 20px;
+    }
+    
+    .mcl-modal-content {
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        border-radius: 0;
+        height: 100vh;
+        max-height: none;
+    }
+    
+    .mcl-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .mcl-actions-section {
+        justify-content: center;
+    }
+    
+    .mcl-tour-trigger-btn {
+        width: 50px;
+        height: 50px;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mcl-tour-floating-panel {
+        width: calc(100vw - 20px);
+        right: 10px;
+        left: 10px;
+        top: 10px;
+    }
+    
+    .mcl-modal {
+        padding: 0;
+    }
+    
+    .mcl-actions-section .button {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+}
+
+/* Animation for element highlighting */
+@keyframes mcl-highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 113, 177, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(34, 113, 177, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 113, 177, 0);
+    }
+}
+
+.mcl-element-highlight.pulse {
+    animation: mcl-highlight-pulse 2s infinite;
+}
+
+/* Loading states */
+.mcl-tour-loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 4px;
+    z-index: 1000003;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mcl-tour-navigation-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000003;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mcl-tour-loading-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.mcl-tour-loading-text {
+    margin-top: 15px;
+    font-size: 16px;
+    color: #1d2327;
+    font-weight: 500;
+}
+
+.mcl-tour-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2271b1;
+    border-radius: 50%;
+    animation: mcl-spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes mcl-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Panel dragging states */
+.mcl-tour-floating-panel.dragging {
+    user-select: none;
+    transition: none;
+}
+
+.mcl-tour-floating-panel.dragging .mcl-panel-header {
+    cursor: grabbing;
+}
+
+/* Element reselection overlay */
+.mcl-reselect-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 6px;
+    font-size: 14px;
+    z-index: 1000003;
+    pointer-events: none;
+} 
