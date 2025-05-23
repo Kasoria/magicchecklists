@@ -77,6 +77,15 @@ class MCL_Settings {
                 'sanitize_callback' => array($this, 'sanitize_integration_settings')
             )
         );
+        
+        register_setting(
+            'mcl_dashboard_widget_settings_group',
+            'mcl_dashboard_widget_settings',
+            array(
+                'type' => 'array',
+                'sanitize_callback' => array($this, 'sanitize_dashboard_widget_settings')
+            )
+        );
 
         add_settings_section(
             'mcl_general_settings',
@@ -90,6 +99,13 @@ class MCL_Settings {
             __('API & Webhook settings', 'magic-checklists'),
             array($this, 'render_webhook_section_description'),
             'mcl_integration_settings'
+        );
+
+        add_settings_section(
+            'mcl_dashboard_widget_settings',
+            __('Dashboard Widget', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_section_description'),
+            'mcl_dashboard_settings'
         );
 
         add_settings_field(
@@ -173,11 +189,74 @@ class MCL_Settings {
             'mcl_integration_settings',
             'mcl_webhook_settings'
         );
+
+        // Dashboard Widget Settings
+        add_settings_field(
+            'dashboard_widget_enabled',
+            __('Enable Dashboard Widget', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_enabled_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_checklists',
+            __('Show Checklists', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_checklists_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_checklist_items',
+            __('Show Checklist Items', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_items_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_deadlines',
+            __('Show Deadlines', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_deadlines_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_tags',
+            __('Show Tags', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_tags_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_descriptions',
+            __('Show Descriptions', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_descriptions_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_show_quick_actions',
+            __('Show Quick Actions', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_show_quick_actions_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
     }
 
     public function render_webhook_section_description() {
         echo '<p class="mcl-description">' . 
              esc_html__('Enable / disable the API endpoints of MagicChecklists, test webhook URLs and more.', 'magic-checklists') . 
+             '</p>';
+    }
+
+    public function render_dashboard_widget_section_description() {
+        echo '<p class="mcl-description">' . 
+             esc_html__('Configure the MagicChecklists dashboard widget that appears on the WordPress admin dashboard. At least one display option must be enabled for the widget to appear.', 'magic-checklists') . 
              '</p>';
     }
 
@@ -373,6 +452,11 @@ class MCL_Settings {
     }
     
     public static function get_setting($key, $default = false) {
+        if ($key === 'dashboard_widget') {
+            $options = get_option('mcl_dashboard_widget_settings', array());
+            return !empty($options) ? $options : $default;
+        }
+        
         $options = get_option('mcl_settings', array());
         return isset($options[$key]) ? $options[$key] : $default;
     }
@@ -825,5 +909,200 @@ class MCL_Settings {
         });
         </script>
         <?php
+    }
+
+    // Dashboard Widget Field Renderers
+    public function render_dashboard_widget_enabled_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $enabled = isset($widget_settings['enabled']) ? $widget_settings['enabled'] : false;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[enabled]" 
+                       <?php checked($enabled, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Enable the MagicChecklists widget on the WordPress admin dashboard.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_checklists_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_checklists = isset($widget_settings['show_checklists']) ? $widget_settings['show_checklists'] : true;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[show_checklists]" 
+                       <?php checked($show_checklists, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display a list of all checklists with their current status.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_items_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_items = isset($widget_settings['show_checklist_items']) ? $widget_settings['show_checklist_items'] : false;
+        $selected_checklist = isset($widget_settings['selected_checklist']) ? $widget_settings['selected_checklist'] : '';
+        
+        // Get all checklists for the dropdown
+        $checklists = get_posts(array(
+            'post_type' => 'mcl_checklist',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC'
+        ));
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       id="show_checklist_items"
+                       name="mcl_dashboard_widget_settings[show_checklist_items]" 
+                       <?php checked($show_items, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display items from a specific checklist. Select which checklist below.', 'magic-checklists'); ?>
+            </p>
+            <div class="mcl-dependent-field" style="margin-top: 10px; display: <?php echo $show_items ? 'block' : 'none'; ?>;">
+                <select name="mcl_dashboard_widget_settings[selected_checklist]" class="regular-text">
+                    <option value=""><?php esc_html_e('Select a checklist', 'magic-checklists'); ?></option>
+                    <?php foreach ($checklists as $checklist): ?>
+                        <option value="<?php echo esc_attr($checklist->ID); ?>" 
+                                <?php selected($selected_checklist, $checklist->ID); ?>>
+                            <?php echo esc_html($checklist->post_title); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            $('#show_checklist_items').on('change', function() {
+                $('.mcl-dependent-field').toggle(this.checked);
+            });
+        });
+        </script>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_deadlines_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_deadlines = isset($widget_settings['show_deadlines']) ? $widget_settings['show_deadlines'] : false;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[show_deadlines]" 
+                       <?php checked($show_deadlines, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display upcoming deadlines for checklist items with color-coded urgency.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_tags_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_tags = isset($widget_settings['show_tags']) ? $widget_settings['show_tags'] : false;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[show_tags]" 
+                       <?php checked($show_tags, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display tags associated with each checklist.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_descriptions_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_descriptions = isset($widget_settings['show_descriptions']) ? $widget_settings['show_descriptions'] : false;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[show_descriptions]" 
+                       <?php checked($show_descriptions, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display a truncated description for each checklist.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_show_quick_actions_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $show_quick_actions = isset($widget_settings['show_quick_actions']) ? $widget_settings['show_quick_actions'] : true;
+        ?>
+        <div class="mcl-toggle-wrapper">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                       name="mcl_dashboard_widget_settings[show_quick_actions]" 
+                       <?php checked($show_quick_actions, true); ?>>
+                <span class="mcl-switch-label"></span>
+            </label>
+            <p class="mcl-description">
+                <?php esc_html_e('Display quick action buttons to activate/deactivate checklists directly from the dashboard.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function sanitize_dashboard_widget_settings($input) {
+        $sanitized = array();
+        
+        if (isset($input['enabled'])) {
+            $sanitized['enabled'] = (bool) $input['enabled'];
+        }
+        
+        if (isset($input['show_checklists'])) {
+            $sanitized['show_checklists'] = (bool) $input['show_checklists'];
+        }
+        
+        if (isset($input['show_checklist_items'])) {
+            $sanitized['show_checklist_items'] = (bool) $input['show_checklist_items'];
+        }
+        
+        if (isset($input['selected_checklist'])) {
+            $sanitized['selected_checklist'] = intval($input['selected_checklist']);
+        }
+        
+        if (isset($input['show_deadlines'])) {
+            $sanitized['show_deadlines'] = (bool) $input['show_deadlines'];
+        }
+        
+        if (isset($input['show_tags'])) {
+            $sanitized['show_tags'] = (bool) $input['show_tags'];
+        }
+        
+        if (isset($input['show_descriptions'])) {
+            $sanitized['show_descriptions'] = (bool) $input['show_descriptions'];
+        }
+        
+        if (isset($input['show_quick_actions'])) {
+            $sanitized['show_quick_actions'] = (bool) $input['show_quick_actions'];
+        }
+        
+        return $sanitized;
     }
 }

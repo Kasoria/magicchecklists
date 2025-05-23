@@ -27,6 +27,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                 class="nav-tab <?php echo $active_tab === 'general' ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e('General', 'magic-checklists'); ?>
             </a>
+            <a href="?page=mcl_settings&tab=dashboard" 
+                class="nav-tab <?php echo $active_tab === 'dashboard' ? 'nav-tab-active' : ''; ?>">
+                <?php esc_html_e('Dashboard Widget', 'magic-checklists'); ?>
+            </a>
             <a href="?page=mcl_settings&tab=integrations" 
                 class="nav-tab <?php echo $active_tab === 'integrations' ? 'nav-tab-active' : ''; ?>">
                 <?php esc_html_e('Integrations', 'magic-checklists'); ?>
@@ -41,6 +45,16 @@ if ( ! defined( 'ABSPATH' ) ) {
                 ?>
                 <div class="mcl-form-actions">
                     <?php submit_button(__('Save Settings', 'magic-checklists'), 'mcl-button mcl-button-primary'); ?>
+                </div>
+            </form>
+        <?php elseif ($active_tab === 'dashboard'): ?>
+            <form method="post" action="options.php" class="mcl-form">
+                <?php
+                settings_fields('mcl_dashboard_widget_settings_group');
+                do_settings_sections('mcl_dashboard_settings');
+                ?>
+                <div class="mcl-form-actions">
+                    <?php submit_button(__('Save Dashboard Widget Settings', 'magic-checklists'), 'mcl-button mcl-button-primary'); ?>
                 </div>
             </form>
         <?php else: ?>
