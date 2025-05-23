@@ -21,7 +21,6 @@ class MCL_Shortcode {
         
         // Register assets
         add_action('wp_enqueue_scripts', array($this, 'register_assets'));
-        error_log("shortcode classloaded");
     }
 
     public function register_assets() {
