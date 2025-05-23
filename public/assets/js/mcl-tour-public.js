@@ -67,12 +67,6 @@
                         if (tour.autostart || tour.continue_from_step !== undefined) {
                             // Add a small delay to ensure the page is fully loaded
                             setTimeout(() => {
-                                console.log('Starting tour:', {
-                                    id: tour.id,
-                                    triggerType: tour.trigger_type,
-                                    autostart: tour.autostart,
-                                    continueFromStep: tour.continue_from_step
-                                });
                                 this.startTour(tour);
                             }, 500);
                         }
@@ -397,13 +391,6 @@
             if (url.searchParams.toString()) {
                 cleanUrl += '?' + url.searchParams.toString();
             }
-            
-            console.log('getCurrentPageUrl:', {
-                original: window.location.href,
-                pathname: url.pathname,
-                search: url.searchParams.toString(),
-                cleaned: cleanUrl
-            });
             
             return cleanUrl;
         },
@@ -1205,12 +1192,16 @@
                 };
             });
 
+            // Calculate initial global position for progress text
+            const initialGlobalPosition = startStepIndex + 1;
+            
             const driver = driverFunction({
                 showProgress: true,
                 allowClose: true,
                 doneBtnText: mclTour.i18n.done || 'Done',
                 nextBtnText: nextPageStep ? 'Continue' : (mclTour.i18n.next || 'Next'),
                 prevBtnText: mclTour.i18n.prev || 'Previous',
+                progressText: `${initialGlobalPosition} of ${tourData.steps.length}`,
                 steps: steps,
                 onNextClick: (element, step, options) => {
                     const currentStepIndex = driver.getActiveIndex();
@@ -1231,14 +1222,8 @@
                     const currentDriverStep = driver.getActiveIndex();
                     const isFirstDriverStep = currentDriverStep === 0;
                     
-                    console.log('Previous clicked:', {
-                        currentDriverStep,
-                        isFirstDriverStep,
-                        startStepIndex
-                    });
-                    
                     if (isFirstDriverStep && startStepIndex > 0) {
-                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex);
+                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
                         const prevGlobalIndex = currentGlobalIndex - 1;
                         if (prevGlobalIndex >= 0) {
                             const prevRaw = tourData.steps[prevGlobalIndex];
@@ -1266,14 +1251,18 @@
                     }
                 },
                 onHighlighted: (element, step, options) => {
-                    const currentStepIndex = driver.getActiveIndex();
-                    const isLastStep = currentStepIndex === steps.length - 1;
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
                     
-                    console.log('Step highlighted:', {
-                        index: currentStepIndex,
-                        isLastStep: isLastStep,
-                        hasNextPageStep: !!nextPageStep
-                    });
+                    // Update the progress text with correct global step position immediately
+                    this.updateTourProgress(currentGlobalIndex + 1, tourData.steps.length);
+                    this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex);
+                    
+                    // Also update after a short delay to override any driver.js changes
+                    setTimeout(() => {
+                        this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex);
+                    }, 50);
+                    
                 },
                 onDestroyed: () => {
                     // Only mark as completed if there are no more steps on other pages
@@ -1288,12 +1277,12 @@
 
             driver.drive();
             
-            // Update progress and buttons after a short delay to ensure driver is initialized
+            // Update progress and buttons after a minimal delay to ensure driver is initialized
             setTimeout(() => {
                 const initialGlobalIndex = tourData.continue_from_step || 0;
                 this.updateTourProgress(initialGlobalIndex + 1, tourData.steps.length);
-                this.updateTourButtons(initialGlobalIndex, tourData.steps.length, 0);
-            }, 200);
+                this.updateTourButtons(initialGlobalIndex, tourData.steps.length, startStepIndex);
+            }, 50);
         },
 
         navigateToTourStep(tourId, step) {
@@ -1554,12 +1543,6 @@
                     const currentDriverStep = driver.getActiveIndex();
                     const isFirstDriverStep = currentDriverStep === 0;
                     
-                    console.log('Previous clicked:', {
-                        currentDriverStep,
-                        isFirstDriverStep,
-                        fromStepIndex
-                    });
-                    
                     if (isFirstDriverStep && fromStepIndex > 0) {
                         // Find the previous step in the global tour
                         const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
@@ -1607,16 +1590,14 @@
                     const currentDriverStep = driver.getActiveIndex();
                     const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
                     
-                    // Update the progress text with correct global step position (with delay to ensure DOM is ready)
-                    setTimeout(() => {
-                        this.updateTourProgress(currentGlobalIndex + 1, totalSteps);
-                        this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
-                    }, 100);
+                    // Update the progress text with correct global step position immediately
+                    this.updateTourProgress(currentGlobalIndex + 1, totalSteps);
+                    this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
                     
-                    // Also update buttons after a longer delay to override any driver.js changes
+                    // Also update after a short delay to override any driver.js changes
                     setTimeout(() => {
                         this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
-                    }, 300);
+                    }, 50);
                     
                     console.log('Preview step highlighted:', {
                         driverIndex: currentDriverStep,
@@ -1634,21 +1615,23 @@
             // we can just start the driver normally
             driver.drive();
             
-            // Update progress and buttons after a short delay to ensure driver is initialized
+            // Update progress and buttons after a minimal delay to ensure driver is initialized
             setTimeout(() => {
                 const initialGlobalIndex = fromStepIndex;
                 this.updateTourProgress(initialGlobalIndex + 1, totalSteps);
                 this.updateTourButtons(initialGlobalIndex, totalSteps, fromStepIndex);
-            }, 200);
+            }, 50);
         },
 
-        getCurrentGlobalStepIndex(driverStepIndex, currentPageUrl, fromStepIndex) {
+        getCurrentGlobalStepIndex(driverStepIndex, currentPageUrl, fromStepIndex, tourSteps = null) {
+            // Use the provided tourSteps or fall back to this.tourSteps
+            const steps = tourSteps || this.tourSteps;
+            
             // Convert driver step index back to global step index
-            let globalIndex = fromStepIndex;
             let currentPageStepCount = 0;
             
-            for (let i = fromStepIndex; i < this.tourSteps.length; i++) {
-                const stepPageUrl = this.tourSteps[i].page_url || currentPageUrl;
+            for (let i = fromStepIndex; i < steps.length; i++) {
+                const stepPageUrl = steps[i].page_url || currentPageUrl;
                 if (stepPageUrl === currentPageUrl) {
                     if (currentPageStepCount === driverStepIndex) {
                         return i;
@@ -1657,6 +1640,7 @@
                 }
             }
             
+            // Fallback if not found (shouldn't happen in normal circumstances)
             return fromStepIndex + driverStepIndex;
         },
 
@@ -1684,11 +1668,55 @@
         },
 
         updateTourProgress(currentStep, totalSteps) {
-            // Update the progress text in driver.js
-            const progressElement = document.querySelector('.driver-popover-progress-text');
-            if (progressElement) {
-                progressElement.textContent = `${currentStep} of ${totalSteps}`;
-            }
+            // Update the progress text in driver.js - force override with multiple attempts
+            const correctText = `${currentStep} of ${totalSteps}`;
+            
+            const updateProgressText = () => {
+                const progressElement = document.querySelector('.driver-popover-progress-text');
+                if (progressElement) {
+                    progressElement.textContent = correctText;
+                    
+                    // Set up a MutationObserver to watch for driver.js trying to change it back
+                    if (!progressElement._mclObserver) {
+                        const observer = new MutationObserver((mutations) => {
+                            mutations.forEach((mutation) => {
+                                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                                    if (progressElement.textContent !== correctText) {
+                                        progressElement.textContent = correctText;
+                                    }
+                                }
+                            });
+                        });
+                        
+                        observer.observe(progressElement, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true
+                        });
+                        
+                        progressElement._mclObserver = observer;
+                        
+                        // Clean up observer after 1 second (reduced from 2)
+                        setTimeout(() => {
+                            if (progressElement._mclObserver) {
+                                progressElement._mclObserver.disconnect();
+                                delete progressElement._mclObserver;
+                            }
+                        }, 1000);
+                    }
+                    
+                    return true;
+                }
+                return false;
+            };
+            
+            // Try immediately and more aggressively
+            updateProgressText();
+            
+            // Try again after minimal delays
+            setTimeout(updateProgressText, 10);
+            setTimeout(updateProgressText, 25);
+            setTimeout(updateProgressText, 100);
         },
 
         updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex) {
@@ -1707,17 +1735,15 @@
                     prevButton.style.opacity = '1';
                     prevButton.style.pointerEvents = 'auto';
                     prevButton.removeAttribute('disabled');
+                    prevButton.classList.remove('driver-popover-prev-btn--disabled');
                 } else {
                     prevButton.disabled = true;
                     prevButton.style.opacity = '0.5';
                     prevButton.style.pointerEvents = 'none';
+                    prevButton.setAttribute('disabled', 'disabled');
+                    prevButton.classList.add('driver-popover-prev-btn--disabled');
                 }
-                
-                console.log('Previous button state:', {
-                    currentGlobalIndex,
-                    isFirstGlobalStep,
-                    disabled: isFirstGlobalStep
-                });
+
             }
             
             if (nextButton) {
