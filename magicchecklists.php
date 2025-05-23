@@ -125,6 +125,8 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             if (is_admin()) {
                 new MCL_Admin();
                 new MCL_Tour_Admin();
+
+                MCL_Dashboard_Widget::get_instance();
             }
 
             // Initialize SureCart Licensing
