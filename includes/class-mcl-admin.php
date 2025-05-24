@@ -206,18 +206,17 @@ class MCL_Admin {
             MAGIC_CHECKLISTS_VERSION,
             true
         );
-    
-        // Analytics CSS for dashboard and analytics page
-        wp_enqueue_style(
-            'mcl-analytics', 
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-analytics.css',
-            array('mcl-admin-base'),
-            MAGIC_CHECKLISTS_VERSION
-        );
 
         // Page-specific assets
         switch ($hook) {
             case 'toplevel_page_mcl_checklists':
+                // Analytics CSS for dashboard analytics widget
+                wp_enqueue_style(
+                    'mcl-analytics', 
+                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-analytics.css',
+                    array('mcl-admin-base'),
+                    MAGIC_CHECKLISTS_VERSION
+                );
                 wp_enqueue_style(
                     'mcl-admin-main',
                     MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/pages/mcl-main.css',
@@ -317,6 +316,16 @@ class MCL_Admin {
                     true
                 );
                 $current_handle = 'mcl-admin-import';
+                break;
+                
+            case 'magicchecklists_page_mcl_analytics':
+                // Analytics CSS for analytics page
+                wp_enqueue_style(
+                    'mcl-analytics', 
+                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-analytics.css',
+                    array('mcl-admin-base'),
+                    MAGIC_CHECKLISTS_VERSION
+                );
                 break;
         }
     
