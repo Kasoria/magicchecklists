@@ -11,26 +11,40 @@ $tours = get_posts(array(
 ));
 ?>
 
-<div class="wrap">
-    <h1 class="wp-heading-inline"><?php _e('Tours', 'magic-checklists'); ?></h1>
-    <a href="<?php echo admin_url('admin.php?page=mcl_tours&create=1'); ?>" class="page-title-action">
-        <?php _e('Add New Tour', 'magic-checklists'); ?>
-    </a>
-    <hr class="wp-header-end">
-
-    <?php if (empty($tours)): ?>
-        <div class="mcl-empty-state">
-            <div class="mcl-empty-state-icon">
-                <span class="dashicons dashicons-location-alt"></span>
+<div class="mcl-wrap">
+    <div class="mcl-header">
+        <div class="mcl-title-wrapper">
+            <h1 class="mcl-title"><?php _e('Tours', 'magic-checklists'); ?></h1>
+            <div class="mcl-actions">
+                <a href="<?php echo admin_url('admin.php?page=mcl_tours&create=1'); ?>" class="mcl-button mcl-button-primary">
+                    <span class="dashicons dashicons-plus-alt2"></span>
+                    <?php _e('Add New Tour', 'magic-checklists'); ?>
+                </a>
             </div>
-            <h2><?php _e('No tours yet', 'magic-checklists'); ?></h2>
-            <p><?php _e('Create your first tour to guide users through your WordPress site.', 'magic-checklists'); ?></p>
-            <a href="<?php echo admin_url('admin.php?page=mcl_tours&create=1'); ?>" class="button button-primary">
-                <?php _e('Create Your First Tour', 'magic-checklists'); ?>
-            </a>
         </div>
-    <?php else: ?>
-        <table class="wp-list-table widefat fixed striped">
+        <div class="mcl-intro">
+            <p class="mcl-description mcl-description-light">
+                <?php _e('Create interactive tours to guide users through your WordPress admin interface. Tours help users learn how to use features and complete important tasks.', 'magic-checklists'); ?>
+            </p>
+        </div>
+    </div>
+
+    <div class="mcl-content">
+
+        <?php if (empty($tours)): ?>
+            <div class="mcl-empty-state mcl-tours-list">
+                <div class="mcl-empty-state-icon">
+                    <span class="dashicons dashicons-location-alt"></span>
+                </div>
+                <h2><?php _e('No tours yet', 'magic-checklists'); ?></h2>
+                <p><?php _e('Create your first tour to guide users through your WordPress site.', 'magic-checklists'); ?></p>
+                <a href="<?php echo admin_url('admin.php?page=mcl_tours&create=1'); ?>" class="mcl-button mcl-button-primary">
+                    <?php _e('Create Your First Tour', 'magic-checklists'); ?>
+                </a>
+            </div>
+        <?php else: ?>
+            <div class="mcl-table-wrapper">
+                <table class="mcl-table">
             <thead>
                 <tr>
                     <th scope="col" class="manage-column column-title column-primary">
@@ -71,12 +85,12 @@ $tours = get_posts(array(
                         </strong>
                         <div class="row-actions">
                             <span class="edit">
-                                <a href="<?php echo admin_url('admin.php?page=mcl_tours&edit=' . $tour->ID); ?>">
+                                <a href="<?php echo admin_url('admin.php?page=mcl_tours&edit=' . $tour->ID); ?>" class="mcl-edit">
                                     <?php _e('Edit', 'magic-checklists'); ?>
                                 </a> |
                             </span>
                             <span class="duplicate">
-                                <a href="#" class="mcl-duplicate-tour" data-tour-id="<?php echo $tour->ID; ?>">
+                                <a href="#" class="mcl-duplicate-tour mcl-clone" data-tour-id="<?php echo $tour->ID; ?>">
                                     <?php _e('Duplicate', 'magic-checklists'); ?>
                                 </a> |
                             </span>
@@ -86,7 +100,7 @@ $tours = get_posts(array(
                                 </a> |
                             </span>
                             <span class="trash">
-                                <a href="#" class="mcl-delete-tour" data-tour-id="<?php echo $tour->ID; ?>">
+                                <a href="#" class="mcl-delete-tour mcl-delete" data-tour-id="<?php echo $tour->ID; ?>">
                                     <?php _e('Delete', 'magic-checklists'); ?>
                                 </a>
                             </span>
@@ -146,37 +160,14 @@ $tours = get_posts(array(
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+                </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <style>
-.mcl-empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.mcl-empty-state-icon .dashicons {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: #c3c4c7;
-    margin-bottom: 20px;
-}
-
-.mcl-empty-state h2 {
-    margin: 0 0 10px;
-    color: #1d2327;
-}
-
-.mcl-empty-state p {
-    color: #646970;
-    margin-bottom: 20px;
-}
-
 .mcl-toggle-switch {
     position: relative;
     display: inline-block;
@@ -269,6 +260,34 @@ input:checked + .mcl-toggle-slider:before {
 
 .column-trigger {
     width: 150px;
+}
+
+.mcl-tours-list .mcl-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 500px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.mcl-tours-list .mcl-empty-state-icon .dashicons {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: #c3c4c7;
+    margin-bottom: 20px;
+}
+
+.mcl-tours-list .mcl-empty-state h2 {
+    margin: 0 0 10px;
+    color: #1d2327;
+}
+
+.mcl-tours-list .mcl-empty-state p {
+    color: #646970;
+    margin-bottom: 20px;
 }
 </style>
 
