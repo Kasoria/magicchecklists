@@ -14,6 +14,39 @@
     pointer-events: none;
 }
 
+/* Custom SVG Icons */
+.mcl-icon-selector, .mcl-icon-navigate {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.mcl-icon-selector svg, .mcl-icon-navigate svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transition: color 0.2s ease;
+}
+
+/* Ensure SVG icons inherit color from parent */
+.mcl-icon-selector svg path,
+.mcl-icon-selector svg g,
+.mcl-icon-navigate svg path,
+.mcl-icon-navigate svg g {
+    color: inherit;
+}
+
+/* Navigation Mode SVG Icon */
+.mcl-icon-navigate {
+    /* Compass/navigation icon */
+}
+
+/* Element Selector Mode SVG Icon */
+.mcl-icon-selector {
+    /* Cursor/selector icon */
+}
+
 /* Floating Control Panel */
 .mcl-tour-floating-panel {
     position: fixed;
@@ -114,7 +147,9 @@
     color: #166534;
 }
 
-.mcl-mode-indicator .dashicons {
+.mcl-mode-indicator .dashicons,
+.mcl-mode-indicator .mcl-icon-selector,
+.mcl-mode-indicator .mcl-icon-navigate {
     font-size: 16px;
     width: 16px;
     height: 16px;
@@ -128,20 +163,86 @@
     margin-bottom: 15px;
 }
 
-.mcl-actions-section .button {
+.mcl-actions-section .mcl-button {
     font-size: 12px;
-    padding: 4px 8px;
+    padding: 6px 10px;
     height: auto;
     line-height: 1.2;
     display: flex;
     align-items: center;
     gap: 4px;
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
 }
 
-.mcl-actions-section .dashicons {
+.mcl-actions-section .dashicons,
+.mcl-actions-section .mcl-icon-selector,
+.mcl-actions-section .mcl-icon-navigate {
     font-size: 14px;
     width: 14px;
     height: 14px;
+}
+
+/* MCL Button System Integration */
+.mcl-tour-creator .mcl-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    gap: 5px;
+    line-height: 1.4;
+    height: auto;
+    min-height: 28px;
+}
+
+.mcl-tour-creator .mcl-button-primary {
+    background: #f2da22;
+    color: #011326;
+}
+
+.mcl-tour-creator .mcl-button-primary:hover,
+.mcl-tour-creator .mcl-button-primary:focus-visible {
+    background: #f5e354;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.mcl-tour-creator .mcl-button-secondary {
+    background: #f8f9fa;
+    border: 2px solid #e2e8f0;
+    color: #1a1a1a;
+}
+
+.mcl-tour-creator .mcl-button-secondary:hover {
+    background: #e2e8f0;
+    color: #1a1a1a;
+}
+
+.mcl-tour-creator .mcl-button-secondary:focus-visible {
+    outline: none;
+    background: #f8f9fa;
+    color: #1a1a1a;
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+}
+
+.mcl-tour-creator .mcl-button-danger {
+    background: #B30000;
+    color: white;
+}
+
+.mcl-tour-creator .mcl-button-danger:hover,
+.mcl-tour-creator .mcl-button-danger:focus-visible {
+    background: #dc2626;
+    transform: translateY(-1px);
+    outline: none;
 }
 
 /* Steps Info */
@@ -312,21 +413,42 @@
 }
 
 .mcl-step-action {
-    background: none;
-    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
     cursor: pointer;
-    padding: 2px;
-    color: #646970;
-    border-radius: 2px;
+    padding: 4px;
+    color: #4a5568;
+    border-radius: 4px;
+    transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    width: 24px;
+    height: 24px;
 }
 
 .mcl-step-action:hover {
-    background: #e0e0e0;
-    color: #2271b1;
+    background: #e2e8f0;
+    color: #1a1a1a;
+    transform: translateY(-1px);
+}
+
+.mcl-step-action.edit:hover {
+    background: #f2da22;
+    color: #011326;
+    border-color: #f2da22;
+}
+
+.mcl-step-action.preview:hover {
+    background: #f2da22;
+    color: #011326;
+    border-color: #f2da22;
 }
 
 .mcl-step-action.delete:hover {
-    color: #d63638;
+    background: #B30000;
+    color: white;
+    border-color: #B30000;
 }
 
 .mcl-step-action .dashicons {
@@ -430,6 +552,11 @@
     flex-shrink: 0;
 }
 
+.mcl-modal-footer .mcl-button {
+    min-width: 100px;
+    justify-content: center;
+}
+
 /* Form Styles */
 .mcl-form-group {
     margin-bottom: 20px;
@@ -477,10 +604,13 @@
     flex: 1;
 }
 
-.mcl-selector-group .button {
+.mcl-selector-group .mcl-button {
     flex-shrink: 0;
     padding: 8px;
     min-width: auto;
+    height: 38px;
+    width: 38px;
+    justify-content: center;
 }
 
 .description {
@@ -723,4 +853,340 @@
     font-size: 14px;
     z-index: 1000003;
     pointer-events: none;
-} 
+}
+
+/* Toast Notification System */
+.mcl-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000004;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.mcl-toast {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+    border-left: 4px solid;
+    font-family: var(--mcl-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    animation: mcl-toast-slide-in 0.3s ease-out;
+    transition: all 0.3s ease;
+}
+
+.mcl-toast.mcl-toast-hiding {
+    animation: mcl-toast-slide-out 0.3s ease-in;
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+.mcl-toast-success {
+    border-left-color: #10B981;
+}
+
+.mcl-toast-error {
+    border-left-color: #B30000;
+}
+
+.mcl-toast-warning {
+    border-left-color: #F59E0B;
+}
+
+.mcl-toast-info {
+    border-left-color: #f2da22;
+}
+
+.mcl-toast-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 0.5rem;
+    margin-right: 12px;
+}
+
+.mcl-toast-success .mcl-toast-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+}
+
+.mcl-toast-error .mcl-toast-icon {
+    background: rgba(179, 0, 0, 0.1);
+    color: #B30000;
+}
+
+.mcl-toast-warning .mcl-toast-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+}
+
+.mcl-toast-info .mcl-toast-icon {
+    background: rgba(242, 218, 34, 0.1);
+    color: #011326;
+}
+
+.mcl-toast-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.mcl-toast-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+
+
+.mcl-toast-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 12px;
+    background: none;
+    border: none;
+    border-radius: 0.375rem;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.mcl-toast-close:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.mcl-toast-close svg {
+    width: 12px;
+    height: 12px;
+}
+
+@keyframes mcl-toast-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes mcl-toast-slide-out {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Responsive toast styling */
+@media (max-width: 768px) {
+    .mcl-toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .mcl-toast {
+        padding: 12px;
+    }
+    
+    .mcl-toast-message {
+        font-size: 13px;
+    }
+}
+
+/* Screen Reader Only utility class */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Confirmation Modal System */
+.mcl-confirmation-modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000005;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    overflow-x: hidden;
+    pointer-events: all;
+}
+
+.mcl-confirmation-modal.active {
+    display: flex;
+}
+
+.mcl-confirmation-modal-content {
+    position: relative;
+    padding: 16px;
+    width: 100%;
+    max-width: 28rem;
+    max-height: 100%;
+}
+
+.mcl-confirmation-modal-inner {
+    position: relative;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+    animation: mcl-modal-fade-in 0.2s ease-out;
+    pointer-events: all;
+}
+
+.mcl-confirmation-modal.mcl-modal-hiding .mcl-confirmation-modal-inner {
+    animation: mcl-modal-fade-out 0.2s ease-in;
+}
+
+.mcl-confirmation-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 0.5rem;
+    color: #9ca3af;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.mcl-confirmation-modal-close:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.mcl-confirmation-modal-close svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.mcl-confirmation-modal-body {
+    padding: 24px;
+    text-align: center;
+}
+
+.mcl-confirmation-modal-icon {
+    margin: 0 auto 16px;
+    width: 48px;
+    height: 48px;
+    color: #F59E0B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mcl-confirmation-modal-icon svg {
+    width: 48px;
+    height: 48px;
+}
+
+.mcl-confirmation-modal-title {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: #4a5568;
+    font-family: var(--mcl-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.mcl-confirmation-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mcl-confirmation-modal-actions .mcl-button {
+    min-width: 100px;
+    justify-content: center;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.mcl-confirmation-modal-actions .mcl-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+}
+
+.mcl-confirmation-modal-actions .mcl-button-danger:focus {
+    box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.3);
+}
+
+@keyframes mcl-modal-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes mcl-modal-fade-out {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Responsive confirmation modal */
+@media (max-width: 768px) {
+    .mcl-confirmation-modal-content {
+        padding: 8px;
+        max-width: none;
+        margin: 0 8px;
+    }
+    
+    .mcl-confirmation-modal-actions {
+        flex-direction: column;
+    }
+    
+    .mcl-confirmation-modal-actions .mcl-button {
+        width: 100%;
+    }
+}

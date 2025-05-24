@@ -282,6 +282,11 @@
             const self = this;
             $(document).on('click', '*', function(e) {
                 if (self.currentMode === 'select' && !self.isReselectingElement && !self.isModalOpen()) {
+                    // Don't interfere with confirmation modal elements
+                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                        return;
+                    }
+                    
                     e.preventDefault();
                     e.stopPropagation();
                     self.selectElement(e.target);
@@ -291,12 +296,20 @@
             // Element hover highlighting
             $(document).on('mouseenter', '*', function(e) {
                 if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
+                    // Don't highlight confirmation modal elements
+                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                        return;
+                    }
                     self.highlightElement(e.target);
                 }
             });
 
             $(document).on('mouseleave', '*', function(e) {
                 if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
+                    // Don't remove highlight for confirmation modal elements
+                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                        return;
+                    }
                     self.removeHighlight();
                 }
             });
@@ -304,6 +317,11 @@
             // Element reselection in modal
             $(document).on('click', '*', function(e) {
                 if (self.isReselectingElement) {
+                    // Don't interfere with confirmation modal elements
+                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                        return;
+                    }
+                    
                     e.preventDefault();
                     e.stopPropagation();
                     self.reselectElement(e.target);
@@ -348,15 +366,25 @@
             indicator.attr('data-mode', mode);
             
             if (mode === 'select') {
-                indicator.find('.dashicons').removeClass('dashicons-move').addClass('dashicons-crosshairs');
+                // Update mode indicator to show selector icon
+                indicator.find('.mcl-icon-navigate').hide();
+                indicator.find('.mcl-icon-selector').show();
                 modeText.text(mclTour.i18n.selectElement || 'Select Mode');
-                toggleBtn.find('.dashicons').removeClass('dashicons-crosshairs').addClass('dashicons-move');
-                toggleBtn.find('span:not(.dashicons)').text(mclTour.i18n.navigate || 'Navigate');
+                
+                // Update toggle button to show navigate icon
+                toggleBtn.find('.mcl-icon-selector').hide();
+                toggleBtn.find('.mcl-icon-navigate').show();
+                toggleBtn.find('span:last-child').text(mclTour.i18n.navigate || 'Navigate');
             } else {
-                indicator.find('.dashicons').removeClass('dashicons-crosshairs').addClass('dashicons-move');
+                // Update mode indicator to show navigate icon
+                indicator.find('.mcl-icon-selector').hide();
+                indicator.find('.mcl-icon-navigate').show();
                 modeText.text(mclTour.i18n.navigate || 'Navigate Mode');
-                toggleBtn.find('.dashicons').removeClass('dashicons-move').addClass('dashicons-crosshairs');
-                toggleBtn.find('span:not(.dashicons)').text(mclTour.i18n.selectElement || 'Select');
+                
+                // Update toggle button to show selector icon
+                toggleBtn.find('.mcl-icon-navigate').hide();
+                toggleBtn.find('.mcl-icon-selector').show();
+                toggleBtn.find('span:last-child').text(mclTour.i18n.selectElement || 'Select');
             }
         },
 
@@ -365,8 +393,8 @@
         },
 
         selectElement(element) {
-            // Don't select tour creator elements
-            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal').length > 0) {
+            // Don't select tour creator elements or modal elements
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, #mcl-confirmation-modal').length > 0) {
                 return;
             }
 
@@ -411,7 +439,7 @@
 
         reselectElement(element) {
             // Don't select tour creator elements or modal elements
-            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay').length > 0) {
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay, #mcl-confirmation-modal').length > 0) {
                 return;
             }
 
@@ -531,7 +559,7 @@
         },
 
         highlightElement(element) {
-            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal').length > 0) {
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, #mcl-confirmation-modal').length > 0) {
                 return;
             }
 
@@ -642,24 +670,32 @@
             $('#mcl-step-editor-modal').addClass('active');
         },
 
-        deleteStep(stepIndex) {
+        async deleteStep(stepIndex) {
             if (stepIndex < 0 || stepIndex >= this.tourSteps.length) {
                 return;
             }
 
-            if (confirm('Are you sure you want to delete this step?')) {
+            const stepTitle = this.tourSteps[stepIndex]?.title || 'Untitled Step';
+            const confirmed = await this.showConfirmationModal(
+                `Are you sure you want to delete "${stepTitle}"?`,
+                'Delete Step',
+                'Cancel'
+            );
+
+            if (confirmed) {
                 this.tourSteps.splice(stepIndex, 1);
                 this.updateStepsCounter();
                 // If steps list is visible, re-render it
                 if ($('#mcl-steps-info').hasClass('expanded')) {
                     this.renderStepsList();
                 }
+                this.showSuccessToast('Step deleted successfully.');
             }
         },
 
         previewTour() {
             if (this.tourSteps.length === 0) {
-                alert('Please add some steps before previewing the tour.');
+                this.showWarningToast('Please add some steps before previewing the tour.');
                 return;
             }
 
@@ -669,7 +705,7 @@
             if (!driverFunction) {
                 console.error('Driver.js is not available. Available on window:', Object.keys(window).filter(k => k.includes('driver')));
                 console.error('window.driver:', window.driver);
-                alert('Driver.js library is not loaded. Please refresh the page and try again.');
+                this.showErrorToast('Driver.js library is not loaded. Please refresh the page and try again.');
                 return;
             }
 
@@ -963,7 +999,7 @@
                     console.log('Step order saved successfully:', response.data);
                 } else {
                     console.error('Failed to save step order:', response.data);
-                    alert('Failed to save step order. Please try again.');
+                    this.showErrorToast('Failed to save step order. Please try again.');
                     // Reload tour data to ensure client-server synchronization
                     this.loadTourData(this.currentTourId);
                 }
@@ -973,7 +1009,7 @@
                     status: status,
                     response: xhr.responseText
                 });
-                alert('Failed to save step order. Please try again.');
+                this.showErrorToast('Failed to save step order. Please try again.');
                 // Reload tour data to ensure client-server synchronization
                 this.loadTourData(this.currentTourId);
             });
@@ -1076,16 +1112,25 @@
                 nonce: mclTour.nonce
             }, (response) => {
                 if (response.success) {
-                    alert('Tour steps saved successfully!');
+                    this.showSuccessToast('Tour steps saved successfully!');
                     this.currentTourId = response.data.tour_id;
                 } else {
-                    alert('Error saving tour: ' + (response.data || 'Unknown error'));
+                    this.showErrorToast('Error saving tour: ' + (response.data || 'Unknown error'));
                 }
+            }).fail((xhr, status, error) => {
+                this.showErrorToast('Failed to save tour. Please try again.');
+                console.error('Save tour failed:', error);
             });
         },
 
-        exitCreator() {
-            if (confirm('Are you sure you want to exit? Any unsaved changes will be lost.')) {
+        async exitCreator() {
+            const confirmed = await this.showConfirmationModal(
+                'Are you sure you want to exit? Any unsaved changes will be lost.',
+                'Exit Creator',
+                'Cancel'
+            );
+
+            if (confirmed) {
                 // Return to tour settings page
                 const tourId = this.currentTourId || '';
                 window.location.href = mclTour.ajax_url.replace('admin-ajax.php', 'admin.php?page=mcl_tours' + (tourId ? '&edit=' + tourId : ''));
@@ -1788,7 +1833,183 @@
          * Check if any modal is currently open
          */
         isModalOpen() {
-            return $('#mcl-step-editor-modal').hasClass('active');
+            return $('#mcl-step-editor-modal').hasClass('active') || 
+                   $('#mcl-confirmation-modal').hasClass('active');
+        },
+
+        /**
+         * Toast notification system
+         */
+        showToast(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('mcl-toast-container');
+            if (!container) {
+                console.warn('Toast container not found');
+                return;
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `mcl-toast mcl-toast-${type}`;
+            
+            // Get appropriate icon based on type
+            const icons = {
+                success: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>`,
+                error: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>`,
+                warning: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>`,
+                info: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>`
+            };
+
+            toast.innerHTML = `
+                <div class="mcl-toast-icon">
+                    ${icons[type] || icons.info}
+                </div>
+                <div class="mcl-toast-message">${message}</div>
+                <button class="mcl-toast-close" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+
+            // Add close functionality
+            const closeBtn = toast.querySelector('.mcl-toast-close');
+            closeBtn.addEventListener('click', () => {
+                this.hideToast(toast);
+            });
+
+            // Add to container
+            container.appendChild(toast);
+
+            // Auto-hide after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    this.hideToast(toast);
+                }, duration);
+            }
+
+            return toast;
+        },
+
+        hideToast(toast) {
+            if (!toast || !toast.parentNode) return;
+            
+            toast.classList.add('mcl-toast-hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        },
+
+        showSuccessToast(message, duration = 4000) {
+            return this.showToast(message, 'success', duration);
+        },
+
+        showErrorToast(message, duration = 6000) {
+            return this.showToast(message, 'error', duration);
+        },
+
+        showWarningToast(message, duration = 5000) {
+            return this.showToast(message, 'warning', duration);
+        },
+
+        showInfoToast(message, duration = 4000) {
+            return this.showToast(message, 'info', duration);
+        },
+
+        /**
+         * Confirmation Modal System
+         */
+        showConfirmationModal(title, confirmText = 'Yes, I\'m sure', cancelText = 'No, cancel', confirmClass = 'mcl-button-danger') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('mcl-confirmation-modal');
+                const titleElement = document.getElementById('mcl-confirmation-modal-title');
+                const confirmButton = document.getElementById('mcl-confirmation-modal-confirm');
+                const cancelButton = document.getElementById('mcl-confirmation-modal-cancel');
+                const closeButton = document.getElementById('mcl-confirmation-modal-close');
+
+                if (!modal || !titleElement || !confirmButton || !cancelButton) {
+                    console.warn('Confirmation modal elements not found');
+                    resolve(false);
+                    return;
+                }
+
+                // Set title and button text
+                titleElement.textContent = title;
+                confirmButton.textContent = confirmText;
+                cancelButton.textContent = cancelText;
+
+                // Reset button classes and apply the appropriate one
+                confirmButton.className = `mcl-button ${confirmClass}`;
+
+                // Show modal
+                modal.classList.add('active');
+
+                // Focus the confirm button after a short delay to ensure modal is visible
+                setTimeout(() => {
+                    confirmButton.focus();
+                }, 100);
+
+                // Handle confirm
+                const handleConfirm = () => {
+                    this.hideConfirmationModal();
+                    cleanup();
+                    resolve(true);
+                };
+
+                // Handle cancel/close
+                const handleCancel = () => {
+                    this.hideConfirmationModal();
+                    cleanup();
+                    resolve(false);
+                };
+
+                // Handle escape key
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        handleCancel();
+                    }
+                };
+
+                // Cleanup function
+                const cleanup = () => {
+                    confirmButton.removeEventListener('click', handleConfirm);
+                    cancelButton.removeEventListener('click', handleCancel);
+                    closeButton.removeEventListener('click', handleCancel);
+                    document.removeEventListener('keydown', handleEscape);
+                };
+
+                // Add event listeners
+                confirmButton.addEventListener('click', handleConfirm);
+                cancelButton.addEventListener('click', handleCancel);
+                closeButton.addEventListener('click', handleCancel);
+                document.addEventListener('keydown', handleEscape);
+
+                // Handle backdrop click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        handleCancel();
+                    }
+                });
+            });
+        },
+
+        hideConfirmationModal() {
+            const modal = document.getElementById('mcl-confirmation-modal');
+            if (!modal) return;
+            
+            modal.classList.add('mcl-modal-hiding');
+            setTimeout(() => {
+                modal.classList.remove('active', 'mcl-modal-hiding');
+            }, 200);
         },
 
     };
