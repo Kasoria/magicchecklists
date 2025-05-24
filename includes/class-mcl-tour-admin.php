@@ -18,6 +18,10 @@ class MCL_Tour_Admin {
         add_action('wp_ajax_mcl_get_checklists_for_tour', array($this, 'get_checklists_for_tour'));
         add_action('wp_ajax_mcl_reset_tour_completion', array($this, 'reset_tour_completion'));
         add_action('wp_ajax_mcl_reorder_tour_steps', array($this, 'reorder_tour_steps'));
+        add_action('wp_ajax_mcl_tour_step_check_item', array($this, 'tour_step_check_item'));
+        add_action('wp_ajax_nopriv_mcl_tour_step_check_item', array($this, 'tour_step_check_item'));
+        add_action('wp_ajax_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
+        add_action('wp_ajax_nopriv_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
     }
 
     public function add_admin_menu() {
@@ -345,49 +349,220 @@ class MCL_Tour_Admin {
         }
 
         $tour_id = intval($_POST['tour_id']);
-        $step_order = $_POST['step_order']; // Array of step indices in new order
+        $step_order = isset($_POST['step_order']) ? array_map('intval', $_POST['step_order']) : array();
         
-        if (!$tour_id || !is_array($step_order)) {
-            wp_send_json_error('Invalid tour ID or step order format');
+        if (!$tour_id || empty($step_order)) {
+            wp_send_json_error('Invalid parameters');
         }
 
         // Get current steps
         $current_steps = get_post_meta($tour_id, '_mcl_tour_steps', true) ?: array();
         
-        if (empty($current_steps)) {
-            wp_send_json_error('No steps found for this tour');
+        // Validate step order
+        if (count($step_order) !== count($current_steps)) {
+            wp_send_json_error('Step count mismatch');
         }
 
-        // Validate that all indices exist and are unique
-        $expected_count = count($current_steps);
-        $provided_count = count($step_order);
-        
-        if ($provided_count !== $expected_count) {
-            wp_send_json_error("Step count mismatch. Expected {$expected_count}, got {$provided_count}");
-        }
-
-        // Reorder steps based on the new order
+        // Reorder steps based on new order
         $reordered_steps = array();
         foreach ($step_order as $old_index) {
-            $old_index = intval($old_index);
             if (isset($current_steps[$old_index])) {
                 $reordered_steps[] = $current_steps[$old_index];
-            } else {
-                wp_send_json_error("Invalid step index: {$old_index}");
             }
         }
 
-        // Double-check we have the right number of steps
-        if (count($reordered_steps) !== $expected_count) {
-            wp_send_json_error('Step reordering failed: count mismatch after reordering');
-        }
-
-        // Save the reordered steps
+        // Save reordered steps
         update_post_meta($tour_id, '_mcl_tour_steps', $reordered_steps);
         
         wp_send_json_success(array(
-            'message' => 'Tour steps reordered successfully',
-            'step_count' => count($reordered_steps)
+            'message' => 'Steps reordered successfully',
+            'steps' => $reordered_steps
+        ));
+    }
+
+    /**
+     * Handle checking/unchecking checklist items from tour steps
+     */
+    public function tour_step_check_item() {
+        // Check for tour nonces or checklist nonces
+        $nonce_verified = false;
+        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+            $nonce_verified = true;
+        }
+        
+        if (!$nonce_verified) {
+            wp_send_json_error('Invalid nonce');
+        }
+
+        $checklist_id = intval($_POST['checklist_id']);
+        $item_id = sanitize_text_field($_POST['item_id']);
+        $checked = filter_var($_POST['checked'], FILTER_VALIDATE_BOOLEAN);
+
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        // Check if user can interact with this checklist
+        if (!$this->can_user_interact_with_checklist($checklist_id)) {
+            wp_send_json_error('You do not have permission to interact with this checklist');
+        }
+
+        // Get current checked state
+        $checked_state = $this->get_checked_state($checklist_id);
+
+        // Update checked state
+        if ($checked) {
+            if (!in_array($item_id, $checked_state)) {
+                $checked_state[] = $item_id;
+            }
+        } else {
+            $checked_state = array_diff($checked_state, array($item_id));
+            // Re-index array to prevent gaps that could cause object conversion
+            $checked_state = array_values($checked_state);
+        }
+
+        // Save checked state
+        $this->save_checked_state($checklist_id, $checked_state);
+
+        wp_send_json_success(array(
+            'message' => $checked ? 'Item checked' : 'Item unchecked',
+            'checked' => $checked
+        ));
+    }
+
+    /**
+     * Get checked state for a checklist (similar to dashboard widget)
+     */
+    private function get_checked_state($checklist_id) {
+        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        
+        if ($is_public) {
+            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+        } else {
+            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+        }
+        
+        if ($handling === 'per_user' && is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            $checked_state = get_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, true);
+        } else {
+            $checked_state = get_post_meta($checklist_id, '_mcl_checked_state', true);
+        }
+        
+        // Ensure we always return a proper array, not an object
+        if (!is_array($checked_state)) {
+            return array();
+        }
+        
+        // Re-index the array to ensure it's a proper indexed array, not an associative array
+        return array_values($checked_state);
+    }
+
+    /**
+     * Save checked state for a checklist (similar to dashboard widget)
+     */
+    private function save_checked_state($checklist_id, $checked_state) {
+        // Ensure we're saving a proper indexed array
+        $checked_state = array_values(array_filter($checked_state));
+        
+        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        
+        if ($is_public) {
+            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+        } else {
+            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+        }
+        
+        if ($handling === 'per_user' && is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            update_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, $checked_state);
+        } else {
+            update_post_meta($checklist_id, '_mcl_checked_state', $checked_state);
+        }
+    }
+
+    /**
+     * Check if user can interact with checklist (similar to dashboard widget)
+     */
+    private function can_user_interact_with_checklist($checklist_id) {
+        if (!class_exists('MCL_Permissions')) {
+            return false;
+        }
+        
+        $permissions = new MCL_Permissions();
+        return $permissions->has_permission($checklist_id, 'interact');
+    }
+
+    /**
+     * Get tour connections for a checklist item
+     */
+    public function get_item_tour_connections() {
+        // Check for tour nonces or checklist nonces
+        $nonce_verified = false;
+        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+            $nonce_verified = true;
+        }
+        
+        if (!$nonce_verified) {
+            wp_send_json_error('Invalid nonce');
+        }
+
+        $checklist_id = intval($_POST['checklist_id']);
+        $item_id = sanitize_text_field($_POST['item_id']);
+
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        // Get all active tours
+        $tours = get_posts(array(
+            'post_type' => 'mcl_tour',
+            'posts_per_page' => -1,
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_tour_active',
+                    'value' => '1',
+                    'compare' => '='
+                )
+            )
+        ));
+
+        $connections = array();
+
+        foreach ($tours as $tour) {
+            $steps = get_post_meta($tour->ID, '_mcl_tour_steps', true) ?: array();
+            
+            foreach ($steps as $step_index => $step) {
+                if (!empty($step['checklist_id']) && !empty($step['checklist_item_id']) &&
+                    $step['checklist_id'] == $checklist_id && $step['checklist_item_id'] == $item_id) {
+                    
+                    $connections[] = array(
+                        'tour_id' => $tour->ID,
+                        'tour_title' => $tour->post_title,
+                        'step_index' => $step_index,
+                        'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
+                        'step_content' => !empty($step['content']) ? wp_trim_words(strip_tags($step['content']), 10) : ''
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success(array(
+            'connections' => $connections,
+            'checklist_id' => $checklist_id,
+            'item_id' => $item_id
         ));
     }
 }

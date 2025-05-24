@@ -1364,6 +1364,10 @@ class MagicChecklistDrawer {
 
         // After rendering all items, ensure children are properly positioned
         this.reattachAllChildren();
+        
+        // Check for tour connections and add tour buttons where applicable
+        console.log('MCL Tour Debug: About to check tour connections');
+        this.checkTourConnections();
     }
     
     uncheckAllItems() {
@@ -1645,20 +1649,20 @@ class MagicChecklistDrawer {
         return data.map(item => this.sanitizeKey(item)).filter(Boolean);
     }
     
-    bindDrawerEvents() {
+        bindDrawerEvents() {
         // Cache DOM elements on first bind
         this.cacheElements();
-    
+
         // Remove any existing listeners
         this.removeExistingListeners();
-    
+
         const checklistData = this.currentChecklistData;
-    
+
         // Initialize LinkManager if user has edit permissions
         if (checklistData?.can_edit) {
             this.initLinkManager();
         }
-    
+
         // Single event listener for all item-related events
         if (this.elements.itemsList) {
             this.elements.itemsList.addEventListener('click', this.handleItemsListEvents);
@@ -1666,22 +1670,173 @@ class MagicChecklistDrawer {
             this.elements.itemsList.addEventListener('keydown', this.handleItemsListEvents);
             this.elements.itemsList.addEventListener('paste', this.handleItemsListEvents);
         }
-    
+
         // Add edit-only events if user has permission
         if (checklistData?.can_edit) {
             this.elements.addItemButton?.addEventListener('click', this.handleAddItem);
         }
-    
+
         // Add general drawer events
         this.elements.drawerCloseButton?.addEventListener('click', this.handleCloseClick);
         document.addEventListener('click', this.handleOutsideClick);
-    
+
         // Bind uncheck all if user can interact with checkboxes
         if (checklistData?.can_check) {
             this.elements.uncheckAllButton?.addEventListener('click', this.handleUncheckAll);
         }
+
+                // Initialize tooltip functionality
+        this.initTooltips();
     }
-    
+
+    initTooltips() {
+        // Initialize tooltip tracking variables
+        this.tooltipTimeout = null;
+        this.currentTooltip = null;
+
+        // Use event delegation for tooltip management
+        if (this.elements.itemsList) {
+            this.elements.itemsList.addEventListener('mouseenter', this.handleTooltipMouseEnter.bind(this), true);
+            this.elements.itemsList.addEventListener('mouseleave', this.handleTooltipMouseLeave.bind(this), true);
+        }
+
+        // Also handle tooltips for drawer-level buttons
+        const drawerButtons = this.drawer.querySelectorAll('.mcl-drawer-button, #mcl-uncheck-all');
+        drawerButtons.forEach(button => {
+            button.addEventListener('mouseenter', this.handleTooltipMouseEnter.bind(this));
+            button.addEventListener('mouseleave', this.handleTooltipMouseLeave.bind(this));
+        });
+    }
+
+    handleTooltipMouseEnter(e) {
+        const target = e.target;
+        
+        // Check if target is an action button with a title attribute
+        const actionButtons = [
+            '.mcl-tour-btn',
+            '.mcl-remove-item', 
+            '.mcl-add-image-btn',
+            '.mcl-in-progress-btn',
+            '.mcl-item-deadline-btn',
+            '#mcl-uncheck-all'
+        ];
+
+        const isActionButton = actionButtons.some(selector => target.matches(selector));
+        
+        if (isActionButton && (target.hasAttribute('title') || target.hasAttribute('data-original-title'))) {
+            // Immediately remove title to prevent browser tooltip
+            if (target.hasAttribute('title')) {
+                target.setAttribute('data-original-title', target.getAttribute('title'));
+                target.removeAttribute('title');
+            }
+
+            // Clear any existing timeout
+            if (this.tooltipTimeout) {
+                clearTimeout(this.tooltipTimeout);
+            }
+
+            // Remove any existing tooltip
+            this.removeTooltip();
+
+            // Set a 1-second delay before showing tooltip
+            this.tooltipTimeout = setTimeout(() => {
+                this.showTooltip(target);
+            }, 500);
+        }
+    }
+
+    handleTooltipMouseLeave(e) {
+        const target = e.target;
+
+        // Clear the timeout if mouse leaves before 1 second
+        if (this.tooltipTimeout) {
+            clearTimeout(this.tooltipTimeout);
+            this.tooltipTimeout = null;
+        }
+
+        // Remove tooltip if it exists
+        this.removeTooltip();
+
+        // Restore title attribute for this specific element
+        if (target.hasAttribute('data-original-title')) {
+            target.setAttribute('title', target.getAttribute('data-original-title'));
+            target.removeAttribute('data-original-title');
+        }
+    }
+
+    showTooltip(element) {
+        const titleText = element.getAttribute('data-original-title') || element.getAttribute('title');
+        
+        if (!titleText) return;
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'mcl-tooltip';
+        tooltip.textContent = titleText;
+
+        // Add to document body for fixed positioning
+        document.body.appendChild(tooltip);
+        
+        // Calculate position
+        const rect = element.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const drawerRect = this.drawer.getBoundingClientRect();
+        
+        // Calculate initial position (centered above the button)
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        let top = rect.top - tooltipRect.height - 8; // 8px gap above button
+        
+        // Ensure tooltip stays within drawer bounds horizontally
+        const drawerLeft = drawerRect.left;
+        const drawerRight = drawerRect.right;
+        const tooltipLeft = left;
+        const tooltipRight = left + tooltipRect.width;
+        
+        // Adjust if tooltip would overflow drawer bounds
+        if (tooltipLeft < drawerLeft) {
+            left = drawerLeft + 10; // 10px padding from drawer edge
+        } else if (tooltipRight > drawerRight) {
+            left = drawerRight - tooltipRect.width - 10; // 10px padding from drawer edge
+        }
+        
+        // Ensure tooltip doesn't go above viewport
+        if (top < 10) {
+            // If no space above, show below the button instead
+            top = rect.bottom + 8;
+            // Flip the arrow by adding a class
+            tooltip.classList.add('mcl-tooltip-below');
+        }
+        
+        // Apply position
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+        
+        // Show tooltip
+        tooltip.classList.add('mcl-tooltip-visible');
+        
+        // Store reference for cleanup
+        this.currentTooltip = tooltip;
+    }
+
+    removeTooltip() {
+        if (this.currentTooltip) {
+            // Remove tooltip
+            this.currentTooltip.remove();
+            this.currentTooltip = null;
+        }
+    }
+
+    restoreTooltipTitles() {
+        // Restore all original titles when leaving the drawer area
+        const elementsWithOriginalTitle = this.drawer.querySelectorAll('[data-original-title]');
+        elementsWithOriginalTitle.forEach(element => {
+            if (element.hasAttribute('data-original-title')) {
+                element.setAttribute('title', element.getAttribute('data-original-title'));
+                element.removeAttribute('data-original-title');
+            }
+        });
+    }
+
     cacheElements() {
         this.elements = {
             itemsList: this.itemsList,
@@ -3058,17 +3213,25 @@ class MagicChecklistDrawer {
           }
     }
 
-    destroy() {
+        destroy() {
         // Remove event listeners
         document.removeEventListener('keydown', this.handleKeyboard);
         document.removeEventListener('mousedown', this.handleClickOutside);
-    
+
+        // Clean up tooltips
+        if (this.tooltipTimeout) {
+            clearTimeout(this.tooltipTimeout);
+            this.tooltipTimeout = null;
+        }
+        this.removeTooltip();
+        this.restoreTooltipTitles();
+
         // Remove toolbar if it exists
         if (this.toolbar && this.toolbar.parentNode) {
             this.toolbar.parentNode.removeChild(this.toolbar);
             this.toolbar = null;
         }
-    
+
         // Remove any existing selection spans
         if (this.itemsList) {
             const spans = this.itemsList.querySelectorAll('.mcl-selected-text');
@@ -3080,7 +3243,7 @@ class MagicChecklistDrawer {
                     );
                 }
             });
-    
+
             // Remove any remaining indicators
             const indicators = this.itemsList.querySelectorAll('.mcl-selection-indicator, .mcl-remove-link-indicator');
             indicators.forEach(indicator => indicator.remove());
@@ -3214,6 +3377,14 @@ class MagicChecklistDrawer {
                 // Release the lock
                 await this.releaseLock();
             }
+
+            // Clean up tooltips
+            if (this.tooltipTimeout) {
+                clearTimeout(this.tooltipTimeout);
+                this.tooltipTimeout = null;
+            }
+            this.removeTooltip();
+            this.restoreTooltipTitles();
 
             // Hide locked overlays/messages
             const lockedOverlay = this.drawerContent.querySelector('.mcl-locked-overlay');
@@ -4074,6 +4245,136 @@ class MagicChecklistDrawer {
                 lastInsertedElement = child;
             });
         }
+    }
+
+    // Add tour connection methods
+    async checkTourConnections() {
+        if (!this.currentChecklistId) {
+            console.log('MCL Tour Debug: No currentChecklistId');
+            return;
+        }
+
+        console.log('MCL Tour Debug: Checking tour connections for checklist:', this.currentChecklistId);
+        
+        const items = this.itemsList.querySelectorAll('li');
+        console.log('MCL Tour Debug: Found items:', items.length);
+        
+        for (const item of items) {
+            const itemId = item.getAttribute('data-item-id');
+            if (itemId) {
+                console.log('MCL Tour Debug: Checking item:', itemId);
+                await this.checkItemTourConnection(item, itemId);
+            }
+        }
+    }
+
+    async checkItemTourConnection(listItem, itemId) {
+        console.log('MCL Tour Debug: Checking connection for item:', itemId);
+        
+        try {
+            const nonce = window.mcl_checklists?.nonce || window.mclTour?.nonce;
+            console.log('MCL Tour Debug: Using nonce:', nonce ? 'available' : 'not available');
+            console.log('MCL Tour Debug: AJAX URL:', window.mcl_checklists?.ajax_url);
+            
+            const requestData = {
+                action: 'mcl_get_item_tour_connections',
+                checklist_id: this.currentChecklistId,
+                item_id: itemId,
+                nonce: nonce
+            };
+            
+            console.log('MCL Tour Debug: Request data:', requestData);
+            
+            const response = await fetch(window.mcl_checklists.ajax_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(requestData)
+            });
+
+            console.log('MCL Tour Debug: Response status:', response.status);
+            
+            const result = await response.json();
+            console.log('MCL Tour Debug: Response data:', result);
+            
+            if (result.success && result.data.connections.length > 0) {
+                console.log('MCL Tour Debug: Found connections:', result.data.connections.length);
+                this.addTourButton(listItem, result.data.connections);
+            } else {
+                console.log('MCL Tour Debug: No connections found for item:', itemId);
+            }
+        } catch (error) {
+            console.error('MCL Tour Debug: Error checking tour connections:', error);
+        }
+    }
+
+    addTourButton(listItem, connections) {
+        console.log('MCL Tour Debug: Adding tour button to item with connections:', connections);
+        
+        // Check if tour button already exists
+        if (listItem.querySelector('.mcl-tour-btn')) {
+            console.log('MCL Tour Debug: Tour button already exists');
+            return;
+        }
+
+        // Get or create the actions container
+        let actionsDiv = listItem.querySelector('.mcl-list-item-actions');
+        if (!actionsDiv) {
+            actionsDiv = document.createElement('div');
+            actionsDiv.className = 'mcl-list-item-actions';
+            listItem.appendChild(actionsDiv);
+        }
+
+        // Create tour button
+        const tourButton = document.createElement('button');
+        tourButton.type = 'button';
+        tourButton.className = 'mcl-tour-btn';
+        tourButton.setAttribute('title', `Start tour from this step`);
+        tourButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 13.5V21q0 .213-.144.356q-.144.144-.357.144t-.356-.144Q5.5 21.213 5.5 21V3q0-.213.144-.356q.144-.144.357-.144t.356.144Q6.5 2.787 6.5 3v1.5h12.583q.429 0 .661.351q.233.35.071.755L18.462 9l1.353 3.394q.162.404-.07.755q-.233.351-.662.351H6.5Zm6-3q.633 0 1.066-.434Q14 9.633 14 9t-.434-1.066Q13.133 7.5 12.5 7.5t-1.066.434Q11 8.367 11 9t.434 1.066q.433.434 1.066.434Z"/></svg>
+        `;
+
+        // Add click handler
+        tourButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.startTourFromConnection(connections);
+        });
+
+        // Insert tour button before the remove button, or add to end if no remove button
+        const removeButton = actionsDiv.querySelector('.mcl-remove-item');
+        if (removeButton) {
+            actionsDiv.insertBefore(tourButton, removeButton);
+        } else {
+            actionsDiv.appendChild(tourButton);
+        }
+    }
+
+    startTourFromConnection(connections) {
+        // If multiple connections, let user choose (for now, just use the first one)
+        const connection = connections[0];
+        
+        // Create the URL with tour continuation parameters
+        const params = new URLSearchParams();
+        params.set('mcl_continue_tour', connection.tour_id);
+        params.set('mcl_tour_step', connection.step_index);
+        
+        // Get current page URL and add tour parameters
+        let tourUrl = window.location.pathname;
+        if (window.location.search) {
+            // If there are existing parameters, merge them
+            const existingParams = new URLSearchParams(window.location.search);
+            for (const [key, value] of params) {
+                existingParams.set(key, value);
+            }
+            tourUrl += '?' + existingParams.toString();
+        } else {
+            tourUrl += '?' + params.toString();
+        }
+        
+        // Navigate to start the tour
+        window.location.href = tourUrl;
     }
 
     // Add new method for tracking item checks

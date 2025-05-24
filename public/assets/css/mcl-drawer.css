@@ -1983,3 +1983,97 @@ body #mcl-drawer .mcl-congratulations.active .mcl-confetti {
 .mcl-hidden-child {
     display: none !important;
 }
+
+/* Tour button for connected items */
+.mcl-tour-btn {
+    border-radius: 3px;
+    padding: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: rgb(90, 90, 90);
+}
+
+.mcl-tour-btn:hover {
+    background: #f5e354;
+}
+
+.mcl-tour-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mcl-list-item-actions .mcl-tour-btn {
+    order: -1;
+}
+
+/* Custom Tooltip Styles */
+.mcl-tooltip {
+    position: fixed;
+    background: var(--mcl-primary);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 999999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.mcl-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--mcl-primary);
+}
+
+.mcl-tooltip.mcl-tooltip-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Dark theme tooltip adjustments */
+.mcl-theme-dark .mcl-tooltip {
+    background: var(--mcl-accent);
+    color: var(--mcl-primary);
+}
+
+.mcl-theme-dark .mcl-tooltip::after {
+    border-top-color: var(--mcl-accent);
+}
+
+/* Tooltip below variant (when no space above) */
+.mcl-tooltip.mcl-tooltip-below::after {
+    top: -8px;
+    border-top-color: transparent;
+    border-bottom-color: var(--mcl-primary);
+}
+
+.mcl-theme-dark .mcl-tooltip.mcl-tooltip-below::after {
+    border-bottom-color: var(--mcl-accent);
+}
+
+/* Ensure action buttons have relative positioning for tooltip placement */
+.mcl-list-item-actions button,
+.mcl-tour-btn,
+.mcl-remove-item,
+.mcl-add-image-btn,
+.mcl-in-progress-btn,
+.mcl-item-deadline-btn {
+    position: relative;
+}

@@ -1004,11 +1004,7 @@
                     this.loadTourData(this.currentTourId);
                 }
             }).fail((xhr, status, error) => {
-                console.error('Ajax request failed when saving step order:', {
-                    error: error,
-                    status: status,
-                    response: xhr.responseText
-                });
+                console.error('Ajax request failed when saving step order:', error);
                 this.showErrorToast('Failed to save step order. Please try again.');
                 // Reload tour data to ensure client-server synchronization
                 this.loadTourData(this.currentTourId);
@@ -1161,58 +1157,78 @@
                 return;
             }
 
-            // Filter steps for current page and handle navigation
-            const currentPageUrl = this.getCurrentPageUrl();
-            let currentPageSteps = [];
-            let nextPageStep = null;
-            let prevPageStep = null;
-            let startStepIndex = tourData.continue_from_step || 0;
+                    // Filter steps for current page and handle navigation
+        const currentPageUrl = this.getCurrentPageUrl();
+        let currentPageSteps = [];
+        let nextPageStep = null;
+        let prevPageStep = null;
+        let startStepIndex = tourData.continue_from_step || 0;
+        
+        // When continuing a tour, first check if the target step is on a different page
+        if (tourData.continue_from_step !== undefined && startStepIndex < tourData.steps.length) {
+            const targetStep = tourData.steps[startStepIndex];
+            const targetStepPageUrl = targetStep.page_url || currentPageUrl;
             
-            // Find steps for current page, next page step, and previous page step
-            for (let i = 0; i < tourData.steps.length; i++) {
-                const step = tourData.steps[i];
-                const stepPageUrl = step.page_url || currentPageUrl;
-                
-                if (stepPageUrl === currentPageUrl) {
-                    currentPageSteps.push({
-                        ...step,
-                        originalIndex: i
-                    });
-                }
-                
-                // Find next step on different page (after startStepIndex)
-                if (i > startStepIndex && !nextPageStep && stepPageUrl !== currentPageUrl) {
-                    nextPageStep = {
-                        ...step,
-                        originalIndex: i
-                    };
-                }
-                
-                // Find previous step on different page (before startStepIndex)
-                if (i < startStepIndex && stepPageUrl !== currentPageUrl) {
-                    prevPageStep = {
-                        ...step,
-                        originalIndex: i
-                    };
-                }
+            // If the target step is on a different page, navigate there directly
+            if (targetStepPageUrl !== currentPageUrl) {
+                console.log('Target step is on different page, navigating to:', {
+                    targetStepIndex: startStepIndex,
+                    targetPageUrl: targetStepPageUrl,
+                    currentPageUrl: currentPageUrl
+                });
+                this.navigateToTourStep(tourData.id, {
+                    ...targetStep,
+                    originalIndex: startStepIndex
+                });
+                return;
+            }
+        }
+        
+        // Find steps for current page, next page step, and previous page step
+        for (let i = 0; i < tourData.steps.length; i++) {
+            const step = tourData.steps[i];
+            const stepPageUrl = step.page_url || currentPageUrl;
+            
+            if (stepPageUrl === currentPageUrl) {
+                currentPageSteps.push({
+                    ...step,
+                    originalIndex: i
+                });
             }
             
-            // If continuing a tour, filter steps to start from the right one
-            if (tourData.continue_from_step !== undefined) {
-                currentPageSteps = currentPageSteps.filter(step => step.originalIndex >= startStepIndex);
+            // Find next step on different page (after startStepIndex)
+            if (i > startStepIndex && !nextPageStep && stepPageUrl !== currentPageUrl) {
+                nextPageStep = {
+                    ...step,
+                    originalIndex: i
+                };
             }
             
-            if (currentPageSteps.length === 0) {
-                if (nextPageStep) {
-                    // No steps on current page, navigate to next step's page
-                    this.navigateToTourStep(tourData.id, nextPageStep);
-                    return;
-                } else if (tourData.continue_from_step !== undefined) {
-                    // Tour continuation but no valid steps found
-                    console.log('No valid steps found for tour continuation');
-                    return;
-                }
+            // Find previous step on different page (before startStepIndex)
+            if (i < startStepIndex && stepPageUrl !== currentPageUrl) {
+                prevPageStep = {
+                    ...step,
+                    originalIndex: i
+                };
             }
+        }
+        
+        // If continuing a tour, filter steps to start from the right one
+        if (tourData.continue_from_step !== undefined) {
+            currentPageSteps = currentPageSteps.filter(step => step.originalIndex >= startStepIndex);
+        }
+        
+        if (currentPageSteps.length === 0) {
+            if (nextPageStep) {
+                // No steps on current page, navigate to next step's page
+                this.navigateToTourStep(tourData.id, nextPageStep);
+                return;
+            } else if (tourData.continue_from_step !== undefined) {
+                // Tour continuation but no valid steps found
+                console.log('No valid steps found for tour continuation');
+                return;
+            }
+        }
 
             const steps = currentPageSteps.map((step, index) => {
                 const isLastStepOnPage = index === currentPageSteps.length - 1;
@@ -1267,8 +1283,11 @@
                     const currentDriverStep = driver.getActiveIndex();
                     const isFirstDriverStep = currentDriverStep === 0;
                     
+                    // Handle checklist integration - uncheck current step's item when going backward
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
+                    this.handleStepChecklistIntegration(currentGlobalIndex, tourData.steps, 'backward');
+                    
                     if (isFirstDriverStep && startStepIndex > 0) {
-                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
                         const prevGlobalIndex = currentGlobalIndex - 1;
                         if (prevGlobalIndex >= 0) {
                             const prevRaw = tourData.steps[prevGlobalIndex];
@@ -1302,6 +1321,9 @@
                     // Update the progress text with correct global step position immediately
                     this.updateTourProgress(currentGlobalIndex + 1, tourData.steps.length);
                     this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex);
+                    
+                    // Handle checklist integration - check item when step is highlighted
+                    this.handleStepChecklistIntegration(currentGlobalIndex, tourData.steps, 'forward');
                     
                     // Also update after a short delay to override any driver.js changes
                     setTimeout(() => {
@@ -1413,6 +1435,26 @@
             }
 
             const currentPageUrl = this.getCurrentPageUrl();
+            
+            // When starting preview from a specific step, check if that step is on a different page
+            if (fromStepIndex < this.tourSteps.length) {
+                const targetStep = this.tourSteps[fromStepIndex];
+                const targetStepPageUrl = targetStep.page_url || currentPageUrl;
+                
+                // If the target step is on a different page, navigate there directly
+                if (targetStepPageUrl !== currentPageUrl) {
+                    console.log('Preview target step is on different page, navigating to:', {
+                        targetStepIndex: fromStepIndex,
+                        targetPageUrl: targetStepPageUrl,
+                        currentPageUrl: currentPageUrl
+                    });
+                    this.navigateToTourPreview({
+                        page_url: targetStepPageUrl,
+                        originalIndex: fromStepIndex
+                    });
+                    return;
+                }
+            }
             
             // Convert all tour steps to driver.js format
             const allSteps = this.tourSteps.map((step, index) => {
@@ -1588,9 +1630,12 @@
                     const currentDriverStep = driver.getActiveIndex();
                     const isFirstDriverStep = currentDriverStep === 0;
                     
+                    // Handle checklist integration - uncheck current step's item when going backward (preview mode)
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
+                    this.handleStepChecklistIntegration(currentGlobalIndex, this.tourSteps, 'backward');
+                    
                     if (isFirstDriverStep && fromStepIndex > 0) {
                         // Find the previous step in the global tour
-                        const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
                         const prevGlobalIndex = currentGlobalIndex - 1;
                         
                         console.log('First driver step reached:', {
@@ -1639,6 +1684,9 @@
                     this.updateTourProgress(currentGlobalIndex + 1, totalSteps);
                     this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
                     
+                    // Handle checklist integration - check item when step is highlighted (preview mode)
+                    this.handleStepChecklistIntegration(currentGlobalIndex, this.tourSteps, 'forward');
+                    
                     // Also update after a short delay to override any driver.js changes
                     setTimeout(() => {
                         this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
@@ -1656,8 +1704,6 @@
                 }
             });
 
-            // Since we already filtered the steps to start from the correct index,
-            // we can just start the driver normally
             driver.drive();
             
             // Update progress and buttons after a minimal delay to ensure driver is initialized
@@ -2010,6 +2056,78 @@
             setTimeout(() => {
                 modal.classList.remove('active', 'mcl-modal-hiding');
             }, 200);
+        },
+
+        // Add checklist integration methods
+        checkChecklistItem(checklistId, itemId) {
+            if (!checklistId || !itemId) {
+                return;
+            }
+
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_tour_step_check_item',
+                checklist_id: checklistId,
+                item_id: itemId,
+                checked: true,
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    console.log('Checklist item checked:', checklistId, itemId);
+                } else {
+                    console.error('Failed to check checklist item:', response.data);
+                }
+            }).fail((xhr, status, error) => {
+                console.error('Ajax request failed when checking checklist item:', error);
+            });
+        },
+
+        uncheckChecklistItem(checklistId, itemId) {
+            if (!checklistId || !itemId) {
+                return;
+            }
+
+            $.post(mclTour.ajax_url, {
+                action: 'mcl_tour_step_check_item',
+                checklist_id: checklistId,
+                item_id: itemId,
+                checked: false,
+                nonce: mclTour.nonce
+            }, (response) => {
+                if (response.success) {
+                    console.log('Checklist item unchecked:', checklistId, itemId);
+                } else {
+                    console.error('Failed to uncheck checklist item:', response.data);
+                }
+            }).fail((xhr, status, error) => {
+                console.error('Ajax request failed when unchecking checklist item:', error);
+            });
+        },
+
+        handleStepChecklistIntegration(currentStepIndex, tourSteps, direction = 'forward') {
+            if (!tourSteps || currentStepIndex < 0 || currentStepIndex >= tourSteps.length) {
+                return;
+            }
+
+            const currentStep = tourSteps[currentStepIndex];
+            
+            // Handle current step's checklist item
+            if (currentStep && currentStep.checklist_id && currentStep.checklist_item_id) {
+                if (direction === 'forward') {
+                    // Check the item when moving forward to this step
+                    this.checkChecklistItem(currentStep.checklist_id, currentStep.checklist_item_id);
+                } else {
+                    // Uncheck the item when moving backward from this step
+                    this.uncheckChecklistItem(currentStep.checklist_id, currentStep.checklist_item_id);
+                }
+            }
+
+            // If moving backward, also handle the next step (uncheck it)
+            if (direction === 'backward' && currentStepIndex + 1 < tourSteps.length) {
+                const nextStep = tourSteps[currentStepIndex + 1];
+                if (nextStep && nextStep.checklist_id && nextStep.checklist_item_id) {
+                    this.uncheckChecklistItem(nextStep.checklist_id, nextStep.checklist_item_id);
+                }
+            }
         },
 
     };
