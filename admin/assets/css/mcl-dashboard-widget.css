@@ -175,6 +175,21 @@
     border-left: 3px solid #3b82f6;
 }
 
+.mcl-widget-deadline.overdue {
+    background-color: #fee;
+    border-left: 3px solid #b91c1c;
+}
+
+.mcl-widget-deadline.overdue .mcl-deadline-item {
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.mcl-widget-deadline.overdue .mcl-deadline-date {
+    color: #b91c1c;
+    font-weight: 500;
+}
+
 .mcl-deadline-item {
     flex: 1;
     color: #374151;
@@ -185,6 +200,48 @@
     color: #6b7280;
     font-size: 11px;
     margin-left: 8px;
+}
+
+.mcl-deadline-type {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    margin-left: 8px;
+    padding: 2px 4px;
+    background-color: rgba(107, 114, 128, 0.1);
+    border-radius: 2px;
+}
+
+.mcl-widget-checklist-deadline {
+    border-left-width: 4px !important;
+    font-weight: 500;
+}
+
+.mcl-widget-checklist-deadline .mcl-deadline-item {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.mcl-widget-checklist-deadline.urgent .mcl-deadline-type {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.mcl-widget-checklist-deadline.warning .mcl-deadline-type {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.mcl-widget-checklist-deadline.normal .mcl-deadline-type {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.mcl-widget-checklist-deadline.overdue .mcl-deadline-type {
+    background-color: rgba(185, 28, 28, 0.1);
+    color: #b91c1c;
 }
 
 .mcl-widget-items {
@@ -364,6 +421,11 @@
     
     .mcl-deadline-date {
         margin-left: 0;
+    }
+    
+    .mcl-deadline-type {
+        margin-left: 0;
+        margin-top: 2px;
     }
 }
 
