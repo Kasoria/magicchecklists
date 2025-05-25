@@ -21,13 +21,15 @@ export class ImageManager {
 
     bindEvents() {
         // Delegate image button clicks
-        this.itemsList.addEventListener('click', (e) => {
-            if (e.target.closest('.mcl-add-image-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleImageButtonClick(e.target.closest('li'));
-            }
-        });
+        if (this.itemsList) {
+            this.itemsList.addEventListener('click', (e) => {
+                if (e.target.closest('.mcl-add-image-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.handleImageButtonClick(e.target.closest('li'));
+                }
+            });
+        }
 
         // Handle image resizing
         document.addEventListener('mousedown', (e) => {
