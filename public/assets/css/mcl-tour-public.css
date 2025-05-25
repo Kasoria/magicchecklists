@@ -1,6 +1,25 @@
 /**
  * Tour Public CSS
  * Styles for tour creator interface and tour display
+ * 
+ * Z-Index Hierarchy (highest to lowest):
+ * - Confirmation Modal: 10000000 (must be above everything including driver.js)
+ *   - Modal Buttons & Close: z-index 10 (relative to modal)
+ *   - Modal Actions: z-index 5 (relative to modal)
+ *   - Modal Body: z-index 3 (relative to modal)
+ *   - Modal Inner: z-index 2 (relative to modal)
+ *   - Modal Content: z-index 1 (relative to modal)
+ * - Toast Notifications: 9999998 (below confirmation modal, above tours)
+ * - Element Reselection Overlay: 9999996
+ * - Navigation Loading: 9999995
+ * - General Loading: 9999994
+ * - Tour Step Modal: 1000002
+ * - Element Highlight: 1000001
+ * - Floating Panel: 1000000
+ * - Tour Creator: 999999
+ * - Tour Trigger Button: 1000
+ * 
+ * Note: Driver.js typically uses z-index around 9999997-9999999 for overlays/popovers
  */
 
 /* Tour Creator Interface */
@@ -862,7 +881,7 @@
     color: white;
     padding: 20px;
     border-radius: 4px;
-    z-index: 1000003;
+    z-index: 9999994;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -875,7 +894,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 1000003;
+    z-index: 9999995;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -932,7 +951,7 @@
     padding: 15px 25px;
     border-radius: 6px;
     font-size: 14px;
-    z-index: 1000003;
+    z-index: 9999996;
     pointer-events: none;
 }
 
@@ -941,7 +960,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000004;
+    z-index: 9999998;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1200,7 +1219,7 @@
     right: 0;
     left: 0;
     bottom: 0;
-    z-index: 1000005;
+    z-index: 10000000;
     display: none;
     justify-content: center;
     align-items: center;
@@ -1224,6 +1243,7 @@
     max-width: 28rem;
     max-height: 100%;
     pointer-events: auto;
+    z-index: 1;
 }
 
 .mcl-confirmation-modal-inner {
@@ -1233,6 +1253,7 @@
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
     animation: mcl-modal-fade-in 0.2s ease-out;
     pointer-events: auto;
+    z-index: 2;
 }
 
 .mcl-confirmation-modal.mcl-modal-hiding .mcl-confirmation-modal-inner {
@@ -1255,7 +1276,7 @@
     align-items: center;
     transition: all 0.2s ease;
     pointer-events: auto;
-    z-index: 1;
+    z-index: 10;
 }
 
 .mcl-confirmation-modal-close:hover {
@@ -1274,6 +1295,8 @@
     padding: 24px;
     text-align: center;
     pointer-events: auto;
+    position: relative;
+    z-index: 1000000001;
 }
 
 .mcl-confirmation-modal-icon {
@@ -1309,6 +1332,8 @@
     justify-content: center;
     flex-wrap: wrap;
     pointer-events: auto;
+    position: relative;
+    z-index: 5;
 }
 
 .mcl-confirmation-modal-actions .mcl-button {
@@ -1318,6 +1343,8 @@
     font-size: 14px;
     pointer-events: auto;
     cursor: pointer;
+    position: relative;
+    z-index: 10;
 }
 
 .mcl-confirmation-modal-actions .mcl-button:focus {
