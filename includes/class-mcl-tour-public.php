@@ -164,10 +164,56 @@ class MCL_Tour_Public {
 
     public function render_tour_ui() {
         $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        
+        // Check if tours are active on this page
+        $has_tours = $is_tour_mode || $continue_tour_id || MCL_Tour_CPT::has_tours_for_current_page();
         
         if ($is_tour_mode) {
             include MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/views/mcl-tour-creator.php';
+        } elseif ($has_tours) {
+            // Render the confirmation modal for regular tours when tours are active
+            $this->render_confirmation_modal();
         }
+    }
+
+    private function render_confirmation_modal() {
+        ?>
+        <!-- Tour Confirmation Modal -->
+        <div class="mcl-confirmation-modal" id="mcl-confirmation-modal">
+            <div class="mcl-confirmation-modal-content">
+                <div class="mcl-confirmation-modal-inner">
+                    <button type="button" class="mcl-confirmation-modal-close" id="mcl-confirmation-modal-close">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                            <path fill="currentColor" fill-rule="evenodd" d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94L4.28 3.22Z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="sr-only"><?php _e('Close modal', 'magic-checklists'); ?></span>
+                    </button>
+                    <div class="mcl-confirmation-modal-body">
+                        <div class="mcl-confirmation-modal-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                            </svg>
+                        </div>
+                        <h3 class="mcl-confirmation-modal-title" id="mcl-confirmation-modal-title">
+                            <?php _e('Are you sure?', 'magic-checklists'); ?>
+                        </h3>
+                        <div class="mcl-confirmation-modal-actions">
+                            <button type="button" class="mcl-button mcl-button-danger" id="mcl-confirmation-modal-confirm">
+                                <?php _e('Yes, I\'m sure', 'magic-checklists'); ?>
+                            </button>
+                            <button type="button" class="mcl-button mcl-button-secondary" id="mcl-confirmation-modal-cancel">
+                                <?php _e('No, cancel', 'magic-checklists'); ?>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+        console.log('MCL: Tour confirmation modal rendered for regular tour mode');
+        </script>
+        <?php
     }
 
     public function mark_tour_complete() {

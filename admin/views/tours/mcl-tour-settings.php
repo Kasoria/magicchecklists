@@ -26,7 +26,7 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
         <div class="mcl-title-wrapper">
             <h1 class="mcl-title"><?php echo esc_html($page_title); ?></h1>
             <div class="mcl-actions">
-                <a href="<?php echo admin_url('admin.php?page=mcl_tours'); ?>" class="mcl-button mcl-button-secondary">
+                <a href="<?php echo admin_url('admin.php?page=mcl_tours'); ?>" class="mcl-button mcl-button-primary">
                     <span class="dashicons dashicons-arrow-left-alt"></span>
                     <?php _e('Back to Tours', 'magic-checklists'); ?>
                 </a>
@@ -98,11 +98,8 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
                             <?php _e('Specific Page URL', 'magic-checklists'); ?>
                         </label>
                         <div class="mcl-trigger-input" id="trigger-page-input" style="<?php echo $trigger_type !== 'page' ? 'display: none;' : ''; ?>">
-                            <input type="text" id="trigger-page-url" class="mcl-input" 
-                                   value="<?php echo $trigger_type === 'page' ? esc_attr($trigger_value) : ''; ?>"
-                                   placeholder="<?php _e('e.g., /wp-admin/admin.php?page=my-page or use * for wildcards', 'magic-checklists'); ?>">
-                            <select id="common-pages" class="mcl-select" style="margin-top: 8px;">
-                                <option value=""><?php _e('Or select a common page...', 'magic-checklists'); ?></option>
+                            <select id="trigger-page-template" class="mcl-input" style="margin-bottom: 5px;">
+                                <option value=""><?php _e('Select a template or enter custom URL', 'magic-checklists'); ?></option>
                                 <option value="/wp-admin/"><?php _e('WordPress Dashboard', 'magic-checklists'); ?></option>
                                 <option value="/wp-admin/edit.php"><?php _e('Posts List', 'magic-checklists'); ?></option>
                                 <option value="/wp-admin/post-new.php"><?php _e('Add New Post', 'magic-checklists'); ?></option>
@@ -112,8 +109,10 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
                                 <option value="/wp-admin/plugins.php"><?php _e('Plugins', 'magic-checklists'); ?></option>
                                 <option value="/wp-admin/users.php"><?php _e('Users', 'magic-checklists'); ?></option>
                                 <option value="/wp-admin/options-general.php"><?php _e('General Settings', 'magic-checklists'); ?></option>
-                                <option value="/"><?php _e('Homepage (Frontend)', 'magic-checklists'); ?></option>
                             </select>
+                            <input type="text" id="trigger-page" class="mcl-input" 
+                                   value="<?php echo $trigger_type === 'page' ? esc_attr($trigger_value) : ''; ?>"
+                                   placeholder="<?php _e('e.g., /wp-admin/edit.php', 'magic-checklists'); ?>">
                             <p class="description"><?php _e('Enter the URL where this tour should trigger. Use * for wildcards.', 'magic-checklists'); ?></p>
                         </div>
                         
@@ -177,36 +176,36 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
                         
                         <label class="mcl-radio-label">
                             <input type="radio" name="user_condition" value="specific_users" <?php checked($user_condition, 'specific_users'); ?>>
-                            <?php _e('Specific Users', 'magic-checklists'); ?>
+                            <?php _e('Specific Users Only', 'magic-checklists'); ?>
                         </label>
                         <div class="mcl-user-input" id="specific-users-input" style="<?php echo $user_condition !== 'specific_users' ? 'display: none;' : ''; ?>">
-                            <select id="specific-users" class="mcl-select" multiple style="min-height: 100px;">
-                                <?php
-                                $users = get_users(array('orderby' => 'display_name'));
+                            <select id="specific-users" multiple="multiple" class="mcl-users-select" style="width: 100%;">
+                                <?php 
+                                $users = get_users(array('number' => 100));
                                 foreach ($users as $user) {
                                     $selected = in_array($user->ID, $specific_users) ? 'selected' : '';
-                                    echo '<option value="' . $user->ID . '" ' . $selected . '>' . esc_html($user->display_name . ' (' . $user->user_login . ')') . '</option>';
+                                    echo '<option value="' . esc_attr($user->ID) . '" ' . $selected . '>' . esc_html($user->display_name . ' (' . $user->user_email . ')') . '</option>';
                                 }
                                 ?>
                             </select>
-                            <p class="description"><?php _e('Hold Ctrl/Cmd to select multiple users.', 'magic-checklists'); ?></p>
+                            <p class="description"><?php _e('Select specific users who should see this tour.', 'magic-checklists'); ?></p>
                         </div>
                         
                         <label class="mcl-radio-label">
                             <input type="radio" name="user_condition" value="specific_roles" <?php checked($user_condition, 'specific_roles'); ?>>
-                            <?php _e('Specific User Roles', 'magic-checklists'); ?>
+                            <?php _e('Specific User Roles Only', 'magic-checklists'); ?>
                         </label>
-                        <div class="mcl-role-input" id="specific-roles-input" style="<?php echo $user_condition !== 'specific_roles' ? 'display: none;' : ''; ?>">
-                            <select id="specific-roles" class="mcl-select" multiple style="min-height: 100px;">
-                                <?php
-                                global $wp_roles;
-                                foreach ($wp_roles->roles as $role_key => $role) {
+                        <div class="mcl-user-input" id="specific-roles-input" style="<?php echo $user_condition !== 'specific_roles' ? 'display: none;' : ''; ?>">
+                            <select id="specific-roles" multiple="multiple" class="mcl-roles-select" style="width: 100%;">
+                                <?php 
+                                $roles = wp_roles()->get_names();
+                                foreach ($roles as $role_key => $role_name) {
                                     $selected = in_array($role_key, $specific_roles) ? 'selected' : '';
-                                    echo '<option value="' . $role_key . '" ' . $selected . '>' . esc_html($role['name']) . '</option>';
+                                    echo '<option value="' . esc_attr($role_key) . '" ' . $selected . '>' . esc_html($role_name) . '</option>';
                                 }
                                 ?>
                             </select>
-                            <p class="description"><?php _e('Hold Ctrl/Cmd to select multiple roles.', 'magic-checklists'); ?></p>
+                            <p class="description"><?php _e('Select user roles that should see this tour.', 'magic-checklists'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -238,6 +237,217 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
                         <label for="tour-show-once" class="mcl-label"><?php _e('Show only once per user', 'magic-checklists'); ?></label>
                     </div>
                     <p class="description"><?php _e('If checked, each user will only see this tour once. Tracked by user account or browser cookie.', 'magic-checklists'); ?></p>
+                </div>
+            </div>
+
+            <!-- Appearance & Behavior Settings -->
+            <div class="mcl-form-section">
+                <h2 class="mcl-section-title">
+                    <?php _e('Appearance & Behavior', 'magic-checklists'); ?>
+                </h2>
+                
+                <!-- Animation Settings -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Animation', 'magic-checklists'); ?></h3>
+                    <div class="mcl-toggle-wrapper">
+                        <label class="mcl-toggle-switch">
+                            <input type="checkbox" id="tour-animate" name="animate" value="1" 
+                                   <?php checked(!isset($tour_settings['animate']) || $tour_settings['animate'] !== false); ?>>
+                            <span class="mcl-switch-label"></span>
+                        </label>
+                        <label for="tour-animate" class="mcl-label"><?php _e('Enable animated transitions', 'magic-checklists'); ?></label>
+                    </div>
+                    <p class="description">
+                        <?php _e('When enabled, the tour will smoothly animate between steps. Disable for a static, instant appearance.', 'magic-checklists'); ?>
+                    </p>
+                </div>
+
+                <!-- Progress Settings -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Progress Display', 'magic-checklists'); ?></h3>
+                    <div class="mcl-toggle-wrapper">
+                        <label class="mcl-toggle-switch">
+                            <input type="checkbox" id="tour-show-progress" name="show_progress" value="1" 
+                                   <?php checked(!isset($tour_settings['show_progress']) || $tour_settings['show_progress'] !== false); ?>>
+                            <span class="mcl-switch-label"></span>
+                        </label>
+                        <label for="tour-show-progress" class="mcl-label"><?php _e('Show progress indicator', 'magic-checklists'); ?></label>
+                    </div>
+                    <div class="mcl-form-row" style="margin-top: 10px;">
+                        <div class="mcl-form-col">
+                            <label for="tour-progress-text" class="mcl-label"><?php _e('Progress Text Template', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-progress-text" name="progress_text" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['progress_text'] ?? '{{current}} of {{total}}'); ?>"
+                                   placeholder="{{current}} of {{total}}">
+                            <p class="description">
+                                <?php _e('Customize the progress text. Use {{current}} for current step and {{total}} for total steps.', 'magic-checklists'); ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exit Control Settings -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Exit Control', 'magic-checklists'); ?></h3>
+                    <div class="mcl-toggle-wrapper">
+                        <label class="mcl-toggle-switch">
+                            <input type="checkbox" id="tour-allow-close" name="allow_close" value="1" 
+                                   <?php checked(!isset($tour_settings['allow_close']) || $tour_settings['allow_close'] !== false); ?>>
+                            <span class="mcl-switch-label"></span>
+                        </label>
+                        <label for="tour-allow-close" class="mcl-label"><?php _e('Allow users to close tour', 'magic-checklists'); ?></label>
+                    </div>
+                    <p class="description">
+                        <?php _e('When disabled, users must complete the entire tour before they can exit.', 'magic-checklists'); ?>
+                    </p>
+                    
+                    <div class="mcl-toggle-wrapper" style="margin-top: 15px;">
+                        <label class="mcl-toggle-switch">
+                            <input type="checkbox" id="tour-confirm-exit" name="confirm_exit" value="1" 
+                                   <?php checked(!empty($tour_settings['confirm_exit'])); ?>>
+                            <span class="mcl-switch-label"></span>
+                        </label>
+                        <label for="tour-confirm-exit" class="mcl-label"><?php _e('Show confirmation dialog before exit', 'magic-checklists'); ?></label>
+                    </div>
+                    <div class="mcl-form-row" style="margin-top: 10px;">
+                        <div class="mcl-form-col">
+                            <label for="tour-exit-message" class="mcl-label"><?php _e('Exit Confirmation Message', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-exit-message" name="exit_message" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['exit_message'] ?? 'Are you sure you want to exit the tour?'); ?>"
+                                   placeholder="Are you sure you want to exit the tour?">
+                            <p class="description">
+                                <?php _e('Message shown when users try to exit the tour (only when confirmation is enabled).', 'magic-checklists'); ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Button Customization -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Button Text', 'magic-checklists'); ?></h3>
+                    <div class="mcl-form-row">
+                        <div class="mcl-form-col">
+                            <label for="tour-next-btn-text" class="mcl-label"><?php _e('Next Button Text', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-next-btn-text" name="next_btn_text" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['next_btn_text'] ?? 'Next'); ?>"
+                                   placeholder="Next">
+                        </div>
+                        <div class="mcl-form-col">
+                            <label for="tour-prev-btn-text" class="mcl-label"><?php _e('Previous Button Text', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-prev-btn-text" name="prev_btn_text" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['prev_btn_text'] ?? 'Previous'); ?>"
+                                   placeholder="Previous">
+                        </div>
+                    </div>
+                    <div class="mcl-form-row">
+                        <div class="mcl-form-col">
+                            <label for="tour-done-btn-text" class="mcl-label"><?php _e('Done Button Text', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-done-btn-text" name="done_btn_text" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['done_btn_text'] ?? 'Done'); ?>"
+                                   placeholder="Done">
+                        </div>
+                        <div class="mcl-form-col">
+                            <label for="tour-close-btn-text" class="mcl-label"><?php _e('Close Button Text', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-close-btn-text" name="close_btn_text" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['close_btn_text'] ?? 'Close'); ?>"
+                                   placeholder="Close">
+                        </div>
+                    </div>
+                    <p class="description">
+                        <?php _e('Customize the text displayed on tour navigation buttons.', 'magic-checklists'); ?>
+                    </p>
+                </div>
+
+                <!-- Default Button Configuration -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Default Buttons to Show', 'magic-checklists'); ?></h3>
+                    <div class="mcl-checkbox-group">
+                        <label class="mcl-checkbox-label">
+                            <input type="checkbox" name="default_buttons[]" value="next" 
+                                   <?php checked(in_array('next', $tour_settings['default_buttons'] ?? ['next', 'previous', 'close'])); ?>>
+                            <?php _e('Next button', 'magic-checklists'); ?>
+                        </label>
+                        <label class="mcl-checkbox-label">
+                            <input type="checkbox" name="default_buttons[]" value="previous" 
+                                   <?php checked(in_array('previous', $tour_settings['default_buttons'] ?? ['next', 'previous', 'close'])); ?>>
+                            <?php _e('Previous button', 'magic-checklists'); ?>
+                        </label>
+                        <label class="mcl-checkbox-label">
+                            <input type="checkbox" name="default_buttons[]" value="close" 
+                                   <?php checked(in_array('close', $tour_settings['default_buttons'] ?? ['next', 'previous', 'close'])); ?>>
+                            <?php _e('Close button', 'magic-checklists'); ?>
+                        </label>
+                    </div>
+                    <p class="description"><?php _e('Select which buttons should be shown by default on each tour step. Individual steps can override these settings.', 'magic-checklists'); ?></p>
+                </div>
+
+                <!-- Overlay Settings -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Overlay Style', 'magic-checklists'); ?></h3>
+                    <div class="mcl-form-row">
+                        <div class="mcl-form-col">
+                            <label for="tour-overlay-color" class="mcl-label"><?php _e('Overlay Color', 'magic-checklists'); ?></label>
+                            <div class="mcl-color-input-wrapper">
+                                <input type="color" id="tour-overlay-color" name="overlay_color" class="mcl-color-input" 
+                                       value="<?php echo esc_attr($tour_settings['overlay_color'] ?? '#000000'); ?>">
+                                <input type="text" id="tour-overlay-color-text" class="mcl-input mcl-color-text" 
+                                       value="<?php echo esc_attr($tour_settings['overlay_color'] ?? '#000000'); ?>"
+                                       placeholder="#000000">
+                            </div>
+                        </div>
+                        <div class="mcl-form-col">
+                            <label for="tour-overlay-opacity" class="mcl-label"><?php _e('Overlay Opacity', 'magic-checklists'); ?></label>
+                            <div class="mcl-range-input-wrapper">
+                                <input type="range" id="tour-overlay-opacity" name="overlay_opacity" class="mcl-range-input" 
+                                       min="0" max="1" step="0.1" value="<?php echo esc_attr($tour_settings['overlay_opacity'] ?? '0.75'); ?>">
+                                <span class="mcl-range-value"><?php echo esc_html($tour_settings['overlay_opacity'] ?? '0.75'); ?></span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="description">
+                        <?php _e('Customize the background overlay that appears behind the tour popover.', 'magic-checklists'); ?>
+                    </p>
+                </div>
+
+                <!-- Popover Styling -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Popover Style', 'magic-checklists'); ?></h3>
+                    <div class="mcl-form-row">
+                        <div class="mcl-form-col">
+                            <label for="tour-popover-class" class="mcl-label"><?php _e('Custom CSS Class', 'magic-checklists'); ?></label>
+                            <input type="text" id="tour-popover-class" name="popover_class" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['popover_class'] ?? ''); ?>"
+                                   placeholder="my-custom-tour-theme">
+                            <p class="description">
+                                <?php _e('Add a custom CSS class to style the popover. Leave empty for default styling.', 'magic-checklists'); ?>
+                                <?php _e('Try: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large.', 'magic-checklists'); ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="mcl-form-group">
+                    <h3 class="mcl-subsection-title"><?php _e('Advanced Options', 'magic-checklists'); ?></h3>
+                    <div class="mcl-form-row">
+                        <div class="mcl-form-col">
+                            <label for="tour-padding" class="mcl-label"><?php _e('Highlight Padding', 'magic-checklists'); ?></label>
+                            <input type="number" id="tour-padding" name="padding" class="mcl-input" 
+                                   value="<?php echo esc_attr($tour_settings['padding'] ?? '4'); ?>" min="0" max="50">
+                            <p class="description"><?php _e('Padding around highlighted elements in pixels.', 'magic-checklists'); ?></p>
+                        </div>
+                        <div class="mcl-form-col">
+                            <label for="tour-smooth-scroll" class="mcl-label"><?php _e('Smooth Scroll', 'magic-checklists'); ?></label>
+                            <div class="mcl-toggle-wrapper">
+                                <label class="mcl-toggle-switch">
+                                    <input type="checkbox" id="tour-smooth-scroll" name="smooth_scroll" value="1" 
+                                           <?php checked(!isset($tour_settings['smooth_scroll']) || $tour_settings['smooth_scroll'] !== false); ?>>
+                                    <span class="mcl-switch-label"></span>
+                                </label>
+                            </div>
+                            <p class="description"><?php _e('Enable smooth scrolling to highlighted elements.', 'magic-checklists'); ?></p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -308,31 +518,31 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
 
         <!-- Instructions Sidebar -->
         <div class="mcl-tour-settings-sidebar">
-            <div class="mcl-instructions-box">
-                <h3><?php _e('How to Create Tours', 'magic-checklists'); ?></h3>
-                <div class="mcl-instruction-steps">
-                    <div class="mcl-instruction-step">
+            <div class="mcl-sidebar-box">
+                <h3><?php _e('Getting Started', 'magic-checklists'); ?></h3>
+                <div class="mcl-steps-guide">
+                    <div class="mcl-guide-step">
                         <span class="mcl-step-number">1</span>
                         <div class="mcl-step-content">
-                            <h4><?php _e('Configure Tour Settings', 'magic-checklists'); ?></h4>
-                            <p><?php _e('Set up the basic information and behavior for your tour using the form on the left.', 'magic-checklists'); ?></p>
+                            <h4><?php _e('Configure Settings', 'magic-checklists'); ?></h4>
+                            <p><?php _e('Set up the basic information, trigger conditions, and customize the appearance.', 'magic-checklists'); ?></p>
                         </div>
                     </div>
-                    <div class="mcl-instruction-step">
+                    <div class="mcl-guide-step">
                         <span class="mcl-step-number">2</span>
                         <div class="mcl-step-content">
-                            <h4><?php _e('Open Visual Creator', 'magic-checklists'); ?></h4>
-                            <p><?php _e('Click "Save & Open Visual Tour Creator" to start adding steps to your tour.', 'magic-checklists'); ?></p>
+                            <h4><?php _e('Add Tour Steps', 'magic-checklists'); ?></h4>
+                            <p><?php _e('Use the visual tour creator to add interactive steps by clicking on elements.', 'magic-checklists'); ?></p>
                         </div>
                     </div>
-                    <div class="mcl-instruction-step">
+                    <div class="mcl-guide-step">
                         <span class="mcl-step-number">3</span>
                         <div class="mcl-step-content">
-                            <h4><?php _e('Select Elements', 'magic-checklists'); ?></h4>
-                            <p><?php _e('In the visual creator, click on page elements to create tour steps for them.', 'magic-checklists'); ?></p>
+                            <h4><?php _e('Preview & Test', 'magic-checklists'); ?></h4>
+                            <p><?php _e('Use the preview feature to test your tour and make adjustments.', 'magic-checklists'); ?></p>
                         </div>
                     </div>
-                    <div class="mcl-instruction-step">
+                    <div class="mcl-guide-step">
                         <span class="mcl-step-number">4</span>
                         <div class="mcl-step-content">
                             <h4><?php _e('Test & Activate', 'magic-checklists'); ?></h4>
@@ -349,6 +559,8 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
                     <li><?php _e('Test your tour on different screen sizes', 'magic-checklists'); ?></li>
                     <li><?php _e('Keep steps concise and actionable', 'magic-checklists'); ?></li>
                     <li><?php _e('Use the preview feature to test the flow', 'magic-checklists'); ?></li>
+                    <li><?php _e('Customize colors and styles to match your brand', 'magic-checklists'); ?></li>
+                    <li><?php _e('Consider disabling animations on slower devices', 'magic-checklists'); ?></li>
                 </ul>
             </div>
         </div>
@@ -375,7 +587,124 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
 
 .mcl-tour-settings-sidebar {
     flex: 1;
-    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 64px; /* WordPress admin bar height */
+    align-self: flex-start;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.mcl-subsection-title {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2563eb;
+    border-left: 3px solid #f2da22;
+    padding-left: 12px;
+}
+
+.mcl-form-group p.description {
+    font-size: 16px;
+    color: rgb(214, 214, 214);
+    line-height: 1.4;
+}
+
+.mcl-form-group {
+    margin-bottom: 24px;
+}
+
+.mcl-form-group:last-child {
+    margin-bottom: 0;
+}
+
+.mcl-input, .mcl-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    background: #fff;
+}
+
+.mcl-input:focus, .mcl-textarea:focus {
+    outline: none;
+    border-color: #f2da22;
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.1);
+}
+
+.mcl-form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.mcl-form-col {
+    flex: 1;
+}
+
+.mcl-radio-group, .mcl-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mcl-radio-label, .mcl-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.mcl-radio-label:hover, .mcl-checkbox-label:hover {
+    background-color: var(--mcl-accent);
+    color: var(--mcl-primary);
+}
+
+.mcl-trigger-input, .mcl-user-input {
+    margin-left: 24px;
+    margin-top: 8px;
+}
+
+.mcl-color-input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mcl-color-input {
+    width: 50px;
+    height: 40px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.mcl-color-text {
+    flex: 1;
+}
+
+.mcl-range-input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mcl-range-input {
+    flex: 1;
+}
+
+.mcl-range-value {
+    min-width: 50px;
+    font-weight: 500;
+    color: #374151;
 }
 
 .mcl-loading-overlay {
@@ -389,232 +718,88 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 .mcl-loading-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: #646970;
+    text-align: center;
+    color: #374151;
+    font-weight: 500;
 }
 
 .mcl-spin {
-    animation: spin 1s linear infinite;
+    animation: mcl-spin 1s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes mcl-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-.mcl-required {
-    color: #d63638;
+.mcl-settings-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-top: 2px solid #f1f5f9;
+    border-radius: 8px;
 }
 
-.mcl-steps-info {
-    font-size: 12px;
-    font-weight: normal;
-    color: #646970;
-    margin-left: 8px;
+.mcl-form-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 0;
+    justify-content: start;
 }
 
-.mcl-steps-list {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 4px;
-    list-style: none;
-    margin: 0;
-    border: 1px solid #e0e0e0;
-}
-
-.mcl-admin-step-item {
+.mcl-sidebar-box, .mcl-tips-box {
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: move;
-    transition: all 0.2s ease;
-}
-
-.mcl-admin-step-item:hover {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.mcl-admin-step-item:last-child {
-    margin-bottom: 0;
-}
-
-.mcl-drag-handle {
-    color: #a7aaad;
-    font-size: 14px;
-    cursor: grab;
-    user-select: none;
-    flex-shrink: 0;
-    padding: 4px;
-    border-radius: 3px;
-    transition: all 0.2s ease;
-}
-
-.mcl-drag-handle:active {
-    cursor: grabbing;
-}
-
-.mcl-admin-step-item:hover .mcl-drag-handle {
-    color: #2271b1;
-    background: #f0f6fc;
-}
-
-.mcl-admin-step-item.sortable-ghost {
-    opacity: 0.5;
-}
-
-.mcl-admin-step-item.sortable-drag {
-    transform: rotate(2deg);
-    opacity: 0.8;
-}
-
-.mcl-step-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-}
-
-.mcl-step-indicator {
-    color: #2271b1;
-    font-weight: 600;
-    min-width: 24px;
-    text-align: center;
-    background: #e7f3ff;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-}
-
-.mcl-step-details {
-    flex: 1;
-}
-
-.mcl-step-details strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 14px;
-    color: #1d2327;
-}
-
-.mcl-steps-list code {
-    background: #e1e1e1;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 11px;
-    margin-right: 8px;
-    color: #646970;
-}
-
-.mcl-step-page-url {
-    font-size: 11px;
-    color: #646970;
-    font-style: italic;
-    margin-top: 2px;
-}
-
-.mcl-trigger-input,
-.mcl-user-input,
-.mcl-role-input {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 4px;
-    border: 1px solid #e0e0e0;
-    margin-top: 10px;
-}
-
-.mcl-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.mcl-radio-group .mcl-radio-label {
-    margin-bottom: 12px;
-    color:rgb(220, 220, 220);
-}
-
-.mcl-empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #646970;
-}
-
-.mcl-empty-state .dashicons {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    margin-bottom: 15px;
-    color: #c3c4c7;
-}
-
-.mcl-instructions-box,
-.mcl-tips-box {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
+    border-radius: 8px;
     padding: 20px;
-    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.mcl-instructions-box h3,
-.mcl-tips-box h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #2271b1;
+.mcl-sidebar-box h3, .mcl-tips-box h3 {
+    margin: 0 0 16px 0;
     font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
 }
 
-.mcl-instruction-step {
+.mcl-guide-step {
     display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.mcl-instruction-step:last-child {
-    margin-bottom: 0;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .mcl-step-number {
-    background: #2271b1;
-    color: white;
-    border-radius: 50%;
+    background: #f2da22;
+    color: #011326;
     width: 24px;
     height: 24px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-weight: 600;
     font-size: 12px;
-    font-weight: bold;
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
-.mcl-step-content h4 {
-    margin: 0 0 5px 0;
+.mcl-guide-step .mcl-step-content h4 {
+    margin: 0 0 4px 0;
     font-size: 14px;
-    color: #1d2327;
+    font-weight: 600;
+    color: #1a1a1a;
 }
 
-.mcl-step-content p {
+.mcl-guide-step .mcl-step-content p {
     margin: 0;
     font-size: 13px;
-    color: #646970;
+    color: #6b7280;
     line-height: 1.4;
 }
 
@@ -626,84 +811,185 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
 .mcl-tips-box li {
     margin-bottom: 8px;
     font-size: 13px;
-    color: #646970;
+    color: #6b7280;
+    line-height: 1.4;
 }
 
-.mcl-tips-box li:last-child {
-    margin-bottom: 0;
+.mcl-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
 }
 
-.mcl-settings-actions {
-    border-top: 1px solid #e2e8f0;
-    background: #f8f9fa;
-    margin: 0 -20px -20px -20px;
-    padding: 20px;
-    border-radius: 0 0 4px 4px;
+.mcl-empty-state .dashicons {
+    font-size: 48px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
 }
 
-.mcl-form-group .description {
-    color:rgb(220, 220, 220);
+.mcl-steps-list-container {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 12px;
 }
 
-@media (max-width: 1024px) {
+.mcl-steps-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mcl-admin-step-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.mcl-admin-step-item:hover {
+    border-color: #f2da22;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mcl-drag-handle {
+    color: #9ca3af;
+    cursor: grab;
+}
+
+.mcl-drag-handle:active {
+    cursor: grabbing;
+}
+
+.mcl-step-indicator {
+    background: #f2da22;
+    color: #011326;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.mcl-admin-step-item .mcl-step-content {
+    flex: 1;
+}
+
+.mcl-step-details strong {
+    display: block;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.mcl-step-details code {
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.mcl-step-page-url {
+    font-size: 12px;
+    color: #3b82f6;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.mcl-steps-info {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.mcl-required {
+    color: #dc2626;
+}
+
+.description {
+    margin: 6px 0 0 0;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.description a {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+.description a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
     .mcl-tour-settings-container {
         flex-direction: column;
     }
     
-    .mcl-tour-settings-sidebar {
-        max-width: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .mcl-admin-step-item {
-        padding: 10px;
-        gap: 8px;
+    .mcl-form-row {
+        flex-direction: column;
+        gap: 0;
     }
     
-    .mcl-step-details strong {
-        font-size: 13px;
+    .mcl-form-actions {
+        justify-content: center;
     }
     
-    .mcl-instruction-step {
-        gap: 10px;
-    }
-    
-    .mcl-step-number {
-        width: 20px;
-        height: 20px;
-        font-size: 11px;
+    .mcl-color-input-wrapper,
+    .mcl-range-input-wrapper {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 </style>
 
 <script>
 jQuery(document).ready(function($) {
-    const tourId = $('#tour-id').val();
+    const tourId = parseInt($('#tour-id').val()) || 0;
     
-    // Initialize sortable if we have steps
+    // Initialize Choices.js for user/role selectors
+    initMultiSelects();
+    
+    // Initialize sortable for steps
     initializeStepsSortable();
-    
-    // Form validation
-    function validateForm() {
-        let isValid = true;
-        const title = $('#tour-title').val().trim();
-        
-        // Clear previous errors
-        $('.mcl-input-error').removeClass('mcl-input-error');
-        
-        if (!title) {
-            $('#tour-title').addClass('mcl-input-error');
-            showNotification('<?php _e('Tour title is required.', 'magic-checklists'); ?>', 'error');
-            isValid = false;
-        }
-        
-        return isValid;
+
+    function initMultiSelects() {
+        const multiSelectElements = document.querySelectorAll('.mcl-users-select, .mcl-roles-select');
+
+        multiSelectElements.forEach((element) => {
+            if (element) {
+                const choices = new Choices(element, {
+                    removeItemButton: true,
+                    searchResultLimit: 20,
+                    shouldSort: false,
+                    placeholder: true,
+                    placeholderValue: 'Click here to search and select',
+                    searchPlaceholderValue: 'Type to search...',
+                });
+                
+                // Store the Choices instance on the element for later access
+                element.choices = choices;
+            }
+        });
     }
-    
+
     function showNotification(message, type = 'success') {
         const notification = $('<div class="notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
-        $('.mcl-wrap .mcl-header').after(notification);
+        $('.mcl-wrap').prepend(notification);
         
         setTimeout(function() {
             notification.fadeOut(function() {
@@ -785,93 +1071,92 @@ jQuery(document).ready(function($) {
     // Handle trigger type changes
     $('input[name="trigger_type"]').on('change', function() {
         $('.mcl-trigger-input').hide();
-        const triggerType = $(this).val();
-        $('#trigger-' + triggerType + '-input').show();
+        const selectedType = $(this).val();
+        $('#trigger-' + selectedType + '-input').show();
     });
     
     // Handle user condition changes
     $('input[name="user_condition"]').on('change', function() {
-        $('.mcl-user-input, .mcl-role-input').hide();
-        const userCondition = $(this).val();
-        if (userCondition === 'specific_users') {
-            $('#specific-users-input').show();
-        } else if (userCondition === 'specific_roles') {
-            $('#specific-roles-input').show();
+        $('.mcl-user-input').hide();
+        const selectedCondition = $(this).val();
+        $('#' + selectedCondition.replace('_', '-') + '-input').show();
+    });
+    
+    // Handle page template selection
+    $('#trigger-page-template').on('change', function() {
+        const selectedTemplate = $(this).val();
+        if (selectedTemplate) {
+            $('#trigger-page').val(selectedTemplate);
         }
     });
     
-    // Common pages dropdown
-    $('#common-pages').on('change', function() {
-        if ($(this).val()) {
-            $('#trigger-page-url').val($(this).val());
-            $(this).val('');
+    // Color picker synchronization
+    $('#tour-overlay-color').on('input', function() {
+        $('#tour-overlay-color-text').val($(this).val());
+    });
+    
+    $('#tour-overlay-color-text').on('input', function() {
+        const colorValue = $(this).val();
+        if (/^#[0-9A-F]{6}$/i.test(colorValue)) {
+            $('#tour-overlay-color').val(colorValue);
         }
+    });
+    
+    // Range input value display
+    $('#tour-overlay-opacity').on('input', function() {
+        $('.mcl-range-value').text($(this).val());
     });
     
     // Save and create button
     $('#mcl-save-and-create').on('click', function() {
-        if (!validateForm()) return;
-        
-        showLoading('<?php _e('Saving & Opening Creator...', 'magic-checklists'); ?>');
-        
         saveTourSettings().then(function(savedTourId) {
-            // Redirect to visual creator
-            window.location.href = '<?php echo admin_url("index.php"); ?>?mcl_tour_mode=1&tour_id=' + savedTourId;
-        }).catch(function(error) {
+            if (savedTourId) {
+                showLoading('<?php _e('Opening tour creator...', 'magic-checklists'); ?>');
+                // Redirect to dashboard with tour creator mode
+                window.location.href = '<?php echo admin_url(); ?>' + '?mcl_tour_mode=1&tour_id=' + savedTourId;
+            }
+        }).catch(function() {
             hideLoading();
-            console.error('Error saving tour:', error);
-            showNotification('<?php _e('Error saving tour settings. Please try again.', 'magic-checklists'); ?>', 'error');
         });
     });
     
     // Save settings only button
     $('#mcl-save-settings').on('click', function() {
-        if (!validateForm()) return;
-        
-        showLoading();
-        
         saveTourSettings().then(function() {
-            hideLoading();
             showNotification('<?php _e('Tour settings saved successfully!', 'magic-checklists'); ?>');
-        }).catch(function(error) {
-            hideLoading();
-            console.error('Error saving tour:', error);
-            showNotification('<?php _e('Error saving tour settings. Please try again.', 'magic-checklists'); ?>', 'error');
         });
     });
     
     // Reset completion button
     $('#mcl-reset-completion').on('click', function() {
-        if (!confirm('<?php _e('Are you sure you want to reset your completion for this tour? This will allow you to see the tour again.', 'magic-checklists'); ?>')) {
+        if (!confirm('<?php _e('Are you sure you want to reset your completion status for this tour?', 'magic-checklists'); ?>')) {
             return;
         }
-        
-        showLoading('<?php _e('Resetting...', 'magic-checklists'); ?>');
         
         $.post(ajaxurl, {
             action: 'mcl_reset_tour_completion',
             tour_id: tourId,
             nonce: '<?php echo wp_create_nonce('mcl_tour_admin'); ?>'
         }, function(response) {
-            hideLoading();
             if (response.success) {
-                showNotification('<?php _e('Tour completion reset successfully.', 'magic-checklists'); ?>');
+                showNotification('<?php _e('Tour completion reset successfully!', 'magic-checklists'); ?>');
             } else {
                 showNotification('<?php _e('Error resetting tour completion.', 'magic-checklists'); ?>', 'error');
             }
         }).fail(function() {
-            hideLoading();
             showNotification('<?php _e('Error resetting tour completion.', 'magic-checklists'); ?>', 'error');
         });
     });
-    
+
     function getTriggerValue() {
         const triggerType = $('input[name="trigger_type"]:checked').val();
         switch (triggerType) {
             case 'page':
-                return $('#trigger-page-url').val();
+                return $('#trigger-page').val();
             case 'selector':
                 return $('#trigger-selector').val();
+            case 'first_login':
+            case 'any_page':
             default:
                 return '';
         }
@@ -889,16 +1174,63 @@ jQuery(document).ready(function($) {
             let specificRoles = [];
             
             if (userCondition === 'specific_users') {
-                specificUsers = $('#specific-users').val() || [];
+                const usersSelect = document.getElementById('specific-users');
+                if (usersSelect && usersSelect.choices) {
+                    specificUsers = usersSelect.choices.getValue().map(choice => choice.value);
+                } else {
+                    specificUsers = $('#specific-users').val() || [];
+                }
             } else if (userCondition === 'specific_roles') {
-                specificRoles = $('#specific-roles').val() || [];
+                const rolesSelect = document.getElementById('specific-roles');
+                if (rolesSelect && rolesSelect.choices) {
+                    specificRoles = rolesSelect.choices.getValue().map(choice => choice.value);
+                } else {
+                    specificRoles = $('#specific-roles').val() || [];
+                }
             }
             
-            // Build settings object
+            // Build settings object with all the new appearance options
             const settings = {};
             if ($('#tour-active').is(':checked')) settings.active = true;
             if ($('#tour-autostart').is(':checked')) settings.autostart = true;
             if ($('#tour-show-once').is(':checked')) settings.show_once = true;
+            
+            // Animation settings
+            settings.animate = $('#tour-animate').is(':checked');
+            
+            // Progress settings
+            settings.show_progress = $('#tour-show-progress').is(':checked');
+            settings.progress_text = $('#tour-progress-text').val() || '{{current}} of {{total}}';
+            
+            // Exit control settings
+            settings.allow_close = $('#tour-allow-close').is(':checked');
+            settings.confirm_exit = $('#tour-confirm-exit').is(':checked');
+            settings.exit_message = $('#tour-exit-message').val() || 'Are you sure you want to exit the tour?';
+            
+            // Button text settings
+            settings.next_btn_text = $('#tour-next-btn-text').val() || 'Next';
+            settings.prev_btn_text = $('#tour-prev-btn-text').val() || 'Previous';
+            settings.done_btn_text = $('#tour-done-btn-text').val() || 'Done';
+            settings.close_btn_text = $('#tour-close-btn-text').val() || 'Close';
+            
+            // Default buttons
+            settings.default_buttons = [];
+            $('input[name="default_buttons[]"]:checked').each(function() {
+                settings.default_buttons.push($(this).val());
+            });
+            
+            // Overlay settings
+            settings.overlay_color = $('#tour-overlay-color').val() || '#000000';
+            settings.overlay_opacity = parseFloat($('#tour-overlay-opacity').val()) || 0.75;
+            
+            // Popover settings
+            settings.popover_class = $('#tour-popover-class').val() || '';
+            
+            // Advanced settings
+            settings.padding = parseInt($('#tour-padding').val()) || 4;
+            settings.smooth_scroll = $('#tour-smooth-scroll').is(':checked');
+            
+            showLoading();
             
             const formData = {
                 action: 'mcl_save_tour_settings',
@@ -914,18 +1246,29 @@ jQuery(document).ready(function($) {
                 nonce: '<?php echo wp_create_nonce('mcl_tour_admin'); ?>'
             };
             
-            $.post(ajaxurl, formData)
-                .done(function(response) {
-                    if (response.success) {
-                        resolve(response.data.tour_id);
-                    } else {
-                        reject(response.data || 'Unknown error');
+            $.post(ajaxurl, formData, function(response) {
+                hideLoading();
+                if (response.success) {
+                    // Update tour ID if it was newly created
+                    if (response.data.tour_id && !tourId) {
+                        $('#tour-id').val(response.data.tour_id);
+                        // Update URL to show edit mode
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('edit', response.data.tour_id);
+                        newUrl.searchParams.delete('create');
+                        window.history.replaceState({}, '', newUrl);
                     }
-                })
-                .fail(function(xhr, status, error) {
-                    reject(error);
-                });
+                    resolve(response.data.tour_id);
+                } else {
+                    showNotification('<?php _e('Error saving tour settings: ', 'magic-checklists'); ?>' + (response.data || '<?php _e('Unknown error', 'magic-checklists'); ?>'), 'error');
+                    reject();
+                }
+            }).fail(function() {
+                hideLoading();
+                showNotification('<?php _e('Error saving tour settings. Please try again.', 'magic-checklists'); ?>', 'error');
+                reject();
+            });
         });
     }
 });
-</script> 
+</script>

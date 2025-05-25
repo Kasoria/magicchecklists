@@ -259,6 +259,38 @@
     border: 1px solid #f5c2c7;
 }
 
+/* Choices.js styling */
+.choices__input.choices__input--cloned {
+    background-color: transparent;
+    border: 0px;
+}
+
+.mcl-form-group.mcl-form-inner-wrapper .choices__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: auto;
+}
+
+.choices__list.choices__list--multiple {
+    flex-shrink: 0;
+}
+
+.choices__list.choices__list--multiple .choices__item {
+    background: var(--mcl-primary);
+}
+
+.choices__list--dropdown .choices__list .choices__group {
+    padding: 12px 16px 6px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e1e1e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #f0f0f1;
+    border-bottom: 1px solid #e2e4e7;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .mcl-tours-grid {

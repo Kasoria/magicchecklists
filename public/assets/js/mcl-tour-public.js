@@ -19,6 +19,7 @@
         highlightElementRef: null,
         editorInstance: null,
         stepsSortableInstance: null,
+        currentDriverInstance: null,
 
         init() {
             this.isCreatorMode = mclTour.is_tour_mode;
@@ -1230,16 +1231,38 @@
             }
         }
 
+            // Get tour settings with defaults
+            const settings = tourData.settings || {};
+            
+            // Debug logging for settings
+            console.log('Tour Settings Debug:', {
+                animate: settings.animate,
+                animateType: typeof settings.animate,
+                show_progress: settings.show_progress,
+                progressType: typeof settings.show_progress,
+                allow_close: settings.allow_close,
+                closeType: typeof settings.allow_close,
+                confirm_exit: settings.confirm_exit,
+                confirmType: typeof settings.confirm_exit,
+                allSettings: settings
+            });
+            
             const steps = currentPageSteps.map((step, index) => {
                 const isLastStepOnPage = index === currentPageSteps.length - 1;
                 let description = step.content;
-                let showButtons = step.show_buttons !== false ? ['next', 'previous', 'close'] : ['close'];
+                
+                // Get step-specific button settings or use defaults from tour settings
+                const stepButtons = step.show_buttons !== false ? 
+                    (settings.default_buttons || ['next', 'previous', 'close']) : 
+                    ['close'];
                 
                 // Modify the last step if there are more steps on other pages
                 if (isLastStepOnPage && nextPageStep) {
                     description += `<br><br><em>Click "Continue" to go to the next page...</em>`;
                     // Force showing next button even on last step when there are more steps
-                    showButtons = ['next', 'previous', 'close'];
+                    if (!stepButtons.includes('next')) {
+                        stepButtons.push('next');
+                    }
                 }
                 
                 return {
@@ -1248,7 +1271,7 @@
                         title: step.title,
                         description: description,
                         side: step.position || 'bottom',
-                        showButtons: showButtons
+                        showButtons: stepButtons
                     }
                 };
             });
@@ -1256,13 +1279,35 @@
             // Calculate initial global position for progress text
             const initialGlobalPosition = startStepIndex + 1;
             
-            const driver = driverFunction({
-                showProgress: true,
-                allowClose: true,
-                doneBtnText: mclTour.i18n.done || 'Done',
-                nextBtnText: nextPageStep ? 'Continue' : (mclTour.i18n.next || 'Next'),
-                prevBtnText: mclTour.i18n.prev || 'Previous',
-                progressText: `${initialGlobalPosition} of ${tourData.steps.length}`,
+            // Build driver configuration using tour settings
+            const driverConfig = {
+                // Animation settings - use explicit boolean value
+                animate: settings.animate === true,
+                
+                // Progress settings - use explicit boolean value
+                showProgress: settings.show_progress === true,
+                progressText: (settings.progress_text || '{{current}} of {{total}}')
+                    .replace('{{current}}', initialGlobalPosition)
+                    .replace('{{total}}', tourData.steps.length),
+                
+                // Exit control settings - use explicit boolean value (defaults to true if not set)
+                allowClose: settings.allow_close !== false,
+                
+                // Button text settings
+                doneBtnText: settings.done_btn_text || mclTour.i18n.done || 'Done',
+                nextBtnText: nextPageStep ? 'Continue' : (settings.next_btn_text || mclTour.i18n.next || 'Next'),
+                prevBtnText: settings.prev_btn_text || mclTour.i18n.prev || 'Previous',
+                
+                // Overlay settings
+                overlayColor: settings.overlay_color || 'rgba(0, 0, 0, 0.75)',
+                
+                // Popover settings
+                popoverClass: settings.popover_class || '',
+                
+                // Advanced settings
+                stagePadding: settings.padding || 4, // driver.js uses stagePadding, not padding
+                smoothScroll: settings.smooth_scroll !== false, // Default to true unless explicitly disabled
+                
                 steps: steps,
                 onNextClick: (element, step, options) => {
                     const currentStepIndex = driver.getActiveIndex();
@@ -1319,19 +1364,22 @@
                     const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
                     
                     // Update the progress text with correct global step position immediately
-                    this.updateTourProgress(currentGlobalIndex + 1, tourData.steps.length);
-                    this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex);
+                    this.updateTourProgress(currentGlobalIndex + 1, tourData.steps.length, settings);
+                    this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex, settings);
                     
                     // Handle checklist integration - check item when step is highlighted
                     this.handleStepChecklistIntegration(currentGlobalIndex, tourData.steps, 'forward');
                     
                     // Also update after a short delay to override any driver.js changes
                     setTimeout(() => {
-                        this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex);
+                        this.updateTourButtons(currentGlobalIndex, tourData.steps.length, startStepIndex, settings);
                     }, 50);
                     
                 },
                 onDestroyed: () => {
+                    // Clean up driver reference
+                    this.currentDriverInstance = null;
+                    
                     // Only mark as completed if there are no more steps on other pages
                     if (!nextPageStep) {
                         console.log('Tour completed - no more steps');
@@ -1339,16 +1387,116 @@
                     } else {
                         console.log('Tour destroyed but more steps exist on other pages');
                     }
+                    
+                    console.log('Regular tour onDestroyed called - tour should be closed now');
                 }
-            });
+            };
+            
+            // Handle exit control functionality - only set onDestroyStarted if needed
+            if (settings.confirm_exit === true && settings.allow_close !== false) {
+                // Confirm on exit but allow exit
+                driverConfig.onDestroyStarted = (element, step, options) => {
+                    // Check if this is the last step - don't confirm on last step
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
+                    const isLastStep = currentGlobalIndex === tourData.steps.length - 1;
+                    
+                    console.log('Regular tour exit check:', {
+                        currentDriverStep,
+                        currentGlobalIndex,
+                        totalSteps: tourData.steps.length,
+                        isLastStep,
+                        lastStepIndex: tourData.steps.length - 1
+                    });
+                    
+                    if (isLastStep) {
+                        console.log('Last step detected - manually destroying tour');
+                        // Manually destroy the tour on last step
+                        setTimeout(() => {
+                            if (driver && typeof driver.destroy === 'function') {
+                                driver.destroy();
+                            }
+                        }, 0);
+                        return true; // Allow closing on last step without confirmation
+                    }
+                    
+                    console.log('Not last step - showing confirmation');
+                    const confirmMessage = settings.exit_message || 'Are you sure you want to exit the tour?';
+                    
+                    // Always prevent immediate destruction for non-last steps
+                    // We'll handle the confirmation and manual destruction separately
+                    this.handleTourExitConfirmation(confirmMessage);
+                    return false;
+                };
+            } else if (settings.allow_close === false) {
+                // Prevent exit functionality - override allowClose and add onDestroyStarted
+                driverConfig.allowClose = false;
+                driverConfig.onDestroyStarted = (element, step, options) => {
+                    // Check if this is the last step - allow closing only on last step
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
+                    const isLastStep = currentGlobalIndex === tourData.steps.length - 1;
+                    
+                    console.log('Regular tour exit check:', {
+                        currentDriverStep,
+                        currentGlobalIndex,
+                        totalSteps: tourData.steps.length,
+                        isLastStep,
+                        lastStepIndex: tourData.steps.length - 1
+                    });
+                    
+                    if (isLastStep) {
+                        console.log('Last step detected - manually destroying tour');
+                        // Manually destroy the tour on last step
+                        setTimeout(() => {
+                            if (driver && typeof driver.destroy === 'function') {
+                                driver.destroy();
+                            }
+                        }, 0);
+                        return true; // Allow closing on last step without confirmation
+                    } else {
+                        // Show a message that the tour cannot be closed
+                        const message = settings.exit_message || 'You must complete the tour before you can exit.';
+                        this.handleTourExitMessage(message);
+                        return false; // Prevent closing
+                    }
+                };
+            }
+            // If neither confirm_exit nor prevent exit is set, use default behavior (no onDestroyStarted)
+
+            // Convert overlay color to rgba if needed
+            if (settings.overlay_color && settings.overlay_opacity !== undefined) {
+                const color = settings.overlay_color;
+                const opacity = settings.overlay_opacity;
+                
+                if (color.startsWith('#')) {
+                    // Convert hex to rgba
+                    const r = parseInt(color.slice(1, 3), 16);
+                    const g = parseInt(color.slice(3, 5), 16);
+                    const b = parseInt(color.slice(5, 7), 16);
+                    driverConfig.overlayColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                } else {
+                    driverConfig.overlayColor = color;
+                }
+            }
+
+            const driver = driverFunction(driverConfig);
+            
+            // Store driver reference for exit handling
+            this.currentDriverInstance = driver;
 
             driver.drive();
+            
+            // Customize close button after driver is created
+            setTimeout(() => {
+                this.customizeDriverCloseButton(settings);
+            }, 100);
             
             // Update progress and buttons after a minimal delay to ensure driver is initialized
             setTimeout(() => {
                 const initialGlobalIndex = tourData.continue_from_step || 0;
-                this.updateTourProgress(initialGlobalIndex + 1, tourData.steps.length);
-                this.updateTourButtons(initialGlobalIndex, tourData.steps.length, startStepIndex);
+                this.updateTourProgress(initialGlobalIndex + 1, tourData.steps.length, settings);
+                this.updateTourButtons(initialGlobalIndex, tourData.steps.length, startStepIndex, settings);
             }, 50);
         },
 
@@ -1456,6 +1604,22 @@
                 }
             }
             
+            // Get tour settings with defaults
+            const settings = this.tourSettings || {};
+            
+            // Debug logging for settings (Preview)
+            console.log('Preview Tour Settings Debug:', {
+                animate: settings.animate,
+                animateType: typeof settings.animate,
+                show_progress: settings.show_progress,
+                progressType: typeof settings.show_progress,
+                allow_close: settings.allow_close,
+                closeType: typeof settings.allow_close,
+                confirm_exit: settings.confirm_exit,
+                confirmType: typeof settings.confirm_exit,
+                allSettings: settings
+            });
+            
             // Convert all tour steps to driver.js format
             const allSteps = this.tourSteps.map((step, index) => {
                 const stepPageUrl = step.page_url || currentPageUrl;
@@ -1490,13 +1654,18 @@
                     description += `<br><br><em>Click "Continue" to go to the next page...</em>`;
                 }
                 
+                // Get step-specific button settings or use defaults from tour settings
+                const stepButtons = step.show_buttons !== false ? 
+                    (settings.default_buttons || ['next', 'previous', 'close']) : 
+                    ['close'];
+                
                 return {
                     element: step.element,
                     popover: {
                         title: step.title,
                         description: description,
                         side: step.position || 'bottom',
-                        showButtons: step.show_buttons !== false ? ['next', 'previous', 'close'] : ['close']
+                        showButtons: stepButtons
                     }
                 };
             }).filter(step => step !== null); // Remove null steps (steps not on current page)
@@ -1551,13 +1720,35 @@
             // Calculate the initial global step position
             const initialGlobalPosition = fromStepIndex + 1;
             
-            const driver = driverFunction({
-                showProgress: true,
-                allowClose: true,
-                doneBtnText: hasMoreStepsAfterPage ? 'Continue' : 'Close Preview',
-                nextBtnText: 'Next',
-                prevBtnText: 'Previous',
-                progressText: `${initialGlobalPosition} of ${totalSteps}`, // Start with correct position
+            // Build driver configuration using tour settings
+            const driverConfig = {
+                // Animation settings - use explicit boolean value
+                animate: settings.animate === true,
+                
+                // Progress settings - use explicit boolean value
+                showProgress: settings.show_progress === true,
+                progressText: (settings.progress_text || '{{current}} of {{total}}')
+                    .replace('{{current}}', initialGlobalPosition)
+                    .replace('{{total}}', totalSteps),
+                
+                // Exit control settings - use explicit boolean value (defaults to true if not set)
+                allowClose: settings.allow_close !== false, // Default to true
+                
+                // Button text settings
+                doneBtnText: hasMoreStepsAfterPage ? 'Continue' : (settings.done_btn_text || 'Close Preview'),
+                nextBtnText: settings.next_btn_text || 'Next',
+                prevBtnText: settings.prev_btn_text || 'Previous',
+                
+                // Overlay settings
+                overlayColor: settings.overlay_color || 'rgba(0, 0, 0, 0.75)',
+                
+                // Popover settings
+                popoverClass: settings.popover_class || '',
+                
+                // Advanced settings
+                stagePadding: settings.padding || 4, // driver.js uses stagePadding, not padding
+                smoothScroll: settings.smooth_scroll !== false, // Default to true
+                
                 steps: allSteps,
                 onNextClick: (element, step, options) => {
                     const currentDriverStep = driver.getActiveIndex();
@@ -1681,15 +1872,15 @@
                     const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, fromStepIndex);
                     
                     // Update the progress text with correct global step position immediately
-                    this.updateTourProgress(currentGlobalIndex + 1, totalSteps);
-                    this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
+                    this.updateTourProgress(currentGlobalIndex + 1, totalSteps, settings);
+                    this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex, settings);
                     
                     // Handle checklist integration - check item when step is highlighted (preview mode)
                     this.handleStepChecklistIntegration(currentGlobalIndex, this.tourSteps, 'forward');
                     
                     // Also update after a short delay to override any driver.js changes
                     setTimeout(() => {
-                        this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex);
+                        this.updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex, settings);
                     }, 50);
                     
                     console.log('Preview step highlighted:', {
@@ -1700,17 +1891,118 @@
                     });
                 },
                 onDestroyed: () => {
+                    // Clean up driver reference
+                    this.currentDriverInstance = null;
+                    
                     console.log('Preview destroyed');
                 }
-            });
+            };
+            
+            // Handle exit control functionality - only set onDestroyStarted if needed
+            if (settings.confirm_exit === true && settings.allow_close !== false) {
+                // Confirm on exit but allow exit
+                driverConfig.onDestroyStarted = (element, step, options) => {
+                    // Check if this is the last step - don't confirm on last step
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
+                    const isLastStep = currentGlobalIndex === tourData.steps.length - 1;
+                    
+                    console.log('Regular tour exit check:', {
+                        currentDriverStep,
+                        currentGlobalIndex,
+                        totalSteps: tourData.steps.length,
+                        isLastStep,
+                        lastStepIndex: tourData.steps.length - 1
+                    });
+                    
+                    if (isLastStep) {
+                        console.log('Last step detected - manually destroying tour');
+                        // Manually destroy the tour on last step
+                        setTimeout(() => {
+                            if (driver && typeof driver.destroy === 'function') {
+                                driver.destroy();
+                            }
+                        }, 0);
+                        return true; // Allow closing on last step without confirmation
+                    }
+                    
+                    console.log('Not last step - showing confirmation');
+                    const confirmMessage = settings.exit_message || 'Are you sure you want to exit the tour?';
+                    
+                    // Always prevent immediate destruction for non-last steps
+                    // We'll handle the confirmation and manual destruction separately
+                    this.handleTourExitConfirmation(confirmMessage);
+                    return false;
+                };
+            } else if (settings.allow_close === false) {
+                // Prevent exit functionality - override allowClose and add onDestroyStarted
+                driverConfig.allowClose = false;
+                driverConfig.onDestroyStarted = (element, step, options) => {
+                    // Check if this is the last step - allow closing only on last step
+                    const currentDriverStep = driver.getActiveIndex();
+                    const currentGlobalIndex = this.getCurrentGlobalStepIndex(currentDriverStep, currentPageUrl, startStepIndex, tourData.steps);
+                    const isLastStep = currentGlobalIndex === tourData.steps.length - 1;
+                    
+                    console.log('Regular tour exit check:', {
+                        currentDriverStep,
+                        currentGlobalIndex,
+                        totalSteps: tourData.steps.length,
+                        isLastStep,
+                        lastStepIndex: tourData.steps.length - 1
+                    });
+                    
+                    if (isLastStep) {
+                        console.log('Last step detected - manually destroying tour');
+                        // Manually destroy the tour on last step
+                        setTimeout(() => {
+                            if (driver && typeof driver.destroy === 'function') {
+                                driver.destroy();
+                            }
+                        }, 0);
+                        return true; // Allow closing on last step without confirmation
+                    } else {
+                        // Show a message that the tour cannot be closed
+                        const message = settings.exit_message || 'You must complete the tour before you can exit.';
+                        this.handleTourExitMessage(message);
+                        return false; // Prevent closing
+                    }
+                };
+            }
+            // If neither confirm_exit nor prevent exit is set, use default behavior (no onDestroyStarted)
+
+            // Convert overlay color to rgba if needed
+            if (settings.overlay_color && settings.overlay_opacity !== undefined) {
+                const color = settings.overlay_color;
+                const opacity = settings.overlay_opacity;
+                
+                if (color.startsWith('#')) {
+                    // Convert hex to rgba
+                    const r = parseInt(color.slice(1, 3), 16);
+                    const g = parseInt(color.slice(3, 5), 16);
+                    const b = parseInt(color.slice(5, 7), 16);
+                    driverConfig.overlayColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                } else {
+                    driverConfig.overlayColor = color;
+                }
+            }
+
+            const driver = driverFunction(driverConfig);
+            
+            // Store driver reference for exit handling
+            this.currentDriverInstance = driver;
 
             driver.drive();
+            
+            // Customize close button after driver is created
+            setTimeout(() => {
+                this.customizeDriverCloseButton(settings);
+            }, 100);
             
             // Update progress and buttons after a minimal delay to ensure driver is initialized
             setTimeout(() => {
                 const initialGlobalIndex = fromStepIndex;
-                this.updateTourProgress(initialGlobalIndex + 1, totalSteps);
-                this.updateTourButtons(initialGlobalIndex, totalSteps, fromStepIndex);
+                this.updateTourProgress(initialGlobalIndex + 1, totalSteps, settings);
+                this.updateTourButtons(initialGlobalIndex, totalSteps, fromStepIndex, settings);
             }, 50);
         },
 
@@ -1758,9 +2050,12 @@
             return null;
         },
 
-        updateTourProgress(currentStep, totalSteps) {
-            // Update the progress text in driver.js - force override with multiple attempts
-            const correctText = `${currentStep} of ${totalSteps}`;
+        updateTourProgress(currentStep, totalSteps, settings = {}) {
+            // Use custom progress text template from settings
+            const progressTemplate = settings.progress_text || '{{current}} of {{total}}';
+            const correctText = progressTemplate
+                .replace('{{current}}', currentStep)
+                .replace('{{total}}', totalSteps);
             
             const updateProgressText = () => {
                 const progressElement = document.querySelector('.driver-popover-progress-text');
@@ -1810,7 +2105,7 @@
             setTimeout(updateProgressText, 100);
         },
 
-        updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex) {
+        updateTourButtons(currentGlobalIndex, totalSteps, fromStepIndex, settings = {}) {
             // Enable/disable buttons based on global tour position
             const prevButton = document.querySelector('.driver-popover-prev-btn');
             const nextButton = document.querySelector('.driver-popover-next-btn');
@@ -1835,6 +2130,10 @@
                     prevButton.classList.add('driver-popover-prev-btn--disabled');
                 }
 
+                // Update button text from settings
+                if (settings.prev_btn_text) {
+                    prevButton.textContent = settings.prev_btn_text;
+                }
             }
             
             if (nextButton) {
@@ -1854,11 +2153,15 @@
                         const currentPageUrl = this.getCurrentPageUrl();
                         const nextStep = this.tourSteps[nextStepIndex];
                         const nextStepPageUrl = nextStep.page_url || currentPageUrl;
-                        nextButton.textContent = nextStepPageUrl !== currentPageUrl ? 'Continue' : 'Next';
+                        const buttonText = nextStepPageUrl !== currentPageUrl ? 'Continue' : (settings.next_btn_text || 'Next');
+                        nextButton.textContent = buttonText;
+                    } else {
+                        nextButton.textContent = settings.next_btn_text || 'Next';
                     }
                 } else {
-                    // On last step - convert next button to close button or hide it
-                    nextButton.textContent = 'Close Preview';
+                    // On last step - convert next button to done button or hide it based on settings
+                    const doneText = settings.done_btn_text || 'Done';
+                    nextButton.textContent = doneText;
                     nextButton.disabled = false;
                     nextButton.style.opacity = '1';
                     nextButton.style.pointerEvents = 'auto';
@@ -1866,12 +2169,14 @@
                 }
             }
             
-            // Ensure close button is always enabled
+            // Ensure close button is always enabled and update text from settings
             if (closeButton) {
                 closeButton.disabled = false;
                 closeButton.style.opacity = '1';
                 closeButton.style.pointerEvents = 'auto';
                 closeButton.removeAttribute('disabled');
+                
+                // Don't set text content here - handled by customizeDriverCloseButton
             }
         },
 
@@ -1975,6 +2280,8 @@
          * Confirmation Modal System
          */
         showConfirmationModal(title, confirmText = 'Yes, I\'m sure', cancelText = 'No, cancel', confirmClass = 'mcl-button-danger') {
+            console.log('MCL: showConfirmationModal called', { title, confirmText, cancelText, confirmClass });
+            
             return new Promise((resolve) => {
                 const modal = document.getElementById('mcl-confirmation-modal');
                 const titleElement = document.getElementById('mcl-confirmation-modal-title');
@@ -1982,16 +2289,42 @@
                 const cancelButton = document.getElementById('mcl-confirmation-modal-cancel');
                 const closeButton = document.getElementById('mcl-confirmation-modal-close');
 
+                console.log('MCL: Modal elements found:', { 
+                    modal: !!modal, 
+                    titleElement: !!titleElement, 
+                    confirmButton: !!confirmButton, 
+                    cancelButton: !!cancelButton,
+                    closeButton: !!closeButton
+                });
+
                 if (!modal || !titleElement || !confirmButton || !cancelButton) {
-                    console.warn('Confirmation modal elements not found');
-                    resolve(false);
+                    console.warn('Confirmation modal elements not found, falling back to native confirm');
+                    // Fallback to native confirm dialog
+                    if (cancelText && cancelText.trim()) {
+                        // Normal confirmation with yes/no
+                        const result = confirm(title);
+                        resolve(result);
+                    } else {
+                        // Just a message with OK
+                        alert(title);
+                        resolve(true);
+                    }
                     return;
                 }
 
                 // Set title and button text
                 titleElement.textContent = title;
                 confirmButton.textContent = confirmText;
-                cancelButton.textContent = cancelText;
+                
+                // Handle cancel button visibility
+                if (cancelText && cancelText.trim()) {
+                    cancelButton.textContent = cancelText;
+                    cancelButton.style.display = '';
+                    closeButton.style.display = ''; // Show close button
+                } else {
+                    cancelButton.style.display = 'none';
+                    closeButton.style.display = 'none'; // Hide close button
+                }
 
                 // Reset button classes and apply the appropriate one
                 confirmButton.className = `mcl-button ${confirmClass}`;
@@ -2018,9 +2351,9 @@
                     resolve(false);
                 };
 
-                // Handle escape key
+                // Handle escape key - only allow escape if cancel is available
                 const handleEscape = (e) => {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Escape' && cancelText && cancelText.trim()) {
                         handleCancel();
                     }
                 };
@@ -2031,19 +2364,32 @@
                     cancelButton.removeEventListener('click', handleCancel);
                     closeButton.removeEventListener('click', handleCancel);
                     document.removeEventListener('keydown', handleEscape);
+                    // Remove the backdrop click listener
+                    modal.removeEventListener('click', handleBackdropClick);
+                };
+
+                // Handle backdrop click - only if cancel is available
+                const handleBackdropClick = (e) => {
+                    if (e.target === modal && cancelText && cancelText.trim()) {
+                        handleCancel();
+                    }
                 };
 
                 // Add event listeners
                 confirmButton.addEventListener('click', handleConfirm);
-                cancelButton.addEventListener('click', handleCancel);
-                closeButton.addEventListener('click', handleCancel);
+                if (cancelText && cancelText.trim()) {
+                    cancelButton.addEventListener('click', handleCancel);
+                    closeButton.addEventListener('click', handleCancel);
+                    modal.addEventListener('click', handleBackdropClick);
+                }
                 document.addEventListener('keydown', handleEscape);
 
-                // Handle backdrop click
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        handleCancel();
-                    }
+                console.log('MCL: Event listeners added to modal buttons', {
+                    confirmButtonExists: !!confirmButton,
+                    cancelButtonExists: !!cancelButton,
+                    closeButtonExists: !!closeButton,
+                    confirmButtonStyle: confirmButton ? window.getComputedStyle(confirmButton).cursor : null,
+                    cancelButtonStyle: cancelButton ? window.getComputedStyle(cancelButton).cursor : null
                 });
             });
         },
@@ -2129,6 +2475,60 @@
                 }
             }
         },
+
+        // Tour exit handling methods
+        async handleTourExitConfirmation(confirmMessage) {
+            const confirmed = await this.showConfirmationModal(
+                confirmMessage,
+                'Yes, exit tour',
+                'No, continue tour',
+                'mcl-button-danger'
+            );
+            
+            if (confirmed && this.currentDriverInstance) {
+                // User confirmed - manually destroy the driver
+                try {
+                    this.currentDriverInstance.destroy();
+                    this.currentDriverInstance = null;
+                } catch (error) {
+                    console.error('Error destroying tour:', error);
+                    this.currentDriverInstance = null;
+                }
+            }
+        },
+
+        async handleTourExitMessage(message) {
+            await this.showConfirmationModal(
+                message,
+                'OK',
+                '', // No cancel button
+                'mcl-button-primary'
+            );
+        },
+
+        customizeDriverCloseButton(settings) {
+            const closeButton = document.querySelector('.driver-popover-close-btn');
+            if (closeButton) {
+                // Set the close button to show an X icon
+                closeButton.innerHTML = '×';
+                closeButton.style.fontSize = '20px';
+                closeButton.style.fontWeight = 'bold';
+                closeButton.style.width = '24px';
+                closeButton.style.height = '24px';
+                closeButton.style.display = 'flex';
+                closeButton.style.alignItems = 'center';
+                closeButton.style.justifyContent = 'center';
+                closeButton.style.cursor = 'pointer';
+                closeButton.style.lineHeight = '1';
+                
+                // Set accessibility attributes using the close_btn_text setting
+                const accessibilityText = settings.close_btn_text || 'Close tour';
+                closeButton.setAttribute('title', accessibilityText);
+                closeButton.setAttribute('aria-label', accessibilityText);
+                
+                console.log('Close button customized with accessibility text:', accessibilityText);
+            }
+        }
 
     };
 

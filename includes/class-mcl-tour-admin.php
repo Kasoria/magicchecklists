@@ -64,12 +64,28 @@ class MCL_Tour_Admin {
             '1.15.0',
             true
         );
+
+        // Enqueue Choices.js for multi-select dropdowns
+        wp_enqueue_style(
+            'choicescss',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/vendor/choices.min.css',
+            array(),
+            '11.0.2'
+        );
+
+        wp_enqueue_script(
+            'choicesjs',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/choices.min.js',
+            array('sortable-js'),
+            '11.0.2',
+            true
+        );
         
         // Enqueue tour admin scripts
         wp_enqueue_script(
             'mcl-tour-admin',
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-tour-admin.js',
-            array('wp-util', 'sortable-js'),
+            array('wp-util', 'sortable-js', 'choicesjs'),
             MAGIC_CHECKLISTS_VERSION,
             true
         );
@@ -207,6 +223,56 @@ class MCL_Tour_Admin {
         $specific_users = isset($_POST['specific_users']) && is_array($_POST['specific_users']) ? array_map('intval', $_POST['specific_users']) : array();
         $specific_roles = isset($_POST['specific_roles']) && is_array($_POST['specific_roles']) ? array_map('sanitize_text_field', $_POST['specific_roles']) : array();
         
+        // Sanitize the settings array properly
+        $sanitized_settings = array();
+        
+        // Basic settings
+        if (isset($settings['active'])) $sanitized_settings['active'] = true;
+        if (isset($settings['autostart'])) $sanitized_settings['autostart'] = true;
+        if (isset($settings['show_once'])) $sanitized_settings['show_once'] = true;
+        
+        // Animation settings - explicitly handle boolean values
+        $sanitized_settings['animate'] = isset($settings['animate']) && $settings['animate'] === 'true';
+        
+        // Progress settings - explicitly handle boolean values
+        $sanitized_settings['show_progress'] = isset($settings['show_progress']) && $settings['show_progress'] === 'true';
+        $sanitized_settings['progress_text'] = sanitize_text_field($settings['progress_text'] ?? '{{current}} of {{total}}');
+        
+        // Exit control settings - explicitly handle boolean values
+        $sanitized_settings['allow_close'] = !isset($settings['allow_close']) || $settings['allow_close'] === 'true'; // Default to true
+        $sanitized_settings['confirm_exit'] = isset($settings['confirm_exit']) && $settings['confirm_exit'] === 'true';
+        $sanitized_settings['exit_message'] = sanitize_text_field($settings['exit_message'] ?? 'Are you sure you want to exit the tour?');
+        
+        // Button text settings
+        $sanitized_settings['next_btn_text'] = sanitize_text_field($settings['next_btn_text'] ?? 'Next');
+        $sanitized_settings['prev_btn_text'] = sanitize_text_field($settings['prev_btn_text'] ?? 'Previous');
+        $sanitized_settings['done_btn_text'] = sanitize_text_field($settings['done_btn_text'] ?? 'Done');
+        $sanitized_settings['close_btn_text'] = sanitize_text_field($settings['close_btn_text'] ?? 'Close');
+        
+        // Default buttons (array of allowed button types)
+        if (isset($settings['default_buttons']) && is_array($settings['default_buttons'])) {
+            $allowed_buttons = array('next', 'previous', 'close');
+            $sanitized_settings['default_buttons'] = array_intersect($settings['default_buttons'], $allowed_buttons);
+        } else {
+            $sanitized_settings['default_buttons'] = array('next', 'previous', 'close');
+        }
+        
+        // Overlay settings
+        $sanitized_settings['overlay_color'] = sanitize_hex_color($settings['overlay_color'] ?? '#000000');
+        if (!$sanitized_settings['overlay_color']) {
+            $sanitized_settings['overlay_color'] = '#000000';
+        }
+        $sanitized_settings['overlay_opacity'] = floatval($settings['overlay_opacity'] ?? 0.75);
+        $sanitized_settings['overlay_opacity'] = max(0, min(1, $sanitized_settings['overlay_opacity'])); // Clamp between 0 and 1
+        
+        // Popover settings
+        $sanitized_settings['popover_class'] = sanitize_html_class($settings['popover_class'] ?? '');
+        
+        // Advanced settings
+        $sanitized_settings['padding'] = intval($settings['padding'] ?? 4);
+        $sanitized_settings['padding'] = max(0, min(50, $sanitized_settings['padding'])); // Clamp between 0 and 50
+        $sanitized_settings['smooth_scroll'] = !isset($settings['smooth_scroll']) || $settings['smooth_scroll'] === 'true'; // Default to true
+        
         $tour_data = array(
             'post_title' => $title,
             'post_content' => $description,
@@ -226,10 +292,10 @@ class MCL_Tour_Admin {
         }
 
         // Save tour meta
-        update_post_meta($tour_id, '_mcl_tour_settings', $settings);
-        update_post_meta($tour_id, '_mcl_tour_active', isset($settings['active']) ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_autostart', isset($settings['autostart']) ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_show_once', ! empty($settings['show_once']) ? 1 : 0);
+        update_post_meta($tour_id, '_mcl_tour_settings', $sanitized_settings);
+        update_post_meta($tour_id, '_mcl_tour_active', isset($sanitized_settings['active']) ? 1 : 0);
+        update_post_meta($tour_id, '_mcl_tour_autostart', isset($sanitized_settings['autostart']) ? 1 : 0);
+        update_post_meta($tour_id, '_mcl_tour_show_once', ! empty($sanitized_settings['show_once']) ? 1 : 0);
         
         // Save trigger settings
         update_post_meta($tour_id, '_mcl_tour_trigger_type', $trigger_type);

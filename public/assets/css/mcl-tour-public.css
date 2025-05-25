@@ -688,6 +688,87 @@
     font-size: 16px;
 }
 
+/* Custom popover themes - Users can add their own CSS classes */
+.driver-popover.mcl-theme-dark {
+    background: #2c3e50;
+    color: #ecf0f1;
+}
+
+.driver-popover.mcl-theme-dark .driver-popover-title {
+    color: #f2da22;
+}
+
+.driver-popover.mcl-theme-primary {
+    background: #f2da22;
+    color: #011326;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-title {
+    color: #011326;
+    font-weight: 700;
+}
+
+.driver-popover.mcl-theme-minimal {
+    border: 2px solid #f2da22;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.driver-popover.mcl-theme-rounded {
+    border-radius: 16px;
+}
+
+.driver-popover.mcl-theme-large {
+    max-width: 500px;
+    padding: 24px;
+}
+
+.driver-popover.mcl-theme-large .driver-popover-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.driver-popover.mcl-theme-large .driver-popover-description {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Button customization support */
+.driver-popover .driver-popover-footer {
+    margin-top: 16px;
+}
+
+.driver-popover .driver-popover-footer button {
+    transition: all 0.2s ease;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-footer button {
+    background: #011326;
+    color: #f2da22;
+    border: 1px solid #011326;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-footer button:hover {
+    background: #f2da22;
+    color: #011326;
+    border: 1px solid #f2da22;
+}
+
+/* Progress indicator customization */
+.driver-popover .driver-popover-progress-text {
+    font-size: 12px;
+    color: #646970;
+    font-weight: 500;
+}
+
+.driver-popover.mcl-theme-dark .driver-popover-progress-text {
+    color: #bdc3c7;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-progress-text {
+    color: #011326;
+    font-weight: 600;
+}
+
 /* Tour progress indicator */
 .mcl-tour-progress {
     position: fixed;
@@ -947,8 +1028,6 @@
     margin: 0;
 }
 
-
-
 .mcl-toast-close {
     display: inline-flex;
     align-items: center;
@@ -1028,6 +1107,92 @@
     border: 0 !important;
 }
 
+/* Base Button System for Confirmation Modal */
+.mcl-confirmation-modal .mcl-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    gap: 5px;
+    line-height: 1.4;
+    min-height: 2.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    outline: none;
+    position: relative;
+    z-index: 2;
+}
+
+.mcl-confirmation-modal .mcl-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mcl-confirmation-modal .mcl-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mcl-confirmation-modal .mcl-button-primary {
+    background: #f2da22;
+    color: #011326;
+    border-color: #f2da22;
+}
+
+.mcl-confirmation-modal .mcl-button-primary:hover,
+.mcl-confirmation-modal .mcl-button-primary:focus {
+    background: #f5e354;
+    border-color: #f5e354;
+    color: #011326;
+}
+
+.mcl-confirmation-modal .mcl-button-primary:focus {
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+}
+
+.mcl-confirmation-modal .mcl-button-secondary {
+    background: #f8f9fa;
+    border: 2px solid #e2e8f0;
+    color: #1a1a1a;
+}
+
+.mcl-confirmation-modal .mcl-button-secondary:hover {
+    background: #e2e8f0;
+    color: #1a1a1a;
+    border-color: #cbd5e0;
+}
+
+.mcl-confirmation-modal .mcl-button-secondary:focus {
+    background: #f8f9fa;
+    color: #1a1a1a;
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+    border-color: #f2da22;
+}
+
+.mcl-confirmation-modal .mcl-button-danger {
+    background: #B30000;
+    color: white;
+    border-color: #B30000;
+}
+
+.mcl-confirmation-modal .mcl-button-danger:hover,
+.mcl-confirmation-modal .mcl-button-danger:focus {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: white;
+}
+
+.mcl-confirmation-modal .mcl-button-danger:focus {
+    box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.3);
+}
+
 /* Confirmation Modal System */
 .mcl-confirmation-modal {
     position: fixed;
@@ -1044,11 +1209,12 @@
     background-color: rgba(0, 0, 0, 0.5);
     overflow-y: auto;
     overflow-x: hidden;
-    pointer-events: all;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal.active {
     display: flex;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal-content {
@@ -1057,6 +1223,7 @@
     width: 100%;
     max-width: 28rem;
     max-height: 100%;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal-inner {
@@ -1065,7 +1232,7 @@
     border-radius: 0.5rem;
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
     animation: mcl-modal-fade-in 0.2s ease-out;
-    pointer-events: all;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal.mcl-modal-hiding .mcl-confirmation-modal-inner {
@@ -1087,6 +1254,8 @@
     justify-content: center;
     align-items: center;
     transition: all 0.2s ease;
+    pointer-events: auto;
+    z-index: 1;
 }
 
 .mcl-confirmation-modal-close:hover {
@@ -1098,11 +1267,13 @@
     width: 16px;
     height: 16px;
     display: block;
+    pointer-events: none;
 }
 
 .mcl-confirmation-modal-body {
     padding: 24px;
     text-align: center;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal-icon {
@@ -1113,11 +1284,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
 }
 
 .mcl-confirmation-modal-icon svg {
     width: 48px;
     height: 48px;
+    pointer-events: none;
 }
 
 .mcl-confirmation-modal-title {
@@ -1127,6 +1300,7 @@
     line-height: 1.4;
     color: #4a5568;
     font-family: var(--mcl-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    pointer-events: none;
 }
 
 .mcl-confirmation-modal-actions {
@@ -1134,6 +1308,7 @@
     gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
+    pointer-events: auto;
 }
 
 .mcl-confirmation-modal-actions .mcl-button {
@@ -1141,6 +1316,8 @@
     justify-content: center;
     padding: 8px 16px;
     font-size: 14px;
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 .mcl-confirmation-modal-actions .mcl-button:focus {
