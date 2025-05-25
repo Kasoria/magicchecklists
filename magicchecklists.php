@@ -125,6 +125,10 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             if (is_admin()) {
                 new MCL_Admin();
                 new MCL_Tour_Admin();
+                
+                MCL_Admin_Integration::get_instance();
+
+                MCL_Publisher_Checklist::get_instance();
 
                 MCL_Dashboard_Widget::get_instance();
             }
