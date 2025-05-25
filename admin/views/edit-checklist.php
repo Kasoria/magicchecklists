@@ -5,7 +5,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $checklist_id = isset( $_GET['checklist_id'] ) ? intval( $_GET['checklist_id'] ) : 0;
 $prefill_items = isset( $_GET['prefill_items'] ) ? true : false;
+$checklist_type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'classic';
 $checklist = null;
+
+// If editing existing checklist, get its type
+if ( $checklist_id ) {
+    $checklist = get_post( $checklist_id );
+    $stored_type = get_post_meta( $checklist_id, '_mcl_checklist_type', true );
+    if ( $stored_type ) {
+        $checklist_type = $stored_type;
+    }
+}
+
+// Redirect to publisher edit page if it's a publisher checklist
+if ( $checklist_type === 'publisher' ) {
+    $redirect_url = admin_url( 'admin.php?page=mcl_add_new&type=publisher' );
+    if ( $checklist_id ) {
+        $redirect_url = add_query_arg( 'checklist_id', $checklist_id, $redirect_url );
+    }
+    wp_redirect( $redirect_url );
+    exit;
+}
 
 $all_pages = $this->get_registered_admin_pages();
 $grouped_pages = $this->group_admin_pages($all_pages);
@@ -122,6 +142,7 @@ if ( $checklist_id ) {
             <div class="mcl-settings-wrapper">
             <input type="hidden" name="action" value="save_checklist">
             <input type="hidden" name="checklist_id" value="<?php echo esc_attr($checklist_id); ?>">
+            <input type="hidden" name="checklist_type" value="classic">
 
                 
 
