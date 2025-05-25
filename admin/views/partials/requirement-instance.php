@@ -9,12 +9,15 @@ $checkbox_id = $is_repeatable ? "requirement_{$req_type}_{$instance_id}" : "requ
 <div class="mcl-requirement-item" data-type="<?php echo esc_attr($req_type); ?>">
     <div class="mcl-requirement-header">
         <div class="mcl-requirement-toggle">
-            <input type="checkbox" 
-                id="<?php echo esc_attr($checkbox_id); ?>" 
-                name="<?php echo esc_attr($field_prefix); ?>[enabled]" 
-                value="1" 
-                <?php checked($is_enabled); ?>
-                class="mcl-requirement-checkbox">
+            <label class="mcl-toggle-switch">
+                <input type="checkbox" 
+                    id="<?php echo esc_attr($checkbox_id); ?>" 
+                    name="<?php echo esc_attr($field_prefix); ?>[enabled]" 
+                    value="1" 
+                    <?php checked($is_enabled); ?>
+                    class="mcl-requirement-checkbox">
+                <span class="mcl-toggle-slider"></span>
+            </label>
             <label for="<?php echo esc_attr($checkbox_id); ?>" class="mcl-requirement-label">
                 <?php if ($is_repeatable): ?>
                     <?php if ($req_type === 'custom_field'): ?>
@@ -32,13 +35,16 @@ $checkbox_id = $is_repeatable ? "requirement_{$req_type}_{$instance_id}" : "requ
         
         <div class="mcl-requirement-actions">
             <div class="mcl-requirement-required" style="<?php echo $is_enabled ? '' : 'display: none;'; ?>">
-                <label class="mcl-checkbox-label mcl-required-label">
-                    <input type="checkbox" 
-                        name="<?php echo esc_attr($field_prefix); ?>[required]" 
-                        value="1" 
-                        <?php checked($is_required); ?>>
-                    <?php esc_html_e('Required', 'magic-checklists'); ?>
-                </label>
+                <div class="mcl-required-toggle-wrapper">
+                    <label class="mcl-toggle-switch mcl-toggle-switch-small">
+                        <input type="checkbox" 
+                            name="<?php echo esc_attr($field_prefix); ?>[required]" 
+                            value="1" 
+                            <?php checked($is_required); ?>>
+                        <span class="mcl-toggle-slider"></span>
+                    </label>
+                    <span class="mcl-required-text"><?php esc_html_e('Required', 'magic-checklists'); ?></span>
+                </div>
             </div>
             
             <?php if ($is_repeatable): ?>

@@ -320,12 +320,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = `<div class="mcl-requirement-item" data-type="${reqType}">
             <div class="mcl-requirement-header">
                 <div class="mcl-requirement-toggle">
-                    <input type="checkbox" 
-                        id="requirement_${reqType}_${instanceId}" 
-                        name="requirements[${reqType}][${instanceId}][enabled]" 
-                        value="1" 
-                        checked
-                        class="mcl-requirement-checkbox">
+                    <label class="mcl-toggle-switch">
+                        <input type="checkbox" 
+                            id="requirement_${reqType}_${instanceId}" 
+                            name="requirements[${reqType}][${instanceId}][enabled]" 
+                            value="1" 
+                            checked
+                            class="mcl-requirement-checkbox">
+                        <span class="mcl-toggle-slider"></span>
+                    </label>
                     <label for="requirement_${reqType}_${instanceId}" class="mcl-requirement-label">
                         ${reqDef.label}
                     </label>
@@ -333,13 +336,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 <div class="mcl-requirement-actions">
                     <div class="mcl-requirement-required">
-                        <label class="mcl-checkbox-label mcl-required-label">
-                            <input type="checkbox" 
-                                name="requirements[${reqType}][${instanceId}][required]" 
-                                value="1" 
-                                checked>
-                            Required
-                        </label>
+                        <div class="mcl-required-toggle-wrapper">
+                            <label class="mcl-toggle-switch mcl-toggle-switch-small">
+                                <input type="checkbox" 
+                                    name="requirements[${reqType}][${instanceId}][required]" 
+                                    value="1" 
+                                    checked>
+                                <span class="mcl-toggle-slider"></span>
+                            </label>
+                            <span class="mcl-required-text">Required</span>
+                        </div>
                     </div>
                     
                     <button type="button" class="mcl-remove-instance-btn" data-instance-id="${instanceId}">
@@ -686,25 +692,21 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
 }
 
 .mcl-requirement-toggle {
     display: flex;
     align-items: center;
+    gap: 12px;
     flex: 1;
 }
 
-.mcl-requirement-checkbox {
-    margin-right: 12px;
-    transform: scale(1.2);
-}
+
 
 .mcl-requirement-label {
     font-weight: 600;
     font-size: 16px;
     color: #1a1a1a;
-    cursor: pointer;
     flex: 1;
 }
 
@@ -714,7 +716,77 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 15px;
 }
 
-.mcl-required-label {
+/* Toggle Switch Styles */
+.mcl-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.mcl-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mcl-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.mcl-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .mcl-toggle-slider {
+    background-color: #2271b1;
+}
+
+input:checked + .mcl-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Small toggle switch for required field */
+.mcl-toggle-switch-small {
+    width: 32px;
+    height: 18px;
+}
+
+.mcl-toggle-switch-small .mcl-toggle-slider:before {
+    height: 12px;
+    width: 12px;
+    left: 3px;
+    bottom: 3px;
+}
+
+.mcl-toggle-switch-small input:checked + .mcl-toggle-slider:before {
+    transform: translateX(14px);
+}
+
+/* Required toggle wrapper */
+.mcl-required-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mcl-required-text {
     background: #f2da22;
     color: #1a1a1a;
     padding: 4px 12px;
@@ -722,12 +794,15 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.mcl-required-label:hover {
-    background: #e6c61a;
+/* Update requirement toggle layout */
+.mcl-requirement-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
 }
 
 .mcl-remove-instance-btn {
@@ -772,6 +847,11 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.mcl-checkbox-label {
+    font-size: 18px;
+    color:rgb(215, 215, 215);
 }
 
 /* Configuration Fields */
