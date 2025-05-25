@@ -260,44 +260,56 @@ class MCL_Admin {
                 break;
     
             case 'magicchecklists_page_mcl_add_new':
-                wp_enqueue_style(
-                    'mcl-admin-edit',
-                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/pages/mcl-edit.css',
-                    array('mcl-admin-base', 'mcl-admin-forms'),
-                    MAGIC_CHECKLISTS_VERSION
-                );
-
-                wp_enqueue_style(
-                    'choicescss',
-                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/vendor/choices.min.css',
-                    array(),
-                    '11.0.2'
-                );
-
-                wp_enqueue_script(
-                    'choicesjs',
-                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/choices.min.js',
-                    array('sortablejs'),
-                    '11.0.2',
-                    true
-                );
-
-                wp_enqueue_script(
-                    'interactjs',
-                    MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/interact.min.js',
-                    array(),
-                    '1.15.3',
-                    true
-                );
+                $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+                $checklist_id = isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0;
                 
-                wp_enqueue_script(
-                    'mcl-admin-edit',
-                    MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/pages/mcl-edit.js',
-                    array('sortablejs', 'choicesjs'),
-                    MAGIC_CHECKLISTS_VERSION,
-                    true
-                );
-                $current_handle = 'mcl-admin-edit';
+                // If editing an existing checklist, determine its type
+                if ($checklist_id && empty($type)) {
+                    $existing_type = get_post_meta($checklist_id, '_mcl_checklist_type', true) ?: 'classic';
+                    $type = $existing_type;
+                }
+                
+                // Only load classic edit scripts when actually editing a classic checklist
+                if ($type === 'classic') {
+                    wp_enqueue_style(
+                        'mcl-admin-edit',
+                        MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/pages/mcl-edit.css',
+                        array('mcl-admin-base', 'mcl-admin-forms'),
+                        MAGIC_CHECKLISTS_VERSION
+                    );
+
+                    wp_enqueue_style(
+                        'choicescss',
+                        MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/vendor/choices.min.css',
+                        array(),
+                        '11.0.2'
+                    );
+
+                    wp_enqueue_script(
+                        'choicesjs',
+                        MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/choices.min.js',
+                        array('sortablejs'),
+                        '11.0.2',
+                        true
+                    );
+
+                    wp_enqueue_script(
+                        'interactjs',
+                        MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/interact.min.js',
+                        array(),
+                        '1.15.3',
+                        true
+                    );
+                    
+                    wp_enqueue_script(
+                        'mcl-admin-edit',
+                        MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/pages/mcl-edit.js',
+                        array('sortablejs', 'choicesjs'),
+                        MAGIC_CHECKLISTS_VERSION,
+                        true
+                    );
+                    $current_handle = 'mcl-admin-edit';
+                }
                 break;
     
             case 'magicchecklists_page_mcl_import':
@@ -571,7 +583,29 @@ class MCL_Admin {
     }
 
     public function add_new_checklist_page() {
-        include MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/views/edit-checklist.php';
+        $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+        $checklist_id = isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0;
+        
+        // If editing an existing checklist, determine its type
+        if ($checklist_id && empty($type)) {
+            $existing_type = get_post_meta($checklist_id, '_mcl_checklist_type', true) ?: 'classic';
+            $type = $existing_type;
+        }
+        
+        if (empty($type)) {
+            // Show type selection
+            include MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/views/checklist-type-selection.php';
+        } elseif ($type === 'classic') {
+            // Show classic edit page
+            include MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/views/edit-checklist.php';
+        } elseif ($type === 'publisher') {
+            // Show publisher edit page
+            include MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/views/edit-publisher-checklist.php';
+        } else {
+            // Invalid type, redirect to type selection
+            wp_redirect(admin_url('admin.php?page=mcl_add_new'));
+            exit;
+        }
     }
 
     public function save_checklist() {
@@ -584,6 +618,7 @@ class MCL_Admin {
         }
     
         $checklist_id = isset( $_POST['checklist_id'] ) ? intval( $_POST['checklist_id'] ) : 0;
+        $checklist_type = isset( $_POST['checklist_type'] ) ? sanitize_text_field( $_POST['checklist_type'] ) : 'classic';
         $title = sanitize_text_field( $_POST['title'] );
         $description = sanitize_textarea_field( $_POST['description'] );
         $show_description = isset($_POST['show_description']) ? 1 : 0;
@@ -758,6 +793,7 @@ class MCL_Admin {
             update_post_meta($checklist_id, '_mcl_enable_item_locking', $enable_item_locking);
             update_post_meta( $checklist_id, '_mcl_time_date', $time_date);
             update_post_meta( $checklist_id, '_mcl_items', $processed_items );
+            update_post_meta( $checklist_id, '_mcl_checklist_type', $checklist_type);
             update_post_meta( $checklist_id, '_mcl_keyboard_shortcut', $keyboard_shortcut );
             update_post_meta( $checklist_id, '_mcl_active', $active );
             update_post_meta( $checklist_id, '_mcl_checked_state_handling', $checked_state_handling );
