@@ -183,9 +183,20 @@ class MCL_Dashboard_Widget {
                 echo '<ul class="mcl-widget-deadline-list">';
                 foreach ($deadlines as $deadline) {
                     $deadline_class = $this->get_deadline_urgency_class($deadline['timestamp']);
-                    echo '<li class="mcl-widget-deadline ' . esc_attr($deadline_class) . '">';
-                    echo '<span class="mcl-deadline-item">' . esc_html($deadline['item_content']) . '</span>';
-                    echo '<span class="mcl-deadline-date">' . esc_html($deadline['formatted_date']) . '</span>';
+                    $is_checklist_deadline = isset($deadline['is_checklist_deadline']) && $deadline['is_checklist_deadline'];
+                    $extra_class = $is_checklist_deadline ? ' mcl-widget-checklist-deadline' : '';
+                    
+                    echo '<li class="mcl-widget-deadline ' . esc_attr($deadline_class . $extra_class) . '">';
+                    echo '<span class="mcl-deadline-item">' . wp_kses_post($deadline['item_content']) . '</span>';
+                    echo '<span class="mcl-deadline-date">';
+                    if ($deadline_class === 'overdue') {
+                        echo '<strong>' . esc_html__('OVERDUE', 'magic-checklists') . '</strong> - ';
+                    }
+                    echo esc_html($deadline['formatted_date']);
+                    echo '</span>';
+                    if ($is_checklist_deadline) {
+                        echo '<span class="mcl-deadline-type">' . esc_html__('Checklist', 'magic-checklists') . '</span>';
+                    }
                     echo '</li>';
                 }
                 echo '</ul>';
@@ -224,7 +235,7 @@ class MCL_Dashboard_Widget {
                         echo '<span class="mcl-widget-status-indicator ' . ($is_checked ? 'checked' : 'unchecked') . '"></span>';
                     }
                     
-                    echo '<span class="mcl-widget-item-content">' . esc_html(wp_trim_words($item['content'], 8)) . '</span>';
+                    echo '<span class="mcl-widget-item-content">' . esc_html(wp_trim_words($item['content'], 15)) . '</span>';
                     echo '</li>';
                     $item_count++;
                 }
@@ -260,24 +271,72 @@ class MCL_Dashboard_Widget {
     }
     
     private function get_checklist_deadlines($checklist_id) {
-        $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
-        $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        // Only show deadlines for active checklists
+        $is_active = get_post_meta($checklist_id, '_mcl_active', true) == '1';
+        if (!$is_active) {
+            return array();
+        }
         
         $result = array();
         $now = current_time('timestamp');
+        $future_threshold = $now + (30 * DAY_IN_SECONDS); // Show future deadlines within 30 days
+        $past_threshold = $now - (7 * DAY_IN_SECONDS); // Show overdue deadlines from last 7 days
         
-        foreach ($deadlines as $item_id => $timestamp) {
-            if ($timestamp <= $now) {
-                continue; // Skip past deadlines
+        // Get checklist title for display
+        $checklist_title = get_the_title($checklist_id);
+        
+        // Check for checklist-level deadline first
+        $checklist_deadline = get_post_meta($checklist_id, '_mcl_time_date', true);
+        
+        // Validate and process checklist deadline if it exists
+        if (!empty($checklist_deadline)) {
+            $checklist_deadline = intval($checklist_deadline);
+            
+            // Show deadlines that are either overdue (within last 7 days) or upcoming (within next 30 days)
+            if ($checklist_deadline > 86400 && 
+                (($checklist_deadline >= $past_threshold && $checklist_deadline <= $now) || 
+                 ($checklist_deadline > $now && $checklist_deadline <= $future_threshold))) {
+                $result[] = array(
+                    'item_id' => 'checklist',
+                    'item_content' => '<strong>' . esc_html($checklist_title) . '</strong>',
+                    'timestamp' => $checklist_deadline,
+                    'formatted_date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $checklist_deadline),
+                    'is_checklist_deadline' => true
+                );
+            }
+        }
+        
+        // Get item deadlines
+        $item_deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+        $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        
+        // Create item map for faster lookup
+        $item_map = array();
+        foreach ($items as $item) {
+            $item_map[$item['id']] = $item;
+        }
+        
+        // Get checked items to filter out completed items
+        $checked_items = $this->get_checked_state($checklist_id);
+        
+        foreach ($item_deadlines as $item_id => $timestamp) {
+            // Skip if item is already checked off
+            if (in_array($item_id, $checked_items)) {
+                continue;
+            }
+            
+            // Validate timestamp and show both overdue and upcoming deadlines
+            $timestamp = intval($timestamp);
+            if ($timestamp <= 86400 || 
+                ($timestamp < $past_threshold) || 
+                ($timestamp > $future_threshold)) {
+                continue; // Skip invalid, too old, or too far future deadlines
             }
             
             // Find the item content
             $item_content = '';
-            foreach ($items as $item) {
-                if ($item['id'] == $item_id) {
-                    $item_content = $item['content'];
-                    break;
-                }
+            if (isset($item_map[$item_id]) && !empty($item_map[$item_id]['content'])) {
+                $item_content = $item_map[$item_id]['content'];
             }
             
             if (!empty($item_content)) {
@@ -285,7 +344,8 @@ class MCL_Dashboard_Widget {
                     'item_id' => $item_id,
                     'item_content' => $item_content,
                     'timestamp' => $timestamp,
-                    'formatted_date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp)
+                    'formatted_date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp),
+                    'is_checklist_deadline' => false
                 );
             }
         }
@@ -302,7 +362,9 @@ class MCL_Dashboard_Widget {
         $now = current_time('timestamp');
         $diff = $timestamp - $now;
         
-        if ($diff <= DAY_IN_SECONDS) {
+        if ($diff < 0) {
+            return 'overdue'; // Past deadline
+        } elseif ($diff <= DAY_IN_SECONDS) {
             return 'urgent'; // Within 24 hours
         } elseif ($diff <= 3 * DAY_IN_SECONDS) {
             return 'warning'; // Within 3 days
