@@ -1,26 +1,78 @@
 /**
- * Tour Public CSS
- * Styles for tour creator interface and tour display
- * 
- * Z-Index Hierarchy (highest to lowest):
- * - Confirmation Modal: 10000000 (must be above everything including driver.js)
- *   - Modal Buttons & Close: z-index 10 (relative to modal)
- *   - Modal Actions: z-index 5 (relative to modal)
- *   - Modal Body: z-index 3 (relative to modal)
- *   - Modal Inner: z-index 2 (relative to modal)
- *   - Modal Content: z-index 1 (relative to modal)
- * - Toast Notifications: 9999998 (below confirmation modal, above tours)
- * - Element Reselection Overlay: 9999996
- * - Navigation Loading: 9999995
- * - General Loading: 9999994
- * - Tour Step Modal: 1000002
- * - Element Highlight: 1000001
- * - Floating Panel: 1000000
- * - Tour Creator: 999999
- * - Tour Trigger Button: 1000
- * 
- * Note: Driver.js typically uses z-index around 9999997-9999999 for overlays/popovers
- */
+* Tour Public CSS
+* Styles for tour creator interface and tour display
+* 
+* Z-Index Hierarchy (highest to lowest):
+* - Confirmation Modal: 10000000 (must be above everything including driver.js)
+*   - Modal Buttons & Close: z-index 10 (relative to modal)
+*   - Modal Actions: z-index 5 (relative to modal)
+*   - Modal Body: z-index 3 (relative to modal)
+*   - Modal Inner: z-index 2 (relative to modal)
+*   - Modal Content: z-index 1 (relative to modal)
+* - Toast Notifications: 9999998 (below confirmation modal, above tours)
+* - Element Reselection Overlay: 9999996
+* - Navigation Loading: 9999995
+* - General Loading: 9999994
+* - Tour Step Modal: 1000002
+* - Element Highlight: 1000001
+* - Floating Panel: 1000000
+* - Tour Creator: 999999
+* - Tour Trigger Button: 1000
+* 
+* Note: Driver.js typically uses z-index around 9999997-9999999 for overlays/popovers
+*/
+
+:root {
+    /* Brand Colors */
+    --mcl-primary: #011326;
+    --mcl-primary-light: #002b56;
+    --mcl-primary-dark: #001529;
+    --mcl-accent: #f2da22;
+    --mcl-accent-dark: #d9c31f;
+    --mcl-accent-light: #f5e354;
+
+    /* UI Colors */
+    --mcl-background: #ffffff;
+    --mcl-surface: #f8f9fa;
+    --mcl-border: #e2e8f0;
+    --mcl-text-primary: #1a1a1a;
+    --mcl-text-secondary: #4a5568;
+    --mcl-success: #10B981;
+    --mcl-warning: #F59E0B;
+    --mcl-danger: #B30000;
+
+    /* Typography */
+    --mcl-font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --mcl-font-size-xs: 13px;
+    --mcl-font-size-sm: 14px;
+    --mcl-font-size-base: 16px;
+    --mcl-font-size-lg: 20px;
+    --mcl-font-size-xl: 24px;
+    --mcl-font-size-2xl: 28px;
+    --mcl-font-size-3xl: 32px;
+
+    /* Spacing */
+    --mcl-spacing-xs: 5px;
+    --mcl-spacing-sm: 10px;
+    --mcl-spacing-md: 15px;
+    --mcl-spacing-lg: 20px;
+    --mcl-spacing-xl: 40px;
+    --mcl-spacing-2xl: 50px;
+
+    /* Shadows */
+    --mcl-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --mcl-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --mcl-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+    /* Border Radius */
+    --mcl-radius-sm: 0.375rem;
+    --mcl-radius-md: 0.5rem;
+    --mcl-radius-lg: 0.75rem;
+    --mcl-radius-xl: 1rem;
+
+    /* Transitions */
+    --mcl-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* Tour Creator Interface */
 .mcl-tour-creator {
@@ -232,24 +284,6 @@
     background: #f5e354;
     transform: translateY(-1px);
     outline: none;
-}
-
-.mcl-tour-creator .mcl-button-secondary {
-    background: #f8f9fa;
-    border: 2px solid #e2e8f0;
-    color: #1a1a1a;
-}
-
-.mcl-tour-creator .mcl-button-secondary:hover {
-    background: #e2e8f0;
-    color: #1a1a1a;
-}
-
-.mcl-tour-creator .mcl-button-secondary:focus-visible {
-    outline: none;
-    background: #f8f9fa;
-    color: #1a1a1a;
-    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
 }
 
 .mcl-tour-creator .mcl-button-danger {
@@ -571,9 +605,80 @@
     flex-shrink: 0;
 }
 
-.mcl-modal-footer .mcl-button {
-    min-width: 100px;
+.mcl-button {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--mcl-radius-md);
+    font-weight: 500;
+    transition: var(--mcl-transition);
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: var(--mcl-font-size-sm);
+    text-decoration: none;
+    gap: 5px;
+    line-height: 1.4;
+    height: 2rem;
+}
+
+.mcl-button-primary {
+    background: var(--mcl-accent);
+    color: var(--mcl-primary);
+}
+
+.mcl-button-primary:hover,
+.mcl-button-primary:focus-visible {
+    background: var(--mcl-accent-light);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.mcl-button-primary:focus-visible {
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+}
+
+.mcl-tour-creator .mcl-button-secondary {
+    background: var(--mcl-primary);
+    color: #fff;
+}
+
+.mcl-tour-creator .mcl-button-outline {
+    background: transparent;
+    border: 2px solid var(--mcl-primary);
+    color: var(--mcl-primary);
+}
+
+.mcl-tour-creator .mcl-button-secondary:hover {
+    background: #002b56;
+    color: #fff;
+}
+
+.mcl-tour-creator .mcl-button-secondary:focus-visible {
+    outline: none;
+    background: #002b56;
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(242, 218, 34, 0.4);
+}
+
+.mcl-button-danger {
+    background: var(--mcl-danger);
+    color: white;
+}
+
+.mcl-button-danger:hover,
+.mcl-button-danger:focus-visible {
+    background: #dc2626;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.mcl-button-danger:focus-visible {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
+}
+
+.mcl-modal-footer .mcl-button {
+    width: 100%;
 }
 
 /* Form Styles */
@@ -596,6 +701,9 @@
     font-size: 14px;
     line-height: 1.4;
     transition: border-color 0.2s;
+    background: #f3f3f3;
+    height: 40px;
+    color: black;
 }
 
 .mcl-form-control:focus {

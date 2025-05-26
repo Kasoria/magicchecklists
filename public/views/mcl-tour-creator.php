@@ -43,7 +43,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
             <!-- Quick Actions -->
             <div class="mcl-actions-section">
-                <button type="button" class="mcl-button mcl-button-secondary mcl-preview-tour" id="mcl-preview-tour">
+                <button type="button" class="mcl-button mcl-button-secondary mcl-button-outline mcl-preview-tour" id="mcl-preview-tour">
                     <span class="dashicons dashicons-visibility"></span>
                     <?php _e('Preview', 'magic-checklists'); ?>
                 </button>
