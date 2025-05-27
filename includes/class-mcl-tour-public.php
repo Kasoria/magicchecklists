@@ -160,10 +160,6 @@ class MCL_Tour_Public {
                 return;
             }
             
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MCL Tour: Loading assets on plugin page: ' . $hook);
-            }
-            
             // Check if we're in tour creation mode
             $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
             $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
@@ -207,11 +203,6 @@ class MCL_Tour_Public {
             
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour: No existing pagebuilder transient found, proceeding with asset loading. Key: ' . $session_key . ', URL: ' . $_SERVER['REQUEST_URI']);
-            }
-        } else {
-            // For non-pagebuilder contexts, just log that we're loading normally
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('MCL Tour: Loading assets normally (non-pagebuilder context). URL: ' . $_SERVER['REQUEST_URI']);
             }
         }
         
@@ -337,13 +328,6 @@ class MCL_Tour_Public {
         
         // Fire action to allow other instances to know assets are being loaded
         do_action('mcl_tour_assets_loading');
-        
-        // Debug logging to track asset loading
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('MCL Tour: Loading assets - Context: ' . ($is_tour_mode ? 'creator' : 'playback') . 
-                     ', URL: ' . $_SERVER['REQUEST_URI'] . 
-                     ', Continue Tour ID: ' . $continue_tour_id);
-        }
         
         // Enqueue driver.js
         wp_enqueue_script(

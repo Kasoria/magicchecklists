@@ -193,7 +193,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
         
         <div class="mcl-modal-footer">
-            <button type="button" class="mcl-button mcl-button-secondary" id="mcl-step-editor-cancel">
+            <button type="button" class="mcl-button mcl-button-secondary mcl-button-outline" id="mcl-step-editor-cancel">
                 <?php _e('Cancel', 'magic-checklists'); ?>
             </button>
             <button type="button" class="mcl-button mcl-button-primary" id="mcl-step-editor-save">
