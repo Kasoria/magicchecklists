@@ -31,12 +31,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Filter rows based on search term and selected tags
         rows.forEach(row => {
             const title = row.querySelector('td:first-child').textContent.toLowerCase();
-            const description = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
+            const type = row.querySelector('td:nth-child(2) .mcl-type-badge').textContent.toLowerCase();
+            const description = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
             const tagCells = row.querySelector('td.mcl-tags-cell');
             
             // Check if the row matches the search term
             const matchesSearch = searchTerm === '' || 
                 title.includes(searchTerm) || 
+                type.includes(searchTerm) ||
                 description.includes(searchTerm);
             
             // Check if the row matches the selected tags

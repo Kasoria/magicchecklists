@@ -246,3 +246,52 @@
   padding: var(--mcl-spacing-xl) !important;
   border-bottom: none;
 }
+
+/* Type Badge Styles for Dashboard */
+.mcl-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.mcl-type-classic {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.mcl-type-publisher {
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  color: #e65100;
+  border: 1px solid #ffcc02;
+}
+
+.mcl-type-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.mcl-not-applicable {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Table adjustments for the new Type column */
+.mcl-table th:nth-child(2),
+.mcl-table td:nth-child(2) {
+  width: 100px;
+  text-align: center;
+}
+
+.mcl-table th:nth-child(7),
+.mcl-table td:nth-child(7) {
+  width: 120px;
+  text-align: center;
+}

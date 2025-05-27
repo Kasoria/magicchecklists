@@ -1081,11 +1081,24 @@ class MCL_Admin {
             $new_checklist_id = wp_insert_post( $new_checklist );
 
             if ( ! is_wp_error( $new_checklist_id ) ) {
-                $time_date = get_post_meta( $checklist_id, '_mcl_time_date', true );
-                $items = get_post_meta( $checklist_id, '_mcl_items', true );
-
-                update_post_meta( $new_checklist_id, '_mcl_time_date', $time_date );
-                update_post_meta( $new_checklist_id, '_mcl_items', $items );
+                // Get all meta data from original checklist
+                $all_meta = get_post_meta( $checklist_id );
+                
+                // Copy all meta data to new checklist
+                foreach ( $all_meta as $meta_key => $meta_values ) {
+                    foreach ( $meta_values as $meta_value ) {
+                        update_post_meta( $new_checklist_id, $meta_key, maybe_unserialize( $meta_value ) );
+                    }
+                }
+                
+                // For publisher checklists, also copy the requirements
+                $checklist_type = get_post_meta( $checklist_id, '_mcl_checklist_type', true );
+                if ( $checklist_type === 'publisher' ) {
+                    $requirements = MCL_DB_Manager::get_publisher_requirements( $checklist_id );
+                    if ( ! empty( $requirements ) ) {
+                        MCL_DB_Manager::save_publisher_requirements( $new_checklist_id, $requirements );
+                    }
+                }
             }
         }
 

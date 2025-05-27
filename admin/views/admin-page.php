@@ -36,7 +36,7 @@ $checklists = get_posts( array(
     <div class="mcl-table-filters">
         <div class="mcl-filter-group mcl-form-group">
             <label for="mcl-search" class="mcl-label mcl-label-dark mcl-label-small"><?php esc_html_e('Search Checklists', 'magic-checklists'); ?></label>
-            <input type="text" id="mcl-search" class="mcl-input" placeholder="<?php esc_attr_e('Search by title, description...', 'magic-checklists'); ?>">
+            <input type="text" id="mcl-search" class="mcl-input" placeholder="<?php esc_attr_e('Search by title, type, description...', 'magic-checklists'); ?>">
         </div>
         <div class="mcl-filter-group mcl-form-group">
             <label for="mcl-tag-filter" class="mcl-label mcl-label-dark mcl-label-small"><?php esc_html_e('Filter by Tags', 'magic-checklists'); ?></label>
@@ -68,9 +68,22 @@ $checklists = get_posts( array(
             <table class="mcl-table mcl-table-main">
                 <thead>
                     <tr>
-                        <th class="sortable" data-sort="title"><?php esc_html_e( 'Title', 'magic-checklists' ); ?></th>
-                        <th class="sortable" data-sort="priority"><?php esc_html_e( 'Priority', 'magic-checklists' ); ?></th>
-                        <th class="sortable" data-sort="tags"><?php esc_html_e('Tags', 'magic-checklists'); ?></th>
+                        <th class="sortable" data-sort="title">
+                            <?php esc_html_e( 'Title', 'magic-checklists' ); ?>
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="sortable" data-sort="type">
+                            <?php esc_html_e( 'Type', 'magic-checklists' ); ?>
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="sortable" data-sort="priority">
+                            <?php esc_html_e( 'Priority', 'magic-checklists' ); ?>
+                            <span class="sort-indicator"></span>
+                        </th>
+                        <th class="sortable" data-sort="tags">
+                            <?php esc_html_e('Tags', 'magic-checklists'); ?>
+                            <span class="sort-indicator"></span>
+                        </th>
                         <th><?php esc_html_e( 'Description', 'magic-checklists' ); ?></th>
                         <th><?php esc_html_e( 'Activate / Deactivate', 'magic-checklists' ); ?></th>
                         <th><?php esc_html_e( 'Shortcut', 'magic-checklists' ); ?></th>
@@ -83,6 +96,9 @@ $checklists = get_posts( array(
                     // Set default priority to 'none' if empty or invalid
                     $priority = !empty($priority) ? $priority : 'none';
                     
+                    // Get checklist type (default to 'classic' for backward compatibility)
+                    $checklist_type = get_post_meta( $checklist->ID, '_mcl_checklist_type', true ) ?: 'classic';
+                    
                     // Get priority levels and colors from the admin class
                     $admin = new MCL_Admin();
                     $priority_levels = $admin->get_priority_levels();
@@ -91,9 +107,21 @@ $checklists = get_posts( array(
                     // Ensure we have a valid priority level
                     $priority_label = isset($priority_levels[$priority]) ? $priority_levels[$priority] : $priority_levels['none'];
                     $priority_color = isset($priority_colors[$priority]) ? $priority_colors[$priority] : $priority_colors['none'];
+                    
+                    // Define type labels and styling
+                    $type_labels = array(
+                        'classic' => __('Classic', 'magic-checklists'),
+                        'publisher' => __('Publisher', 'magic-checklists')
+                    );
+                    $type_label = isset($type_labels[$checklist_type]) ? $type_labels[$checklist_type] : $type_labels['classic'];
                 ?>
                         <tr>
                             <td><?php echo esc_html( $checklist->post_title ); ?></td>
+                            <td>
+                                <span class="mcl-type-badge mcl-type-<?php echo esc_attr($checklist_type); ?>" data-type="<?php echo esc_attr($checklist_type); ?>">
+                                    <?php echo esc_html($type_label); ?>
+                                </span>
+                            </td>
                             <td>
                                 <span class="mcl-priority-badge" 
                                     style="background-color: <?php echo esc_attr($priority_colors[$priority]); ?>"
@@ -123,7 +151,13 @@ $checklists = get_posts( array(
                                     <label for="mcl-toggle-<?php echo esc_attr( $checklist->ID ); ?>" class="mcl-switch-label"></label>
                                 </div>
                             </td>
-                            <td><?php echo esc_html( get_post_meta( $checklist->ID, '_mcl_keyboard_shortcut', true ) ); ?></td>
+                            <td>
+                                <?php if ($checklist_type === 'classic'): ?>
+                                    <?php echo esc_html( get_post_meta( $checklist->ID, '_mcl_keyboard_shortcut', true ) ); ?>
+                                <?php else: ?>
+                                    <span class="mcl-not-applicable">—</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <a href="<?php echo admin_url( 'admin.php?page=mcl_add_new&checklist_id=' . $checklist->ID ); ?>" class="mcl-action-button mcl-edit"><?php esc_html_e( 'Edit', 'magic-checklists' ); ?></a>
                                 <a href="<?php echo wp_nonce_url( admin_url( 'admin-post.php?action=delete_checklist&checklist_id=' . $checklist->ID ), 'mcl_delete_checklist' ); ?>" class="mcl-action-button mcl-delete" onclick="return confirm('<?php esc_html_e( 'Are you sure you want to delete this checklist?', 'magic-checklists' ); ?>');"><?php esc_html_e( 'Delete', 'magic-checklists' ); ?></a>

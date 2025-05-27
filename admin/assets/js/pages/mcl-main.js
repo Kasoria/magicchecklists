@@ -128,9 +128,35 @@ document.addEventListener('DOMContentLoaded', function() {
                         bVal = priorityOrder[bPriority] || 1;
                         break;
 
+                    case 'type':
+                        const typeOrder = {
+                            'publisher': 2,
+                            'classic': 1
+                        };
+                        
+                        const aType = a.querySelector('.mcl-type-badge').textContent.trim().toLowerCase();
+                        const bType = b.querySelector('.mcl-type-badge').textContent.trim().toLowerCase();
+                        aVal = typeOrder[aType] || 1;
+                        bVal = typeOrder[bType] || 1;
+                        break;
+
                     case 'title':
                         aVal = a.querySelector('td').textContent.trim().toLowerCase();
                         bVal = b.querySelector('td').textContent.trim().toLowerCase();
+                        break;
+
+                    case 'tags':
+                        // Get all tag names from the tags cell
+                        const aTagsCell = a.querySelector('.mcl-tags-cell');
+                        const bTagsCell = b.querySelector('.mcl-tags-cell');
+                        
+                        const aTags = aTagsCell ? Array.from(aTagsCell.querySelectorAll('.mcl-tag-badge'))
+                            .map(badge => badge.textContent.trim().toLowerCase()).join(' ') : '';
+                        const bTags = bTagsCell ? Array.from(bTagsCell.querySelectorAll('.mcl-tag-badge'))
+                            .map(badge => badge.textContent.trim().toLowerCase()).join(' ') : '';
+                        
+                        aVal = aTags;
+                        bVal = bTags;
                         break;
 
                     default:
