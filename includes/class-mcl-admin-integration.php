@@ -63,10 +63,25 @@ class MCL_Admin_Integration {
                     continue;
                 }
                 
+                $config = isset($req_data['config']) ? $req_data['config'] : array();
+                
+                // Validate required fields for non-repeatable items
+                if ($req_type === 'custom_field') {
+                    if (empty($config['field_name'])) {
+                        $this->redirect_with_error(__('Custom field name cannot be empty', 'magic-checklists'), $checklist_id);
+                        return;
+                    }
+                } elseif ($req_type === 'custom_item') {
+                    if (empty($config['item_title'])) {
+                        $this->redirect_with_error(__('Custom item title cannot be empty', 'magic-checklists'), $checklist_id);
+                        return;
+                    }
+                }
+                
                 $requirements[] = array(
                     'type' => $req_type,
                     'instance_id' => '',
-                    'config' => isset($req_data['config']) ? $req_data['config'] : array(),
+                    'config' => $config,
                     'required' => isset($req_data['required']) && $req_data['required']
                 );
             } else {
@@ -76,10 +91,25 @@ class MCL_Admin_Integration {
                         continue;
                     }
                     
+                    $config = isset($instance_data['config']) ? $instance_data['config'] : array();
+                    
+                    // Validate required fields for repeatable items
+                    if ($req_type === 'custom_field') {
+                        if (empty($config['field_name'])) {
+                            $this->redirect_with_error(__('Custom field name cannot be empty', 'magic-checklists'), $checklist_id);
+                            return;
+                        }
+                    } elseif ($req_type === 'custom_item') {
+                        if (empty($config['item_title'])) {
+                            $this->redirect_with_error(__('Custom item title cannot be empty', 'magic-checklists'), $checklist_id);
+                            return;
+                        }
+                    }
+                    
                     $requirements[] = array(
                         'type' => $req_type,
                         'instance_id' => isset($instance_data['instance_id']) ? $instance_data['instance_id'] : $instance_id,
-                        'config' => isset($instance_data['config']) ? $instance_data['config'] : array(),
+                        'config' => $config,
                         'required' => isset($instance_data['required']) && $instance_data['required']
                     );
                 }

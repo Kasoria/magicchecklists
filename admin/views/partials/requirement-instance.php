@@ -9,15 +9,15 @@ $checkbox_id = $is_repeatable ? "requirement_{$req_type}_{$instance_id}" : "requ
 <div class="mcl-requirement-item" data-type="<?php echo esc_attr($req_type); ?>">
     <div class="mcl-requirement-header">
         <div class="mcl-requirement-toggle">
-            <label class="mcl-toggle-switch">
+            <div class="mcl-toggle-switch">
                 <input type="checkbox" 
                     id="<?php echo esc_attr($checkbox_id); ?>" 
                     name="<?php echo esc_attr($field_prefix); ?>[enabled]" 
                     value="1" 
                     <?php checked($is_enabled); ?>
                     class="mcl-requirement-checkbox">
-                <span class="mcl-toggle-slider"></span>
-            </label>
+                <label for="<?php echo esc_attr($checkbox_id); ?>" class="mcl-switch-label"></label>
+            </div>
             <label for="<?php echo esc_attr($checkbox_id); ?>" class="mcl-requirement-label">
                 <?php if ($is_repeatable): ?>
                     <?php if ($req_type === 'custom_field'): ?>
@@ -36,13 +36,14 @@ $checkbox_id = $is_repeatable ? "requirement_{$req_type}_{$instance_id}" : "requ
         <div class="mcl-requirement-actions">
             <div class="mcl-requirement-required" style="<?php echo $is_enabled ? '' : 'display: none;'; ?>">
                 <div class="mcl-required-toggle-wrapper">
-                    <label class="mcl-toggle-switch mcl-toggle-switch-small">
+                    <div class="mcl-toggle-switch mcl-toggle-switch-small">
                         <input type="checkbox" 
+                            id="required_<?php echo esc_attr($checkbox_id); ?>"
                             name="<?php echo esc_attr($field_prefix); ?>[required]" 
                             value="1" 
                             <?php checked($is_required); ?>>
-                        <span class="mcl-toggle-slider"></span>
-                    </label>
+                        <label for="required_<?php echo esc_attr($checkbox_id); ?>" class="mcl-switch-label"></label>
+                    </div>
                     <span class="mcl-required-text"><?php esc_html_e('Required', 'magic-checklists'); ?></span>
                 </div>
             </div>
@@ -84,19 +85,28 @@ $checkbox_id = $is_repeatable ? "requirement_{$req_type}_{$instance_id}" : "requ
                                 class="mcl-input mcl-input-medium <?php echo $req_type === 'custom_item' && $field_name === 'item_title' ? 'mcl-instance-title-field' : ''; ?>">
                         
                         <?php elseif ($field_def['type'] === 'select'): ?>
-                            <select name="<?php echo esc_attr($field_prefix); ?>[config][<?php echo esc_attr($field_name); ?>]" 
-                                class="mcl-input mcl-input-medium <?php echo $req_type === 'custom_field' && $field_name === 'field_name' ? 'mcl-meta-field-select' : ''; ?>"
-                                data-post-types-target="<?php echo $req_type === 'custom_field' ? 'true' : 'false'; ?>">
-                                <option value=""><?php echo esc_html($field_def['placeholder'] ?? 'Select...'); ?></option>
-                                <?php if ($req_type === 'custom_field' && $field_name === 'field_name'): ?>
-                                    <!-- Options will be populated by JavaScript -->
-                                    <?php if (!empty($config[$field_name])): ?>
-                                        <option value="<?php echo esc_attr($config[$field_name]); ?>" selected>
-                                            <?php echo esc_html($config[$field_name]); ?>
-                                        </option>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                            </select>
+                            <?php if ($req_type === 'custom_field' && $field_name === 'field_name'): ?>
+                                <!-- Custom field selector with improved dropdown -->
+                                <div class="mcl-meta-field-wrapper">
+                                    <input type="text" 
+                                        name="<?php echo esc_attr($field_prefix); ?>[config][<?php echo esc_attr($field_name); ?>]" 
+                                        value="<?php echo esc_attr($config[$field_name] ?? ''); ?>"
+                                        placeholder="<?php echo esc_attr($field_def['placeholder'] ?? 'Type or select a custom field...'); ?>"
+                                        class="mcl-input mcl-input-medium mcl-meta-field-input"
+                                        data-post-types-target="true"
+                                        autocomplete="off">
+                                    <button type="button" class="mcl-meta-field-clear" title="Clear field">&times;</button>
+                                    <button type="button" class="mcl-meta-field-dropdown" title="Show all fields">&#9662;</button>
+                                    <div class="mcl-meta-field-options" style="display: none;">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <select name="<?php echo esc_attr($field_prefix); ?>[config][<?php echo esc_attr($field_name); ?>]" 
+                                    class="mcl-input mcl-input-medium">
+                                    <option value=""><?php echo esc_html($field_def['placeholder'] ?? 'Select...'); ?></option>
+                                </select>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>

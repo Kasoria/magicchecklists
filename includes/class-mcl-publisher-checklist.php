@@ -1024,7 +1024,9 @@ class MCL_Publisher_Checklist {
         
         global $wpdb;
         
-        // Get meta keys from the database for the selected post types
+        $all_fields = array();
+        
+        // 1. Get meta keys from the database for the selected post types
         $post_types_placeholders = implode(',', array_fill(0, count($post_types), '%s'));
         
         $meta_keys = $wpdb->get_col($wpdb->prepare("
@@ -1033,28 +1035,171 @@ class MCL_Publisher_Checklist {
             INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID 
             WHERE p.post_type IN ($post_types_placeholders)
             AND pm.meta_key NOT LIKE '\_%'
+            AND pm.meta_key NOT LIKE 'field_%'
             AND pm.meta_key != ''
+            AND pm.meta_key NOT IN ('footnotes')
             ORDER BY pm.meta_key ASC
-            LIMIT 100
+            LIMIT 200
         ", $post_types));
-        
-        // Prepare fields from database only
-        $all_fields = array();
         
         // Add database fields
         foreach ($meta_keys as $key) {
             $all_fields[$key] = ucwords(str_replace(array('_', '-'), ' ', $key));
         }
         
-        // Sort by label
+        // 2. Get ACF fields directly from database (more reliable)
+        // Exclude ACF reference fields (field_xxxxx) and only get actual content fields
+        $acf_fields = $wpdb->get_results("
+            SELECT p.post_title as field_label, p.post_name as field_name, p.post_parent as field_group_id
+            FROM {$wpdb->posts} p
+            WHERE p.post_type = 'acf-field' 
+            AND p.post_status = 'publish'
+            AND p.post_name NOT LIKE 'field_%'
+            AND p.post_name != ''
+            ORDER BY p.post_title ASC
+        ");
+        
+        if (!empty($acf_fields)) {
+            // Get field group location rules to filter by post type
+            $field_group_ids = array_unique(array_column($acf_fields, 'field_group_id'));
+            if (!empty($field_group_ids)) {
+                $placeholders = implode(',', array_fill(0, count($field_group_ids), '%d'));
+                $field_groups = $wpdb->get_results($wpdb->prepare("
+                    SELECT p.ID, p.post_content
+                    FROM {$wpdb->posts} p
+                    WHERE p.post_type = 'acf-field-group' 
+                    AND p.post_status = 'publish'
+                    AND p.ID IN ($placeholders)
+                ", $field_group_ids));
+                
+                $applicable_groups = array();
+                foreach ($field_groups as $group) {
+                    $group_config = maybe_unserialize($group->post_content);
+                    if (is_array($group_config) && isset($group_config['location'])) {
+                        $location_rules = $group_config['location'];
+                        $applies_to_post_type = false;
+                        
+                        // Check if group applies to any of our post types
+                        foreach ($location_rules as $rule_group) {
+                            if (is_array($rule_group)) {
+                                foreach ($rule_group as $rule) {
+                                    if (is_array($rule) && 
+                                        isset($rule['param']) && $rule['param'] === 'post_type' &&
+                                        isset($rule['value']) && in_array($rule['value'], $post_types)) {
+                                        $applies_to_post_type = true;
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if ($applies_to_post_type) {
+                            $applicable_groups[] = $group->ID;
+                        }
+                    } else {
+                        // If no location rules or can't parse, include it
+                        $applicable_groups[] = $group->ID;
+                    }
+                }
+                
+                // Add fields from applicable groups
+                foreach ($acf_fields as $field) {
+                    if (in_array($field->field_group_id, $applicable_groups) || empty($applicable_groups)) {
+                        $field_name = sanitize_text_field($field->field_name);
+                        $field_label = sanitize_text_field($field->field_label);
+                        if (!empty($field_name) && !empty($field_label)) {
+                            $all_fields[$field_name] = $field_label . ' [ACF]';
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 3. Get Meta Box fields if Meta Box is active
+        if (function_exists('rwmb_get_registry')) {
+            try {
+                $meta_boxes = rwmb_get_registry('meta_box')->get_by_object_type('post');
+                if (is_array($meta_boxes)) {
+                    foreach ($meta_boxes as $meta_box) {
+                        if (isset($meta_box->post_types) && is_array($meta_box->post_types) && 
+                            array_intersect($meta_box->post_types, $post_types)) {
+                            if (isset($meta_box->fields) && is_array($meta_box->fields)) {
+                                foreach ($meta_box->fields as $field) {
+                                    if (isset($field['id']) && isset($field['name'])) {
+                                        $all_fields[$field['id']] = $field['name'] . ' [Meta Box]';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                // Skip Meta Box if there's an error
+            }
+        }
+        
+        // 4. Get Toolset Types fields if Toolset is active
+        if (function_exists('wpcf_admin_fields_get_fields')) {
+            try {
+                $toolset_fields = wpcf_admin_fields_get_fields();
+                if (is_array($toolset_fields)) {
+                    foreach ($toolset_fields as $field_slug => $field_data) {
+                        if (is_array($field_data)) {
+                            $field_name = 'wpcf-' . $field_slug;
+                            $field_label = isset($field_data['name']) ? $field_data['name'] : ucwords(str_replace('_', ' ', $field_slug));
+                            $all_fields[$field_name] = $field_label . ' [Toolset]';
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                // Skip Toolset if there's an error
+            }
+        }
+        
+        // 5. Get CMB2 fields if CMB2 is active
+        if (function_exists('cmb2_get_metaboxes')) {
+            try {
+                $cmb2_boxes = cmb2_get_metaboxes();
+                if (is_array($cmb2_boxes)) {
+                    foreach ($cmb2_boxes as $box) {
+                        if (isset($box->meta_box['object_types']) && is_array($box->meta_box['object_types']) && 
+                            array_intersect($box->meta_box['object_types'], $post_types)) {
+                            if (isset($box->meta_box['fields']) && is_array($box->meta_box['fields'])) {
+                                foreach ($box->meta_box['fields'] as $field) {
+                                    if (isset($field['id']) && isset($field['name'])) {
+                                        $all_fields[$field['id']] = $field['name'] . ' [CMB2]';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception $e) {
+                // Skip CMB2 if there's an error
+            }
+        }
+        
+        // Remove duplicates and sort by label
+        $all_fields = array_unique($all_fields);
         asort($all_fields);
         
-        // Format for select options
+        // Format for select options - simplified approach
         $options = array();
         $options[''] = '-- Select a custom field --';
         
+        // Add all fields directly without complex grouping
         foreach ($all_fields as $key => $label) {
-            $options[$key] = $label . ' (' . $key . ')';
+            // Ensure we have valid string values
+            if (is_string($key) && is_string($label)) {
+                if (strpos($label, '[ACF]') !== false || 
+                    strpos($label, '[Meta Box]') !== false || 
+                    strpos($label, '[Toolset]') !== false || 
+                    strpos($label, '[CMB2]') !== false) {
+                    $options[$key] = $label;
+                } else {
+                    $options[$key] = $label . ' (' . $key . ')';
+                }
+            }
         }
         
         wp_send_json_success($options);

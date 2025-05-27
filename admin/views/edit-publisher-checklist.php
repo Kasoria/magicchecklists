@@ -256,14 +256,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 updateMetaFieldSelects(data.data);
+            } else {
+                console.error('MCL Error: Failed to fetch meta fields:', data);
             }
         })
         .catch(error => {
-            console.error('Error fetching meta fields:', error);
+            console.error('MCL Error: Error fetching meta fields:', error);
         });
     }
     
     function updateMetaFieldSelects(options) {
+        // Update both old selects and new inputs with datalists
         document.querySelectorAll('.mcl-meta-field-select').forEach(select => {
             const currentValue = select.value;
             select.innerHTML = '';
@@ -286,6 +289,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     select.appendChild(option);
                 }
             });
+        });
+        
+        // Update custom field dropdowns
+        document.querySelectorAll('.mcl-meta-field-wrapper').forEach(wrapper => {
+            const input = wrapper.querySelector('.mcl-meta-field-input');
+            const optionsContainer = wrapper.querySelector('.mcl-meta-field-options');
+            
+            if (input && optionsContainer) {
+                optionsContainer.innerHTML = '';
+                
+                // Add field options
+                Object.entries(options).forEach(([value, label]) => {
+                    if (value !== '' && typeof value === 'string' && typeof label === 'string') {
+                        const option = document.createElement('div');
+                        option.className = 'mcl-meta-field-option';
+                        option.dataset.value = value;
+                        option.textContent = label;
+                        option.addEventListener('click', function() {
+                            input.value = value;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            optionsContainer.style.display = 'none';
+                        });
+                        optionsContainer.appendChild(option);
+                    }
+                });
+            }
         });
     }
     
@@ -320,15 +349,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = `<div class="mcl-requirement-item" data-type="${reqType}">
             <div class="mcl-requirement-header">
                 <div class="mcl-requirement-toggle">
-                    <label class="mcl-toggle-switch">
+                    <div class="mcl-toggle-switch">
                         <input type="checkbox" 
                             id="requirement_${reqType}_${instanceId}" 
                             name="requirements[${reqType}][${instanceId}][enabled]" 
                             value="1" 
                             checked
                             class="mcl-requirement-checkbox">
-                        <span class="mcl-toggle-slider"></span>
-                    </label>
+                        <label for="requirement_${reqType}_${instanceId}" class="mcl-switch-label"></label>
+                    </div>
                     <label for="requirement_${reqType}_${instanceId}" class="mcl-requirement-label">
                         ${reqDef.label}
                     </label>
@@ -337,13 +366,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="mcl-requirement-actions">
                     <div class="mcl-requirement-required">
                         <div class="mcl-required-toggle-wrapper">
-                            <label class="mcl-toggle-switch mcl-toggle-switch-small">
+                            <div class="mcl-toggle-switch mcl-toggle-switch-small">
                                 <input type="checkbox" 
+                                    id="required_${reqType}_${instanceId}"
                                     name="requirements[${reqType}][${instanceId}][required]" 
                                     value="1" 
                                     checked>
-                                <span class="mcl-toggle-slider"></span>
-                            </label>
+                                <label for="required_${reqType}_${instanceId}" class="mcl-switch-label"></label>
+                            </div>
                             <span class="mcl-required-text">Required</span>
                         </div>
                     </div>
@@ -380,12 +410,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         placeholder="${fieldDef.placeholder || ''}"
                         class="mcl-input mcl-input-medium ${extraClass}">`;
                 } else if (fieldDef.type === 'select') {
-                    const extraClass = (reqType === 'custom_field' && fieldName === 'field_name') ? 'mcl-meta-field-select' : '';
-                    html += `<select name="requirements[${reqType}][${instanceId}][config][${fieldName}]" 
-                        class="mcl-input mcl-input-medium ${extraClass}"
-                        data-post-types-target="${reqType === 'custom_field' ? 'true' : 'false'}">
-                        <option value="">${fieldDef.placeholder || 'Select...'}</option>
-                    </select>`;
+                    if (reqType === 'custom_field' && fieldName === 'field_name') {
+                        html += `<div class="mcl-meta-field-wrapper">
+                            <input type="text" 
+                                name="requirements[${reqType}][${instanceId}][config][${fieldName}]" 
+                                value=""
+                                placeholder="${fieldDef.placeholder || 'Type or select a custom field...'}"
+                                class="mcl-input mcl-input-medium mcl-meta-field-input"
+                                data-post-types-target="true"
+                                autocomplete="off">
+                            <button type="button" class="mcl-meta-field-clear" title="Clear field">&times;</button>
+                            <button type="button" class="mcl-meta-field-dropdown" title="Show all fields">&#9662;</button>
+                            <div class="mcl-meta-field-options" style="display: none;">
+                                <!-- Options will be populated by JavaScript -->
+                            </div>
+                        </div>`;
+                    } else {
+                        html += `<select name="requirements[${reqType}][${instanceId}][config][${fieldName}]" 
+                            class="mcl-input mcl-input-medium">
+                            <option value="">${fieldDef.placeholder || 'Select...'}</option>
+                        </select>`;
+                    }
                 }
                 
                 html += '</div>';
@@ -411,13 +456,18 @@ document.addEventListener('DOMContentLoaded', function() {
         instanceDiv.innerHTML = html;
         container.appendChild(instanceDiv);
         
-        // Update meta field selects for new custom field instances
+        // Update meta field selects and inputs for new custom field instances
         if (reqType === 'custom_field') {
             fetchMetaFields();
         }
         
         // Attach event listeners
         attachInstanceEventListeners(instanceDiv);
+        
+        // Initial validation for required fields
+        instanceDiv.querySelectorAll('.mcl-config-field input, .mcl-config-field select').forEach(input => {
+            validateRequiredFields(input);
+        });
     }
     
     function attachInstanceEventListeners(instance) {
@@ -443,9 +493,11 @@ document.addEventListener('DOMContentLoaded', function() {
         instance.querySelectorAll('.mcl-config-field input, .mcl-config-field select').forEach(input => {
             input.addEventListener('input', function() {
                 updateInstanceLabel(this);
-            });
+                validateRequiredFields(this);
+             });
             input.addEventListener('change', function() {
                 updateInstanceLabel(this);
+                validateRequiredFields(this);
             });
         });
     }
@@ -469,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 label.textContent = 'Custom Field';
             }
-        } else if (input.name.includes('[field_name]')) {
+        } else if (input.name.includes('[field_name]') || input.classList.contains('mcl-meta-field-input')) {
             // Update custom field label when field name changes
             const fieldName = input.value;
             const fieldLabelInput = instance.querySelector('input[name*="[field_label]"]');
@@ -485,10 +537,132 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function validateRequiredFields(input) {
+        const instance = input.closest('.mcl-requirement-instance');
+        const item = instance.querySelector('.mcl-requirement-item');
+        const reqType = item.dataset.type;
+        
+        // Remove existing error styling
+        input.classList.remove('mcl-field-error');
+        
+        // Check if this is a required field that's empty
+        let isEmpty = false;
+        let errorMessage = '';
+        
+        if (reqType === 'custom_field' && (input.name.includes('[field_name]') || input.classList.contains('mcl-meta-field-input'))) {
+            if (!input.value.trim()) {
+                isEmpty = true;
+                errorMessage = '<?php esc_html_e('Field name is required', 'magic-checklists'); ?>';
+            }
+        } else if (reqType === 'custom_item' && (input.name.includes('[item_title]') || input.classList.contains('mcl-instance-title-field'))) {
+            if (!input.value.trim()) {
+                isEmpty = true;
+                errorMessage = '<?php esc_html_e('Item title is required', 'magic-checklists'); ?>';
+            }
+        }
+        
+        if (isEmpty) {
+            input.classList.add('mcl-field-error');
+            input.title = errorMessage;
+        } else {
+            input.removeAttribute('title');
+        }
+    }
+    
     // Attach initial event listeners
     document.querySelectorAll('.mcl-requirement-instance').forEach(instance => {
         attachInstanceEventListeners(instance);
+        
+        // Initial validation for required fields
+        instance.querySelectorAll('.mcl-config-field input, .mcl-config-field select').forEach(input => {
+            validateRequiredFields(input);
+        });
     });
+    
+    // Set up meta field dropdown functionality
+    setupMetaFieldDropdowns();
+    
+    function setupMetaFieldDropdowns() {
+        // Handle dropdown button clicks
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('mcl-meta-field-dropdown')) {
+                e.preventDefault();
+                const wrapper = e.target.closest('.mcl-meta-field-wrapper');
+                const optionsContainer = wrapper.querySelector('.mcl-meta-field-options');
+                const isVisible = optionsContainer.style.display !== 'none';
+                
+                // Hide all other dropdowns
+                document.querySelectorAll('.mcl-meta-field-options').forEach(container => {
+                    container.style.display = 'none';
+                });
+                
+                // Toggle current dropdown
+                optionsContainer.style.display = isVisible ? 'none' : 'block';
+            }
+            
+            if (e.target.classList.contains('mcl-meta-field-clear')) {
+                e.preventDefault();
+                const wrapper = e.target.closest('.mcl-meta-field-wrapper');
+                const input = wrapper.querySelector('.mcl-meta-field-input');
+                input.value = '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                wrapper.querySelector('.mcl-meta-field-options').style.display = 'none';
+            }
+            
+            // Close dropdowns when clicking outside
+            if (!e.target.closest('.mcl-meta-field-wrapper')) {
+                document.querySelectorAll('.mcl-meta-field-options').forEach(container => {
+                    container.style.display = 'none';
+                });
+            }
+        });
+        
+        // Handle input focus and typing
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('mcl-meta-field-input')) {
+                const wrapper = e.target.closest('.mcl-meta-field-wrapper');
+                const optionsContainer = wrapper.querySelector('.mcl-meta-field-options');
+                const searchTerm = e.target.value.toLowerCase();
+                
+                // Filter options based on input
+                const options = optionsContainer.querySelectorAll('.mcl-meta-field-option');
+                let hasVisibleOptions = false;
+                
+                options.forEach(option => {
+                    const text = option.textContent.toLowerCase();
+                    const value = option.dataset.value.toLowerCase();
+                    if (text.includes(searchTerm) || value.includes(searchTerm)) {
+                        option.style.display = 'block';
+                        hasVisibleOptions = true;
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide dropdown based on content
+                optionsContainer.style.display = hasVisibleOptions && searchTerm.length > 0 ? 'block' : 'none';
+            }
+        });
+        
+        // Handle input focus
+        document.addEventListener('focus', function(e) {
+            if (e.target.classList.contains('mcl-meta-field-input')) {
+                const wrapper = e.target.closest('.mcl-meta-field-wrapper');
+                const optionsContainer = wrapper.querySelector('.mcl-meta-field-options');
+                
+                // Show all options on focus if input is empty
+                if (e.target.value === '') {
+                    const options = optionsContainer.querySelectorAll('.mcl-meta-field-option');
+                    options.forEach(option => {
+                        option.style.display = 'block';
+                    });
+                    if (options.length > 0) {
+                        optionsContainer.style.display = 'block';
+                    }
+                }
+            }
+        }, true);
+    }
     
     // Handle upper submit button click
     document.querySelector('.mcl-submit-form')?.addEventListener('click', function(e) {
@@ -516,9 +690,44 @@ document.addEventListener('DOMContentLoaded', function() {
             errors.push('<?php esc_html_e('At least one requirement must be enabled', 'magic-checklists'); ?>');
         }
         
+        // Validate custom field requirements
+        requirements.forEach(requirement => {
+            const item = requirement.closest('.mcl-requirement-item');
+            const reqType = item.dataset.type;
+            
+            if (reqType === 'custom_field') {
+                const fieldNameInput = item.querySelector('input[name*="[field_name]"], .mcl-meta-field-input');
+                if (fieldNameInput && !fieldNameInput.value.trim()) {
+                    errors.push('<?php esc_html_e('Custom field name cannot be empty', 'magic-checklists'); ?>');
+                }
+            }
+            
+            if (reqType === 'custom_item') {
+                const itemTitleInput = item.querySelector('input[name*="[item_title]"], .mcl-instance-title-field');
+                if (itemTitleInput && !itemTitleInput.value.trim()) {
+                    errors.push('<?php esc_html_e('Custom item title cannot be empty', 'magic-checklists'); ?>');
+                }
+            }
+        });
+        
         if (errors.length > 0) {
             e.preventDefault();
-            alert('<?php esc_html_e('Please fix the following errors:', 'magic-checklists'); ?>\n\n' + errors.join('\n'));
+            
+            // Use global modal instead of browser alert
+            const errorList = errors.map(error => `<li>${error}</li>`).join('');
+            
+            // Check if global modal is available, fallback to alert if not
+            if (typeof MCLModal !== 'undefined') {
+                MCLModal.alert({
+                    type: 'danger',
+                    title: '<?php esc_html_e('Please fix the following errors:', 'magic-checklists'); ?>',
+                    message: `<ul style="margin: 0; padding-left: 20px; text-align: left;">${errorList}</ul>`,
+                    confirmText: '<?php esc_html_e('OK', 'magic-checklists'); ?>'
+                });
+            } else {
+                // Fallback to browser alert if modal not available
+                alert('<?php esc_html_e('Please fix the following errors:', 'magic-checklists'); ?>\n\n' + errors.join('\n'));
+            }
         }
     });
 });
@@ -716,67 +925,21 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 15px;
 }
 
-/* Toggle Switch Styles */
-.mcl-toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-}
-
-.mcl-toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.mcl-toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 24px;
-}
-
-.mcl-toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .mcl-toggle-slider {
-    background-color: #2271b1;
-}
-
-input:checked + .mcl-toggle-slider:before {
-    transform: translateX(20px);
-}
-
 /* Small toggle switch for required field */
 .mcl-toggle-switch-small {
-    width: 32px;
-    height: 18px;
+    width: 2rem;
+    height: 1.2rem;
 }
 
-.mcl-toggle-switch-small .mcl-toggle-slider:before {
-    height: 12px;
-    width: 12px;
-    left: 3px;
-    bottom: 3px;
+.mcl-toggle-switch-small .mcl-switch-label:before {
+    height: 0.8rem;
+    width: 0.8rem;
+    left: 0.2rem;
+    bottom: 0.2rem;
 }
 
-.mcl-toggle-switch-small input:checked + .mcl-toggle-slider:before {
-    transform: translateX(14px);
+.mcl-toggle-switch-small input:checked + .mcl-switch-label:before {
+    transform: translateX(0.8rem);
 }
 
 /* Required toggle wrapper */
@@ -888,8 +1051,102 @@ input:checked + .mcl-toggle-slider:before {
     width: 100%;
 }
 
-.mcl-meta-field-select {
+.mcl-meta-field-select,
+.mcl-meta-field-input {
     min-width: 250px;
+}
+
+/* Custom field dropdown styling */
+.mcl-meta-field-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.mcl-meta-field-input {
+    padding-right: 60px;
+}
+
+.mcl-meta-field-clear,
+.mcl-meta-field-dropdown {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    padding: 4px;
+    line-height: 1;
+    height: 24px;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mcl-meta-field-clear {
+    right: 30px;
+    font-size: 18px;
+    color: #dc3545;
+}
+
+.mcl-meta-field-clear:hover {
+    color: #a02834;
+    background: #f8f9fa;
+    border-radius: 50%;
+}
+
+.mcl-meta-field-dropdown {
+    right: 6px;
+    color: #6c757d;
+}
+
+.mcl-meta-field-dropdown:hover {
+    color: #495057;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.mcl-meta-field-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.mcl-meta-field-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 13px;
+}
+
+.mcl-meta-field-option:last-child {
+    border-bottom: none;
+}
+
+.mcl-meta-field-option:hover {
+    background: #f8f9fa;
+}
+
+/* Field validation styling */
+.mcl-field-error {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.mcl-field-error:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 
 /* Requirement Status */
