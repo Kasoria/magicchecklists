@@ -60,7 +60,7 @@ $theme_class = $theme === 'dark' ? 'mcl-theme-dark' : 'mcl-theme-light';
                       data-display="color"
                       style="background-color: <?php echo esc_attr($priority_color); ?>">
                 </span>
-            <?php endif; ?>
+            <?php } ?>
             <?php endif; ?>
             <!-- Replace span with div here -->
             <div contenteditable="true" class="mcl-item-content<?php echo $is_checked ? ' mcl-checked' : ''; ?>">
