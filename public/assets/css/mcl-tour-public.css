@@ -649,6 +649,21 @@
     color: var(--mcl-primary);
 }
 
+.mcl-tour-step-modal .mcl-button {
+    padding: 15px 10px;
+}
+
+.mcl-tour-step-modal .mcl-button-outline {
+    background: transparent;
+    border: 2px solid var(--mcl-primary);
+    color: var(--mcl-primary);
+}
+
+.mcl-tour-creator .mcl-button-outline:hover {
+    background: var(--mcl-primary);
+    color: #fff;
+}
+
 .mcl-tour-creator .mcl-button-secondary:hover {
     background: #002b56;
     color: #fff;
@@ -693,7 +708,7 @@
     color: #1d2327;
 }
 
-.mcl-form-control {
+.mcl-form-control:not(#mcl-step-content) {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #ddd;
@@ -701,8 +716,12 @@
     font-size: 14px;
     line-height: 1.4;
     transition: border-color 0.2s;
-    background: #f3f3f3;
+    background: #fafafa;
     height: 40px;
+}
+
+.mcl-form-control,
+.mcl-form-control::placeholder {
     color: black;
 }
 
