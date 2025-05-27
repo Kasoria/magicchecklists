@@ -720,6 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof MCLModal !== 'undefined') {
                 MCLModal.alert({
                     type: 'danger',
+                    context: 'validation',
                     title: '<?php esc_html_e('Please fix the following errors:', 'magic-checklists'); ?>',
                     message: `<ul style="margin: 0; padding-left: 20px; text-align: left;">${errorList}</ul>`,
                     confirmText: '<?php esc_html_e('OK', 'magic-checklists'); ?>'
