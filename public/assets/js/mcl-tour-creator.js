@@ -344,6 +344,18 @@
             $('#mcl-reselect-element').on('click', () => {
                 this.startElementReselection();
             });
+
+            // Real-time selector validation
+            let validationTimeout;
+            $('#mcl-step-element').on('input', (e) => {
+                clearTimeout(validationTimeout);
+                validationTimeout = setTimeout(() => {
+                    this.validateSelectorInEditor($(e.target).val());
+                }, 300); // Debounce validation
+            });
+
+            // Add optimize selector button functionality
+            this.addOptimizeSelectorButton();
         },
 
         setMode(mode) {
@@ -381,9 +393,13 @@
             if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, #mcl-confirmation-modal').length > 0) {
                 return;
             }
-            const selector = this.generateSelector(element);
+            const selectorResult = this.generateSelectorWithStrategy(element);
             const currentPageUrl = this.getCurrentPageUrl();
-            this.openStepEditor(selector, currentPageUrl);
+            
+            // Show toast with strategy info
+            this.showSelectorGenerationFeedback(selectorResult);
+            
+            this.openStepEditor(selectorResult.selector, currentPageUrl);
         },
 
         getCurrentPageUrl() {
@@ -402,30 +418,49 @@
 
         startElementReselection() {
             this.isReselectingElement = true;
-            $('#mcl-step-editor-modal').addClass('reselecting');
+            // Hide the modal completely while reselecting (but preserve form data)
+            $('#mcl-step-editor-modal').removeClass('active').addClass('reselecting');
             $('body').css('cursor', 'crosshair');
-            $('.mcl-tour-step-modal').css('pointer-events', 'none');
             if (!$('.mcl-reselect-overlay').length) {
-                $('body').append('<div class="mcl-reselect-overlay">Click on an element to select it...</div>');
+                $('body').append('<div class="mcl-reselect-overlay">Click on an element to select it...<br><small style="opacity: 0.8;">Press Escape to cancel</small></div>');
             }
+            
+            // Add escape key listener to cancel reselection
+            $(document).on('keydown.mcl-reselect', (e) => {
+                if (e.key === 'Escape' && this.isReselectingElement) {
+                    this.cancelElementReselection();
+                }
+            });
         },
 
         reselectElement(element) {
             if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay, #mcl-confirmation-modal').length > 0) {
                 return;
             }
-            const selector = this.generateSelector(element);
-            $('#mcl-step-element').val(selector);
+            const selectorResult = this.generateSelectorWithStrategy(element);
+            $('#mcl-step-element').val(selectorResult.selector);
+            this.validateSelectorInEditor(selectorResult.selector);
+            this.showSelectorGenerationFeedback(selectorResult);
             this.stopElementReselection();
+            // Show the modal again after element selection
+            $('#mcl-step-editor-modal').addClass('active');
         },
 
         stopElementReselection() {
             this.isReselectingElement = false;
             $('#mcl-step-editor-modal').removeClass('reselecting');
             $('body').css('cursor', '');
-            $('.mcl-tour-step-modal').css('pointer-events', '');
             $('.mcl-reselect-overlay').remove();
             this.removeHighlight();
+            
+            // Remove escape key listener
+            $(document).off('keydown.mcl-reselect');
+        },
+
+        cancelElementReselection() {
+            this.stopElementReselection();
+            // Show the modal again without changing anything
+            $('#mcl-step-editor-modal').addClass('active');
         },
 
         togglePanel() {
@@ -485,21 +520,492 @@
         },
 
         generateSelector(element) {
-            let selector = '';
+            return this.generateSelectorWithStrategy(element).selector;
+        },
+
+        generateSelectorWithStrategy(element) {
+            // Strategy 1: Use ID if available and unique
             if (element.id) {
-                selector = '#' + element.id;
-            } else if (element.className && element.className.trim()) {
-                const classes = element.className.trim().split(/\s+/);
-                selector = '.' + classes[0];
-            } else {
-                selector = element.tagName.toLowerCase();
-                const siblings = $(element).parent().children(element.tagName.toLowerCase());
-                if (siblings.length > 1) {
-                    const index = siblings.index(element) + 1;
-                    selector += ':nth-child(' + index + ')';
+                const selector = '#' + CSS.escape(element.id);
+                if (this.isUniqueSelector(selector, element)) {
+                    return {
+                        selector: selector,
+                        strategy: 'id',
+                        quality: 'excellent',
+                        message: 'Perfect! Using unique ID selector.'
+                    };
                 }
             }
-            return selector;
+            
+            // Strategy 2: Try unique class combinations
+            if (element.className && element.className.trim()) {
+                const classes = element.className.trim().split(/\s+/)
+                    .filter(cls => cls.length > 0 && !this.isCommonClass(cls))
+                    .map(cls => CSS.escape(cls));
+                
+                // Try single classes first (skip common ones)
+                for (const className of classes) {
+                    const selector = '.' + className;
+                    if (this.isUniqueSelector(selector, element)) {
+                        return {
+                            selector: selector,
+                            strategy: 'single-class',
+                            quality: 'excellent',
+                            message: 'Great! Using unique class selector.'
+                        };
+                    }
+                }
+                
+                // Try combinations of classes
+                const classSelector = this.generateUniqueClassSelector(element, classes);
+                if (classSelector) {
+                    return {
+                        selector: classSelector,
+                        strategy: 'multi-class',
+                        quality: 'good',
+                        message: 'Good! Using combined class selector.'
+                    };
+                }
+            }
+            
+            // Strategy 3: Try tag with unique attributes
+            const attrSelector = this.generateAttributeSelector(element);
+            if (attrSelector && this.isUniqueSelector(attrSelector, element)) {
+                return {
+                    selector: attrSelector,
+                    strategy: 'attribute',
+                    quality: 'good',
+                    message: 'Good! Using attribute-based selector.'
+                };
+            }
+            
+            // Strategy 4: Use tag with nth-child/nth-of-type
+            const nthSelector = this.generateNthChildSelector(element);
+            if (this.isUniqueSelector(nthSelector, element)) {
+                return {
+                    selector: nthSelector,
+                    strategy: 'nth-child',
+                    quality: 'fair',
+                    message: 'OK. Using position-based selector (may break if layout changes).'
+                };
+            }
+            
+            // Strategy 5: Generate path-based selector as last resort
+            const pathSelector = this.generatePathBasedSelector(element);
+            return {
+                selector: pathSelector,
+                strategy: 'path',
+                quality: 'poor',
+                message: 'Warning: Using complex path-based selector. Consider adding an ID or unique class to this element.'
+            };
+        },
+
+        /**
+         * Check if a selector uniquely identifies the target element
+         */
+        isUniqueSelector(selector, targetElement) {
+            try {
+                const elements = document.querySelectorAll(selector);
+                return elements.length === 1 && elements[0] === targetElement;
+            } catch (e) {
+                console.warn('Invalid selector:', selector, e);
+                return false;
+            }
+        },
+
+        /**
+         * Check if a class name is commonly used (and likely not unique)
+         */
+        isCommonClass(className) {
+            const commonClasses = [
+                'active', 'inactive', 'selected', 'disabled', 'hidden', 'visible',
+                'open', 'closed', 'expanded', 'collapsed', 'current', 'first', 'last',
+                'odd', 'even', 'primary', 'secondary', 'success', 'error', 'warning',
+                'info', 'left', 'right', 'center', 'top', 'bottom', 'small', 'large',
+                'big', 'tiny', 'medium', 'bold', 'italic', 'red', 'green', 'blue',
+                'white', 'black', 'gray', 'grey', 'container', 'wrapper', 'content',
+                'main', 'sidebar', 'header', 'footer', 'nav', 'menu', 'item', 'list',
+                'row', 'col', 'column', 'grid', 'flex', 'inline', 'block', 'fixed',
+                'absolute', 'relative', 'static', 'sticky', 'clearfix', 'clear',
+                'float-left', 'float-right', 'text-left', 'text-right', 'text-center'
+            ];
+            return commonClasses.includes(className.toLowerCase()) || 
+                   className.length < 3 || 
+                   /^(wp-|jquery-|js-|css-)/.test(className);
+        },
+
+        /**
+         * Generate unique class selector using combinations
+         */
+        generateUniqueClassSelector(element, classes) {
+            if (classes.length === 0) return null;
+            
+            // Try combinations of 2 classes
+            for (let i = 0; i < classes.length; i++) {
+                for (let j = i + 1; j < classes.length; j++) {
+                    const selector = '.' + classes[i] + '.' + classes[j];
+                    if (this.isUniqueSelector(selector, element)) {
+                        return selector;
+                    }
+                }
+            }
+            
+            // Try combinations of 3 classes
+            for (let i = 0; i < classes.length; i++) {
+                for (let j = i + 1; j < classes.length; j++) {
+                    for (let k = j + 1; k < classes.length; k++) {
+                        const selector = '.' + classes[i] + '.' + classes[j] + '.' + classes[k];
+                        if (this.isUniqueSelector(selector, element)) {
+                            return selector;
+                        }
+                    }
+                }
+            }
+            
+            // Try all classes combined
+            if (classes.length > 1) {
+                const allClassesSelector = '.' + classes.join('.');
+                if (this.isUniqueSelector(allClassesSelector, element)) {
+                    return allClassesSelector;
+                }
+            }
+            
+            return null;
+        },
+
+        /**
+         * Generate selector using element attributes
+         */
+        generateAttributeSelector(element) {
+            const tagName = element.tagName.toLowerCase();
+            const uniqueAttributes = ['name', 'data-id', 'data-testid', 'data-test', 'role', 'aria-label'];
+            
+            for (const attr of uniqueAttributes) {
+                const value = element.getAttribute(attr);
+                if (value) {
+                    const selector = `${tagName}[${attr}="${CSS.escape(value)}"]`;
+                    if (this.isUniqueSelector(selector, element)) {
+                        return selector;
+                    }
+                }
+            }
+            
+            // Try type attribute for inputs
+            if (tagName === 'input' && element.type) {
+                const selector = `input[type="${element.type}"]`;
+                if (this.isUniqueSelector(selector, element)) {
+                    return selector;
+                }
+            }
+            
+            // Try href for links
+            if (tagName === 'a' && element.href) {
+                try {
+                    const url = new URL(element.href);
+                    const pathname = url.pathname;
+                    if (pathname && pathname !== '/') {
+                        const selector = `a[href*="${CSS.escape(pathname)}"]`;
+                        if (this.isUniqueSelector(selector, element)) {
+                            return selector;
+                        }
+                    }
+                } catch (e) {
+                    // Invalid URL, skip
+                }
+            }
+            
+            return null;
+        },
+
+        /**
+         * Generate nth-child or nth-of-type selector
+         */
+        generateNthChildSelector(element) {
+            const tagName = element.tagName.toLowerCase();
+            const parent = element.parentElement;
+            
+            if (!parent) {
+                return tagName;
+            }
+            
+            // Try nth-of-type first (more specific)
+            const sameTagSiblings = Array.from(parent.children).filter(child => 
+                child.tagName.toLowerCase() === tagName
+            );
+            
+            if (sameTagSiblings.length === 1) {
+                return tagName;
+            }
+            
+            const nthOfTypeIndex = sameTagSiblings.indexOf(element) + 1;
+            const nthOfTypeSelector = `${tagName}:nth-of-type(${nthOfTypeIndex})`;
+            
+            // If nth-of-type is unique, use it
+            if (this.isUniqueSelector(nthOfTypeSelector, element)) {
+                return nthOfTypeSelector;
+            }
+            
+            // Fall back to nth-child
+            const allSiblings = Array.from(parent.children);
+            const nthChildIndex = allSiblings.indexOf(element) + 1;
+            return `${tagName}:nth-child(${nthChildIndex})`;
+        },
+
+        /**
+         * Generate path-based selector as last resort
+         */
+        generatePathBasedSelector(element) {
+            const path = [];
+            let current = element;
+            let maxDepth = 5; // Prevent overly long selectors
+            
+            while (current && current.nodeType === Node.ELEMENT_NODE && 
+                   current !== document.body && maxDepth > 0) {
+                
+                let selector = current.tagName.toLowerCase();
+                
+                // If we find an ID, use it and stop
+                if (current.id) {
+                    selector = '#' + CSS.escape(current.id);
+                    path.unshift(selector);
+                    break;
+                }
+                
+                // Add the most specific class if available
+                if (current.className && current.className.trim()) {
+                    const classes = current.className.trim().split(/\s+/)
+                        .filter(cls => cls.length > 0 && !this.isCommonClass(cls))
+                        .map(cls => CSS.escape(cls));
+                    
+                    if (classes.length > 0) {
+                        selector += '.' + classes[0];
+                    }
+                }
+                
+                // Add nth-child if needed for uniqueness at this level
+                const parent = current.parentElement;
+                if (parent) {
+                    const sameTagSiblings = Array.from(parent.children).filter(child => 
+                        child.tagName.toLowerCase() === current.tagName.toLowerCase()
+                    );
+                    
+                    if (sameTagSiblings.length > 1) {
+                        const index = sameTagSiblings.indexOf(current) + 1;
+                        selector += `:nth-of-type(${index})`;
+                    }
+                }
+                
+                path.unshift(selector);
+                current = current.parentElement;
+                maxDepth--;
+            }
+            
+            // Build the final selector, trying different combinations
+            let finalSelector = path.join(' > ');
+            
+            // If the full path is unique, return it
+            if (this.isUniqueSelector(finalSelector, element)) {
+                return finalSelector;
+            }
+            
+            // Try with descendant selectors instead of child selectors
+            finalSelector = path.join(' ');
+            if (this.isUniqueSelector(finalSelector, element)) {
+                return finalSelector;
+            }
+            
+            // If still not unique, add more specificity
+            const lastElement = path[path.length - 1];
+            const parent = element.parentElement;
+            if (parent) {
+                const siblings = Array.from(parent.children);
+                const index = siblings.indexOf(element) + 1;
+                finalSelector = path.slice(0, -1).join(' ') + ' > ' + lastElement + `:nth-child(${index})`;
+            }
+            
+            return finalSelector;
+        },
+
+        /**
+         * Validate a selector and provide visual feedback in the step editor
+         */
+        validateSelectorInEditor(selector) {
+            const elementInput = $('#mcl-step-element');
+            const inputGroup = elementInput.closest('.mcl-selector-group');
+            const formGroup = inputGroup.closest('.mcl-form-group');
+            const description = formGroup.find('.description');
+            
+            // Remove existing validation classes and messages
+            inputGroup.removeClass('mcl-selector-valid mcl-selector-invalid mcl-selector-warning');
+            inputGroup.find('.mcl-selector-feedback').remove();
+            
+            if (!selector || !selector.trim()) {
+                // Show original description when no selector
+                description.show();
+                return;
+            }
+            
+            try {
+                const elements = document.querySelectorAll(selector);
+                let feedback = '';
+                let cssClass = '';
+                
+                if (elements.length === 0) {
+                    feedback = 'No elements found with this selector';
+                    cssClass = 'mcl-selector-invalid';
+                } else if (elements.length === 1) {
+                    feedback = 'Perfect! This selector uniquely identifies 1 element';
+                    cssClass = 'mcl-selector-valid';
+                } else {
+                    feedback = `Warning: This selector matches ${elements.length} elements. Consider making it more specific.`;
+                    cssClass = 'mcl-selector-warning';
+                }
+                
+                inputGroup.addClass(cssClass);
+                inputGroup.append(`<div class="mcl-selector-feedback">${feedback}</div>`);
+                
+                // Hide the original description when showing validation feedback
+                description.hide();
+                
+                // If multiple elements, briefly highlight them
+                if (elements.length > 1 && elements.length <= 10) {
+                    this.highlightMultipleElements(elements, 2000);
+                }
+                
+            } catch (e) {
+                inputGroup.addClass('mcl-selector-invalid');
+                inputGroup.append('<div class="mcl-selector-feedback">Invalid CSS selector syntax</div>');
+                
+                // Hide the original description when showing validation feedback
+                description.hide();
+            }
+        },
+
+        /**
+         * Highlight multiple elements temporarily
+         */
+        highlightMultipleElements(elements, duration = 2000) {
+            const highlights = [];
+            
+            elements.forEach((element, index) => {
+                if (index >= 10) return; // Limit to 10 highlights
+                
+                const rect = element.getBoundingClientRect();
+                const highlight = $('<div class="mcl-element-highlight mcl-multiple-highlight"></div>');
+                highlight.css({
+                    position: 'fixed',
+                    top: rect.top + 'px',
+                    left: rect.left + 'px',
+                    width: rect.width + 'px',
+                    height: rect.height + 'px',
+                    pointerEvents: 'none',
+                    zIndex: 1000001,
+                    border: '2px solid #ff6b6b',
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)'
+                });
+                
+                // Add number indicator
+                if (elements.length > 1) {
+                    highlight.append(`<div style="position: absolute; top: -8px; left: -8px; background: #ff6b6b; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">${index + 1}</div>`);
+                }
+                
+                $('body').append(highlight);
+                highlights.push(highlight[0]);
+            });
+            
+            // Remove highlights after duration
+            setTimeout(() => {
+                highlights.forEach(highlight => $(highlight).remove());
+            }, duration);
+        },
+
+        /**
+         * Add optimize selector button to the step editor
+         */
+        addOptimizeSelectorButton() {
+            const selectorGroup = $('.mcl-selector-group');
+            if (selectorGroup.find('.mcl-optimize-selector').length === 0) {
+                const optimizeBtn = $(`
+                    <button type="button" class="mcl-button mcl-button-secondary mcl-optimize-selector" title="Optimize this selector">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 16px; height: 16px;">
+                            <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `);
+                
+                selectorGroup.append(optimizeBtn);
+                
+                optimizeBtn.on('click', () => {
+                    this.optimizeCurrentSelector();
+                });
+            }
+        },
+
+        /**
+         * Optimize the current selector in the editor
+         */
+        optimizeCurrentSelector() {
+            const currentSelector = $('#mcl-step-element').val().trim();
+            if (!currentSelector) {
+                this.showWarningToast('Please enter a selector first.');
+                return;
+            }
+
+            try {
+                const elements = document.querySelectorAll(currentSelector);
+                if (elements.length === 0) {
+                    this.showErrorToast('No elements found with the current selector.');
+                    return;
+                } else if (elements.length > 1) {
+                    this.showWarningToast('Current selector matches multiple elements. Please select the target element first.');
+                    // Highlight the multiple elements briefly
+                    this.highlightMultipleElements(elements, 3000);
+                    return;
+                } else {
+                    // Single element found - optimize it
+                    const element = elements[0];
+                    const optimizedResult = this.generateSelectorWithStrategy(element);
+                    
+                    $('#mcl-step-element').val(optimizedResult.selector);
+                    this.validateSelectorInEditor(optimizedResult.selector);
+                    
+                    // Show feedback about the optimization
+                    this.showToast(`Selector optimized! ${optimizedResult.message}`, 
+                        optimizedResult.quality === 'excellent' || optimizedResult.quality === 'good' ? 'success' : 'warning', 4000);
+                }
+            } catch (e) {
+                this.showErrorToast('Invalid selector syntax.');
+            }
+        },
+
+        /**
+         * Show feedback about the selector generation strategy
+         */
+        showSelectorGenerationFeedback(selectorResult) {
+            const { strategy, quality, message } = selectorResult;
+            
+            // Map quality to toast type
+            const toastTypeMap = {
+                'excellent': 'success',
+                'good': 'success', 
+                'fair': 'warning',
+                'poor': 'warning'
+            };
+            
+            const toastType = toastTypeMap[quality] || 'info';
+            
+            // Show toast with strategy info
+            this.showToast(message, toastType, 3000);
+            
+            // Optional: Log detailed info for debugging
+            if (typeof console !== 'undefined' && console.log) {
+                console.log('MCL Selector Generated:', {
+                    selector: selectorResult.selector,
+                    strategy: strategy,
+                    quality: quality,
+                    element: selectorResult.element || 'unknown'
+                });
+            }
         },
 
         highlightElement(element) {
@@ -537,15 +1043,39 @@
             $('#mcl-step-page-url').val(pageUrl);
             $('#mcl-step-index').val(this.currentStepIndex);
             this.populateChecklistDropdown();
+            
+            // Reset description visibility and validate the selector
+            const formGroup = $('#mcl-step-element').closest('.mcl-form-group');
+            const description = formGroup.find('.description');
+            description.show(); // Always show description first
+            
+            if (selector) {
+                this.validateSelectorInEditor(selector);
+            }
+            
             modal.addClass('active');
         },
 
         closeStepEditor() {
-            $('#mcl-step-editor-modal').removeClass('active');
-            this.currentStepIndex = -1;
+            // If currently reselecting an element, stop the reselection first
             if (this.isReselectingElement) {
                 this.stopElementReselection();
+                // Don't close the modal yet, just show it again so user can continue editing
+                $('#mcl-step-editor-modal').addClass('active');
+                return;
             }
+            
+            $('#mcl-step-editor-modal').removeClass('active');
+            this.currentStepIndex = -1;
+            
+            // Reset validation state and description visibility
+            const inputGroup = $('#mcl-step-element').closest('.mcl-selector-group');
+            const formGroup = inputGroup.closest('.mcl-form-group');
+            const description = formGroup.find('.description');
+            
+            inputGroup.removeClass('mcl-selector-valid mcl-selector-invalid mcl-selector-warning');
+            inputGroup.find('.mcl-selector-feedback').remove();
+            description.show();
         },
 
         saveStep() {
