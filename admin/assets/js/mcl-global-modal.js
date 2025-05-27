@@ -1,6 +1,9 @@
 /**
  * Magic Checklists Global Modal Component
- * Provides a reusable  modal for admin pages
+ * Provides a reusable confirmation modal for admin pages
+ * AVAILABLE TYPES: 'warning', 'danger', 'info', 'success'
+ * AVAILABLE CONTEXTS: 'general', 'validation', 'tour-exit', 'delete'
+ * 
  */
 
 (function($) {
@@ -15,7 +18,8 @@
          * @param {string} options.message - Modal message/content
          * @param {string} options.confirmText - Confirm button text
          * @param {string} options.cancelText - Cancel button text
-         * @param {string} options.type - Modal type ('warning', 'danger', 'info')
+         * @param {string} options.type - Modal type ('warning', 'danger', 'info', 'success')
+         * @param {string} options.context - Modal context ('validation', 'tour-exit', 'delete', 'general')
          * @param {Function} options.onConfirm - Callback when confirmed
          * @param {Function} options.onCancel - Callback when cancelled
          */
@@ -26,6 +30,7 @@
                 confirmText: 'Yes, I\'m sure',
                 cancelText: 'No, cancel',
                 type: 'warning',
+                context: 'general',
                 onConfirm: function() {},
                 onCancel: function() {}
             };
@@ -100,10 +105,8 @@
                                 <span class="sr-only">Close modal</span>
                             </button>
                             <div class="mcl-global-modal-body">
-                                <div class="mcl-global-modal-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" width="48" height="48">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                    </svg>
+                                <div class="mcl-global-modal-icon" id="mcl-global-modal-icon">
+                                    <!-- Icon will be dynamically inserted here -->
                                 </div>
                                 <h3 class="mcl-global-modal-title" id="mcl-global-modal-title"></h3>
                                 <div class="mcl-global-modal-message" id="mcl-global-modal-message"></div>
@@ -134,7 +137,7 @@
             const message = document.getElementById('mcl-global-modal-message');
             const confirmBtn = document.getElementById('mcl-global-modal-confirm');
             const cancelBtn = document.getElementById('mcl-global-modal-cancel');
-            const icon = modal.querySelector('.mcl-global-modal-icon svg');
+            const iconContainer = document.getElementById('mcl-global-modal-icon');
 
             // Update content
             title.textContent = settings.title;
@@ -169,35 +172,81 @@
                 cancelBtn.style.display = 'inline-flex';
             }
 
-            // Update icon based on type
-            this._updateIcon(icon, settings.type);
+            // Update icon based on type and context
+            this._updateIcon(iconContainer, settings.type, settings.context);
         },
 
         /**
-         * Update modal icon based on type
+         * Update modal icon based on type and context
          * @private
          */
-        _updateIcon: function(iconElement, type) {
-            let iconPath = '';
+        _updateIcon: function(iconContainer, type, context) {
+            let iconSVG = '';
             
-            switch (type) {
-                case 'danger':
-                    iconPath = 'M10 2L3 7v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V7l-7-5zM10 17H8v-2h2v2zm0-4H8V9h2v4z';
-                    iconElement.setAttribute('stroke', '#dc2626');
+            // Determine icon based on context first, then type
+            const iconKey = context + '-' + type;
+            
+            switch (iconKey) {
+                // Validation context
+                case 'validation-danger':
+                    iconSVG = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512"><path fill="currentColor" d="M176 432c0 44.112-35.888 80-80 80s-80-35.888-80-80s35.888-80 80-80s80 35.888 80 80zM25.26 25.199l13.6 272C39.499 309.972 50.041 320 62.83 320h66.34c12.789 0 23.331-10.028 23.97-22.801l13.6-272C167.425 11.49 156.496 0 142.77 0H49.23C35.504 0 24.575 11.49 25.26 25.199z"/></svg>`;
                     break;
-                case 'info':
-                    iconPath = 'M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z';
-                    iconElement.setAttribute('stroke', '#3b82f6');
+                    
+                // Tour exit context  
+                case 'tour-exit-danger':
+                case 'tour-exit-warning':
+                    iconSVG = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M19.002 3h-14c-1.103 0-2 .897-2 2v4h2V5h14v14h-14v-4h-2v4c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2V5c0-1.103-.898-2-2-2z"/><path fill="currentColor" d="m11 16l5-4l-5-4v3.001H3v2h8z"/></svg>`;
                     break;
-                default: // warning
-                    iconPath = 'M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z';
-                    iconElement.setAttribute('stroke', '#f59e0b');
+                    
+                // Delete context
+                case 'delete-danger':
+                    iconSVG = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none" fill-rule="evenodd"><path d="M24 0v24H0V0h24ZM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427c-.002-.01-.009-.017-.017-.018Zm.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093c.012.004.023 0 .029-.008l.004-.014l-.034-.614c-.003-.012-.01-.02-.02-.022Zm-.715.002a.023.023 0 0 0-.027.006l-.006.014l-.034.614c0 .012.007.02.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01l-.184-.092Z"/><path fill="currentColor" d="M14.28 2a2 2 0 0 1 1.897 1.368L16.72 5H20a1 1 0 1 1 0 2l-.003.071l-.867 12.143A3 3 0 0 1 16.138 22H7.862a3 3 0 0 1-2.992-2.786L4.003 7.07A1.01 1.01 0 0 1 4 7a1 1 0 0 1 0-2h3.28l.543-1.632A2 2 0 0 1 9.721 2h4.558ZM9 10a1 1 0 0 0-.993.883L8 11v6a1 1 0 0 0 1.993.117L10 17v-6a1 1 0 0 0-1-1Zm6 0a1 1 0 0 0-1 1v6a1 1 0 1 0 2 0v-6a1 1 0 0 0-1-1Zm-.72-6H9.72l-.333 1h5.226l-.334-1Z"/></g></svg>`;
+                    break;
+                    
+                // Success context
+                case 'general-success':
+                case 'validation-success':
+                    iconSVG = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+                            <circle cx="24" cy="24" r="22" fill="#22c55e" stroke="#16a34a" stroke-width="2"/>
+                            <path d="M14 24l8 8 12-16" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>`;
+                    break;
+                    
+                // Info context
+                case 'general-info':
+                case 'tour-exit-info':
+                    iconSVG = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+                            <circle cx="24" cy="24" r="22" fill="#3b82f6" stroke="#2563eb" stroke-width="2"/>
+                            <path d="M24 16h.01M24 22v10" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        </svg>`;
+                    break;
+                    
+                // Default danger
+                case 'general-danger':
+                default:
+                    if (type === 'danger') {
+                        iconSVG = `
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+                                <path d="M24 4L4 42h40L24 4z" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                                <path d="M24 16v12M24 32h.01" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+                            </svg>`;
+                    } else {
+                        // Default warning triangle
+                        iconSVG = `
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+                                <path d="M24 4L4 42h40L24 4z" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                                <path d="M24 16v12M24 32h.01" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
+                            </svg>`;
+                    }
             }
-
-            const pathElement = iconElement.querySelector('path');
-            if (pathElement) {
-                pathElement.setAttribute('d', iconPath);
-            }
+            
+            // Insert the SVG
+            iconContainer.innerHTML = iconSVG;
         },
 
         /**
