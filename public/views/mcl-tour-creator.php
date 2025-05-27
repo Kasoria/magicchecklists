@@ -80,37 +80,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <!-- Toast Notification Container -->
     <div class="mcl-toast-container" id="mcl-toast-container"></div>
 
-    <!-- Confirmation Modal -->
-    <div class="mcl-confirmation-modal" id="mcl-confirmation-modal">
-        <div class="mcl-confirmation-modal-content">
-            <div class="mcl-confirmation-modal-inner">
-                <button type="button" class="mcl-confirmation-modal-close" id="mcl-confirmation-modal-close">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                        <path fill="currentColor" fill-rule="evenodd" d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94L4.28 3.22Z" clip-rule="evenodd"/>
-                    </svg>
-                    <span class="sr-only"><?php _e('Close modal', 'magic-checklists'); ?></span>
-                </button>
-                <div class="mcl-confirmation-modal-body">
-                    <div class="mcl-confirmation-modal-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                        </svg>
-                    </div>
-                    <h3 class="mcl-confirmation-modal-title" id="mcl-confirmation-modal-title">
-                        <?php _e('Are you sure?', 'magic-checklists'); ?>
-                    </h3>
-                    <div class="mcl-confirmation-modal-actions">
-                        <button type="button" class="mcl-button mcl-button-danger" id="mcl-confirmation-modal-confirm">
-                            <?php _e('Yes, I\'m sure', 'magic-checklists'); ?>
-                        </button>
-                        <button type="button" class="mcl-button mcl-button-secondary" id="mcl-confirmation-modal-cancel">
-                            <?php _e('No, cancel', 'magic-checklists'); ?>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 </div>
 
 <!-- Step Editor Modal -->
