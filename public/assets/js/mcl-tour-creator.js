@@ -1170,6 +1170,19 @@
             // Get the current page URL for filtering steps
             const currentPageUrl = this.getCurrentPageUrl();
             
+            // If we're starting from step 0 and step 0 is on a different page, navigate there first
+            if (stepIndex === 0 && this.tourSteps.length > 0) {
+                const firstStep = this.tourSteps[0];
+                const firstStepPageUrl = firstStep.page_url || currentPageUrl;
+                if (firstStepPageUrl !== currentPageUrl) {
+                    this.navigateToTourPreview({
+                        ...firstStep,
+                        originalIndex: 0
+                    });
+                    return;
+                }
+            }
+            
             // Filter steps for the current page and preserve original indices
             const currentPageSteps = [];
             let globalStartIndex = stepIndex;
@@ -1186,7 +1199,7 @@
             }
 
             if (currentPageSteps.length === 0) {
-                // Navigate to the first step's page if no steps on current page
+                // Navigate to the target step's page if no steps on current page
                 const targetStep = this.tourSteps[stepIndex];
                 if (targetStep && targetStep.page_url && targetStep.page_url !== currentPageUrl) {
                     this.navigateToTourPreview({
@@ -1840,6 +1853,14 @@
                         modalType = 'info';
                     }
                     
+                    // Determine context based on title/content
+                    let context = 'general';
+                    if (title.toLowerCase().includes('exit') || title.toLowerCase().includes('tour')) {
+                        context = 'tour-exit';
+                    } else if (title.toLowerCase().includes('delete') || confirmClass.includes('danger')) {
+                        context = 'delete';
+                    }
+                    
                     // Use global modal
                     if (cancelText && cancelText.trim()) {
                         // Show confirmation modal with cancel option
@@ -1847,6 +1868,7 @@
                             title: title,
                             message: '',
                             type: modalType,
+                            context: context,
                             confirmText: confirmText,
                             cancelText: cancelText,
                             onConfirm: function() {
@@ -1862,6 +1884,7 @@
                             title: title,
                             message: '',
                             type: modalType,
+                            context: context,
                             confirmText: confirmText,
                             onConfirm: function() {
                                 resolve(true);

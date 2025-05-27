@@ -67,13 +67,24 @@
             let currentPageSteps = [];
             let nextPageStep = null;
             let prevPageStep = null; // To store the actual previous step object if on a different page
-            let startStepIndex = tourData.continue_from_step || 0;
+            let startStepIndex = tourData.continue_from_step !== undefined ? tourData.continue_from_step : 0;
 
+            // Handle tour continuation from a specific step
             if (tourData.continue_from_step !== undefined && startStepIndex < tourData.steps.length) {
                 const targetStep = tourData.steps[startStepIndex];
                 const targetStepPageUrl = targetStep.page_url || currentPageUrl;
                 if (targetStepPageUrl !== currentPageUrl) {
                     this.navigateToTourStep(tourData.id, { ...targetStep, originalIndex: startStepIndex });
+                    return;
+                }
+            }
+            
+            // Handle initial tour start - if step 0 is on a different page, navigate there first
+            if (tourData.continue_from_step === undefined && tourData.steps.length > 0) {
+                const firstStep = tourData.steps[0];
+                const firstStepPageUrl = firstStep.page_url || currentPageUrl;
+                if (firstStepPageUrl !== currentPageUrl) {
+                    this.navigateToTourStep(tourData.id, { ...firstStep, originalIndex: 0 });
                     return;
                 }
             }
@@ -408,6 +419,14 @@
                         modalType = 'info';
                     }
                     
+                    // Determine context based on title/content
+                    let context = 'general';
+                    if (title.toLowerCase().includes('exit') || title.toLowerCase().includes('tour')) {
+                        context = 'tour-exit';
+                    } else if (title.toLowerCase().includes('delete') || confirmClass.includes('danger')) {
+                        context = 'delete';
+                    }
+                    
                     // Use global modal
                     if (cancelText && cancelText.trim()) {
                         // Show confirmation modal with cancel option
@@ -415,6 +434,7 @@
                             title: title,
                             message: '',
                             type: modalType,
+                            context: context,
                             confirmText: confirmText,
                             cancelText: cancelText,
                             onConfirm: function() {
@@ -430,6 +450,7 @@
                             title: title,
                             message: '',
                             type: modalType,
+                            context: context,
                             confirmText: confirmText,
                             onConfirm: function() {
                                 resolve(true);
