@@ -280,7 +280,7 @@
             const self = this;
             $(document).on('click', '*', function(e) {
                 if (self.currentMode === 'select' && !self.isReselectingElement && !self.isModalOpen()) {
-                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                    if ($(e.target).closest('#mcl-global-modal').length > 0) {
                         return;
                     }
                     e.preventDefault();
@@ -292,7 +292,7 @@
             // Element hover highlighting
             $(document).on('mouseenter', '*', function(e) {
                 if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
-                     if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                     if ($(e.target).closest('#mcl-global-modal').length > 0) {
                         return;
                     }
                     self.highlightElement(e.target);
@@ -301,7 +301,7 @@
 
             $(document).on('mouseleave', '*', function(e) {
                 if ((self.currentMode === 'select' || self.isReselectingElement) && !self.isModalOpen()) {
-                    if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                    if ($(e.target).closest('#mcl-global-modal').length > 0) {
                         return;
                     }
                     self.removeHighlight();
@@ -311,7 +311,7 @@
             // Element reselection in modal
             $(document).on('click', '*', function(e) {
                 if (self.isReselectingElement) {
-                     if ($(e.target).closest('#mcl-confirmation-modal').length > 0) {
+                     if ($(e.target).closest('#mcl-global-modal').length > 0) {
                         return;
                     }
                     e.preventDefault();
@@ -390,7 +390,7 @@
         },
 
         selectElement(element) {
-            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, #mcl-confirmation-modal').length > 0) {
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, #mcl-global-modal').length > 0) {
                 return;
             }
             const selectorResult = this.generateSelectorWithStrategy(element);
@@ -434,7 +434,7 @@
         },
 
         reselectElement(element) {
-            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay, #mcl-confirmation-modal').length > 0) {
+            if ($(element).closest('#mcl-tour-creator, .mcl-tour-step-modal, .mcl-reselect-overlay, #mcl-global-modal').length > 0) {
                 return;
             }
             const selectorResult = this.generateSelectorWithStrategy(element);
@@ -1665,9 +1665,20 @@
                 'Exit Creator',
                 'Cancel'
             );
+            
             if (confirmed) {
                 // Clean up tour mode cookie
                 document.cookie = 'mcl_tour_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                
+                // Clean up any active driver instance
+                if (this.currentDriverInstance) {
+                    try { 
+                        this.currentDriverInstance.destroy(); 
+                    } catch(e) { 
+                        /* ignore */ 
+                    }
+                    this.currentDriverInstance = null;
+                }
                 
                 // Redirect to the main tours list page
                 // Ensure to get the admin URL correctly for redirection
@@ -1676,108 +1687,6 @@
                                       '/wp-admin/admin.php?page=mcl_tours'; // Fallback
                 window.location.href = adminToursUrl;
             }
-            if (this.currentDriverInstance) {
-                try { this.currentDriverInstance.destroy(); } catch(e) { /* ignore */ }
-                this.currentDriverInstance = null;
-            }
-            const settings = this.tourSettings || {};
-            const steps = this.tourSteps.map((step, index) => ({
-                element: step.element,
-                popover: {
-                    title: step.title,
-                    description: step.content,
-                    side: step.position || 'bottom',
-                    showButtons: step.show_buttons !== false ? (settings.default_buttons || ['next', 'previous', 'close']) : ['close']
-                }
-            }));
-
-            const driverFunction = this.getDriverFunction();
-            if (!driverFunction) {
-                console.error('Driver.js is not available for tour preview.');
-                this.showErrorToast('Driver.js not found. Preview unavailable.');
-                return;
-            }
-
-            const driverConfig = {
-                animate: settings.animate === true,
-                showProgress: settings.show_progress === true,
-                progressText: (settings.progress_text || '{{current}} of {{total}}').replace('{{current}}', 1).replace('{{total}}', steps.length),
-                allowClose: settings.allow_close !== false,
-                doneBtnText: settings.done_btn_text || mclTourCreatorData.i18n.done || 'Done',
-                nextBtnText: settings.next_btn_text || mclTourCreatorData.i18n.next || 'Next',
-                prevBtnText: settings.prev_btn_text || mclTourCreatorData.i18n.prev || 'Previous',
-                overlayColor: settings.overlay_color || 'rgba(0, 0, 0, 0.75)',
-                popoverClass: settings.popover_class || '',
-                stagePadding: settings.padding || 4,
-                smoothScroll: settings.smooth_scroll !== false,
-                steps: steps,
-                onHighlighted: (element, step, options) => {
-                    const currentDriverStep = driver.getActiveIndex(); // driver.js is 0-indexed
-                    const currentGlobalIndex = currentDriverStep; // For preview, driver steps are global steps
-                    this.updateTourProgress(currentGlobalIndex + 1, steps.length, settings);
-                    this.updateTourButtons(currentGlobalIndex, steps.length, 0, settings); // fromStepIndex is 0 for preview
-                    this.handleStepChecklistIntegration(currentGlobalIndex, this.tourSteps, 'forward'); // Use original tourSteps for checklist data
-                },
-                onNextClick: (element, step, options) => {
-                    driver.moveNext();
-                },
-                onPrevClick: (element, step, options) => {
-                    const currentDriverStep = driver.getActiveIndex();
-                    const currentGlobalIndex = currentDriverStep; // For preview
-                    this.handleStepChecklistIntegration(currentGlobalIndex, this.tourSteps, 'backward');
-                    driver.movePrevious();
-                },
-                onDestroyed: () => {
-                    this.currentDriverInstance = null;
-                    // Optionally remove preview query params
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('mcl_preview_step');
-                    window.history.replaceState({}, '', url.toString());
-                }
-            };
-
-            if (settings.confirm_exit === true && settings.allow_close !== false) {
-                driverConfig.onDestroyStarted = (element, step, options) => {
-                    const currentDriverStep = driver.getActiveIndex();
-                    const currentGlobalIndex = currentDriverStep;
-                    const isLastGlobalStepOverall = currentGlobalIndex === steps.length - 1;
-                    if (isLastGlobalStepOverall) { return true; }
-                    this.handleTourExitConfirmation(settings.exit_message || 'Are you sure you want to exit the tour?');
-                    return false; // Prevent immediate destroy
-                };
-            } else if (settings.allow_close === false) {
-                driverConfig.allowClose = false;
-                driverConfig.onDestroyStarted = (element, step, options) => {
-                    const currentDriverStep = driver.getActiveIndex();
-                    const currentGlobalIndex = currentDriverStep;
-                    const isLastGlobalStepOverall = currentGlobalIndex === steps.length - 1;
-                    if (isLastGlobalStepOverall) { return true; }
-                    this.handleTourExitMessage(settings.exit_message || 'You must complete the tour before you can exit.');
-                    return false; // Prevent immediate destroy
-                };
-            }
-
-            if (settings.overlay_color && settings.overlay_opacity !== undefined) {
-                const color = settings.overlay_color; const opacity = settings.overlay_opacity;
-                if (color.startsWith('#')) {
-                    const r = parseInt(color.slice(1,3),16); const g = parseInt(color.slice(3,5),16); const b = parseInt(color.slice(5,7),16);
-                    driverConfig.overlayColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-                } else driverConfig.overlayColor = color;
-            }
-
-            const driver = driverFunction(driverConfig);
-            this.currentDriverInstance = driver;
-
-            if (fromStepIndex >= 0 && fromStepIndex < steps.length) {
-                driver.drive(fromStepIndex);
-            } else {
-                driver.drive();
-            }
-            setTimeout(() => this.customizeDriverCloseButton(settings), 100);
-            setTimeout(() => {
-                this.updateTourProgress( (fromStepIndex || 0) + 1, steps.length, settings);
-                this.updateTourButtons(fromStepIndex || 0, steps.length, 0, settings);
-            }, 50);
         },
 
         getCurrentGlobalStepIndex(driverStepIndex, currentPageUrl, fromStepIndex, tourSteps = null) {
@@ -1886,7 +1795,8 @@
         },
 
         isModalOpen() {
-            return $('#mcl-step-editor-modal').hasClass('active') || $('#mcl-confirmation-modal').hasClass('active');
+            return $('#mcl-step-editor-modal').hasClass('active') || 
+                   (typeof window.MCLModal !== 'undefined' && window.MCLModal.isOpen && window.MCLModal.isOpen());
         },
 
         showToast(message, type = 'info', duration = 5000) {
@@ -1920,49 +1830,57 @@
 
         showConfirmationModal(title, confirmText = 'Yes, I\'m sure', cancelText = 'No, cancel', confirmClass = 'mcl-button-danger') {
             return new Promise((resolve) => {
-                const modal = document.getElementById('mcl-confirmation-modal');
-                const titleEl = document.getElementById('mcl-confirmation-modal-title');
-                const confirmBtn = document.getElementById('mcl-confirmation-modal-confirm');
-                const cancelBtn = document.getElementById('mcl-confirmation-modal-cancel');
-                const closeBtn = document.getElementById('mcl-confirmation-modal-close');
-                if (!modal || !titleEl || !confirmBtn || !cancelBtn) {
-                    resolve(confirm(title)); return;
-                }
-                titleEl.textContent = title; confirmBtn.textContent = confirmText;
-                if (cancelText && cancelText.trim()) {
-                    cancelBtn.textContent = cancelText; cancelBtn.style.display = ''; closeBtn.style.display = '';
+                // Check if global modal is available
+                if (typeof window.MCLModal !== 'undefined') {
+                    // Determine modal type based on button class
+                    let modalType = 'warning';
+                    if (confirmClass.includes('danger')) {
+                        modalType = 'danger';
+                    } else if (confirmClass.includes('primary')) {
+                        modalType = 'info';
+                    }
+                    
+                    // Use global modal
+                    if (cancelText && cancelText.trim()) {
+                        // Show confirmation modal with cancel option
+                        window.MCLModal.show({
+                            title: title,
+                            message: '',
+                            type: modalType,
+                            confirmText: confirmText,
+                            cancelText: cancelText,
+                            onConfirm: function() {
+                                resolve(true);
+                            },
+                            onCancel: function() {
+                                resolve(false);
+                            }
+                        });
+                    } else {
+                        // Show alert-style modal (no cancel)
+                        window.MCLModal.alert({
+                            title: title,
+                            message: '',
+                            type: modalType,
+                            confirmText: confirmText,
+                            onConfirm: function() {
+                                resolve(true);
+                            }
+                        });
+                    }
                 } else {
-                    cancelBtn.style.display = 'none'; closeBtn.style.display = 'none';
+                    // Fallback to native confirm if global modal is not available
+                    console.warn('MCL Tour Creator: Global modal not available, falling back to browser alert');
+                    resolve(confirm(title));
                 }
-                confirmBtn.className = `mcl-button ${confirmClass}`;
-                modal.classList.add('active');
-                setTimeout(() => confirmBtn.focus(), 100);
-                const handleConfirm = () => { this.hideConfirmationModal(); cleanup(); resolve(true); };
-                const handleCancel = () => { this.hideConfirmationModal(); cleanup(); resolve(false); };
-                const handleEscape = (e) => { if (e.key === 'Escape' && cancelText && cancelText.trim()) handleCancel(); };
-                const cleanup = () => {
-                    confirmBtn.removeEventListener('click', handleConfirm);
-                    cancelBtn.removeEventListener('click', handleCancel);
-                    closeBtn.removeEventListener('click', handleCancel);
-                    document.removeEventListener('keydown', handleEscape);
-                    modal.removeEventListener('click', handleBackdropClick);
-                };
-                const handleBackdropClick = (e) => { if (e.target === modal && cancelText && cancelText.trim()) handleCancel(); };
-                confirmBtn.addEventListener('click', handleConfirm);
-                if (cancelText && cancelText.trim()) {
-                    cancelBtn.addEventListener('click', handleCancel);
-                    closeBtn.addEventListener('click', handleCancel);
-                    modal.addEventListener('click', handleBackdropClick);
-                }
-                document.addEventListener('keydown', handleEscape);
             });
         },
 
         hideConfirmationModal() {
-            const modal = document.getElementById('mcl-confirmation-modal');
-            if (!modal) return;
-            modal.classList.add('mcl-modal-hiding');
-            setTimeout(() => modal.classList.remove('active', 'mcl-modal-hiding'), 200);
+            // Global modal handles its own hiding, but we can provide this method for compatibility
+            if (typeof window.MCLModal !== 'undefined') {
+                window.MCLModal.hide();
+            }
         },
 
         checkChecklistItem(checklistId, itemId) { // Used by preview

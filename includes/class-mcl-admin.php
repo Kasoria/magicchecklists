@@ -168,6 +168,15 @@ class MCL_Admin {
             true
         );
         
+        // Global Modal Component
+        wp_enqueue_script(
+            'mcl-global-modal',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-global-modal.js',
+            array('jquery'),
+            MAGIC_CHECKLISTS_VERSION,
+            true
+        );
+        
         // Enqueue Nunito Sans font
         wp_enqueue_style(
             'mcl-fonts',
@@ -176,11 +185,19 @@ class MCL_Admin {
             MAGIC_CHECKLISTS_VERSION
         );
         
+        // Global Modal CSS
+        wp_enqueue_style(
+            'mcl-global-modal',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-global-modal.css',
+            array('mcl-fonts'),
+            MAGIC_CHECKLISTS_VERSION
+        );
+        
         // Common CSS first
         wp_enqueue_style(
             'mcl-admin-base', 
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/common/mcl-base.css',
-            array('mcl-fonts'),
+            array('mcl-fonts', 'mcl-global-modal'),
             MAGIC_CHECKLISTS_VERSION
         );
     

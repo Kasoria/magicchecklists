@@ -316,7 +316,7 @@ class MCL_Tour_Public {
         // For other contexts, rely on other checks above
         if ($use_transient === true || ($use_transient === null && $this->is_inside_pagebuilder())) {
             $session_key = $this->get_session_key();
-            set_transient($session_key, true, 20); // 20 seconds - just enough to prevent pagebuilder triple-loading
+            set_transient($session_key, true, 10); // 10 seconds
         }
     }
 
@@ -329,11 +329,27 @@ class MCL_Tour_Public {
         // Fire action to allow other instances to know assets are being loaded
         do_action('mcl_tour_assets_loading');
         
+        // Enqueue global modal component for tour confirmations
+        wp_enqueue_script(
+            'mcl-global-modal',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-global-modal.js',
+            array('jquery'),
+            MAGIC_CHECKLISTS_VERSION,
+            true
+        );
+        
+        wp_enqueue_style(
+            'mcl-global-modal',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-global-modal.css',
+            array(),
+            MAGIC_CHECKLISTS_VERSION
+        );
+        
         // Enqueue driver.js
         wp_enqueue_script(
             'driver-js',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.js.iife.js',
-            array(),
+            array('mcl-global-modal'),
             '1.3.1',
             true
         );
@@ -341,7 +357,7 @@ class MCL_Tour_Public {
         wp_enqueue_style(
             'driver-css',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.css',
-            array(),
+            array('mcl-global-modal'),
             '1.3.1'
         );
 
@@ -537,49 +553,19 @@ class MCL_Tour_Public {
                 <?php
             }
         } elseif ($has_tours) {
-            // Render the confirmation modal for regular tours when tours are active
-            // This can be rendered in all contexts since users might interact with tours in iframes
-            $this->render_confirmation_modal();
+            // Note: Confirmation modal is now handled by the global modal component
+            // The global modal assets are loaded on all admin pages and tour pages will use MCLModal.show()
         }
     }
 
+    /**
+     * Legacy confirmation modal function - now using global modal component
+     * @deprecated Use MCLModal.show() instead
+     */
     private function render_confirmation_modal() {
-        ?>
-        <!-- Tour Confirmation Modal -->
-        <div class="mcl-confirmation-modal" id="mcl-confirmation-modal">
-            <div class="mcl-confirmation-modal-content">
-                <div class="mcl-confirmation-modal-inner">
-                    <button type="button" class="mcl-confirmation-modal-close" id="mcl-confirmation-modal-close">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-                            <path fill="currentColor" fill-rule="evenodd" d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94L4.28 3.22Z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="sr-only"><?php _e('Close modal', 'magic-checklists'); ?></span>
-                    </button>
-                    <div class="mcl-confirmation-modal-body">
-                        <div class="mcl-confirmation-modal-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                            </svg>
-                        </div>
-                        <h3 class="mcl-confirmation-modal-title" id="mcl-confirmation-modal-title">
-                            <?php _e('Are you sure?', 'magic-checklists'); ?>
-                        </h3>
-                        <div class="mcl-confirmation-modal-actions">
-                            <button type="button" class="mcl-button mcl-button-danger" id="mcl-confirmation-modal-confirm">
-                                <?php _e('Yes, I\'m sure', 'magic-checklists'); ?>
-                            </button>
-                            <button type="button" class="mcl-button mcl-button-secondary" id="mcl-confirmation-modal-cancel">
-                                <?php _e('No, cancel', 'magic-checklists'); ?>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <script>
-        console.log('MCL: Tour confirmation modal rendered for regular tour mode');
-        </script>
-        <?php
+        // This function is now deprecated in favor of the global modal component
+        // Tour scripts should use MCLModal.show() for confirmations instead
+        return;
     }
 
     public function mark_tour_complete() {

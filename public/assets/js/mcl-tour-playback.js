@@ -395,57 +395,61 @@
             }
         },
         
-        // Confirmation Modal System (shared utility)
-        // This can be kept here or moved to a separate utility file if used elsewhere.
-        // For now, keeping it in playback as it's used by tour exit handling.
+        // Confirmation Modal System using Global Modal Component
         showConfirmationModal(title, confirmText = 'Yes, I\'m sure', cancelText = 'No, cancel', confirmClass = 'mcl-button-danger') {
             return new Promise((resolve) => {
-                const modal = document.getElementById('mcl-confirmation-modal');
-                const titleEl = document.getElementById('mcl-confirmation-modal-title');
-                const confirmBtn = document.getElementById('mcl-confirmation-modal-confirm');
-                const cancelBtn = document.getElementById('mcl-confirmation-modal-cancel');
-                const closeBtn = document.getElementById('mcl-confirmation-modal-close');
-                if (!modal || !titleEl || !confirmBtn || !cancelBtn) {
-                     // Fallback to native confirm if modal elements are not found (e.g. if UI hasn't rendered yet)
+                // Check if global modal is available
+                if (typeof window.MCLModal !== 'undefined') {
+                    // Determine modal type based on button class
+                    let modalType = 'warning';
+                    if (confirmClass.includes('danger')) {
+                        modalType = 'danger';
+                    } else if (confirmClass.includes('primary')) {
+                        modalType = 'info';
+                    }
+                    
+                    // Use global modal
+                    if (cancelText && cancelText.trim()) {
+                        // Show confirmation modal with cancel option
+                        window.MCLModal.show({
+                            title: title,
+                            message: '',
+                            type: modalType,
+                            confirmText: confirmText,
+                            cancelText: cancelText,
+                            onConfirm: function() {
+                                resolve(true);
+                            },
+                            onCancel: function() {
+                                resolve(false);
+                            }
+                        });
+                    } else {
+                        // Show alert-style modal (no cancel)
+                        window.MCLModal.alert({
+                            title: title,
+                            message: '',
+                            type: modalType,
+                            confirmText: confirmText,
+                            onConfirm: function() {
+                                resolve(true);
+                            }
+                        });
+                    }
+                } else {
+                    // Fallback to native confirm if global modal is not available
+                    console.warn('MCL Tour: Global modal not available, falling back to browser alert');
                     const result = confirm(title);
                     resolve(result);
-                    return;
                 }
-                titleEl.textContent = title; confirmBtn.textContent = confirmText;
-                if (cancelText && cancelText.trim()) {
-                    cancelBtn.textContent = cancelText; cancelBtn.style.display = ''; closeBtn.style.display = '';
-                } else {
-                    cancelBtn.style.display = 'none'; closeBtn.style.display = 'none';
-                }
-                confirmBtn.className = `mcl-button ${confirmClass}`;
-                modal.classList.add('active');
-                setTimeout(() => confirmBtn.focus(), 100);
-                const handleConfirm = () => { this.hideConfirmationModal(); cleanup(); resolve(true); };
-                const handleCancel = () => { this.hideConfirmationModal(); cleanup(); resolve(false); };
-                const handleEscape = (e) => { if (e.key === 'Escape' && cancelText && cancelText.trim()) handleCancel(); };
-                const cleanup = () => {
-                    confirmBtn.removeEventListener('click', handleConfirm);
-                    cancelBtn.removeEventListener('click', handleCancel);
-                    closeBtn.removeEventListener('click', handleCancel);
-                    document.removeEventListener('keydown', handleEscape);
-                    modal.removeEventListener('click', handleBackdropClick);
-                };
-                const handleBackdropClick = (e) => { if (e.target === modal && cancelText && cancelText.trim()) handleCancel(); };
-                confirmBtn.addEventListener('click', handleConfirm);
-                if (cancelText && cancelText.trim()) {
-                    cancelBtn.addEventListener('click', handleCancel);
-                    closeBtn.addEventListener('click', handleCancel);
-                    modal.addEventListener('click', handleBackdropClick);
-                }
-                document.addEventListener('keydown', handleEscape);
             });
         },
 
         hideConfirmationModal() {
-            const modal = document.getElementById('mcl-confirmation-modal');
-            if (!modal) return;
-            modal.classList.add('mcl-modal-hiding');
-            setTimeout(() => modal.classList.remove('active', 'mcl-modal-hiding'), 200);
+            // Global modal handles its own hiding, but we can provide this method for compatibility
+            if (typeof window.MCLModal !== 'undefined') {
+                window.MCLModal.hide();
+            }
         },
 
         async handleTourExitConfirmation(confirmMessage) {
