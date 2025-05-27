@@ -1365,8 +1365,6 @@ class MagicChecklistDrawer {
         // After rendering all items, ensure children are properly positioned
         this.reattachAllChildren();
         
-        // Check for tour connections and add tour buttons where applicable
-        console.log('MCL Tour Debug: About to check tour connections');
         this.checkTourConnections();
     }
     
@@ -4250,31 +4248,23 @@ class MagicChecklistDrawer {
     // Add tour connection methods
     async checkTourConnections() {
         if (!this.currentChecklistId) {
-            console.log('MCL Tour Debug: No currentChecklistId');
             return;
         }
-
-        console.log('MCL Tour Debug: Checking tour connections for checklist:', this.currentChecklistId);
         
         const items = this.itemsList.querySelectorAll('li');
-        console.log('MCL Tour Debug: Found items:', items.length);
         
         for (const item of items) {
             const itemId = item.getAttribute('data-item-id');
             if (itemId) {
-                console.log('MCL Tour Debug: Checking item:', itemId);
                 await this.checkItemTourConnection(item, itemId);
             }
         }
     }
 
     async checkItemTourConnection(listItem, itemId) {
-        console.log('MCL Tour Debug: Checking connection for item:', itemId);
         
         try {
             const nonce = window.mcl_checklists?.nonce || window.mclTour?.nonce;
-            console.log('MCL Tour Debug: Using nonce:', nonce ? 'available' : 'not available');
-            console.log('MCL Tour Debug: AJAX URL:', window.mcl_checklists?.ajax_url);
             
             const requestData = {
                 action: 'mcl_get_item_tour_connections',
@@ -4283,7 +4273,6 @@ class MagicChecklistDrawer {
                 nonce: nonce
             };
             
-            console.log('MCL Tour Debug: Request data:', requestData);
             
             const response = await fetch(window.mcl_checklists.ajax_url, {
                 method: 'POST',
@@ -4293,16 +4282,10 @@ class MagicChecklistDrawer {
                 body: new URLSearchParams(requestData)
             });
 
-            console.log('MCL Tour Debug: Response status:', response.status);
-            
             const result = await response.json();
-            console.log('MCL Tour Debug: Response data:', result);
             
             if (result.success && result.data.connections.length > 0) {
-                console.log('MCL Tour Debug: Found connections:', result.data.connections.length);
                 this.addTourButton(listItem, result.data.connections);
-            } else {
-                console.log('MCL Tour Debug: No connections found for item:', itemId);
             }
         } catch (error) {
             console.error('MCL Tour Debug: Error checking tour connections:', error);
@@ -4310,11 +4293,9 @@ class MagicChecklistDrawer {
     }
 
     addTourButton(listItem, connections) {
-        console.log('MCL Tour Debug: Adding tour button to item with connections:', connections);
         
         // Check if tour button already exists
         if (listItem.querySelector('.mcl-tour-btn')) {
-            console.log('MCL Tour Debug: Tour button already exists');
             return;
         }
 
