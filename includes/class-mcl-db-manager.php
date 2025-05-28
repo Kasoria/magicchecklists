@@ -285,8 +285,23 @@ class MCL_DB_Manager {
             ],
             'excerpt' => [
                 'label' => 'Excerpt',
-                'description' => 'Post must have an excerpt',
-                'config_fields' => [],
+                'description' => 'Excerpt must be between [X] and [Y] characters',
+                'config_fields' => [
+                    'min_excerpt_length' => [
+                        'type' => 'number',
+                        'label' => 'Minimum excerpt length',
+                        'default' => 50,
+                        'min' => 1,
+                        'max' => 1000
+                    ],
+                    'max_excerpt_length' => [
+                        'type' => 'number',
+                        'label' => 'Maximum excerpt length',
+                        'default' => 300,
+                        'min' => 1,
+                        'max' => 1000
+                    ]
+                ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
@@ -374,12 +389,19 @@ class MCL_DB_Manager {
             ],
             'meta_description' => [
                 'label' => 'Meta Description',
-                'description' => 'Meta description must be at least [X] characters',
+                'description' => 'Meta description must be between [X] and [Y] characters',
                 'config_fields' => [
                     'min_meta_length' => [
                         'type' => 'number',
                         'label' => 'Minimum meta description length',
                         'default' => 120,
+                        'min' => 1,
+                        'max' => 500
+                    ],
+                    'max_meta_length' => [
+                        'type' => 'number',
+                        'label' => 'Maximum meta description length',
+                        'default' => 160,
                         'min' => 1,
                         'max' => 500
                     ]
@@ -418,13 +440,27 @@ class MCL_DB_Manager {
             ],
             'heading_count' => [
                 'label' => 'Heading Count',
-                'description' => 'Content must have at least [X] headings (H2-H4)',
+                'description' => 'Content must have specific heading counts (H2, H3, H4)',
                 'config_fields' => [
-                    'min_headings' => [
+                    'min_h2_headings' => [
                         'type' => 'number',
-                        'label' => 'Minimum headings',
-                        'default' => 3,
-                        'min' => 1,
+                        'label' => 'Minimum H2 headings',
+                        'default' => 2,
+                        'min' => 0,
+                        'max' => 50
+                    ],
+                    'min_h3_headings' => [
+                        'type' => 'number',
+                        'label' => 'Minimum H3 headings',
+                        'default' => 1,
+                        'min' => 0,
+                        'max' => 50
+                    ],
+                    'min_h4_headings' => [
+                        'type' => 'number',
+                        'label' => 'Minimum H4 headings',
+                        'default' => 0,
+                        'min' => 0,
                         'max' => 50
                     ]
                 ],

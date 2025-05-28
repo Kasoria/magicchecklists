@@ -134,6 +134,7 @@ class MCL_Publisher_Checklist {
                 'id' => $checklist->ID,
                 'title' => $checklist->post_title,
                 'description' => $checklist->post_content,
+                'show_tips' => get_post_meta($checklist->ID, '_mcl_show_tips', true) == '1',
                 'requirements' => array()
             );
             
@@ -269,7 +270,7 @@ class MCL_Publisher_Checklist {
                 return $this->check_featured_image_data($editor_data['featured_media_id']);
                 
             case 'excerpt':
-                return $this->check_excerpt($editor_data['excerpt']);
+                return $this->check_excerpt($editor_data['excerpt'], $config);
                 
             case 'categories':
                 return $this->check_categories_data($editor_data['categories'], $config);
@@ -346,17 +347,36 @@ class MCL_Publisher_Checklist {
         }
     }
     
-    private function check_excerpt($excerpt) {
-        if (!empty(trim($excerpt))) {
-            return array(
-                'status' => 'passed',
-                'message' => __('Excerpt is present', 'magic-checklists')
-            );
-        } else {
+    private function check_excerpt($excerpt, $config) {
+        $min_length = intval($config['min_excerpt_length'] ?? 50);
+        $max_length = intval($config['max_excerpt_length'] ?? 300);
+        $excerpt_text = trim($excerpt);
+        $length = strlen($excerpt_text);
+        
+        if (empty($excerpt_text)) {
             return array(
                 'status' => 'failed',
-                'message' => __('Excerpt is missing', 'magic-checklists')
+                'message' => sprintf(__('Excerpt is missing (required: %d-%d characters)', 'magic-checklists'), $min_length, $max_length)
             );
+        }
+        
+        if ($length >= $min_length && $length <= $max_length) {
+            return array(
+                'status' => 'passed',
+                'message' => sprintf(__('Excerpt length: %d characters (required: %d-%d)', 'magic-checklists'), $length, $min_length, $max_length)
+            );
+        } else {
+            if ($length < $min_length) {
+                return array(
+                    'status' => 'failed',
+                    'message' => sprintf(__('Excerpt too short: %d characters (required: %d-%d)', 'magic-checklists'), $length, $min_length, $max_length)
+                );
+            } else {
+                return array(
+                    'status' => 'failed',
+                    'message' => sprintf(__('Excerpt too long: %d characters (required: %d-%d)', 'magic-checklists'), $length, $min_length, $max_length)
+                );
+            }
         }
     }
     
@@ -702,6 +722,7 @@ class MCL_Publisher_Checklist {
     
     private function check_meta_description($post, $config) {
         $min_length = intval($config['min_meta_length'] ?? 120);
+        $max_length = intval($config['max_meta_length'] ?? 160);
         
         // Check various SEO plugins first
         $meta_description = '';
@@ -760,15 +781,19 @@ class MCL_Publisher_Checklist {
         
         $length = strlen($meta_description);
         
-        if ($length >= $min_length) {
+        if ($length >= $min_length && $length <= $max_length) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Meta description: %d characters (required: %d+) - %s detected', 'magic-checklists'), $length, $min_length, $plugin_detected)
+                'message' => sprintf(__('Meta description: %d characters (required: %d-%d) - %s detected', 'magic-checklists'), $length, $min_length, $max_length, $plugin_detected)
             );
         } else {
-            $message = $length > 0 ? 
-                sprintf(__('Meta description: %d characters (required: %d+) - %s detected', 'magic-checklists'), $length, $min_length, $plugin_detected) :
-                sprintf(__('No meta description found (required: %d+ characters). Please add one using your SEO plugin.', 'magic-checklists'), $min_length);
+            if ($length === 0) {
+                $message = sprintf(__('No meta description found (required: %d-%d characters). Please add one using your SEO plugin.', 'magic-checklists'), $min_length, $max_length);
+            } elseif ($length < $min_length) {
+                $message = sprintf(__('Meta description too short: %d characters (required: %d-%d) - %s detected', 'magic-checklists'), $length, $min_length, $max_length, $plugin_detected);
+            } else {
+                $message = sprintf(__('Meta description too long: %d characters (required: %d-%d) - %s detected', 'magic-checklists'), $length, $min_length, $max_length, $plugin_detected);
+            }
                 
             return array(
                 'status' => 'failed',
@@ -910,26 +935,40 @@ class MCL_Publisher_Checklist {
     }
     
     private function check_heading_count($content, $config) {
-        $min_headings = intval($config['min_headings'] ?? 3);
+        $min_h2_headings = intval($config['min_h2_headings'] ?? 2);
+        $min_h3_headings = intval($config['min_h3_headings'] ?? 1);
+        $min_h4_headings = intval($config['min_h4_headings'] ?? 0);
         
         // Convert Gutenberg blocks to HTML if needed
         $html_content = $this->convert_blocks_to_html($content);
         
-        // Count H2, H3, and H4 headings
-        $heading_count = 0;
-        $heading_count += preg_match_all('/<h2[^>]*>.*?<\/h2>/is', $html_content);
-        $heading_count += preg_match_all('/<h3[^>]*>.*?<\/h3>/is', $html_content);
-        $heading_count += preg_match_all('/<h4[^>]*>.*?<\/h4>/is', $html_content);
+        // Count each heading type separately
+        $h2_count = preg_match_all('/<h2[^>]*>.*?<\/h2>/is', $html_content);
+        $h3_count = preg_match_all('/<h3[^>]*>.*?<\/h3>/is', $html_content);
+        $h4_count = preg_match_all('/<h4[^>]*>.*?<\/h4>/is', $html_content);
         
-        if ($heading_count >= $min_headings) {
+        $issues = array();
+        
+        // Check each heading type requirement
+        if ($h2_count < $min_h2_headings) {
+            $issues[] = sprintf(__('H2: %d/%d', 'magic-checklists'), $h2_count, $min_h2_headings);
+        }
+        if ($h3_count < $min_h3_headings) {
+            $issues[] = sprintf(__('H3: %d/%d', 'magic-checklists'), $h3_count, $min_h3_headings);
+        }
+        if ($h4_count < $min_h4_headings) {
+            $issues[] = sprintf(__('H4: %d/%d', 'magic-checklists'), $h4_count, $min_h4_headings);
+        }
+        
+        if (empty($issues)) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Headings found: %d (required: %d+)', 'magic-checklists'), $heading_count, $min_headings)
+                'message' => sprintf(__('Headings found - H2: %d, H3: %d, H4: %d', 'magic-checklists'), $h2_count, $h3_count, $h4_count)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Headings found: %d (required: %d+)', 'magic-checklists'), $heading_count, $min_headings)
+                'message' => sprintf(__('Heading requirements not met: %s', 'magic-checklists'), implode(', ', $issues))
             );
         }
     }

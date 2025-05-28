@@ -138,13 +138,33 @@ const PublisherChecklistSidebar = () => {
                                 // Enhanced message handling for new requirement types
                                 let enhancedMessage = result.message;
                                 
-                                // Add helpful icons for different requirement types
-                                if (req.type === 'image_alt_text' && result.status === 'failed') {
-                                    enhancedMessage = '♿ ' + result.message;
-                                } else if (req.type === 'heading_count' && result.status === 'failed') {
-                                    enhancedMessage = '📋 ' + result.message;
-                                } else if (req.type === 'image_count' && result.status === 'failed') {
-                                    enhancedMessage = '🖼️ ' + result.message;
+                                // Add helpful icons and formatting for different requirement types (only if tips are enabled)
+                                if (checklist.show_tips) {
+                                    if (req.type === 'excerpt' && result.status === 'failed') {
+                                        enhancedMessage = '📝 ' + result.message;
+                                    } else if (req.type === 'excerpt' && result.status === 'passed') {
+                                        enhancedMessage = '✍️ ' + result.message;
+                                    } else if (req.type === 'meta_description' && result.status === 'failed') {
+                                        enhancedMessage = '🔍 ' + result.message;
+                                    } else if (req.type === 'meta_description' && result.status === 'passed') {
+                                        enhancedMessage = '🎯 ' + result.message;
+                                    } else if (req.type === 'meta_description' && result.status === 'pending') {
+                                        enhancedMessage = '💾 ' + result.message;
+                                    } else if (req.type === 'heading_count' && result.status === 'failed') {
+                                        enhancedMessage = '📋 ' + result.message;
+                                    } else if (req.type === 'heading_count' && result.status === 'passed') {
+                                        enhancedMessage = '📊 ' + result.message;
+                                    } else if (req.type === 'image_alt_text' && result.status === 'failed') {
+                                        enhancedMessage = '♿ ' + result.message;
+                                    } else if (req.type === 'image_count' && result.status === 'failed') {
+                                        enhancedMessage = '🖼️ ' + result.message;
+                                    } else if (req.type === 'word_count' && result.status === 'failed') {
+                                        enhancedMessage = '📊 ' + result.message;
+                                    } else if (req.type === 'title_length' && result.status === 'failed') {
+                                        enhancedMessage = '📏 ' + result.message;
+                                    } else if (req.type === 'custom_field' && result.status === 'pending') {
+                                        enhancedMessage = '💾 ' + result.message;
+                                    }
                                 }
                                 
                                 return {
@@ -168,7 +188,7 @@ const PublisherChecklistSidebar = () => {
                 if (window.mclPublisher.debug) {
                     updatedChecklists.forEach(checklist => {
                         checklist.requirements.forEach(req => {
-                            if (['image_alt_text', 'heading_count', 'image_count'].includes(req.type)) {
+                            if (['excerpt', 'meta_description', 'heading_count', 'image_alt_text', 'image_count'].includes(req.type)) {
                                 console.log(`MCL Publisher: ${req.type} status:`, req.status, req.message);
                             }
                         });
@@ -302,6 +322,27 @@ const PublisherChecklistSidebar = () => {
         }
     };
 
+    const getRequirementTip = (requirement) => {
+        const tips = {
+            'excerpt': 'Excerpt helps users understand your content before reading. Check character limits in the excerpt section.',
+            'meta_description': 'Meta descriptions appear in search results. Keep within SEO-recommended character limits.',
+            'heading_count': 'Proper heading structure (H2, H3, H4) improves readability and SEO.',
+            'word_count': 'Adequate content length helps with SEO and provides value to readers.',
+            'title_length': 'Title length affects how it displays in search results and social media.',
+            'featured_image': 'Featured images improve engagement and social media sharing.',
+            'categories': 'Categories help organize your content and improve navigation.',
+            'tags': 'Tags help readers discover related content and improve SEO.',
+            'external_links': 'External links to authoritative sources add credibility to your content.',
+            'internal_links': 'Internal links help readers explore related content and improve SEO.',
+            'image_alt_text': 'Alt text makes images accessible to screen readers and improves SEO.',
+            'image_count': 'Images make content more engaging and help break up text.',
+            'custom_field': 'Custom fields store additional metadata for your content.',
+            'custom_item': 'Manual verification items require human review before publishing.'
+        };
+        
+        return tips[requirement.type] || 'Complete this requirement before publishing.';
+    };
+
     if (isLoading) {
         return null; // Don't render anything while loading
     }
@@ -378,6 +419,8 @@ const PublisherChecklistSidebar = () => {
                             {
                                 key: `${checklist.id}-${requirement.type}-${index}`,
                                 className: "mcl-requirement-item",
+                                'data-requirement-type': requirement.type,
+                                'data-status': requirement.status,
                                 style: {
                                     position: 'relative',
                                     padding: '12px',
@@ -465,6 +508,24 @@ const PublisherChecklistSidebar = () => {
                                                         }
                                                     },
                                                     requirement.message
+                                                ),
+                                                
+                                                // Show helpful tip for failed requirements
+                                                requirement.status === 'failed' && checklist.show_tips && wp.element.createElement(
+                                                    'div',
+                                                    {
+                                                        style: {
+                                                            fontSize: '11px',
+                                                            color: '#64748b',
+                                                            marginTop: '4px',
+                                                            padding: '6px 8px',
+                                                            backgroundColor: '#f8fafc',
+                                                            borderRadius: '4px',
+                                                            border: '1px solid #e2e8f0',
+                                                            lineHeight: '1.3'
+                                                        }
+                                                    },
+                                                    '💡 ' + getRequirementTip(requirement)
                                                 ),
                                                 
                                                 !requirement.auto_check && wp.element.createElement(

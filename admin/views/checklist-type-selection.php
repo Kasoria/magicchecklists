@@ -248,9 +248,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 .mcl-type-button {
     width: 100%;
-    padding: 15px 30px;
-    font-size: 16px;
-    font-weight: 600;
+    padding: 0;
+    border: none;
+}
+
+.mcl-type-button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1;
 }
 
 .mcl-type-comparison {

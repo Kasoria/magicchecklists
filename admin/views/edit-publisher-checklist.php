@@ -121,6 +121,19 @@ $default_requirements = MCL_DB_Manager::get_default_publisher_requirements();
                             </p>
                         </div>
                     </div>
+
+                    <div class="mcl-form-group">
+                        <label for="mcl_show_tips" class="mcl-label"><?php esc_html_e('Show Helpful Tips', 'magic-checklists'); ?></label>
+                        <div class="mcl-toggle-wrapper">
+                            <div class="mcl-toggle-switch">
+                                <input name="show_tips" type="checkbox" id="mcl_show_tips" value="1" <?php checked(get_post_meta($checklist_id, '_mcl_show_tips', true), 1); ?>>
+                                <label for="mcl_show_tips" class="mcl-switch-label"></label>
+                            </div>
+                            <p class="mcl-description">
+                                <?php esc_html_e('When enabled, the Gutenberg sidebar will show helpful tips for failed requirements to guide content creators.', 'magic-checklists'); ?>
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Requirements Section -->
