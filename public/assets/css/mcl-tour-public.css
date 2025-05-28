@@ -344,7 +344,7 @@
     margin-top: 8px;
     border-top: 1px solid #e0e0e0;
     padding-top: 8px;
-    max-height: 200px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
@@ -700,7 +700,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
-    color: #1d2327;
+    color: white;
 }
 
 .mcl-form-control:not(#mcl-step-content) {

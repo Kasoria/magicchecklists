@@ -601,8 +601,8 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
     margin: 0 0 15px 0;
     font-size: 16px;
     font-weight: 600;
-    color: #2563eb;
-    border-left: 3px solid #f2da22;
+    color: var(--mcl-accent);
+    border-left: 3px solid rgb(30, 101, 255);
     padding-left: 12px;
 }
 
@@ -850,7 +850,6 @@ $page_title = $tour_id ? __('Edit Tour', 'magic-checklists') : __('Create New To
     align-items: center;
     gap: 12px;
     cursor: move;
-    transition: all 0.2s ease;
 }
 
 .mcl-admin-step-item:hover {
@@ -1016,7 +1015,20 @@ jQuery(document).ready(function($) {
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
+            forceFallback: true,
+            scroll: true,
+            scrollSensitivity: 80,
+            scrollSpeed: 15,
+            bubbleScroll: true,
+            onStart: function() {
+                document.body.style.userSelect = 'none';
+                document.body.style.webkitUserSelect = 'none';
+                document.body.style.msUserSelect = 'none';
+            },
             onEnd: function(evt) {
+                document.body.style.userSelect = '';
+                document.body.style.webkitUserSelect = '';
+                document.body.style.msUserSelect = '';
                 if (evt.oldIndex !== evt.newIndex) {
                     updateStepNumbers();
                     handleStepsReorder();
