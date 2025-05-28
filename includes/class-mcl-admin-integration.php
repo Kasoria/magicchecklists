@@ -40,6 +40,7 @@ class MCL_Admin_Integration {
         $description = wp_kses_post($_POST['description']);
         $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', $_POST['post_types']) : array();
         $active = isset($_POST['active']) ? 1 : 0;
+        $show_tips = isset($_POST['show_tips']) ? 1 : 0;
         $requirements_data = isset($_POST['requirements']) ? $_POST['requirements'] : array();
         
         // Validate required fields
@@ -146,6 +147,7 @@ class MCL_Admin_Integration {
         update_post_meta($checklist_id, '_mcl_checklist_type', 'publisher');
         update_post_meta($checklist_id, '_mcl_publisher_post_types', $post_types);
         update_post_meta($checklist_id, '_mcl_active', $active);
+        update_post_meta($checklist_id, '_mcl_show_tips', $show_tips);
         
         // Save requirements
                     MCL_DB_Manager::save_publisher_requirements($checklist_id, $requirements);
