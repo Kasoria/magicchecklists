@@ -243,7 +243,6 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       const data = await response.json()
       if (data.success) {
-        console.log('Loaded checklist data:', data.data)
         setFormData(prevData => ({ ...prevData, ...data.data }))
       } else {
         throw new Error(data.data?.message || 'Failed to load checklist')
@@ -571,8 +570,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         submitData.append(`items[${index}][content]`, item.content || '')
         submitData.append(`items[${index}][priority]`, item.priority || 'none')
         submitData.append(`items[${index}][locked]`, item.locked ? '1' : '0')
+        submitData.append(`items[${index}][in_progress]`, item.in_progress ? '1' : '0')
+        submitData.append(`items[${index}][checked]`, item.checked ? '1' : '0')
         if (item.parent_id) {
           submitData.append(`items[${index}][parent_id]`, item.parent_id)
+        }
+        if (item.deadline) {
+          submitData.append(`items[${index}][deadline]`, item.deadline)
         }
       })
 
@@ -1269,6 +1273,8 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
               enableLocking={formData.enable_item_locking}
               onPriorityToggle={(checked) => handleInputChange('enable_item_priority', checked)}
               errors={errors}
+              checklistId={checklistId}
+              adminData={adminData}
             />
           </div>
         </div>
