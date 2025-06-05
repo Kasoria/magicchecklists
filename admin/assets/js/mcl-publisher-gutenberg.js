@@ -13,6 +13,7 @@ const PublisherChecklistSidebar = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isChecking, setIsChecking] = useState(false);
     const [lastCheck, setLastCheck] = useState(null);
+    const [isBlocking, setIsBlocking] = useState(false);
 
     const { editedPostContent, editedPostTitle, editedPostExcerpt, currentPost, postType, featuredMediaId, categories, tags, postMeta } = useSelect(select => {
         const editor = select('core/editor');
@@ -50,6 +51,26 @@ const PublisherChecklistSidebar = () => {
 
         return () => clearTimeout(debounceTimer);
     }, [editedPostContent, editedPostTitle, editedPostExcerpt, featuredMediaId, categories, tags, postMeta, checklists.length]);
+
+    // Cleanup effect to remove event listeners when component unmounts
+    useEffect(() => {
+        return () => {
+            // Clean up event listeners on unmount
+            removePublishButtonListener();
+            
+            // Clean up visual indicators
+            removePublishButtonIndicators();
+            
+            // Remove body class
+            document.body.classList.remove('mcl-requirements-blocking');
+            
+            // Clear any intervals
+            if (window.mclPublishButtonInterval) {
+                clearInterval(window.mclPublishButtonInterval);
+                window.mclPublishButtonInterval = null;
+            }
+        };
+    }, []);
 
     const loadChecklistsForPost = async () => {
         if (!currentPost?.id) {
@@ -194,6 +215,9 @@ const PublisherChecklistSidebar = () => {
                         });
                     });
                 }
+            } else {
+                // Also update publishing lock when there are no results
+                updatePublishingLock([]);
             }
         } catch (error) {
             console.error('Error checking requirements:', error);
@@ -213,12 +237,143 @@ const PublisherChecklistSidebar = () => {
             });
         });
 
-        if (hasFailedRequired) {
-            lockPostSaving('mcl-publisher-requirements');
-            lockPostAutosaving('mcl-publisher-requirements');
-        } else {
-            unlockPostSaving('mcl-publisher-requirements');
-            unlockPostAutosaving('mcl-publisher-requirements');
+        // Debug logging
+        if (window.mclPublisher.debug) {
+            console.log('MCL Publisher: Updating publish lock. Has failed required:', hasFailedRequired, 'Current blocking state:', isBlocking);
+        }
+
+        // Only update if the blocking state has actually changed
+        if (hasFailedRequired !== isBlocking) {
+            setIsBlocking(hasFailedRequired);
+            
+            if (hasFailedRequired) {
+                lockPostSaving('mcl-publisher-requirements');
+                lockPostAutosaving('mcl-publisher-requirements');
+                
+                // Add click listener to publish button to open checklist sidebar
+                addPublishButtonListener();
+                
+                // Add visual indicators to publish button
+                addPublishButtonIndicators();
+                
+                // Add body class for global styling
+                document.body.classList.add('mcl-requirements-blocking');
+            } else {
+                unlockPostSaving('mcl-publisher-requirements');
+                unlockPostAutosaving('mcl-publisher-requirements');
+                
+                // Remove the click listener when requirements are met
+                removePublishButtonListener();
+                
+                // Remove visual indicators
+                removePublishButtonIndicators();
+                
+                // Remove body class
+                document.body.classList.remove('mcl-requirements-blocking');
+                
+                // Debug logging
+                if (window.mclPublisher.debug) {
+                    console.log('MCL Publisher: All requirements met, publish button should be functional');
+                }
+            }
+        }
+    };
+
+    // Function to add click listener to publish button
+    const addPublishButtonListener = () => {
+        // Remove existing listener first to avoid duplicates
+        removePublishButtonListener();
+        
+        // Add listener to the document to catch publish button clicks
+        document.addEventListener('click', handlePublishButtonClick, true);
+        
+        // Debug logging
+        if (window.mclPublisher.debug) {
+            console.log('MCL Publisher: Added publish button click listener');
+        }
+    };
+
+    // Function to remove click listener from publish button
+    const removePublishButtonListener = () => {
+        document.removeEventListener('click', handlePublishButtonClick, true);
+        
+        // Debug logging
+        if (window.mclPublisher.debug) {
+            console.log('MCL Publisher: Removed publish button click listener');
+        }
+    };
+
+    // Handle publish button clicks when requirements are not met
+    const handlePublishButtonClick = (event) => {
+        const target = event.target;
+        
+        // Check if the clicked element is a publish button or its child elements
+        const isPublishButton = target && (
+            // Direct publish button classes
+            target.classList.contains('editor-post-publish-button') ||
+            target.classList.contains('editor-post-publish-panel__toggle') ||
+            target.classList.contains('editor-post-publish-button__button') ||
+            // Check if it's inside a publish button
+            target.closest('.editor-post-publish-button') ||
+            target.closest('.editor-post-publish-panel__toggle') ||
+            target.closest('.editor-post-publish-button__button') ||
+            // Check by text content (for different languages)
+            (target.textContent && (
+                target.textContent.includes('Publish') ||
+                target.textContent.includes('Update') ||
+                target.textContent.includes('Submit for Review')
+            )) ||
+            // Check by aria-label
+            target.getAttribute('aria-label') === 'Publish' ||
+            // Check data attributes that WordPress might use
+            target.getAttribute('data-wp-component') === 'Button'
+        );
+        
+        if (isPublishButton) {
+            // Double-check if we should still be blocking
+            if (!document.body.classList.contains('mcl-requirements-blocking')) {
+                // Requirements are met, allow normal publishing
+                if (window.mclPublisher.debug) {
+                    console.log('MCL Publisher: Requirements are met, allowing publish to proceed');
+                }
+                return;
+            }
+            
+            // Debug logging
+            if (window.mclPublisher.debug) {
+                console.log('MCL Publisher: Intercepting publish button click');
+            }
+            
+            // Prevent the default action
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Open the checklist sidebar
+            openChecklistSidebar();
+            
+            return false;
+        }
+    };
+
+    // Function to open the checklist sidebar
+    const openChecklistSidebar = () => {
+        const { dispatch } = wp.data;
+        
+        try {
+            // Open the plugin sidebar - using the correct sidebar name format
+            dispatch('core/edit-post').openGeneralSidebar('mcl-publisher-checklist-sidebar/mcl-publisher-checklist-sidebar');
+            
+            // Optional: Show a notice to guide the user
+            dispatch('core/notices').createNotice(
+                'warning',
+                __('Please complete all required checklist items before publishing.', 'magic-checklists'),
+                {
+                    isDismissible: true,
+                    type: 'snackbar'
+                }
+            );
+        } catch (error) {
+            console.error('MCL Publisher: Error opening checklist sidebar:', error);
         }
     };
 
@@ -341,6 +496,58 @@ const PublisherChecklistSidebar = () => {
         };
         
         return tips[requirement.type] || 'Complete this requirement before publishing.';
+    };
+
+    // Function to add visual indicators to publish buttons
+    const addPublishButtonIndicators = () => {
+        const addIndicatorToButton = (button) => {
+            if (button && !button.classList.contains('is-locked')) {
+                button.classList.add('is-locked');
+                button.title = __('Complete checklist requirements to publish', 'magic-checklists');
+            }
+        };
+        
+        // Find and mark publish buttons
+        const publishButtons = document.querySelectorAll(
+            '.editor-post-publish-button, .editor-post-publish-panel__toggle, .editor-post-publish-button__button'
+        );
+        
+        publishButtons.forEach(addIndicatorToButton);
+        
+        // Set up periodic check to catch dynamically added buttons
+        if (!window.mclPublishButtonInterval) {
+            window.mclPublishButtonInterval = setInterval(() => {
+                if (document.body.classList.contains('mcl-requirements-blocking')) {
+                    const newButtons = document.querySelectorAll(
+                        '.editor-post-publish-button:not(.is-locked), .editor-post-publish-panel__toggle:not(.is-locked), .editor-post-publish-button__button:not(.is-locked)'
+                    );
+                    newButtons.forEach(addIndicatorToButton);
+                }
+            }, 1000);
+        }
+    };
+
+    // Function to remove visual indicators from publish buttons
+    const removePublishButtonIndicators = () => {
+        const removeIndicatorFromButton = (button) => {
+            if (button) {
+                button.classList.remove('is-locked');
+                button.removeAttribute('title');
+            }
+        };
+        
+        // Find and unmark publish buttons
+        const publishButtons = document.querySelectorAll(
+            '.editor-post-publish-button, .editor-post-publish-panel__toggle, .editor-post-publish-button__button'
+        );
+        
+        publishButtons.forEach(removeIndicatorFromButton);
+        
+        // Clear the periodic check
+        if (window.mclPublishButtonInterval) {
+            clearInterval(window.mclPublishButtonInterval);
+            window.mclPublishButtonInterval = null;
+        }
     };
 
     if (isLoading) {

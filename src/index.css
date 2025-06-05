@@ -1,0 +1,888 @@
+/* Import Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom WordPress admin integration styles */
+@layer base {
+  /* Prevent WordPress admin content padding from interfering */
+  #wpcontent {
+    padding: 0 !important;
+  }
+  
+  /* Apply Nunito Sans globally to the React app */
+  #mcl-admin-root {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: calc(100vh - 32px); /* Account for WordPress admin bar on desktop */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+  }
+
+  /* Ensure all child elements inherit the font */
+  #mcl-admin-root *,
+  #mcl-admin-root *::before,
+  #mcl-admin-root *::after {
+    font-family: inherit;
+  }
+
+  /* Override any system defaults for common elements */
+  button,
+  input,
+  textarea,
+  select {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+
+  /* Ensure proper z-index layering for Flowbite components */
+  .fixed {
+    z-index: 40;
+  }
+
+  /* Custom scrollbar for sidebar */
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* Responsive fixes for main layout */
+@layer base {
+  /* Ensure the main flex container works properly on all screen sizes */
+  #mcl-admin-root .main-flex-container {
+    display: flex;
+    min-height: calc(100vh - 32px); /* Desktop admin bar height */
+    position: relative;
+  }
+
+  /* Mobile sidebar overlay fixes */
+  @media (max-width: 1023px) {
+    #wpcontent {
+      padding: 0 !important;
+    }
+    #mcl-admin-root .sidebar-container {
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    #mcl-admin-root .sidebar-container.open {
+      transform: translateX(0);
+    }
+
+    #mcl-admin-root .main-content-container {
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    /* Prevent body scroll when sidebar is open on mobile */
+    body.sidebar-open {
+      overflow: hidden;
+    }
+
+    /* Mobile overlay backdrop */
+    #mcl-admin-root .mobile-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+
+    #mcl-admin-root .mobile-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  /* Large screen layout - sidebar always visible */
+  @media (min-width: 1024px) {
+    #mcl-admin-root .sidebar-container {
+      position: relative !important;
+      transform: translateX(0) !important;
+      height: auto;
+    }
+
+    #mcl-admin-root .main-content-container {
+      margin-left: 0;
+    }
+
+    /* Hide mobile overlay on large screens */
+    #mcl-admin-root .mobile-overlay {
+      display: none !important;
+    }
+  }
+}
+
+/* WordPress admin bar responsive adjustments */
+@media screen and (max-width: 782px) {
+  /* WordPress changes admin bar height to 46px on screens ≤782px */
+  #mcl-admin-root {
+    min-height: calc(100vh - 46px) !important; /* Account for mobile admin bar height */
+  }
+  
+  #mcl-admin-root .main-flex-container {
+    min-height: calc(100vh - 46px) !important; /* Update main container height */
+  }
+}
+
+/* Additional mobile admin bar adjustments for very small screens */
+@media screen and (max-width: 600px) {
+  /* On very small screens, WordPress admin bar might have different behavior */
+  #mcl-admin-root {
+    min-height: calc(100vh - 46px) !important;
+  }
+  
+  #mcl-admin-root .main-flex-container {
+    min-height: calc(100vh - 46px) !important;
+  }
+  
+  /* Ensure sidebar covers full height including admin bar adjustment */
+  #mcl-admin-root .sidebar-container {
+    height: calc(100vh - 46px) !important;
+    top: 46px !important;
+  }
+}
+
+/* Ensure sidebar positioning accounts for admin bar on mobile */
+@media screen and (max-width: 782px) {
+  #mcl-admin-root .sidebar-container {
+    height: calc(100vh - 46px) !important;
+    top: 46px !important;
+  }
+}
+
+@layer components {
+  /* Custom component styles with proper font weights */
+  .app-shell {
+    @apply antialiased bg-gray-50 dark:bg-gray-900;
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+
+  .sidebar-item {
+    @apply flex items-center p-2 w-full text-base font-medium rounded-lg transition duration-75;
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+  }
+
+  .sidebar-item.active {
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-white;
+    font-weight: 600;
+  }
+
+  .sidebar-item:not(.active) {
+    @apply text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700;
+  }
+
+  /* Typography with Nunito Sans font weights */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+  }
+
+  .page-title {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 800;
+  }
+
+  .page-description {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+  }
+
+  /* Button styles with proper font weights */
+  .btn-primary {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 600;
+  }
+
+  .btn-secondary {
+    font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+  }
+
+  /* Custom badge styling for consistent colors */
+  .priority-badge-urgent {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+    font-weight: 600;
+  }
+
+  .priority-badge-high {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+    font-weight: 600;
+  }
+
+  .priority-badge-normal {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
+    font-weight: 600;
+  }
+
+  .priority-badge-low {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300;
+    font-weight: 600;
+  }
+
+  /* Enhanced table hover effects */
+  .table-row-hover {
+    @apply hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150;
+  }
+
+  /* Custom empty state styling */
+  .empty-state {
+    @apply text-center py-12 px-6;
+  }
+
+  .empty-state-icon {
+    @apply w-16 h-16 text-gray-400 mx-auto mb-4;
+  }
+
+  .empty-state-title {
+    @apply text-lg font-medium text-gray-900 dark:text-white mb-2;
+    font-weight: 700;
+  }
+
+  .empty-state-description {
+    @apply text-gray-600 dark:text-gray-400 mb-4;
+    font-weight: 400;
+  }
+}
+
+@layer utilities {
+  /* Utility classes for specific use cases */
+  .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Mobile-first responsive utilities */
+  .mobile-menu-transition {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  /* Font weight utilities with Nunito Sans */
+  .font-light {
+    font-weight: 300;
+  }
+
+  .font-normal {
+    font-weight: 400;
+  }
+
+  .font-medium {
+    font-weight: 500;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .font-extrabold {
+    font-weight: 800;
+  }
+
+  .font-black {
+    font-weight: 900;
+  }
+
+  /* Responsive sidebar utilities */
+  .sidebar-responsive {
+    @media (max-width: 1023px) {
+      position: fixed !important;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+  }
+
+  .sidebar-responsive.open {
+    @media (max-width: 1023px) {
+      transform: translateX(0);
+    }
+  }
+
+  /* Main content responsive padding */
+  .main-content-responsive {
+    @media (max-width: 1023px) {
+      width: 100%;
+      padding-left: 0;
+    }
+  }
+}
+
+/* WordPress admin specific styles - ensure React app fits within admin layout */
+.wrap #mcl-admin-root {
+  margin: 0;
+  background: transparent;
+  font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/* Responsive layout fixes for mobile and tablet breakpoints */
+@media screen and (max-width: 1023px) {
+  #mcl-admin-root {
+    position: relative;
+  }
+  
+  /* Ensure main content takes full width on mobile */
+  #mcl-admin-root .flex.min-h-\[calc\(100vh-32px\)\] {
+    position: relative;
+  }
+  
+  /* Mobile sidebar should not affect main content layout */
+  #mcl-admin-root .flex.flex-col.flex-1 {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+}
+
+/* Tablet specific adjustments */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  #mcl-admin-root .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Large screen optimizations */
+@media screen and (min-width: 1024px) {
+  #mcl-admin-root {
+    overflow-x: visible;
+  }
+}
+
+/* Additional responsive utilities for edge cases */
+@media screen and (max-width: 640px) {
+  /* Extra small screen adjustments */
+  #mcl-admin-root .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Ensure proper spacing on very small screens */
+  #mcl-admin-root .px-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Adjust header text on mobile */
+  #mcl-admin-root h1 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+  
+  /* Stack header content on very small screens */
+  #mcl-admin-root header > div:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  #mcl-admin-root header > div:first-child > div:last-child {
+    margin-left: 0;
+  }
+}
+
+/* Prevent layout shift during sidebar animations */
+@media (max-width: 1023px) {
+  #mcl-admin-root .main-content-container {
+    min-width: 0; /* Prevents flex item from growing beyond container */
+  }
+}
+
+/* Ensure proper z-index stacking */
+#mcl-admin-root .sidebar-container {
+  z-index: 50;
+}
+
+@media (max-width: 1023px) {
+  #mcl-admin-root .sidebar-container {
+    z-index: 50;
+  }
+  
+  #mcl-admin-root .mobile-overlay {
+    z-index: 40;
+  }
+}
+
+/* Fix any potential overflow issues */
+#mcl-admin-root {
+  max-width: 100vw;
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 1023px) {
+  #mcl-admin-root button {
+    min-height: 44px; /* Apple's recommended touch target size */
+  }
+  
+  #mcl-admin-root .sidebar-container nav button {
+    padding: 0.875rem; /* Increase padding for better touch targets */
+  }
+
+  /* Mobile header specific improvements */
+  #mcl-admin-root header {
+    position: relative;
+  }
+  
+  /* Prevent button text from causing overflow */
+  #mcl-admin-root header button {
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  /* Ensure proper spacing in mobile header rows */
+  #mcl-admin-root header .flex {
+    min-width: 0; /* Allows flex items to shrink below their content size */
+  }
+  
+  /* Mobile title responsive sizing */
+  #mcl-admin-root header h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100vw - 180px); /* Account for hamburger + button space */
+  }
+}
+
+/* Extra small screen header adjustments */
+@media (max-width: 640px) {
+  #mcl-admin-root header h1 {
+    font-size: 1rem;
+    max-width: calc(100vw - 120px); /* Smaller button on mobile */
+  }
+  
+  /* Tighter spacing for very small screens */
+  #mcl-admin-root header .gap-2 {
+    gap: 0.25rem;
+  }
+  
+  /* Smaller buttons on very small screens */
+  #mcl-admin-root header button {
+    padding: 0.5rem;
+  }
+  
+  #mcl-admin-root header button svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+/* Tablet-specific header adjustments */
+@media (min-width: 641px) and (max-width: 1023px) {
+  #mcl-admin-root header h1 {
+    max-width: calc(100vw - 220px); /* More space for larger buttons */
+  }
+}
+
+/* Dark mode styles for react-select */
+.dark .react-select-container .react-select__control {
+  background-color: rgb(17 24 39) !important;
+  border-color: rgb(75 85 99) !important;
+  color: rgb(243 244 246) !important;
+}
+
+/* Hide native search input clear button to avoid duplicate buttons */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Firefox */
+input[type="search"] {
+  -moz-appearance: textfield;
+}
+
+/* Fix react-select input styling issues */
+.react-select-container .react-select__input-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.react-select-container .react-select__input {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  caret-color: currentColor !important;
+}
+
+.react-select-container .react-select__input input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.react-select-container .react-select__input input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.dark .react-select-container .react-select__control--is-focused {
+  border-color: rgb(59 130 246) !important;
+  box-shadow: 0 0 0 1px rgb(59 130 246) !important;
+}
+
+.dark .react-select-container .react-select__control:hover {
+  border-color: rgb(59 130 246) !important;
+}
+
+.dark .react-select-container .react-select__menu {
+  background-color: rgb(17 24 39) !important;
+  border-color: rgb(75 85 99) !important;
+}
+
+.dark .react-select-container .react-select__option {
+  color: rgb(243 244 246) !important;
+}
+
+.dark .react-select-container .react-select__option--is-focused {
+  background-color: rgb(75 85 99) !important;
+}
+
+.dark .react-select-container .react-select__option--is-selected {
+  background-color: rgb(59 130 246) !important;
+}
+
+.dark .react-select-container .react-select__multi-value {
+  background-color: rgb(75 85 99) !important;
+}
+
+.dark .react-select-container .react-select__multi-value__label {
+  color: rgb(243 244 246) !important;
+}
+
+.dark .react-select-container .react-select__multi-value__remove {
+  color: rgb(156 163 175) !important;
+}
+
+.dark .react-select-container .react-select__multi-value__remove:hover {
+  background-color: rgb(239 68 68) !important;
+  color: white !important;
+}
+
+.dark .react-select-container .react-select__placeholder {
+  color: rgb(156 163 175) !important;
+}
+
+.dark .react-select-container .react-select__input-container {
+  color: rgb(243 244 246) !important;
+}
+
+.dark .react-select-container .react-select__single-value {
+  color: rgb(243 244 246) !important;
+}
+
+.dark .react-select-container .react-select__dropdown-indicator {
+  color: rgb(156 163 175) !important;
+}
+
+.dark .react-select-container .react-select__clear-indicator {
+  color: rgb(156 163 175) !important;
+}
+
+input[type="text"], input[type="password"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], input[type="week"] {
+  min-height: 0;
+  padding-left: 0.75rem;
+}
+
+/* Add global scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Firefox scrollbar styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Layout switcher specific styles */
+.mcl-layout-stacked .mcl-form-container {
+  display: block;
+}
+
+.mcl-layout-side-by-side .mcl-form-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* Responsive layout switching */
+@media (max-width: 1024px) {
+  .mcl-layout-side-by-side .mcl-form-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Layout transition animations */
+.mcl-form-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Better form section spacing for both layouts */
+.mcl-form-section {
+  margin-bottom: 2rem;
+  transition: margin 0.3s ease-in-out;
+}
+
+.mcl-form-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Form grid improvements */
+.mcl-form-grid-stacked {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.mcl-form-grid-side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .mcl-form-grid-side-by-side {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Layout switcher button styles */
+.mcl-layout-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #f9fafb;
+  color: #374151;
+  transition: all 0.2s ease-in-out;
+}
+
+.mcl-layout-toggle-btn:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dark .mcl-layout-toggle-btn {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .mcl-layout-toggle-btn:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+/* Better toggle styling to match the design system */
+.mcl-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.mcl-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mcl-toggle-slider {
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: #d1d5db;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.mcl-toggle input[type="checkbox"]:checked + .mcl-toggle-slider {
+  background-color: #f2da22;
+}
+
+.mcl-toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.mcl-toggle input[type="checkbox"]:checked + .mcl-toggle-slider::before {
+  transform: translateX(1.25rem);
+}
+
+/* Priority indicator improvements */
+.mcl-priority-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease-in-out;
+}
+
+.mcl-priority-indicator:hover {
+  transform: scale(1.1);
+  border-color: #9ca3af;
+}
+
+/* Shortcode settings styling */
+.mcl-shortcode-settings {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.dark .mcl-shortcode-settings {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+/* Custom image resize handle styles */
+.mcl-item-image-container {
+  position: relative;
+  display: inline-block;
+  margin: 8px 0;
+}
+
+.mcl-item-image-container img {
+  border-radius: 4px;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.mcl-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border: 2px solid white;
+  border-radius: 3px;
+  cursor: nw-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mcl-item-image-container:hover .mcl-resize-handle {
+  opacity: 1;
+}
+
+.mcl-resize-handle:before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-bottom: 4px solid white;
+}
+
+.mcl-resize-handle:after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid white;
+}

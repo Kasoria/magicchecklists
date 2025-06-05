@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           1.3.5
+ * Version:           2.0.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
@@ -40,7 +40,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '1.3.5');
+            define('MAGIC_CHECKLISTS_VERSION', '2.0.0');
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
             define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
@@ -110,17 +110,29 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          */
         public function init() {
             new MCL_CPT();
-            new MCL_Public();
+            
+            // Store MCL_Public instance globally for other classes to access
+            global $mcl_public_instance;
+            $mcl_public_instance = new MCL_Public();
+            
             MCL_Settings::get_instance();
             MCL_Export_Handler::get_instance();
             MCL_Analytics::get_instance();
             
-            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
-            MCL_Shortcode::get_instance();
-
             // Initialize tour functionality
             new MCL_Tour_CPT();
             new MCL_Tour_Public();
+
+            // Initialize React development environment and store globally
+            global $mcl_react_dev;
+            $mcl_react_dev = new MCL_React_Dev();
+
+            // Load AJAX handler for test notifications
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-ajax-manager.php';
+            MCL_Notification_Ajax_Handler::get_instance();
+
+            // Initialize image upload/select AJAX handlers
+            new MCL_Image_Handler();
 
             if (is_admin()) {
                 new MCL_Admin();
@@ -135,6 +147,9 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
 
             // Initialize SureCart Licensing
             $this->init_licensing();
+
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
+            MCL_Shortcode::get_instance();
         }
 
         public function activate() {

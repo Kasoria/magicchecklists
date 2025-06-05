@@ -20,6 +20,7 @@ class MCL_Notification_Ajax_Handler {
     }
     
     public function handle_test_webhook() {
+        // Verify nonce
         check_ajax_referer('mcl_test_webhook', 'nonce');
     
         if (!current_user_can('manage_options')) {
@@ -97,6 +98,7 @@ class MCL_Notification_Ajax_Handler {
 
 
     public function handle_test_email() {
+        // Verify nonce
         check_ajax_referer('mcl_test_webhook', 'nonce');
 
         if (!current_user_can('manage_options')) {

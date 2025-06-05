@@ -1,0 +1,278 @@
+/* ============================================================
+   Minimal CSS for MCL Drawer - Using Tailwind for most styling
+   ============================================================ */
+
+/* Custom scrollbar styles for better cross-browser support */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background-color: rgb(209, 213, 219);
+}
+
+/* Custom scale for slight hover effects */
+.scale-101 {
+  transform: scale(1.01);
+}
+
+/* Ensure contentEditable elements have proper cursor */
+[contenteditable="true"] {
+  cursor: text;
+}
+
+[contenteditable="false"] {
+  cursor: default;
+}
+
+/* Custom focus styles for content editable */
+[contenteditable="true"]:focus {
+  outline: none;
+}
+
+/* Image resizing cursor */
+.mcl-item-content img {
+  cursor: ew-resize;
+  user-select: none;
+}
+
+/* Image resizing state */
+.mcl-item-content img.mcl-resizing {
+  cursor: ew-resize;
+  user-select: none;
+  opacity: 0.8;
+  transition: none; /* Disable transitions during resize */
+}
+
+/* Ensure images maintain aspect ratio */
+.mcl-item-content img[data-mcl-image] {
+  max-width: 400px;
+  height: auto;
+  display: block;
+  margin: 8px 0;
+}
+
+/* Link styles within content */
+.mcl-item-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.mcl-item-content a:hover {
+  color: #1d4ed8;
+}
+
+/* Dark theme link adjustments */
+.dark .mcl-item-content a {
+  color: #fbbf24;
+}
+
+.dark .mcl-item-content a:hover {
+  color: #f59e0b;
+}
+
+/* Prevent text selection on drag handles */
+.drag-handle {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Animation for confetti */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  animation: confetti-fall 3s linear forwards;
+}
+
+/* Child item connection lines - enhanced with Tailwind-friendly approach */
+.mcl-child-item {
+  margin-left: 32px;
+  position: relative;
+}
+
+/* Vertical connecting line */
+.mcl-child-item::before {
+  content: '';
+  position: absolute;
+  left: -25px;
+  top: -10px; /* Start from the top of the gap */
+  height: calc(100% + 20px); /* Cover the full height including gaps */
+  width: 2px;
+  background-color: #d1d5db;
+}
+
+/* Horizontal connecting line */
+.mcl-child-item::after {
+  content: '';
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  width: 15px;
+  height: 2px;
+  background-color: #d1d5db;
+}
+
+/* Last child in a group should only have vertical line to center */
+.mcl-child-item[data-parent-id]:not(:has(+ .mcl-child-item[data-parent-id]))::before {
+  top: -10px;
+  height: calc(50% + 10px);
+}
+
+/* First child in a group should start from its top */
+.mcl-child-item:first-of-type::before {
+  top: 0;
+  height: calc(100% + 10px);
+}
+
+/* Dark theme adjustments for connecting lines */
+.dark .mcl-child-item::before,
+.dark .mcl-child-item::after {
+  background-color: #6b7280;
+}
+
+/* Hide connecting lines during drag */
+.sortable-ghost.mcl-child-item::before,
+.sortable-ghost.mcl-child-item::after {
+  display: none;
+}
+
+/* Ensure proper stacking for modals */
+.modal-overlay {
+  z-index: 99999;
+}
+
+/* WordPress media modal z-index fixes */
+.media-modal {
+  z-index: 100000 !important;
+}
+
+.media-modal-backdrop {
+  z-index: 99999 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  #mcl-drawer {
+    max-width: 95vw;
+    left: 2.5vw;
+    right: 2.5vw;
+    transform: none;
+  }
+}
+
+/* Hide action buttons on mobile to save space */
+@media (max-width: 480px) {
+  .group:not(:hover) .group-hover\\:opacity-100 {
+    opacity: 0.6;
+  }
+}
+
+/* Ensure proper line height for content */
+.mcl-item-content {
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Custom checkbox styles that work with Tailwind */
+input[type="checkbox"].mcl-item-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Ensure floating buttons don't interfere */
+.mcl-speed-dial-button,
+.mcl-single-floating-button {
+  z-index: 40;
+}
+
+/* Drawer should be above floating buttons but below modals */
+#mcl-drawer {
+  z-index: 50;
+}
+
+/* Force dragging item to be on top */
+[data-is-dragging="true"] {
+  z-index: 100000000001 !important;
+}
+
+/* In-progress indicator as child element */
+.mcl-progress-indicator {
+  position: absolute;
+  top: 0;
+  left: 0px;
+  width: 4px;
+  height: 100%;
+  background-color: #10b981;
+  border-radius: 0.5rem 0 0 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mcl-progress-indicator.active {
+  opacity: 1;
+}
+
+/* Override custom checkbox styling for native appearance */
+body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox) {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: initial !important;
+  background-image: none !important;
+  position: static !important;
+  transition: none !important;
+  margin: initial !important;
+  padding: initial !important;
+}
+
+body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked::before {
+  content: none !important;
+  display: none !important;
+}
+
+body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked {
+  background-color: initial !important;
+  border-color: initial !important;
+  background-image: none !important;
+}

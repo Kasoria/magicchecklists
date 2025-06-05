@@ -22,6 +22,9 @@ class MCL_Publisher_Checklist {
         add_action('wp_ajax_mcl_save_publisher_checklist_state', array($this, 'ajax_save_checklist_state'));
         add_action('wp_ajax_mcl_get_publisher_checklist_data', array($this, 'ajax_get_publisher_checklist_data'));
         add_action('wp_ajax_mcl_get_meta_fields', array($this, 'ajax_get_meta_fields'));
+        add_action('wp_ajax_mcl_get_requirement_definitions', array($this, 'ajax_get_requirement_definitions'));
+        add_action('wp_ajax_mcl_get_post_types', array($this, 'ajax_get_post_types'));
+        add_action('wp_ajax_save_publisher_checklist', array($this, 'ajax_save_publisher_checklist'));
         add_action('transition_post_status', array($this, 'check_publish_requirements'), 10, 3);
     }
     
@@ -62,6 +65,7 @@ class MCL_Publisher_Checklist {
         wp_localize_script('mcl-publisher-gutenberg', 'mclPublisher', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('mcl_publisher_nonce'),
+            'debug' => defined('WP_DEBUG') && WP_DEBUG,
             'i18n' => array(
                 'publisherChecklist' => __('Publisher Checklist', 'magic-checklists'),
                 'allRequirementsMet' => __('All requirements met!', 'magic-checklists'),
@@ -1242,5 +1246,149 @@ class MCL_Publisher_Checklist {
         }
         
         wp_send_json_success($options);
+    }
+
+    /**
+     * AJAX handler to get requirement definitions
+     */
+    public function ajax_get_requirement_definitions() {
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+        
+        $definitions = MCL_DB_Manager::get_default_publisher_requirements();
+        wp_send_json_success($definitions);
+    }
+    
+    /**
+     * AJAX handler to save publisher checklist
+     */
+    public function ajax_save_publisher_checklist() {
+        check_ajax_referer('mcl_admin_nonce', 'mcl_nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+        
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $title = sanitize_text_field($_POST['title'] ?? '');
+        $description = wp_kses_post($_POST['description'] ?? '');
+        $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', $_POST['post_types']) : array();
+        $active = isset($_POST['active']) && $_POST['active'] === '1';
+        $show_tips = isset($_POST['show_tips']) && $_POST['show_tips'] === '1';
+        $requirements = isset($_POST['requirements']) ? $_POST['requirements'] : array();
+        
+        // Validation
+        if (empty($title)) {
+            wp_send_json_error('Checklist name is required');
+            return;
+        }
+        
+        if (empty($post_types)) {
+            wp_send_json_error('At least one post type must be selected');
+            return;
+        }
+        
+        // Create or update the checklist post
+        $post_data = array(
+            'post_title' => $title,
+            'post_content' => $description,
+            'post_type' => 'mcl_checklist',
+            'post_status' => 'publish',
+            'meta_input' => array(
+                '_mcl_checklist_type' => 'publisher',
+                '_mcl_publisher_post_types' => $post_types,
+                '_mcl_active' => $active ? '1' : '0',
+                '_mcl_show_tips' => $show_tips ? '1' : '0'
+            )
+        );
+        
+        if ($checklist_id) {
+            $post_data['ID'] = $checklist_id;
+            $result = wp_update_post($post_data);
+        } else {
+            $result = wp_insert_post($post_data);
+            $checklist_id = $result;
+        }
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error('Failed to save checklist: ' . $result->get_error_message());
+            return;
+        }
+        
+        // Clear existing requirements
+        MCL_DB_Manager::clear_publisher_requirements($checklist_id);
+        
+        // Save new requirements
+        $processed_requirements = array();
+        foreach ($requirements as $type => $instances) {
+            foreach ($instances as $instance_id => $instance_data) {
+                if (isset($instance_data['enabled']) && $instance_data['enabled'] === '1') {
+                    $processed_requirements[] = array(
+                        'type' => $type,
+                        'instance_id' => sanitize_text_field($instance_data['instance_id'] ?? $instance_id),
+                        'required' => isset($instance_data['required']) && $instance_data['required'] === '1',
+                        'config' => isset($instance_data['config']) ? array_map('sanitize_text_field', $instance_data['config']) : array()
+                    );
+                }
+            }
+        }
+        
+        if (!empty($processed_requirements)) {
+            MCL_DB_Manager::save_publisher_requirements($checklist_id, $processed_requirements);
+        }
+        
+        wp_send_json_success(array(
+            'checklist_id' => $checklist_id,
+            'message' => 'Publisher checklist saved successfully'
+        ));
+    }
+
+    /**
+     * AJAX handler to get available post types for the publisher checklist configuration
+     */
+    public function ajax_get_post_types() {
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+            return;
+        }
+        
+        // Get all public post types that support editor
+        $all_post_types = get_post_types(array('public' => true), 'objects');
+        $formatted_post_types = array();
+        
+        // Exclude certain post types that shouldn't be used with publisher checklists
+        $excluded_types = array('attachment', 'revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_block');
+        
+        foreach ($all_post_types as $post_type_key => $post_type_obj) {
+            // Skip excluded types
+            if (in_array($post_type_key, $excluded_types)) {
+                continue;
+            }
+            
+            // Only include post types that support editor (content editing)
+            if (!post_type_supports($post_type_key, 'editor')) {
+                continue;
+            }
+            
+            $formatted_post_types[] = array(
+                'key' => $post_type_key,
+                'label' => $post_type_obj->labels->name,
+                'singular' => $post_type_obj->labels->singular_name
+            );
+        }
+        
+        // Sort by label
+        usort($formatted_post_types, function($a, $b) {
+            return strcmp($a['label'], $b['label']);
+        });
+        
+        wp_send_json_success($formatted_post_types);
     }
 } 

@@ -103,6 +103,11 @@ class MCL_Image_Handler {
           // Initialize Public class for permission check
           $public = new MCL_Public();
           
+          // Handle stored token for invite users
+          if (isset($_POST['stored_token'])) {
+              $public->set_stored_token($_POST['stored_token']);
+          }
+          
           // Check if user has edit permission
           if (!$public->has_permission($checklist_id, 'edit')) {
               wp_send_json_error(array('message' => 'Permission denied'));
@@ -242,6 +247,11 @@ class MCL_Image_Handler {
     
             // Initialize Public class for permission check
             $public = new MCL_Public();
+            
+            // Handle stored token for invite users
+            if (isset($_POST['stored_token'])) {
+                $public->set_stored_token($_POST['stored_token']);
+            }
             
             // Check if user has edit permission
             if (!$public->has_permission($checklist_id, 'edit')) {

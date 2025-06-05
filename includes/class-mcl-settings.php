@@ -19,6 +19,14 @@ class MCL_Settings {
         add_action('admin_menu', array($this, 'add_settings_page'), 20);
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_settings_scripts'));
+        
+        // Add AJAX handlers for React settings
+        add_action('wp_ajax_mcl_get_settings', array($this, 'ajax_get_settings'));
+        add_action('wp_ajax_mcl_save_settings', array($this, 'ajax_save_settings'));
+        add_action('wp_ajax_mcl_get_menu_items', array($this, 'ajax_get_menu_items'));
+        add_action('wp_ajax_mcl_get_webhook_logs', array($this, 'ajax_get_webhook_logs'));
+        add_action('wp_ajax_mcl_test_webhook', array($this, 'ajax_test_webhook'));
+        add_action('wp_ajax_mcl_clear_webhook_logs', array($this, 'ajax_clear_webhook_logs'));
     }
 
     public function enqueue_settings_scripts($hook) {
@@ -26,26 +34,19 @@ class MCL_Settings {
             return;
         }
 
-        wp_enqueue_script(
-            'mcl-integration-settings',
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/pages/mcl-integration-settings.js',
-            array(),
-            MAGIC_CHECKLISTS_VERSION,
-            true
-        );
+        // Since we're using React for settings now, we don't need the old integration settings JS
+        // The React app handles all the settings functionality
+        
+        // Keep this method for backwards compatibility but don't enqueue the old script
+        // wp_enqueue_script(
+        //     'mcl-integration-settings',
+        //     MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/pages/mcl-integration-settings.js',
+        //     array(),
+        //     MAGIC_CHECKLISTS_VERSION,
+        //     true
+        // );
 
-        wp_localize_script('mcl-integration-settings', 'mclIntegration', array(
-            'nonce' => wp_create_nonce('mcl_integration_nonce'),
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'i18n' => array(
-                'confirmDeleteEndpoint' => __('Are you sure you want to delete this webhook endpoint?', 'magic-checklists'),
-                'testingConnection' => __('Testing connection...', 'magic-checklists'),
-                'testSuccess' => __('Connection successful!', 'magic-checklists'),
-                'testFailed' => __('Connection failed:', 'magic-checklists'),
-                'confirmClearLogs' => __('Are you sure you want to clear all webhook logs?', 'magic-checklists'),
-                'clearLogsFailed' => __('Failed to clear webhook logs', 'magic-checklists')
-            )
-        ));
+        // The React admin app is already enqueued by the main admin class
     }
     
     public function add_settings_page() {
@@ -469,9 +470,15 @@ class MCL_Settings {
             $sanitized['webhook_secret'] = sanitize_text_field($input['webhook_secret']);
         }
         
-        if (isset($input['webhook_endpoints']) && is_array($input['webhook_endpoints'])) {
-            $sanitized['webhook_endpoints'] = array_map('esc_url_raw', $input['webhook_endpoints']);
-            $sanitized['webhook_endpoints'] = array_filter($sanitized['webhook_endpoints']);
+        if (isset($input['webhook_endpoints'])) {
+            if (is_array($input['webhook_endpoints'])) {
+                $sanitized['webhook_endpoints'] = array_map('esc_url_raw', $input['webhook_endpoints']);
+                $sanitized['webhook_endpoints'] = array_filter($sanitized['webhook_endpoints']);
+            } else {
+                $sanitized['webhook_endpoints'] = array();
+            }
+        } else {
+            $sanitized['webhook_endpoints'] = array();
         }
         
         // Encrypt API keys before saving
@@ -1104,5 +1111,177 @@ class MCL_Settings {
         }
         
         return $sanitized;
+    }
+
+    /**
+     * AJAX handler to get all settings
+     */
+    public function ajax_get_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        $general_settings = get_option($this->option_name, array());
+        $integration_settings = get_option($this->integration_option_name, array());
+        $dashboard_settings = get_option('mcl_dashboard_widget_settings', array());
+
+        // Decrypt API keys for display
+        if (isset($integration_settings['mainwp_api_key'])) {
+            $integration_settings['mainwp_api_key'] = $this->decrypt_api_key($integration_settings['mainwp_api_key']);
+        }
+        if (isset($integration_settings['mcl_api_key'])) {
+            $integration_settings['mcl_api_key'] = $this->decrypt_api_key($integration_settings['mcl_api_key']);
+        }
+
+        wp_send_json_success(array(
+            'general' => $general_settings,
+            'integration' => $integration_settings,
+            'dashboard' => $dashboard_settings
+        ));
+    }
+
+    /**
+     * AJAX handler to save settings
+     */
+    public function ajax_save_settings() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        $section = sanitize_text_field($_POST['section']);
+        $settings_json = stripslashes($_POST['settings']);
+        $settings = json_decode($settings_json, true);
+
+        if (!$settings) {
+            wp_send_json_error(array('message' => 'Invalid settings data'));
+            return;
+        }
+
+        switch ($section) {
+            case 'general':
+                $sanitized = $this->sanitize_settings($settings);
+                update_option($this->option_name, $sanitized);
+                break;
+            case 'integration':
+                $sanitized = $this->sanitize_integration_settings($settings);
+                update_option($this->integration_option_name, $sanitized);
+                break;
+            case 'dashboard':
+                $sanitized = $this->sanitize_dashboard_widget_settings($settings);
+                update_option('mcl_dashboard_widget_settings', $sanitized);
+                break;
+            default:
+                wp_send_json_error(array('message' => 'Invalid section'));
+                return;
+        }
+
+        wp_send_json_success(array('message' => 'Settings saved successfully'));
+    }
+
+    /**
+     * AJAX handler to get menu items
+     */
+    public function ajax_get_menu_items() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        global $menu;
+        $menu_items = array();
+        
+        if (is_array($menu)) {
+            foreach ($menu as $item) {
+                if (!empty($item[0]) && !empty($item[2])) {
+                    $title = strip_tags($item[0]);
+                    $menu_items[] = array(
+                        'slug' => $item[2],
+                        'title' => $title
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success($menu_items);
+    }
+
+    /**
+     * AJAX handler to get webhook logs
+     */
+    public function ajax_get_webhook_logs() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        $logs = $this->get_webhook_logs();
+        wp_send_json_success($logs);
+    }
+
+    /**
+     * AJAX handler to test webhook
+     */
+    public function ajax_test_webhook() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        $endpoint = esc_url_raw($_POST['endpoint']);
+        
+        if (!$endpoint) {
+            wp_send_json_error(array('message' => 'Invalid endpoint URL'));
+            return;
+        }
+
+        // Send a test payload
+        $test_payload = array(
+            'event' => 'test',
+            'data' => array(
+                'message' => 'This is a test webhook from MagicChecklists',
+                'timestamp' => current_time('timestamp')
+            )
+        );
+
+        $response = wp_remote_post($endpoint, array(
+            'body' => json_encode($test_payload),
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'User-Agent' => 'MagicChecklists-Webhook/1.0'
+            ),
+            'timeout' => 10
+        ));
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(array('message' => $response->get_error_message()));
+        } else {
+            $status_code = wp_remote_retrieve_response_code($response);
+            if ($status_code >= 200 && $status_code < 300) {
+                wp_send_json_success(array('message' => 'Webhook test successful'));
+            } else {
+                wp_send_json_error(array('message' => 'Webhook returned status: ' . $status_code));
+            }
+        }
+    }
+
+    /**
+     * AJAX handler to clear webhook logs
+     */
+    public function ajax_clear_webhook_logs() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        delete_option('mcl_webhook_logs');
+        wp_send_json_success(array('message' => 'Webhook logs cleared'));
     }
 }

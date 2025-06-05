@@ -361,23 +361,14 @@ class MCL_Tour_Public {
             '1.3.1'
         );
 
-        // Enqueue sortable.js if in tour creation mode
-        if ($is_tour_mode) {
-            wp_enqueue_script(
-                'sortable-js',
-                MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/sortable.min.js',
-                array(),
-                '1.15.0',
-                true
-            );
-        }
+
 
         // Enqueue tour public scripts
         if ($is_tour_mode) {
             wp_enqueue_script(
                 'mcl-tour-creator',
                 MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-tour-creator.js',
-                array('jquery', 'driver-js', 'sortable-js', 'wp-util', 'json2'),
+                array('jquery', 'driver-js', 'wp-util', 'json2'),
                 MAGIC_CHECKLISTS_VERSION,
                 true
             );

@@ -527,6 +527,16 @@ class MCL_DB_Manager {
     }
     
     /**
+     * Clear publisher requirements for a checklist
+     */
+    public static function clear_publisher_requirements($checklist_id) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'mcl_publisher_requirements';
+        return $wpdb->delete($table, ['checklist_id' => $checklist_id], ['%d']);
+    }
+    
+    /**
      * Save publisher requirements for a checklist
      */
     public static function save_publisher_requirements($checklist_id, $requirements) {

@@ -1,0 +1,444 @@
+import React, { useState } from 'react'
+import { Card, Button, Label, TextInput, Alert } from 'flowbite-react'
+import ReactSelect from 'react-select'
+
+// Consistent Checkbox Component
+const Checkbox = ({ id, checked, onChange, label, className = "" }) => (
+  <div className={`flex items-center ${className}`}>
+    <div className="relative">
+      <input 
+        type="checkbox" 
+        id={id}
+        className="sr-only" 
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <label 
+        htmlFor={id}
+        className={`cursor-pointer block w-4 h-4 border-2 rounded transition-all duration-200 ${
+          checked 
+            ? 'bg-brand-accent border-brand-accent' 
+            : 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600 hover:border-brand-accent'
+        }`}
+      >
+        {checked && (
+          <svg className="w-3 h-3 text-brand-dark absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        )}
+      </label>
+    </div>
+    {label && <span className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{label}</span>}
+  </div>
+)
+
+// Improved Toggle Component matching ChecklistsTable style
+const Toggle = ({ checked, onChange, label, disabled = false }) => (
+  <div className="flex items-center">
+    <label className="inline-flex items-center cursor-pointer">
+      <input 
+        type="checkbox" 
+        className="sr-only peer" 
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        disabled={disabled}
+      />
+      <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
+    </label>
+    {label && <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">{label}</span>}
+  </div>
+)
+
+const NotificationSettings = ({ formData, onChange, adminData }) => {
+  const [testingWebhook, setTestingWebhook] = useState({ slack: false, discord: false })
+  const [testingEmail, setTestingEmail] = useState(false)
+
+  const testWebhook = async (platform) => {
+    const webhookField = `${platform}_webhook_url`
+    const webhookUrl = formData[webhookField]
+
+    if (!webhookUrl) {
+      alert('Please enter a webhook URL first')
+      return
+    }
+
+    setTestingWebhook(prev => ({ ...prev, [platform]: true }))
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_test_notification_webhook',
+          platform: platform,
+          webhook_url: webhookUrl,
+          nonce: adminData.nonces?.testWebhook || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        alert(`${platform.charAt(0).toUpperCase() + platform.slice(1)} webhook test successful!`)
+      } else {
+        alert(`Webhook test failed: ${data.data?.message || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Webhook test error:', error)
+      alert('Webhook test failed due to network error')
+    } finally {
+      setTestingWebhook(prev => ({ ...prev, [platform]: false }))
+    }
+  }
+
+  const testEmailNotification = async () => {
+    if (!formData.email_recipients) {
+      alert('Please enter email recipients first')
+      return
+    }
+
+    setTestingEmail(true)
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_test_email_notification',
+          recipients: formData.email_recipients,
+          nonce: adminData.nonces?.testWebhook || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        alert('Test email(s) sent successfully!')
+      } else {
+        alert(`Email test failed: ${data.data?.message || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Email test error:', error)
+      alert('Email test failed due to network error')
+    } finally {
+      setTestingEmail(false)
+    }
+  }
+
+  const validateEmails = (emails) => {
+    if (!emails.trim()) return false
+    
+    const emailList = emails.split(',').map(email => email.trim())
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+    
+    return emailList.every(email => emailRegex.test(email) && email.length <= 254)
+  }
+
+  const validateWebhookUrl = (url, platform) => {
+    if (!url) return true // Empty URLs are allowed
+    
+    const urlRegex = /^https:\/\/[^\s/$.?#].[^\s]*$/
+    if (!urlRegex.test(url)) return false
+    
+    // Platform-specific validation
+    if (platform === 'slack' && !url.startsWith('https://hooks.slack.com/')) return false
+    if (platform === 'discord' && !url.startsWith('https://discord.com/api/webhooks/')) return false
+    
+    return true
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Main Notifications Toggle */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="text-brand-dark dark:text-white font-semibold">Notifications</label>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Enable notifications for this checklist
+            </p>
+          </div>
+          <Toggle
+            checked={formData.notifications_enabled}
+            onChange={(checked) => onChange('notifications_enabled', checked)}
+          />
+        </div>
+      </Card>
+
+      {formData.notifications_enabled && (
+        <>
+          {/* Notification Methods */}
+          <Card>
+            <div className="space-y-4">
+              <label className="text-brand-dark dark:text-white font-semibold">Notification Methods</label>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Please check at least one option for the notifications to work.
+              </p>
+
+              <div className="space-y-3">
+                <Checkbox
+                  id="email_enabled"
+                  checked={formData.email_enabled}
+                  onChange={(checked) => onChange('email_enabled', checked)}
+                  label="Email Notifications"
+                />
+
+                <Checkbox
+                  id="integration_enabled"
+                  checked={formData.integration_enabled}
+                  onChange={(checked) => onChange('integration_enabled', checked)}
+                  label="Integration Notifications"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Email Settings */}
+          {formData.email_enabled && (
+            <Card>
+              <div className="space-y-4">
+                <label className="text-brand-dark dark:text-white font-semibold">Email Settings</label>
+                
+                <div>
+                  <label htmlFor="email_recipients" className="text-brand-dark dark:text-white">Email Recipients</label>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-1">
+                      <TextInput
+                        id="email_recipients"
+                        value={formData.email_recipients || ''}
+                        onChange={(e) => onChange('email_recipients', e.target.value)}
+                        placeholder="email1@example.com, email2@example.com"
+                        color={
+                          formData.email_recipients && !validateEmails(formData.email_recipients) 
+                            ? 'failure' 
+                            : 'gray'
+                        }
+                      />
+                      {formData.email_recipients && !validateEmails(formData.email_recipients) && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Please enter valid email addresses separated by commas
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      color="blue"
+                      outline
+                      onClick={testEmailNotification}
+                      disabled={testingEmail || !formData.email_recipients}
+                    >
+                      {testingEmail ? 'Testing...' : 'Test Email'}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    Enter email addresses separated by commas
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Integration Settings */}
+          {formData.integration_enabled && (
+            <Card>
+              <div className="space-y-6">
+                <label className="text-brand-dark dark:text-white font-semibold">Integration Settings</label>
+                
+                {/* Slack Webhook */}
+                <div>
+                  <label htmlFor="slack_webhook_url" className="text-brand-dark dark:text-white">Slack Webhook URL</label>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-1">
+                      <TextInput
+                        id="slack_webhook_url"
+                        value={formData.slack_webhook_url || ''}
+                        onChange={(e) => onChange('slack_webhook_url', e.target.value)}
+                        placeholder="https://hooks.slack.com/services/..."
+                        color={
+                          formData.slack_webhook_url && !validateWebhookUrl(formData.slack_webhook_url, 'slack')
+                            ? 'failure'
+                            : 'gray'
+                        }
+                      />
+                      {formData.slack_webhook_url && !validateWebhookUrl(formData.slack_webhook_url, 'slack') && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Please enter a valid Slack webhook URL
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      color="blue"
+                      outline
+                      onClick={() => testWebhook('slack')}
+                      disabled={testingWebhook.slack || !formData.slack_webhook_url}
+                    >
+                      {testingWebhook.slack ? 'Testing...' : 'Test Slack'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Discord Webhook */}
+                <div>
+                  <label htmlFor="discord_webhook_url" className="text-brand-dark dark:text-white">Discord Webhook URL</label>
+                  <div className="flex items-start space-x-2">
+                    <div className="flex-1">
+                      <TextInput
+                        id="discord_webhook_url"
+                        value={formData.discord_webhook_url || ''}
+                        onChange={(e) => onChange('discord_webhook_url', e.target.value)}
+                        placeholder="https://discord.com/api/webhooks/..."
+                        color={
+                          formData.discord_webhook_url && !validateWebhookUrl(formData.discord_webhook_url, 'discord')
+                            ? 'failure'
+                            : 'gray'
+                        }
+                      />
+                      {formData.discord_webhook_url && !validateWebhookUrl(formData.discord_webhook_url, 'discord') && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Please enter a valid Discord webhook URL
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      color="blue"
+                      outline
+                      onClick={() => testWebhook('discord')}
+                      disabled={testingWebhook.discord || !formData.discord_webhook_url}
+                    >
+                      {testingWebhook.discord ? 'Testing...' : 'Test Discord'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Notification Triggers */}
+          <Card>
+            <div className="space-y-4">
+              <label className="text-brand-dark dark:text-white font-semibold">Notification Triggers</label>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Choose which events should trigger notifications
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Checkbox
+                  id="notify_on_new_item"
+                  checked={formData.notify_on_new_item}
+                  onChange={(checked) => onChange('notify_on_new_item', checked)}
+                  label="New item added"
+                />
+
+                <Checkbox
+                  id="notify_on_delete_item"
+                  checked={formData.notify_on_delete_item}
+                  onChange={(checked) => onChange('notify_on_delete_item', checked)}
+                  label="Item deleted"
+                />
+
+                <Checkbox
+                  id="notify_on_check_item"
+                  checked={formData.notify_on_check_item}
+                  onChange={(checked) => onChange('notify_on_check_item', checked)}
+                  label="Item checked"
+                />
+
+                <Checkbox
+                  id="notify_on_uncheck_item"
+                  checked={formData.notify_on_uncheck_item}
+                  onChange={(checked) => onChange('notify_on_uncheck_item', checked)}
+                  label="Item unchecked"
+                />
+
+                <Checkbox
+                  id="notify_on_deadline"
+                  checked={formData.notify_on_deadline}
+                  onChange={(checked) => onChange('notify_on_deadline', checked)}
+                  label="Deadline approaching"
+                  className="md:col-span-2"
+                />
+              </div>
+
+              {/* Deadline Settings */}
+              {formData.notify_on_deadline && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <label htmlFor="deadline_threshold_hours" className="text-brand-dark dark:text-white">Send deadline notification when</label>
+                    <div className="flex items-center space-x-2">
+                      <TextInput
+                        id="deadline_threshold_hours"
+                        type="number"
+                        min="1"
+                        value={formData.deadline_threshold_hours || '24'}
+                        onChange={(e) => onChange('deadline_threshold_hours', e.target.value)}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">hours remaining</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Notification Frequency */}
+          <Card>
+            <div className="space-y-4">
+              <label className="text-brand-dark dark:text-white font-semibold">Notification Frequency</label>
+              
+              <div>
+                <ReactSelect
+                  inputId="batch_interval"
+                  value={{ value: formData.batch_interval || 'fifteen_minutes', label: 
+                    formData.batch_interval === 'immediate' ? 'Send Immediately' :
+                    formData.batch_interval === 'hourly' ? 'Hourly' :
+                    formData.batch_interval === 'daily' ? 'Daily Digest' :
+                    'Every 15 Minutes'
+                  }}
+                  onChange={(selectedOption) => onChange('batch_interval', selectedOption.value)}
+                  options={[
+                    { value: 'immediate', label: 'Send Immediately' },
+                    { value: 'fifteen_minutes', label: 'Every 15 Minutes' },
+                    { value: 'hourly', label: 'Hourly' },
+                    { value: 'daily', label: 'Daily Digest' }
+                  ]}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  placeholder="Select frequency..."
+                />
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  Choose how often notifications should be sent
+                </p>
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Validation Warnings */}
+      {formData.notifications_enabled && (
+        <>
+          {!formData.email_enabled && !formData.integration_enabled && (
+            <Alert color="warning">
+              <span className="font-medium">No notification methods enabled!</span> Please enable at least one notification method for notifications to work.
+            </Alert>
+          )}
+
+          {formData.email_enabled && !formData.email_recipients && (
+            <Alert color="warning">
+              <span className="font-medium">No email recipients!</span> Please add email recipients to receive email notifications.
+            </Alert>
+          )}
+
+          {formData.integration_enabled && !formData.slack_webhook_url && !formData.discord_webhook_url && (
+            <Alert color="warning">
+              <span className="font-medium">No webhook URLs configured!</span> Please add at least one webhook URL for integration notifications.
+            </Alert>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export default NotificationSettings 

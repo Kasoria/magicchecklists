@@ -330,15 +330,6 @@ textarea.mcl-input-error {
   margin-left: var(--mcl-spacing-sm);
 }
   
-  /* Sortable States */
-.sortable-ghost {
-    opacity: 0.4;
-}
-
-.sortable-drag {
-    opacity: 0.9;
-}
-  
   /* Animations */
   @keyframes fadeIn {
     from { 
@@ -1777,44 +1768,18 @@ textarea.mcl-input-error {
     flex: 1;
 }
 
-/* Add nesting drag and drop styles */
-.mcl-items-list {
-    padding-left: 20px; /* Add space for nesting */
-}
-
-.mcl-items-list li.sortable-drag {
-    opacity: 0.8;
-}
-
 /* Visual guide for nesting zones */
 .mcl-items-list li.sortable-ghost::after {
     content: '';
     position: absolute;
     top: 0;
-    left: 40px; /* Increased from 20px to 40px to match the new threshold */
+    left: 40px;
     right: 0;
     bottom: 0;
     background: rgba(242, 218, 34, 0.1);
     border: 2px dashed var(--mcl-accent);
     border-radius: var(--mcl-radius-md);
     pointer-events: none;
-}
-
-/* Nesting indicator during drag */
-.mcl-nesting-indicator {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 40px; /* Increased from 20px to 40px */
-    background-color: rgba(242, 218, 34, 0.1);
-    border-right: 2px dashed var(--mcl-accent);
-    display: none;
-    pointer-events: none;
-}
-
-.mcl-items-list li.is-nesting .mcl-nesting-indicator {
-    display: block;
 }
 
 /* Lock Button Styles */

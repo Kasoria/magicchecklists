@@ -74,9 +74,14 @@ class MCL_Public {
         add_action('wp_ajax_nopriv_mcl_save_item_deadline', array($this, 'save_item_deadline'));
         add_action('wp_ajax_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
         add_action('wp_ajax_nopriv_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
+        add_action('wp_ajax_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
+        add_action('wp_ajax_nopriv_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
     }
 
-    private function should_load_assets() {
+    /**
+     * Determine if assets should be loaded for the current page
+     */
+    public function should_load_assets() {
         // for these posts (either directly here or within has_permission) should be efficient.
         $active_checklists = get_posts(array(
             'post_type' => 'mcl_checklist',
@@ -120,6 +125,15 @@ class MCL_Public {
             if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                 return true; // Found a reason to load assets.
             }
+            
+            // For frontend pages, also check if this is a common frontend page that should load assets
+            if (!is_admin()) {
+                // If no specific restrictions are set (no allowed_pages and no allowed_urls), 
+                // load assets on all frontend pages by default
+                if (empty($allowed_pages) && empty($allowed_urls)) {
+                    return true;
+                }
+            }
         }
 
         // If the loop completes without returning true, no checklist met the criteria for loading assets.
@@ -137,14 +151,25 @@ class MCL_Public {
             return true;
         }
     
+        // Check allowed pages (admin pages)
         $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
         if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
             return true;
         }
-    
+        
+        // Check allowed URLs (both admin and frontend)
         $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
         if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
             return true;
+        }
+        
+        // For frontend pages, also check if this is a common frontend page that should show floating buttons
+        if (!is_admin()) {
+            // If no specific restrictions are set (no allowed_pages and no allowed_urls), 
+            // show on all frontend pages by default
+            if (empty($allowed_pages) && empty($allowed_urls)) {
+                return true;
+            }
         }
     
         return false;
@@ -574,6 +599,11 @@ class MCL_Public {
                     $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
                     if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                         $is_visible_based_on_conditions = true;
+                    } else {
+                        // For frontend pages, show floating buttons if no specific restrictions are set
+                        if (!is_admin() && empty($allowed_pages) && empty($allowed_urls)) {
+                            $is_visible_based_on_conditions = true;
+                        }
                     }
                 }
             }
@@ -717,22 +747,15 @@ class MCL_Public {
             '1.15.3', 
             true
         );
-        
-        wp_enqueue_script(
-            'sortablejs', 
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/sortable.min.js',
-            array(), 
-            '1.15.3', 
-            true
-        );
     
-        wp_register_script(
-            'mcl-drawer',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-drawer.js',
-            array('interactjs'),
-            MAGIC_CHECKLISTS_VERSION,
-            true
-        );
+        // OLD mcl-drawer.js - Now replaced by React component
+        // wp_register_script(
+        //     'mcl-drawer',
+        //     MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-drawer.js',
+        //     array('interactjs'),
+        //     MAGIC_CHECKLISTS_VERSION,
+        //     true
+        // );
     
         wp_enqueue_style(
             'mcl-fonts',
@@ -743,7 +766,7 @@ class MCL_Public {
         
         wp_enqueue_style(
             'mcl-drawer',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-drawer.css',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-drawer-minimal.css',
             array('mcl-fonts'),
             MAGIC_CHECKLISTS_VERSION
         );
@@ -775,13 +798,13 @@ class MCL_Public {
         wp_enqueue_script(
             'mcl-boot',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-boot.js',
-            array('mcl-drawer', 'sortablejs'),
+            array(), // Removed 'mcl-drawer' dependency since React handles it
             MAGIC_CHECKLISTS_VERSION,
             true
         );
     
         add_filter('script_loader_tag', function($tag, $handle) {
-            if (in_array($handle, ['mcl-drawer', 'mcl-boot'])) {
+            if (in_array($handle, ['mcl-boot'])) { // Removed 'mcl-drawer' since it's no longer loaded
                 return str_replace(' src=', ' type="module" src=', $tag);
             }
             return $tag;
@@ -798,7 +821,8 @@ class MCL_Public {
                 'public_only' => !$this->is_administrator()
             ),
             'settings' => array(
-                'enable_navigation' => MCL_Settings::get_setting('enable_checklist_navigation', false)
+                'enable_navigation' => MCL_Settings::get_setting('enable_checklist_navigation', false),
+                'enable_progress_counter' => MCL_Settings::get_setting('enable_progress_counter', false)
             ),
             'i18n' => array(
                 'uncheckAllConfirm' => __('Are you sure you want to uncheck all items? This cannot be undone.', 'magic-checklists')
@@ -1006,103 +1030,11 @@ class MCL_Public {
     }
 
     public function render_checklist_drawer() {
-        // Get the current screen
-        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-        
-        // Don't render on edit page
-        if ($screen && $screen->id === 'magicchecklists_page_mcl_add_new') {
-            return;
-        }
-
-        $is_bricks_iframe = false;
-        if (isset($_GET['bricks']) || (function_exists('bricks_is_builder') && bricks_is_builder())) {
-            if (function_exists('bricks_is_builder_iframe') && bricks_is_builder_iframe()) {
-                $is_bricks_iframe = true;
-            }
-        }
-
-        // Don't render if we're in Bricks iframe
-        if ($is_bricks_iframe) {
-            return;
-        }
-
-        if ($this->should_load_assets()) {
-            // Determine base theme for the drawer container (light/dark)
-            $theme = 'light'; // Default theme
-
-            // This is a fallback and for general styling, not for specific custom themes.
-            $first_active_checklist_args = array(
-                'post_type' => 'mcl_checklist',
-                'meta_key' => '_mcl_active',
-                'meta_value' => '1',
-                'posts_per_page' => 1,
-                'fields' => 'ids' // We only need the ID to get meta
-            );
-            $first_active_checklists = get_posts($first_active_checklist_args);
-    
-            if (!empty($first_active_checklists)) {
-                $checklist_id_for_theme = $first_active_checklists[0];
-                $checklist_theme_meta = get_post_meta($checklist_id_for_theme, '_mcl_theme', true);
-                // Use the theme if it's explicitly 'light' or 'dark'. Ignore 'custom' for the base container class.
-                if ($checklist_theme_meta && ($checklist_theme_meta === 'light' || $checklist_theme_meta === 'dark')) {
-                    $theme = $checklist_theme_meta;
-                }
-            }
-    
-            include MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/views/mcl-drawer-container.php';
-        }
+        return;
     }
 
     public function render_floating_buttons() {
-        // Get the current screen
-        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-        
-        if ($screen && $screen->id === 'magicchecklists_page_mcl_add_new') {
-            return;
-        }
-
-        $is_bricks_iframe = false;
-        if (isset($_GET['bricks']) || (function_exists('bricks_is_builder') && bricks_is_builder())) {
-            if (function_exists('bricks_is_builder_iframe') && bricks_is_builder_iframe()) {
-                $is_bricks_iframe = true;
-            }
-        }
-
-        if ($is_bricks_iframe) {
-            return;
-        }
-
-        // Use the new method here as well to determine if buttons should render.
-        // The original logic in has_active_floating_buttons also checked get_visible_checklists.
-        // The view mcl-floating-button.php uses $active_checklists which are post objects.
-        // So, get_visible_checklists_with_theme needs to return enough info for this, or we requery.
-        // For simplicity, let's requery here using the old get_visible_checklists if the view absolutely needs post objects.
-        // Or, adjust mcl-floating-button.php to work with IDs and titles fetched differently.
-        // Reverting to fetching full post objects for this specific rendering function if needed.
-        // However, let's try to adapt. The view seems to use ->ID and get_the_title(ID) and get_post_meta for _mcl_short_title.
-
-        // Create a structure that the view can use from $active_checklists_with_theme
-        // This avoids calling get_visible_checklists() again if possible.
-        $active_checklists_for_view = [];
-        foreach ($this->get_visible_checklists_with_theme() as $data) {
-            $post_obj = get_post($data['id']); // Fetch post object
-            if ($post_obj) {
-                 // The view expects an array of post objects.
-                $active_checklists_for_view[] = $post_obj; 
-            }
-        }
-        
-        // For mcl-floating-button.php, it iterates $active_checklists and uses $checklist->ID, 
-        // get_the_title($checklist->ID), get_post_meta($checklist->ID, '_mcl_short_title', true), etc.
-        // So we need to pass it $active_checklists_for_view which contains post objects.
-        $active_checklists = $active_checklists_for_view; // This is what the view expects
-
-        if(empty($active_checklists)) { // Double check if after fetching posts, any are left.
-            return;
-        }
-        
-        include MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/views/mcl-floating-button.php';
-        
+        return;
     }
 
     private function should_render_on_current_page() {
@@ -1268,8 +1200,16 @@ class MCL_Public {
             return;
         }
     
+        // Handle checked_items as JSON string (consistent with other endpoints)
         $checked_items = isset($_POST['checked_items']) ? 
-            array_map('sanitize_text_field', $_POST['checked_items']) : array();
+            json_decode(stripslashes($_POST['checked_items']), true) : array();
+        
+        if (!is_array($checked_items)) {
+            $checked_items = array();
+        }
+        
+        // Sanitize the items
+        $checked_items = array_map('sanitize_text_field', $checked_items);
         
         $old_checked_items = $this->get_checked_state($checklist_id, $context);
         $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
@@ -1371,30 +1311,57 @@ class MCL_Public {
             $hours = intval($time_parts[0]);
             $minutes = intval($time_parts[1]);
     
-            $now = current_time('timestamp');
-            $today = strtotime(date('Y-m-d', $now) . " {$hours}:{$minutes}:00");
-            $next = $today;
+            // Use WordPress timezone consistently
+            $timezone = wp_timezone();
+            $now = new DateTime('now', $timezone);
+            $today = new DateTime($now->format('Y-m-d') . ' ' . sprintf('%02d:%02d:00', $hours, $minutes), $timezone);
     
             switch ($reset_interval) {
                 case 'daily':
-                    $next = strtotime('+1 day', $today);
+                    $next = clone $today;
+                    $next->add(new DateInterval('P1D'));
                     break;
     
                 case 'weekly':
-                    $next = strtotime('next monday', $today);
+                    $week_day = get_post_meta($checklist_id, '_mcl_week_day', true) ?: '1';
+                    // Calculate days until next occurrence of the target day
+                    $current_week_day = (int)$now->format('N'); // 1 = Monday, 7 = Sunday
+                    $days_until_target = ($week_day - $current_week_day + 7) % 7;
+                    if ($days_until_target === 0) {
+                        $days_until_target = 7; // Next week if today is the target day
+                    }
+                    $next = clone $today;
+                    $next->add(new DateInterval('P' . $days_until_target . 'D'));
                     break;
     
                 case 'monthly':
-                    $next = strtotime('first day of next month', $today);
+                    $month_day = get_post_meta($checklist_id, '_mcl_month_day', true) ?: '1';
+                    $next = new DateTime($now->format('Y-m-') . sprintf('%02d', $month_day) . ' ' . sprintf('%02d:%02d:00', $hours, $minutes), $timezone);
+                    // If we're past this month's target date, move to next month
+                    if ($now >= $next) {
+                        $next->add(new DateInterval('P1M'));
+                    }
                     break;
     
                 case 'custom':
-                    $custom_days = get_post_meta($checklist_id, '_mcl_custom_days', true) ?: 1;
-                    $next = strtotime("+{$custom_days} days", $today);
+                    $custom_months = intval(get_post_meta($checklist_id, '_mcl_custom_months', true)) ?: 0;
+                    $custom_weeks = intval(get_post_meta($checklist_id, '_mcl_custom_weeks', true)) ?: 0;
+                    $custom_days = intval(get_post_meta($checklist_id, '_mcl_custom_days', true)) ?: 0;
+                    
+                    // Convert all to days
+                    $total_days = ($custom_months * 30) + ($custom_weeks * 7) + $custom_days;
+                    
+                    // If no interval was set, default to 1 day
+                    if ($total_days === 0) {
+                        $total_days = 1;
+                    }
+                    
+                    $next = clone $today;
+                    $next->add(new DateInterval('P' . $total_days . 'D'));
                     break;
             }
     
-            update_post_meta($checklist_id, '_mcl_reset_next', $next);
+            update_post_meta($checklist_id, '_mcl_reset_next', $next->getTimestamp());
     
             $reset_counter = intval(get_post_meta($checklist_id, '_mcl_reset_counter', true)) ?: 1;
             update_post_meta($checklist_id, '_mcl_reset_counter', $reset_counter + 1);
@@ -1518,5 +1485,74 @@ class MCL_Public {
         }
 
         wp_send_json_success();
+    }
+
+    public function get_active_checklists_data() {
+        try {
+            // Optional nonce verification for logged-in users
+            if (is_user_logged_in() && isset($_POST['nonce'])) {
+                if (!wp_verify_nonce($_POST['nonce'], 'mcl_admin_nonce')) {
+                    wp_send_json_error(array(
+                        'message' => 'Invalid nonce',
+                        'code' => 403
+                    ));
+                    return;
+                }
+            }
+            
+            // Get active checklists with trigger button enabled
+            $active_checklists = $this->get_visible_checklists_with_theme();
+            
+            // Format the checklists for React
+            $formatted_checklists = array();
+            foreach ($active_checklists as $checklist_data) {
+                $checklist_id = $checklist_data['id'];
+                
+                // Get the full post object
+                $checklist = get_post($checklist_id);
+                if (!$checklist) {
+                    continue; // Skip if post doesn't exist
+                }
+                
+                // Get meta values
+                $priority = get_post_meta($checklist_id, '_mcl_priority', true) ?: 'none';
+                $short_title = get_post_meta($checklist_id, '_mcl_short_title', true) ?: '';
+                $button_position = get_post_meta($checklist_id, '_mcl_button_position', true) ?: 'bottom-right';
+                $theme = get_post_meta($checklist_id, '_mcl_theme', true) ?: 'light';
+                
+                $priority_colors = MCL_Priority_Utils::get_priority_colors();
+                $priority_levels = MCL_Priority_Utils::get_priority_levels();
+                
+                $formatted_checklists[] = array(
+                    'id' => $checklist->ID,
+                    'title' => $checklist->post_title,
+                    'shortTitle' => $short_title,
+                    'buttonPosition' => $button_position,
+                    'priority' => $priority,
+                    'priorityColor' => $priority_colors[$priority] ?? '#cccccc',
+                    'priorityLabel' => $priority_levels[$priority] ?? 'None',
+                    'theme' => $theme
+                );
+            }
+            
+            // Get the base theme for the drawer
+            $theme = 'light'; // Default theme
+            if (!empty($active_checklists)) {
+                $first_checklist_theme = get_post_meta($active_checklists[0]['id'], '_mcl_theme', true);
+                if ($first_checklist_theme && ($first_checklist_theme === 'light' || $first_checklist_theme === 'dark')) {
+                    $theme = $first_checklist_theme;
+                }
+            }
+            
+            wp_send_json_success(array(
+                'checklists' => $formatted_checklists,
+                'theme' => $theme
+            ));
+        } catch (Exception $e) {
+            wp_send_json_error(array(
+                'message' => 'Error loading checklist data',
+                'code' => 500
+            ));
+        }
     }
 }

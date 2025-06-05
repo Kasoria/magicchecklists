@@ -55,15 +55,6 @@ class MCL_Tour_Admin {
 
         // Enqueue admin common scripts first
         wp_enqueue_script('wp-util');
-        
-        // Enqueue sortable.js for drag and drop functionality
-        wp_enqueue_script(
-            'sortable-js',
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/sortable.min.js',
-            array(),
-            '1.15.0',
-            true
-        );
 
         // Enqueue Choices.js for multi-select dropdowns
         wp_enqueue_style(
@@ -76,7 +67,7 @@ class MCL_Tour_Admin {
         wp_enqueue_script(
             'choicesjs',
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/vendor/choices.min.js',
-            array('sortable-js'),
+            array(),
             '11.0.2',
             true
         );
@@ -85,7 +76,7 @@ class MCL_Tour_Admin {
         wp_enqueue_script(
             'mcl-tour-admin',
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-tour-admin.js',
-            array('wp-util', 'sortable-js', 'choicesjs'),
+            array('wp-util', 'choicesjs'),
             MAGIC_CHECKLISTS_VERSION,
             true
         );

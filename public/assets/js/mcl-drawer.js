@@ -2,10 +2,22 @@ import { createManagers } from './modules/index.js';
 import { ImageManager } from './modules/mcl-image-manager.js';
 class MagicChecklistDrawer {
     constructor() {
-        // Core elements
+        // Core elements - add null checks
         this.drawer = document.getElementById('mcl-drawer');
+        if (!this.drawer) {
+            throw new Error('MagicChecklistDrawer: Required element #mcl-drawer not found. Ensure React components have rendered before initializing.');
+        }
+        
         this.drawerContent = this.drawer.querySelector('.mcl-drawer-content');
+        if (!this.drawerContent) {
+            throw new Error('MagicChecklistDrawer: Required element .mcl-drawer-content not found within #mcl-drawer.');
+        }
+        
         this.itemsList = document.getElementById('mcl-items');
+        if (!this.itemsList) {
+            throw new Error('MagicChecklistDrawer: Required element #mcl-items not found. Ensure React components have rendered before initializing.');
+        }
+        
         this.imageManager = new ImageManager({
             itemsList: this.itemsList,
             drawer: this,
@@ -104,6 +116,14 @@ class MagicChecklistDrawer {
         this.activeErrorTimers = new Map();
         this.globalError = document.getElementById('mcl-global-rate-limit-error');
         this.drawerError = document.getElementById('mcl-drawer-rate-limit-error');
+
+        // Warn if error elements are missing (non-critical)
+        if (!this.globalError) {
+            console.warn('MagicChecklistDrawer: Error element #mcl-global-rate-limit-error not found');
+        }
+        if (!this.drawerError) {
+            console.warn('MagicChecklistDrawer: Error element #mcl-drawer-rate-limit-error not found');
+        }
 
         // Initialize storage and bind error events
         this.bindErrorEvents();
@@ -468,30 +488,39 @@ class MagicChecklistDrawer {
     }
 
     bindFloatingButtons() {
-        // Select all floating buttons that aren't in the FAB list, plus the FAB trigger button
-        const floatingButtons = document.querySelectorAll('.mcl-floating-button:not(.mcl-fab-list .mcl-floating-button), .mcl-multi-fab-trigger');
+        // Select speed dial triggers and single floating buttons
+        const speedDialTriggers = document.querySelectorAll('.mcl-speed-dial-trigger');
+        const singleFloatingButtons = document.querySelectorAll('.mcl-single-floating-button');
         
-        floatingButtons.forEach(button => {
+        // Handle speed dial triggers
+        speedDialTriggers.forEach(trigger => {
+            trigger.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Check if element was just dragged - always skip click handling in this case
+                if (trigger.getAttribute('data-just-dragged') === 'true') {
+                    trigger.removeAttribute('data-just-dragged');
+                    return;
+                }
+
+                this.toggleSpeedDial(trigger);
+            });
+        });
+
+        // Handle single floating buttons
+        singleFloatingButtons.forEach(button => {
             button.addEventListener('click', async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
 
-                const target = event.currentTarget;
-
                 // Check if element was just dragged - always skip click handling in this case
-                if (target.getAttribute('data-just-dragged') === 'true') {
-                    target.removeAttribute('data-just-dragged');
+                if (button.getAttribute('data-just-dragged') === 'true') {
+                    button.removeAttribute('data-just-dragged');
                     return;
                 }
 
-                // Handle FAB trigger button
-                if (target.classList.contains('mcl-multi-fab-trigger')) {
-                    this.toggleFabList(target);
-                    return;
-                }
-
-                // Handle regular floating button
-                const checklistId = target.dataset.checklistId;
+                const checklistId = button.dataset.checklistId;
                 if (checklistId) {
                     if (this.drawer.classList.contains('mcl-drawer-open') && this.currentChecklistId === checklistId) {
                         this.closeDrawer();
@@ -502,8 +531,8 @@ class MagicChecklistDrawer {
             });
         });
 
-        // Handle clicks on buttons inside the FAB list
-        document.querySelectorAll('.mcl-fab-list .mcl-floating-button').forEach(button => {
+        // Handle clicks on buttons inside the speed dial menu
+        document.querySelectorAll('.mcl-speed-dial-button').forEach(button => {
             button.addEventListener('click', async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -511,10 +540,11 @@ class MagicChecklistDrawer {
                 const checklistId = button.dataset.checklistId;
                 if (!checklistId) return;
                 
-                // Close the FAB list first
-                const fabTrigger = button.closest('.mcl-floating-buttons')?.querySelector('.mcl-multi-fab-trigger');
-                if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
-                    this.toggleFabList(fabTrigger, false);
+                // Close the speed dial menu first
+                const speedDialWrapper = button.closest('.mcl-speed-dial-wrapper');
+                const speedDialTrigger = speedDialWrapper?.querySelector('.mcl-speed-dial-trigger');
+                if (speedDialTrigger && speedDialTrigger.getAttribute('aria-expanded') === 'true') {
+                    this.toggleSpeedDial(speedDialTrigger, false);
                 }
 
                 // Then toggle the checklist
@@ -522,56 +552,57 @@ class MagicChecklistDrawer {
             });
         });
 
-        // Close FAB list when clicking outside
+        // Close speed dial when clicking outside
         document.addEventListener('click', (event) => {
-            const fabContainer = document.querySelector('.mcl-floating-buttons.mcl-is-multi-trigger');
-            if (fabContainer && !fabContainer.contains(event.target)) {
-                const fabTrigger = fabContainer.querySelector('.mcl-multi-fab-trigger');
-                if (fabTrigger && fabTrigger.getAttribute('aria-expanded') === 'true') {
-                    this.toggleFabList(fabTrigger, false);
+            const speedDialContainer = document.querySelector('.mcl-speed-dial-container.mcl-multi-fab');
+            if (speedDialContainer && !speedDialContainer.contains(event.target)) {
+                const speedDialTrigger = speedDialContainer.querySelector('.mcl-speed-dial-trigger');
+                if (speedDialTrigger && speedDialTrigger.getAttribute('aria-expanded') === 'true') {
+                    this.toggleSpeedDial(speedDialTrigger, false);
                 }
             }
         });
     }
 
-    toggleFabList(fabTrigger, forceState = null) {
-        const fabList = fabTrigger.nextElementSibling;
-        if (!fabList || !fabList.classList.contains('mcl-fab-list')) return;
+    toggleSpeedDial(speedDialTrigger, forceState = null) {
+        const speedDialWrapper = speedDialTrigger.closest('.mcl-speed-dial-wrapper');
+        const speedDialMenu = speedDialWrapper?.querySelector('.mcl-speed-dial-menu');
+        if (!speedDialMenu) return;
 
         // Get current state and determine new state
-        const isExpanded = fabTrigger.getAttribute('aria-expanded') === 'true';
+        const isExpanded = speedDialTrigger.getAttribute('aria-expanded') === 'true';
         const newState = forceState !== null ? forceState : !isExpanded;
 
-        fabTrigger.setAttribute('aria-expanded', newState.toString());
+        speedDialTrigger.setAttribute('aria-expanded', newState.toString());
         
         if (newState) {
-            // Opening the list
-            fabList.hidden = false;
+            // Opening the menu
+            speedDialMenu.classList.add('open');
             
-            // Ensure the FAB list stays within viewport
+            // Ensure the speed dial menu stays within viewport
             requestAnimationFrame(() => {
-                const fabContainer = fabTrigger.closest('.mcl-floating-buttons');
+                const speedDialContainer = speedDialTrigger.closest('.mcl-speed-dial-container');
                 const viewportWidth = document.documentElement.clientWidth;
                 const viewportHeight = document.documentElement.clientHeight;
-                const listRect = fabList.getBoundingClientRect();
+                const menuRect = speedDialMenu.getBoundingClientRect();
                 
-                // Check if the list is outside the viewport
-                if (listRect.left < 0 || 
-                    listRect.right > viewportWidth || 
-                    listRect.top < 0 || 
-                    listRect.bottom > viewportHeight) {
+                // Check if the menu is outside the viewport
+                if (menuRect.left < 0 || 
+                    menuRect.right > viewportWidth || 
+                    menuRect.top < 0 || 
+                    menuRect.bottom > viewportHeight) {
                     
                     // Adjust the container position if draggable
-                    if (fabContainer.classList.contains('has-draggable-fab') && this.drawer.draggable) {
-                        this.drawer.draggable.adjustGroupPosition(fabContainer);
+                    if ((speedDialContainer.classList.contains('has-draggable') || 
+                         speedDialContainer.classList.contains('has-draggable-fab')) && 
+                        this.drawer.draggable) {
+                        this.drawer.draggable.adjustGroupPosition(speedDialContainer);
                     }
                 }
             });
         } else {
-            // Closing the list - wait for transition
-            setTimeout(() => {
-                fabList.hidden = true;
-            }, 200);
+            // Closing the menu
+            speedDialMenu.classList.remove('open');
         }
     }
 
@@ -3598,7 +3629,7 @@ class MagicChecklistDrawer {
                     if (storedResetCounter !== reset_info.reset_counter.toString()) {
                         checklistData.checked_state = [];
                         sessionStorage.setItem(`mcl_reset_counter_${checklistData.checklist_id}`, reset_info.reset_counter);
-                        this.uncheckAllItems();
+                        this.uncheckAllItemsVisually();
                     }
                 } catch (error) {
                     console.error('Error handling reset for logged-in user:', error);
@@ -3629,7 +3660,7 @@ class MagicChecklistDrawer {
                     checklistData.checked_state = [];
                     
                     sessionStorage.setItem(`mcl_reset_counter_${checklistData.checklist_id}`, reset_info.reset_counter);
-                    this.uncheckAllItems();
+                    this.uncheckAllItemsVisually();
                 }
                 
             } catch (error) {
@@ -3649,35 +3680,8 @@ class MagicChecklistDrawer {
             if (existingInfo) {
                 existingInfo.remove();
             }
-    
-            // Create and add new reset info
-            const resetInfo = document.createElement('div');
-            resetInfo.className = 'mcl-reset-info';
-            
-            // Calculate time remaining until reset
-            const now = Math.floor(Date.now() / 1000);
-            const timeRemaining = reset_info.next_reset - now;
-            
-            // Format time remaining
-            const formattedTime = this.formatTimeRemaining(timeRemaining);
-            
-            resetInfo.innerHTML = `
-                <span class="mcl-reset-info-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                </span>
-                <span class="mcl-reset-info-text">
-                    Resets in: ${formattedTime}
-                </span>
-            `;
-    
-            // Add to drawer header
-            const headerActions = this.drawerContent.querySelector('.mcl-drawer-actions');
-            if (headerActions) {
-                headerActions.appendChild(resetInfo);
-            }
+            // Delegate to centralized display method
+            this.updateNextResetDisplay(reset_info.next_reset);
         }
     }
 
@@ -3700,7 +3704,7 @@ class MagicChecklistDrawer {
         if (days > 0) {
             return `${days}d ${hours}h`;
         } else if (hours > 0) {
-            return `${hours}h ${minutes}m`;
+            return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
         } else {
             return `${minutes}m`;
         }
@@ -4379,6 +4383,34 @@ class MagicChecklistDrawer {
             // Silently fail tracking - don't disrupt user experience
             console.error('Analytics tracking error:', error);
         });
+    }
+
+    /**
+     * Unchecks all items visually without saving checklist data
+     * This is used for resets to avoid overwriting item content
+     */
+    uncheckAllItemsVisually() {
+        this.itemsList.querySelectorAll('li').forEach(li => {
+            const checkbox = li.querySelector('.mcl-item-checkbox');
+            const itemText = li.querySelector('[contenteditable="true"]');
+
+            // Uncheck the checkbox
+            checkbox.checked = false;
+
+            // Remove the checked class for styling
+            itemText.classList.remove('mcl-checked');
+
+            // Optionally, move the item to the top if desired
+            this.itemsList.insertBefore(li, this.itemsList.firstChild);
+        });
+
+        // **Save ONLY the new checked state (which should be empty)**
+        this.saveCheckedState(this.currentChecklistId, []);
+
+        // **DO NOT save checklist data - this would overwrite item content**
+        
+        // After unchecking all items, update the progress counter
+        this.updateProgressCounter();
     }
 }
 

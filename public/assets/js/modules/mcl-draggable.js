@@ -4,7 +4,7 @@ class MCLDraggable {
     this.initialized = false;
     
     // Add initializing class to prevent flicker
-    document.querySelectorAll('.mcl-floating-button.draggable, .mcl-floating-buttons.has-draggable-fab')
+    document.querySelectorAll('.mcl-single-button-wrapper[data-draggable="true"], .mcl-speed-dial-wrapper[data-draggable="true"]')
       .forEach(el => el.classList.add('initializing'));
   }
 
@@ -30,10 +30,8 @@ class MCLDraggable {
   dragMoveListener(event) {
     const target = event.target;
     
-    // Determine which element to move (either the dragged element or its container)
-    const elementToMove = target.dataset.dragTargetContainer === 'true' 
-      ? target.closest('.mcl-floating-buttons') || target 
-      : target;
+    // Determine which element to move based on the target
+    const elementToMove = target.closest('.mcl-speed-dial-container') || target;
     
     // Update position data
     const x = (parseFloat(elementToMove.getAttribute('data-x')) || 0) + event.dx;
@@ -50,46 +48,56 @@ class MCLDraggable {
     const sharedOptions = {
       inertia: true,
       listeners: {
-        move: this.dragMoveListener
+        move: this.dragMoveListener.bind(this)
       }
     };
     
-    // Configure individual draggable buttons
-    interact('.mcl-floating-button.draggable:not([data-drag-target-container="true"])')
+    // Configure individual draggable single buttons
+    interact('.mcl-single-button-wrapper[data-draggable="true"]')
       .draggable({
         ...sharedOptions,
         autoScroll: true,
         modifiers: [
           interact.modifiers.restrictRect({
-            restriction: 'parent',
+            restriction: 'body',
             endOnly: true
           })
         ],
         listeners: {
-          start: event => event.target.classList.add('mcl-dragging'),
-          move: this.dragMoveListener,
+          start: event => {
+            const container = event.target.closest('.mcl-speed-dial-container');
+            if (container) container.classList.add('mcl-dragging');
+            event.target.classList.add('mcl-dragging');
+          },
+          move: this.dragMoveListener.bind(this),
           end: event => {
-            const target = event.target;
+            const container = event.target.closest('.mcl-speed-dial-container');
+            const wrapper = event.target;
             
-            // Remove dragging class
-            target.classList.remove('mcl-dragging');
+            // Remove dragging classes
+            if (container) container.classList.remove('mcl-dragging');
+            wrapper.classList.remove('mcl-dragging');
             
-            // Mark as just dragged to prevent accidental clicks
-            target.setAttribute('data-just-dragged', 'true');
+            // Mark button as just dragged to prevent accidental clicks
+            const button = wrapper.querySelector('.mcl-single-floating-button');
+            if (button) {
+              button.setAttribute('data-just-dragged', 'true');
+              setTimeout(() => button.removeAttribute('data-just-dragged'), 100);
+            }
             
             // Save position
-            const checklistId = target.dataset.checklistId;
-            if (checklistId) {
-              const x = parseFloat(target.getAttribute('data-x')) || 0;
-              const y = parseFloat(target.getAttribute('data-y')) || 0;
-              this.savePosition(checklistId, { x, y });
+            const checklistId = button?.dataset.checklistId;
+            if (checklistId && container) {
+              const x = parseFloat(container.getAttribute('data-x')) || 0;
+              const y = parseFloat(container.getAttribute('data-y')) || 0;
+              this.savePosition('single_' + checklistId, { x, y });
             }
           }
         }
       });
 
-    // Configure draggable FAB triggers (group container)
-    interact('.draggable[data-drag-target-container="true"]')
+    // Configure draggable speed dial groups
+    interact('.mcl-speed-dial-wrapper[data-draggable="true"]')
       .draggable({
         ...sharedOptions,
         autoScroll: false,
@@ -101,22 +109,37 @@ class MCLDraggable {
         ],
         listeners: {
           start: event => {
-            const fabContainer = event.target.closest('.mcl-floating-buttons');
-            if (fabContainer) fabContainer.classList.add('mcl-dragging');
-            event.target.classList.add('mcl-fab-trigger-dragging');
+            const container = event.target.closest('.mcl-speed-dial-container');
+            if (container) container.classList.add('mcl-dragging');
+            event.target.classList.add('mcl-dragging');
           },
-          move: this.dragMoveListener,
+          move: this.dragMoveListener.bind(this),
           end: event => {
-            const fabContainer = event.target.closest('.mcl-floating-buttons');
-            if (fabContainer) {
-              fabContainer.classList.remove('mcl-dragging');
-              fabContainer.setAttribute('data-just-dragged', 'true');
-              
-              // Ensure the FAB stays within viewport after drag
-              // Use a smaller threshold for manual drag operations
-              this.adjustGroupPosition(fabContainer, 5);
+            const container = event.target.closest('.mcl-speed-dial-container');
+            const wrapper = event.target;
+            
+            // Remove dragging classes
+            if (container) container.classList.remove('mcl-dragging');
+            wrapper.classList.remove('mcl-dragging');
+            
+            // Mark trigger as just dragged to prevent accidental clicks
+            const trigger = wrapper.querySelector('.mcl-speed-dial-trigger');
+            if (trigger) {
+              trigger.setAttribute('data-just-dragged', 'true');
+              setTimeout(() => trigger.removeAttribute('data-just-dragged'), 100);
             }
-            event.target.classList.remove('mcl-fab-trigger-dragging');
+            
+            // Ensure the group stays within viewport after drag
+            this.adjustGroupPosition(container, 5);
+            
+            // Save position for speed dial group
+            const speedDialButtons = wrapper.querySelectorAll('.mcl-speed-dial-button[data-checklist-id]');
+            if (speedDialButtons.length > 0 && container) {
+              const firstId = speedDialButtons[0].dataset.checklistId;
+              const x = parseFloat(container.getAttribute('data-x')) || 0;
+              const y = parseFloat(container.getAttribute('data-y')) || 0;
+              this.savePosition('group_' + firstId, { x, y });
+            }
           }
         }
       });
@@ -124,107 +147,102 @@ class MCLDraggable {
 
   adjustDraggableElementPositions() {
     // Adjust individual buttons
-    document.querySelectorAll('.mcl-floating-button.draggable:not([data-drag-target-container="true"])')
-      .forEach(this.adjustElementPosition.bind(this));
+    document.querySelectorAll('.mcl-single-button-wrapper[data-draggable="true"]')
+      .forEach(wrapper => {
+        const container = wrapper.closest('.mcl-speed-dial-container');
+        if (container) this.adjustElementPosition(container);
+      });
 
-    // Adjust FAB groups
-    document.querySelectorAll('.mcl-floating-buttons.has-draggable-fab')
-      .forEach(container => this.adjustGroupPosition(container, 5));
+    // Adjust speed dial groups
+    document.querySelectorAll('.mcl-speed-dial-wrapper[data-draggable="true"]')
+      .forEach(wrapper => {
+        const container = wrapper.closest('.mcl-speed-dial-container');
+        if (container) this.adjustGroupPosition(container, 5);
+      });
   }
   
-  adjustElementPosition(element) {
-    const parentElement = element.parentElement;
-    if (!parentElement) return;
-
-    const rect = element.getBoundingClientRect();
-    const parentRect = parentElement.getBoundingClientRect();
+  adjustElementPosition(container) {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const rect = container.getBoundingClientRect();
     
-    let x = parseFloat(element.getAttribute('data-x')) || 0;
-    let y = parseFloat(element.getAttribute('data-y')) || 0;
+    let x = parseFloat(container.getAttribute('data-x')) || 0;
+    let y = parseFloat(container.getAttribute('data-y')) || 0;
 
-    // Calculate current visual position relative to parent
-    const currentVisualLeft = element.offsetLeft + x;
-    const currentVisualTop = element.offsetTop + y;
+    // Calculate current visual position
+    const currentLeft = rect.left - x;
+    const currentTop = rect.top - y;
     
-    // Check if element is outside the parent boundaries
+    // Check if element needs adjustment
     let newX = x;
     let newY = y;
+    const minVisible = 5;
 
-    if (currentVisualLeft < 0) newX = -element.offsetLeft;
-    if (currentVisualTop < 0) newY = -element.offsetTop;
-    if (currentVisualLeft + rect.width > parentRect.width) 
-      newX = parentRect.width - rect.width - element.offsetLeft;
-    if (currentVisualTop + rect.height > parentRect.height) 
-      newY = parentRect.height - rect.height - element.offsetTop;
+    if (rect.left < -rect.width + minVisible) {
+      newX = x - (rect.left + rect.width - minVisible);
+    } else if (rect.right > viewportWidth - minVisible) {
+      newX = x - (rect.right - viewportWidth + minVisible);
+    }
+
+    if (rect.top < -rect.height + minVisible) {
+      newY = y - (rect.top + rect.height - minVisible);
+    } else if (rect.bottom > viewportHeight - minVisible) {
+      newY = y - (rect.bottom - viewportHeight + minVisible);
+    }
     
     // Apply position change if needed
     if (newX !== x || newY !== y) {
-      element.style.transform = `translate(${newX}px, ${newY}px)`;
-      element.setAttribute('data-x', newX);
-      element.setAttribute('data-y', newY);
-
-      // Save the updated position
-      const checklistId = element.dataset.checklistId;
-      if (checklistId) {
-        this.savePosition(checklistId, { x: newX, y: newY });
-      }
+      container.style.transform = `translate(${newX}px, ${newY}px)`;
+      container.setAttribute('data-x', newX);
+      container.setAttribute('data-y', newY);
     }
   }
   
-  adjustGroupPosition(fabGroup, minVisiblePx = 5) {
-    if (!fabGroup) return;
+  adjustGroupPosition(container, minVisiblePx = 5) {
+    if (!container) return;
     
     // Get viewport dimensions
-    const viewportWidth = document.documentElement.clientWidth;
-    const viewportHeight = document.documentElement.clientHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    // Get the FAB group dimensions
-    const groupRect = fabGroup.getBoundingClientRect();
+    // Get the container dimensions
+    const rect = container.getBoundingClientRect();
     
     // Get current transform values
-    let x = parseFloat(fabGroup.getAttribute('data-x')) || 0;
-    let y = parseFloat(fabGroup.getAttribute('data-y')) || 0;
-    
-    // Current position in the viewport
-    const fabLeft = groupRect.left;
-    const fabTop = groupRect.top;
-    const fabRight = groupRect.right;
-    const fabBottom = groupRect.bottom;
+    let x = parseFloat(container.getAttribute('data-x')) || 0;
+    let y = parseFloat(container.getAttribute('data-y')) || 0;
     
     // Calculate adjustments needed
     let newX = x;
     let newY = y;
     
     // Only adjust if element is actually outside the viewport boundary minus threshold
-    if (fabLeft < -groupRect.width + minVisiblePx) {
-      newX = x - (fabLeft + groupRect.width - minVisiblePx);
-    } else if (fabRight > viewportWidth - minVisiblePx) {
-      newX = x - (fabRight - viewportWidth + minVisiblePx);
+    if (rect.left < -rect.width + minVisiblePx) {
+      newX = x - (rect.left + rect.width - minVisiblePx);
+    } else if (rect.right > viewportWidth - minVisiblePx) {
+      newX = x - (rect.right - viewportWidth + minVisiblePx);
     }
     
-    if (fabTop < -groupRect.height + minVisiblePx) {
-      newY = y - (fabTop + groupRect.height - minVisiblePx);
-    } else if (fabBottom > viewportHeight - minVisiblePx) {
-      newY = y - (fabBottom - viewportHeight + minVisiblePx);
+    if (rect.top < -rect.height + minVisiblePx) {
+      newY = y - (rect.top + rect.height - minVisiblePx);
+    } else if (rect.bottom > viewportHeight - minVisiblePx) {
+      newY = y - (rect.bottom - viewportHeight + minVisiblePx);
     }
     
     // Apply position change if needed
     if (newX !== x || newY !== y) {
-      fabGroup.style.transform = `translate(${newX}px, ${newY}px)`;
-      fabGroup.setAttribute('data-x', newX);
-      fabGroup.setAttribute('data-y', newY);
+      container.style.transform = `translate(${newX}px, ${newY}px)`;
+      container.setAttribute('data-x', newX);
+      container.setAttribute('data-y', newY);
       
-      // If there's a FAB list open, update its position as well
-      const fabList = fabGroup.querySelector('.mcl-fab-list');
-      if (fabList && fabList.offsetParent !== null) {
-        this.adjustFabListPosition(fabList, fabGroup);
+      // Update positioning class for menu direction if this is a speed dial
+      const yPos = rect.top + (newY - y);
+      if (yPos < viewportHeight / 2) {
+        container.classList.add('mcl-positioned-top');
+      } else {
+        container.classList.remove('mcl-positioned-top');
       }
     }
-  }
-  
-  adjustFabListPosition(fabList, fabGroup) {
-    // This method adjusts the FAB list position if needed
-    // It's called when the FAB group position is adjusted while the list is open
   }
 
   getStoredPosition(elementId) {
@@ -249,125 +267,97 @@ class MCLDraggable {
   }
 
   restoreAllPositions() {
-    // Restore individual draggable buttons
-    document.querySelectorAll('.mcl-floating-button.draggable:not([data-drag-target-container="true"])')
-      .forEach(button => {
+    // Restore individual draggable single buttons
+    document.querySelectorAll('.mcl-single-button-wrapper[data-draggable="true"]')
+      .forEach(wrapper => {
+        const button = wrapper.querySelector('.mcl-single-floating-button[data-checklist-id]');
+        const container = wrapper.closest('.mcl-speed-dial-container');
+        
+        if (!button || !container) return;
+        
         const checklistId = button.dataset.checklistId;
         if (!checklistId) return;
         
-        const position = this.getStoredPosition(checklistId);
-        this.applyPosition(button, position, true);
+        const position = this.getStoredPosition('single_' + checklistId);
+        this.applyPosition(container, position);
       });
 
-    // Initialize FAB groups
-    document.querySelectorAll('.mcl-floating-buttons.has-draggable-fab')
-      .forEach(container => {
-        // Check if we have a stored position for the FAB group
-        const firstFabTrigger = container.querySelector('.mcl-multi-fab-trigger.draggable');
+    // Restore speed dial groups
+    document.querySelectorAll('.mcl-speed-dial-wrapper[data-draggable="true"]')
+      .forEach(wrapper => {
+        const container = wrapper.closest('.mcl-speed-dial-container');
+        if (!container) return;
+        
+        // Check if we have a stored position for the speed dial group
+        const speedDialButtons = wrapper.querySelectorAll('.mcl-speed-dial-button[data-checklist-id]');
         let position = null;
         
-        if (firstFabTrigger) {
-          // Try to get position from a stored checklist ID if available
-          const checklistElements = container.querySelectorAll('.mcl-fab-list .mcl-floating-button[data-checklist-id]');
-          if (checklistElements.length > 0) {
-            const firstId = checklistElements[0].dataset.checklistId;
-            if (firstId) {
-              position = this.getStoredPosition('fab_group_' + firstId);
-            }
+        if (speedDialButtons.length > 0) {
+          const firstId = speedDialButtons[0].dataset.checklistId;
+          if (firstId) {
+            position = this.getStoredPosition('group_' + firstId);
           }
         }
         
-        if (position) {
-          // Apply saved position
-          container.style.transform = `translate(${position.x}px, ${position.y}px)`;
-          container.setAttribute('data-x', position.x);
-          container.setAttribute('data-y', position.y);
-        } else {
-          // Use default position
-          container.style.transform = 'translate(0px, 0px)';
-          container.setAttribute('data-x', 0);
-          container.setAttribute('data-y', 0);
-        }
-        
-        // Ensure it's within viewport bounds after setting initial position
-        // but use a minimal threshold to allow positioning near edges
-        requestAnimationFrame(() => {
-          // Use minimal threshold for initial positioning
-          this.adjustGroupPosition(container, 5);
-          container.classList.remove('initializing');
-          container.style.visibility = 'visible';
-        });
+        this.applyPosition(container, position);
       });
   }
 
-  applyPosition(element, position, isIndividualButton = false) {
-    if (!position && isIndividualButton) {
-      // Default position for new buttons (bottom-right)
-      element.style.visibility = 'hidden';
-      
-      requestAnimationFrame(() => {
-        const parentRect = element.parentElement.getBoundingClientRect();
-        const buttonRect = element.getBoundingClientRect();
-        
-        // Position 20px from the bottom-right corner
-        const x = parentRect.width - buttonRect.width - 20;
-        const y = parentRect.height - buttonRect.height - 20;
-
-        element.style.transform = `translate(${x}px, ${y}px)`;
-        element.setAttribute('data-x', x);
-        element.setAttribute('data-y', y);
-        element.style.visibility = 'visible';
-        element.classList.remove('initializing');
-      });
-    } else if (position) {
+  applyPosition(container, position) {
+    if (!container) return;
+    
+    if (position) {
       // Apply saved position
-      element.style.transform = `translate(${position.x}px, ${position.y}px)`;
-      element.setAttribute('data-x', position.x);
-      element.setAttribute('data-y', position.y);
-      
-      requestAnimationFrame(() => {
-        element.style.visibility = 'visible';
-        element.classList.remove('initializing');
-      });
+      container.style.transform = `translate(${position.x}px, ${position.y}px)`;
+      container.setAttribute('data-x', position.x);
+      container.setAttribute('data-y', position.y);
     } else {
-      // Reset to default position (0,0)
-      element.style.transform = 'translate(0px, 0px)';
-      element.setAttribute('data-x', 0);
-      element.setAttribute('data-y', 0);
-      
-      requestAnimationFrame(() => {
-        element.style.visibility = 'visible';
-        element.classList.remove('initializing');
-      });
+      // Use default position (0,0 relative to CSS positioning)
+      container.style.transform = 'translate(0px, 0px)';
+      container.setAttribute('data-x', 0);
+      container.setAttribute('data-y', 0);
     }
+    
+    // Ensure it's within viewport bounds and remove initializing class
+    requestAnimationFrame(() => {
+      this.adjustElementPosition(container);
+      container.classList.remove('initializing');
+      
+      // Remove initializing class from children
+      const wrapper = container.querySelector('.mcl-single-button-wrapper, .mcl-speed-dial-wrapper');
+      if (wrapper) wrapper.classList.remove('initializing');
+    });
   }
 
   resetElementPosition(elementId) {
     localStorage.removeItem(`mcl_element_position_${elementId}`);
     
-    // Find the element
-    const element = document.querySelector(`.mcl-floating-button[data-checklist-id="${elementId}"]`);
-    if (!element) return;
-    
-    // Reset and reapply default position
-    element.style.transform = 'translate(0px, 0px)';
-    element.removeAttribute('data-x');
-    element.removeAttribute('data-y');
-    this.applyPosition(element, null, element.classList.contains('mcl-floating-button'));
+    // Find and reset the element
+    const button = document.querySelector(`.mcl-single-floating-button[data-checklist-id="${elementId}"], .mcl-speed-dial-button[data-checklist-id="${elementId}"]`);
+    if (button) {
+      const container = button.closest('.mcl-speed-dial-container');
+      if (container) {
+        container.style.transform = 'translate(0px, 0px)';
+        container.removeAttribute('data-x');
+        container.removeAttribute('data-y');
+      }
+    }
   }
 
   resetAllDraggablePositions() {
-    // Reset all individual buttons
-    document.querySelectorAll('.mcl-floating-button.draggable').forEach(button => {
-      const checklistId = button.dataset.checklistId;
-      if (checklistId) this.resetElementPosition(checklistId);
+    // Clear all stored positions
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('mcl_element_position_')) {
+        localStorage.removeItem(key);
+      }
     });
     
-    // Reset all FAB groups
-    document.querySelectorAll('.mcl-floating-buttons.has-draggable-fab').forEach(fabGroup => {
-      fabGroup.style.transform = 'translate(0px, 0px)';
-      fabGroup.setAttribute('data-x', 0);
-      fabGroup.setAttribute('data-y', 0);
+    // Reset all containers
+    document.querySelectorAll('.mcl-speed-dial-container').forEach(container => {
+      container.style.transform = 'translate(0px, 0px)';
+      container.setAttribute('data-x', 0);
+      container.setAttribute('data-y', 0);
+      container.classList.remove('mcl-positioned-top');
     });
   }
 
@@ -376,8 +366,8 @@ class MCLDraggable {
     
     try {
       // Remove all interact instances
-      interact('.mcl-floating-button.draggable:not([data-drag-target-container="true"])').unset();
-      interact('.draggable[data-drag-target-container="true"]').unset();
+      interact('.mcl-single-button-wrapper[data-draggable="true"]').unset();
+      interact('.mcl-speed-dial-wrapper[data-draggable="true"]').unset();
       
       this.initialized = false;
     } catch (error) {
@@ -386,4 +376,4 @@ class MCLDraggable {
   }
 }
 
-export { MCLDraggable };
+export default MCLDraggable;
