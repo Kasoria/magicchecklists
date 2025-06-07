@@ -1075,8 +1075,29 @@ class MCL_Admin {
     
         set_transient( $transient_key, $prefilled_items, 60 * 15 ); // Store for 15 minutes
     
-        // Redirect to the add new checklist page
-        wp_redirect( admin_url( 'admin.php?page=mcl_add_new&prefill_items=1' ) );
+        // Create a new checklist directly from the imported items
+        $checklist_title = 'Imported Checklist ' . date('Y-m-d H:i:s');
+        
+        $checklist_post = array(
+            'post_title'   => $checklist_title,
+            'post_content' => '',
+            'post_type'    => 'mcl_checklist',
+            'post_status'  => 'publish'
+        );
+
+        $checklist_id = wp_insert_post($checklist_post);
+
+        if (!is_wp_error($checklist_id)) {
+            // Save the imported items
+            update_post_meta($checklist_id, '_mcl_items', $prefilled_items);
+            update_post_meta($checklist_id, '_mcl_active', '1');
+            
+            // Redirect back to import page with success message
+            wp_redirect( admin_url( 'admin.php?page=mcl_import&imported=1&checklist_id=' . $checklist_id ) );
+        } else {
+            // Redirect back to import page with error message
+            wp_redirect( admin_url( 'admin.php?page=mcl_import&error=1' ) );
+        }
         exit;
     }
 
@@ -1422,7 +1443,7 @@ class MCL_Admin {
     
         wp_redirect(add_query_arg(
             array(
-                'page' => 'mcl_add_new',
+                'page' => 'mcl_import',
                 'checklist_id' => $checklist_id,
                 'imported' => '1'
             ),

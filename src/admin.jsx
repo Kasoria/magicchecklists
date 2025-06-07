@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import AdminApp from './AdminApp.jsx'
+import ImportExport from './components/ImportExport.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 import './index.css'
 import 'flowbite'
@@ -42,6 +43,8 @@ const getInitialTab = () => {
   // Map WordPress admin pages to React tabs
   if (page === 'mcl_add_new' || page === 'mcl_edit_checklist') {
     return 'add-new'
+  } else if (page === 'mcl_import') {
+    return 'import'
   } else if (page === 'mcl_analytics') {
     return 'analytics'
   } else if (page === 'mcl_settings') {
@@ -51,8 +54,9 @@ const getInitialTab = () => {
   return 'checklists' // default
 }
 
-// Create the root element and render the app
+// Create the root element and render the appropriate app
 const root = ReactDOM.createRoot(document.getElementById('mcl-admin-root'))
+
 root.render(
   <React.StrictMode>
     <ToastProvider position="top-right" maxToasts={3}>

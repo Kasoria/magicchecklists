@@ -453,7 +453,13 @@ class MCL_React_Dev {
         $analytics_data = array();
         if (class_exists('MCL_Analytics')) {
             $analytics = MCL_Analytics::get_instance();
-            $analytics_data = $analytics->get_analytics_summary();
+            
+            // For the analytics page, get comprehensive data. For others, just summary.
+            if ($current_page === 'analytics') {
+                $analytics_data = $analytics->get_comprehensive_analytics();
+            } else {
+                $analytics_data = $analytics->get_analytics_summary();
+            }
         }
         
         wp_localize_script( $handle, 'mclAdminData', array(
@@ -467,6 +473,14 @@ class MCL_React_Dev {
                 'mcl_save_checklist' => wp_create_nonce( 'mcl_save_checklist' ),
                 'inviteLinks' => wp_create_nonce( 'mcl_invite_links_nonce' ),
                 'testWebhook' => wp_create_nonce( 'mcl_test_webhook' ),
+                'mcl_import_checklist' => wp_create_nonce( 'mcl_import_checklist' ),
+                'mcl_import_json_checklist' => wp_create_nonce( 'mcl_import_json_checklist' ),
+                'mcl_export_txt' => wp_create_nonce( 'mcl_export_txt' ),
+                'mcl_export_json' => wp_create_nonce( 'mcl_export_json' ),
+                'mcl_export_pdf' => wp_create_nonce( 'mcl_export_pdf' ),
+                'mcl_save_pdf_settings' => wp_create_nonce( 'mcl_save_pdf_settings' ),
+                'mcl_get_comprehensive_analytics' => wp_create_nonce( 'mcl_get_comprehensive_analytics' ),
+                'mcl_cleanup_test_data' => wp_create_nonce( 'mcl_cleanup_test_data' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
             'savedTheme' => get_user_meta( get_current_user_id(), 'mcl_theme', true ),
@@ -606,32 +620,48 @@ class MCL_React_Dev {
         
         ?>
         <style>
-        /* Ensure the React app container fits properly within WordPress admin */
         #mcl-admin-root {
             width: 100%;
-            min-height: calc(100vh - 32px); /* Account for WordPress admin bar */
+            min-height: 100%;
             margin: 0;
             padding: 0;
             background: transparent;
         }
 
-        /* Remove WordPress admin page wrapper styling that might interfere */
         .wrap #mcl-admin-root {
             margin: 0;
         }
 
-        /* Ensure the container respects WordPress admin spacing */
         @media screen and (max-width: 782px) {
             #mcl-admin-root {
-                min-height: calc(100vh - 46px); /* Account for mobile admin bar height */
+                min-height: calc(100vh - 46px);
             }
         }
 
-        /* Hide default WordPress admin content when React takes over */
         body.admin-bar #mcl-admin-root ~ .wrap,
         body.admin-bar #mcl-admin-root ~ .error,
         body.admin-bar #mcl-admin-root ~ .notice {
             display: none;
+        }
+
+        #wpfooter {
+            display: none !important;
+        }
+
+        #wpcontent {
+            padding: 0 !important;
+        }
+        #wpbody-content {
+            padding-bottom: 0 !important;
+        }
+        /* Theme-based WP admin background color overrides */
+        html:not(.dark) body,
+        html:not(.dark) #wpwrap {
+            background-color: #f4f4f4 !important;
+        }
+        html.dark body,
+        html.dark #wpwrap {
+            background-color: #011326 !important;
         }
         </style>
         <?php

@@ -57,18 +57,6 @@
    2. Base Layout
    ============================================================ */
 
-#wpcontent {
-    padding: 0 !important;
-}
-
-#wpbody-content {
-padding-bottom: 0;
-}
-
-#wpfooter {
-    display: none;
-}
-
 .mcl-wrap {
     margin: 0 auto;
     padding: var(--mcl-spacing-xl);

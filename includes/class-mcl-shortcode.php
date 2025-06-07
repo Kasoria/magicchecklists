@@ -176,6 +176,9 @@ class MCL_Shortcode {
         
         // Get checked state
         $checked_state = $this->get_checked_state($checklist_id);
+
+        // Track checklist view for analytics
+        do_action('mcl_checklist_rendered', $checklist_id);
     
         // Start output buffering
         ob_start();

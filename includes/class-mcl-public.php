@@ -413,6 +413,9 @@ class MCL_Public {
                 return;
             }
 
+            // Track checklist view for analytics
+            do_action('mcl_checklist_rendered', $checklist_id);
+
             if (ob_get_length()) ob_clean();
             wp_send_json_success($data);
 

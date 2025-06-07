@@ -5,6 +5,7 @@ import ChecklistForm from './components/ChecklistForm.jsx'
 import ChecklistEditor from './components/ChecklistEditor.jsx'
 import Analytics from './components/Analytics.jsx'
 import Settings from './components/Settings.jsx'
+import ImportExport from './components/ImportExport.jsx'
 
 const customTheme = {
   button: {
@@ -108,6 +109,11 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       icon: "M12 6v6m0 0v6m0-6h6m-6 0H6"
     },
     {
+      id: 'import',
+      label: 'Import / Export',
+      icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+    },
+    {
       id: 'analytics',
       label: 'Analytics',
       icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
@@ -176,6 +182,8 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
             onSetFormRef={handleSetEditFormRef}
           />
         )
+      case 'import':
+        return <ImportExport adminData={adminData} />
       case 'analytics':
         return <Analytics adminData={adminData} />
       case 'settings':
@@ -231,7 +239,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
 
   return (
     <ThemeProvider theme={customTheme}>
-      <div className={`flex min-h-[calc(100vh-32px)] bg-brand-light dark:bg-brand-dark transition-colors duration-300 main-flex-container ${darkMode ? 'dark' : ''}`}>
+      <div className={`flex min-h-[100vh] bg-brand-light dark:bg-brand-dark transition-colors duration-300 main-flex-container ${darkMode ? 'dark' : ''}`}>
         {/* Mobile Overlay */}
         <div
           className={`mobile-overlay ${sidebarOpen ? 'show' : ''}`}
@@ -242,12 +250,13 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
         <div
           className={`sidebar-container ${sidebarOpen ? 'open' : ''} ${
             sidebarCollapsed ? 'w-16' : 'w-64'
-          } transition-all duration-300 bg-white dark:bg-brand-dark border-r border-gray-200 dark:border-gray-600 lg:translate-x-0 lg:static lg:inset-0 relative`}
+          } transition-all duration-300 bg-white dark:bg-brand-dark border-r border-gray-200 dark:border-gray-600 lg:translate-x-0 lg:static lg:inset-0 relative flex-shrink-0 z-50`}
         >
           {/* Collapse Toggle Button - Absolutely Positioned */}
+          <div className="sticky top-[32px]">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute top-5 -right-3 z-10 hidden lg:flex items-center justify-center w-6 h-6 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-accent dark:focus:ring-blue-400 transition-colors duration-200"
+            className="absolute top-5 -right-3 hidden lg:flex items-center justify-center w-6 h-6 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-accent dark:focus:ring-blue-400 transition-colors duration-200"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -321,23 +330,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="/wp-admin/admin.php?page=mcl_import"
-                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={sidebarCollapsed ? 'Import' : undefined}
-                  >
-                    <svg
-                      className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    {!sidebarCollapsed && 'Import'}
-                  </a>
-                </li>
-                <li>
-                  <a
                     href="#"
                     className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
                     title={sidebarCollapsed ? 'Help' : undefined}
@@ -385,11 +377,12 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
             </div>
           </nav>
         </div>
+        </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col flex-1 overflow-hidden main-content-container main-content-responsive">
-          {/* Top Header */}
-          <header className="bg-white dark:bg-brand-dark border-b border-gray-200 dark:border-gray-600 transition-colors duration-300">
+        {/* Main Content Area */}
+        <div className="flex flex-col flex-1 min-w-0 main-content-area">
+          {/* Sticky Header */}
+          <header className="sticky top-[32px] z-40 bg-white dark:bg-brand-dark border-b border-gray-200 dark:border-gray-600 transition-colors duration-300 shadow-sm">
             {/* Desktop Header Layout */}
             <div className="hidden lg:flex items-center justify-between px-6 py-4">
               <div className="flex items-center">
@@ -399,6 +392,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {activeTab === 'add-new' && (
                       editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
                     )}
+                    {activeTab === 'import' && 'Import / Export'}
                     {activeTab === 'analytics' && 'Analytics'}
                     {activeTab === 'settings' && 'Settings'}
                   </h1>
@@ -407,6 +401,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {activeTab === 'add-new' && (
                       editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist for your site.'
                     )}
+                    {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
                     {activeTab === 'analytics' && 'View performance metrics and usage statistics for your checklists.'}
                     {activeTab === 'settings' && 'Configure your MagicChecklists plugin settings.'}
                   </p>
@@ -414,16 +409,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
               </div>
 
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => window.open(`/wp-admin/admin.php?page=mcl_import`, '_self')}
-                  className="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors duration-200"
-                >
-                  <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Import / Export
-                </button>
-
                 {activeTab === 'add-new' && editingChecklist && (
                   <>
                     <button
@@ -494,6 +479,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       {activeTab === 'add-new' && (
                         editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
                       )}
+                      {activeTab === 'import' && 'Import / Export'}
                       {activeTab === 'analytics' && 'Analytics'}
                       {activeTab === 'settings' && 'Settings'}
                     </h1>
@@ -531,6 +517,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   {activeTab === 'add-new' && (
                     editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist.'
                   )}
+                  {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
                   {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
                   {activeTab === 'settings' && 'Configure your plugin settings.'}
                 </p>
@@ -564,25 +551,14 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     <span className="hidden sm:inline">Back to List</span>
                     <span className="sm:hidden">Back</span>
                   </button>
-
-                  <button
-                    onClick={() => window.open(`/wp-admin/admin.php?page=mcl_import`, '_self')}
-                    className="flex items-center justify-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                  >
-                    <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <span className="hidden sm:inline">Import</span>
-                    <span className="sm:hidden">Import</span>
-                  </button>
                 </div>
               )}
             </div>
           </header>
 
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-brand-light dark:bg-brand-dark transition-colors duration-300">
-            <div className="container px-6 py-8 w-[100%]">
+          {/* Scrollable Content Area */}
+          <main className="flex-1 bg-brand-light dark:bg-brand-dark transition-colors duration-300">
+            <div className="container px-6 py-8 pb-12 w-[100%] max-w-none">
               {renderContent()}
             </div>
           </main>
