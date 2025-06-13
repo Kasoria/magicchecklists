@@ -224,7 +224,7 @@ const ImportExport = ({ adminData }) => {
         </div>
       ) : (
         <Card className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Export Classic Checklists</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">Export Classic Checklists</h2>
           {checklists.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500 dark:text-gray-400">No classic checklists found.</p>
@@ -282,7 +282,7 @@ const ImportExport = ({ adminData }) => {
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <h2 className="text-xl font-semibold mb-4">Import from Text</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">Import from Text</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Import checklist items from plain text. Enter one item per line.
           </p>
@@ -294,7 +294,7 @@ const ImportExport = ({ adminData }) => {
             <textarea
               id="importText"
               name="checklist_items"
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mt-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mt-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
               rows={6}
               value={importText}
               onChange={e => setImportText(e.target.value)}
@@ -306,7 +306,7 @@ const ImportExport = ({ adminData }) => {
           </form>
         </Card>
         <Card>
-          <h2 className="text-xl font-semibold mb-4">Import from JSON</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">Import from JSON</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Import a complete checklist from a JSON file exported from MagicChecklists.
           </p>

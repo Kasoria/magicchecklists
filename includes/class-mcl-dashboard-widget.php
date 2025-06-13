@@ -142,8 +142,8 @@ class MCL_Dashboard_Widget {
             echo '</h4>';
         }
         
-        // Quick actions
-        if (!empty($settings['show_quick_actions'])) {
+        // Quick actions (only show if checklists are being displayed)
+        if (!empty($settings['show_quick_actions']) && !empty($settings['show_checklists'])) {
             echo '<div class="mcl-widget-actions">';
             echo '<button type="button" class="mcl-widget-toggle-btn ' . ($is_active ? 'active' : 'inactive') . '" ';
             echo 'data-checklist-id="' . esc_attr($checklist_id) . '" ';
@@ -214,13 +214,7 @@ class MCL_Dashboard_Widget {
                 echo '<div class="mcl-widget-items">';
                 echo '<span class="mcl-widget-label">' . esc_html__('Items:', 'magic-checklists') . '</span>';
                 echo '<ul class="mcl-widget-item-list">';
-                $item_count = 0;
                 foreach ($items as $item) {
-                    if ($item_count >= 5) { // Limit to 5 items for dashboard
-                        echo '<li class="mcl-widget-more">... ' . sprintf(esc_html__('and %d more', 'magic-checklists'), count($items) - 5) . '</li>';
-                        break;
-                    }
-                    
                     $is_checked = in_array($item['id'], $checked_state);
                     $item_class = 'mcl-widget-item' . ($is_checked ? ' mcl-widget-item-checked' : '');
                     
@@ -235,9 +229,8 @@ class MCL_Dashboard_Widget {
                         echo '<span class="mcl-widget-status-indicator ' . ($is_checked ? 'checked' : 'unchecked') . '"></span>';
                     }
                     
-                    echo '<span class="mcl-widget-item-content">' . esc_html(wp_trim_words($item['content'], 15)) . '</span>';
+                    echo '<span class="mcl-widget-item-content">' . $this->format_item_content_for_widget($item['content']) . '</span>';
                     echo '</li>';
-                    $item_count++;
                 }
                 echo '</ul>';
                 echo '</div>';
@@ -248,16 +241,40 @@ class MCL_Dashboard_Widget {
     }
     
     private function get_checklists_data() {
-        $checklists = get_posts(array(
+        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $selected_checklists = isset($widget_settings['selected_checklists']) ? $widget_settings['selected_checklists'] : array();
+        
+        $query_args = array(
             'post_type' => 'mcl_checklist',
             'post_status' => 'publish',
             'posts_per_page' => 10, // Limit for dashboard
             'orderby' => 'title',
-            'order' => 'ASC'
-        ));
+            'order' => 'ASC',
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_checklist_type',
+                    'value' => 'publisher',
+                    'compare' => '!='
+                )
+            )
+        );
+        
+        // If specific checklists are selected, filter to only those
+        if (!empty($selected_checklists) && is_array($selected_checklists)) {
+            $query_args['post__in'] = array_map('intval', $selected_checklists);
+            $query_args['posts_per_page'] = -1; // Show all selected checklists, not limited to 10
+        }
+        
+        $checklists = get_posts($query_args);
         
         $result = array();
         foreach ($checklists as $checklist) {
+            // Double-check that this isn't a publisher checklist (in case meta_query didn't work perfectly)
+            $checklist_type = get_post_meta($checklist->ID, '_mcl_checklist_type', true) ?: 'classic';
+            if ($checklist_type === 'publisher') {
+                continue; // Skip publisher checklists
+            }
+            
             $result[] = array(
                 'id' => $checklist->ID,
                 'title' => $checklist->post_title,
@@ -270,11 +287,71 @@ class MCL_Dashboard_Widget {
         return $result;
     }
     
+    /**
+     * Format item content for widget display, handling image-only content
+     */
+    private function format_item_content_for_widget($content) {
+        // Strip HTML tags to get plain text
+        $plain_text = wp_strip_all_tags($content);
+        $trimmed_text = trim($plain_text);
+        
+        // If there's meaningful text content, use it
+        if (!empty($trimmed_text) && strlen($trimmed_text) > 2) {
+            return esc_html(wp_trim_words($trimmed_text, 15));
+        }
+        
+        // If no meaningful text, check if content contains images
+        if (preg_match('/<img[^>]*>/i', $content)) {
+            // Try to extract alt text from the first image
+            if (preg_match('/<img[^>]*alt=["\']([^"\']*)["\'][^>]*>/i', $content, $matches)) {
+                $alt_text = trim($matches[1]);
+                if (!empty($alt_text)) {
+                    return esc_html('[Image: ' . wp_trim_words($alt_text, 10) . ']');
+                }
+            }
+            
+            // Try to extract title attribute from the first image
+            if (preg_match('/<img[^>]*title=["\']([^"\']*)["\'][^>]*>/i', $content, $matches)) {
+                $title_text = trim($matches[1]);
+                if (!empty($title_text)) {
+                    return esc_html('[Image: ' . wp_trim_words($title_text, 10) . ']');
+                }
+            }
+            
+            // Fallback for images without alt text
+            return esc_html__('[Image]', 'magic-checklists');
+        }
+        
+        // Check for other media types
+        if (preg_match('/<(video|audio|iframe|embed)[^>]*>/i', $content)) {
+            return esc_html__('[Media]', 'magic-checklists');
+        }
+        
+        // If content contains other HTML but no readable text
+        if (strlen($content) > strlen($trimmed_text) && strlen($content) > 10) {
+            return esc_html__('[Content]', 'magic-checklists');
+        }
+        
+        // Fallback for truly empty or minimal content
+        return esc_html__('[Empty item]', 'magic-checklists');
+    }
+    
     private function get_checklist_deadlines($checklist_id) {
         // Only show deadlines for active checklists
         $is_active = get_post_meta($checklist_id, '_mcl_active', true) == '1';
         if (!$is_active) {
             return array();
+        }
+        
+        // Check if this checklist should be displayed based on selection
+        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $selected_checklists = isset($widget_settings['selected_checklists']) ? $widget_settings['selected_checklists'] : array();
+        
+        // If specific checklists are selected, only show deadlines for those
+        if (!empty($selected_checklists) && is_array($selected_checklists)) {
+            if (!in_array($checklist_id, array_map('intval', $selected_checklists))) {
+                return array();
+            }
         }
         
         $result = array();
@@ -517,10 +594,10 @@ class MCL_Dashboard_Widget {
         ?>
         <p>
             <?php esc_html_e('Configure this widget from the', 'magic-checklists'); ?>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=mcl_settings&tab=dashboard')); ?>" target="_blank">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=mcl_checklists&view=settings')); ?>">
                 <?php esc_html_e('Settings page', 'magic-checklists'); ?>
             </a>
         </p>
         <?php
     }
-} 
+}

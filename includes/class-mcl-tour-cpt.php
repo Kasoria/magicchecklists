@@ -119,28 +119,36 @@ class MCL_Tour_CPT {
      * Get all active tours that should be triggered for the current context
      */
     public static function get_active_tours_for_context() {
-        $args = array(
+        $tours = get_posts([
             'post_type' => 'mcl_tour',
-            'meta_query' => array(
-                array(
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'meta_query' => [
+                [
                     'key' => '_mcl_tour_active',
                     'value' => '1',
                     'compare' => '='
-                )
-            ),
-            'posts_per_page' => -1
-        );
+                ]
+            ]
+        ]);
 
-        $tours = get_posts($args);
-        $triggered_tours = array();
+        // Get all tours to check their active status - for debugging
+        $all_tours = get_posts([
+            'post_type' => 'mcl_tour',
+            'post_status' => 'publish',
+            'numberposts' => -1
+        ]);
 
-        foreach ($tours as $tour) {
-            if (self::should_tour_be_triggered($tour->ID)) {
-                $triggered_tours[] = $tour;
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            foreach ($all_tours as $tour) {
+                $active_status = get_post_meta($tour->ID, '_mcl_tour_active', true);
+                $autostart_status = get_post_meta($tour->ID, '_mcl_tour_autostart', true);
+                $trigger_type = get_post_meta($tour->ID, '_mcl_tour_trigger_type', true);
+                $trigger_value = get_post_meta($tour->ID, '_mcl_tour_trigger_value', true);
             }
         }
 
-        return $triggered_tours;
+        return $tours;
     }
 
     /**
@@ -149,6 +157,7 @@ class MCL_Tour_CPT {
     public static function has_tours_for_current_page() {
         $current_url = self::get_current_page_url();
         
+        // Get all active tours
         $args = array(
             'post_type' => 'mcl_tour',
             'meta_query' => array(
@@ -162,10 +171,11 @@ class MCL_Tour_CPT {
         );
 
         $tours = get_posts($args);
-
+        
         foreach ($tours as $tour) {
             $trigger_type = get_post_meta($tour->ID, '_mcl_tour_trigger_type', true) ?: 'page';
             $trigger_value = get_post_meta($tour->ID, '_mcl_tour_trigger_value', true) ?: '';
+
 
             // Check if this tour could be triggered on current page
             switch ($trigger_type) {
@@ -191,6 +201,7 @@ class MCL_Tour_CPT {
      * Determine if a specific tour should be triggered
      */
     public static function should_tour_be_triggered($tour_id) {
+        
         // Check if user meets the user condition
         if (!self::user_meets_condition($tour_id)) {
             return false;
@@ -217,6 +228,8 @@ class MCL_Tour_CPT {
         $is_logged_in = is_user_logged_in();
         $current_user_id = get_current_user_id();
 
+
+
         switch ($user_condition) {
             case 'all_logged_in':
                 return $is_logged_in;
@@ -230,13 +243,15 @@ class MCL_Tour_CPT {
             case 'specific_users':
                 if (!$is_logged_in) return false;
                 $specific_users = get_post_meta($tour_id, '_mcl_tour_specific_users', true) ?: array();
-                return in_array($current_user_id, $specific_users);
+                $result = in_array($current_user_id, $specific_users);
+                return $result;
                 
             case 'specific_roles':
                 if (!$is_logged_in) return false;
                 $user = wp_get_current_user();
                 $specific_roles = get_post_meta($tour_id, '_mcl_tour_specific_roles', true) ?: array();
-                return !empty(array_intersect($user->roles, $specific_roles));
+                $result = !empty(array_intersect($user->roles, $specific_roles));
+                return $result;
         }
 
         return false;
@@ -275,9 +290,12 @@ class MCL_Tour_CPT {
         $trigger_value = get_post_meta($tour_id, '_mcl_tour_trigger_value', true) ?: '';
         $current_url = self::get_current_page_url();
 
+
+
         switch ($trigger_type) {
             case 'page':
-                return self::url_matches($current_url, $trigger_value);
+                $result = self::url_matches($current_url, $trigger_value);
+                return $result;
                 
             case 'selector':
                 // For selector triggers, we'll need to check on the frontend via JS
@@ -285,11 +303,13 @@ class MCL_Tour_CPT {
                 return true;
                 
             case 'first_login':
-                return self::is_user_first_login();
+                $result = self::is_user_first_login();
+                return $result;
                 
             case 'any_page':
                 return true;
         }
+
 
         return false;
     }
@@ -321,10 +341,13 @@ class MCL_Tour_CPT {
         // Support wildcards and exact matches
         if (strpos($trigger_path, '*') !== false) {
             $pattern = str_replace('*', '.*', preg_quote($trigger_path, '/'));
-            return preg_match('/^' . $pattern . '$/', $current_path);
+            $matches = preg_match('/^' . $pattern . '$/', $current_path);
+            return $matches;
         }
 
-        return $current_path === $trigger_path;
+        $exact_match = $current_path === $trigger_path;
+
+        return $exact_match;
     }
 
     /**
@@ -354,7 +377,8 @@ class MCL_Tour_CPT {
     /**
      * Get current page URL
      */
-    private static function get_current_page_url() {
+    public static function get_current_page_url() {
+        
         if (is_admin()) {
             global $pagenow;
             
@@ -378,11 +402,14 @@ class MCL_Tour_CPT {
                 }
             }
             
+
+            
             return $path;
         }
         
         // Frontend URL
         global $wp;
+        
         $path = '/' . ltrim($wp->request, '/');
         
         // Ensure path starts with /
@@ -399,6 +426,8 @@ class MCL_Tour_CPT {
                 $path .= '?' . http_build_query($params);
             }
         }
+        
+
         
         return $path;
     }

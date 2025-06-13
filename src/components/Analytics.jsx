@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Card, Button, Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, Dropdown, DropdownDivider, DropdownItem } from 'flowbite-react'
 import ApexCharts from 'apexcharts'
 import ConfirmationModal from './ConfirmationModal'
+import { formatDate } from '../utils/dateUtils'
 
 const Analytics = ({ adminData }) => {
   const [timeFilter, setTimeFilter] = useState('7')
@@ -277,14 +278,7 @@ const Analytics = ({ adminData }) => {
     }
   }
 
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
-    } catch (e) {
-      return 'Invalid date'
-    }
-  }
+
 
   const formatTimeAgo = (dateString) => {
     try {
@@ -359,7 +353,7 @@ const Analytics = ({ adminData }) => {
             <div className="flex-shrink-0">
               <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6.343 6.343a8 8 0 1 0 11.314 0M12 8V4"/>
                 </svg>
               </div>
             </div>
@@ -452,7 +446,7 @@ const Analytics = ({ adminData }) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                      {item.last_viewed ? formatDate(item.last_viewed) : 'Never'}
+                      {item.last_viewed ? formatDate(item.last_viewed, 'datetime') : 'Never'}
                     </TableCell>
                     <TableCell>
                       {item.most_checked_items && item.most_checked_items.length > 0 ? (

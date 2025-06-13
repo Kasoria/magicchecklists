@@ -6,6 +6,10 @@ import ChecklistEditor from './components/ChecklistEditor.jsx'
 import Analytics from './components/Analytics.jsx'
 import Settings from './components/Settings.jsx'
 import ImportExport from './components/ImportExport.jsx'
+import Tours from './components/Tours.jsx'
+import TourEditor from './components/TourEditor.jsx'
+import License from './components/License.jsx'
+import { ToastProvider } from './components/Toast.jsx'
 
 const customTheme = {
   button: {
@@ -28,6 +32,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
   const [editingChecklist, setEditingChecklist] = useState(null)
   const [layoutMode, setLayoutMode] = useState('stacked')
   const [editFormRef, setEditFormRef] = useState(null)
+  const [editingTour, setEditingTour] = useState(null)
 
   // Initialize dark mode from localStorage or system preference
   useEffect(() => {
@@ -109,9 +114,9 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       icon: "M12 6v6m0 0v6m0-6h6m-6 0H6"
     },
     {
-      id: 'import',
-      label: 'Import / Export',
-      icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+      id: 'tours',
+      label: 'Tours',
+      icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"
     },
     {
       id: 'analytics',
@@ -122,6 +127,11 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       id: 'settings',
       label: 'Settings',
       icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    },
+    {
+      id: 'import',
+      label: 'Import / Export',
+      icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
     }
   ]
 
@@ -180,14 +190,28 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
             onBackToChecklists={handleBackToChecklists}
             layoutMode={layoutMode}
             onSetFormRef={handleSetEditFormRef}
+            onSelectType={handleTypeSelect}
           />
         )
+      case 'tours':
+        if (editingTour !== null) {
+          return (
+            <TourEditor 
+              adminData={adminData}
+              tourId={editingTour}
+              onBackToTours={handleBackToTours}
+            />
+          )
+        }
+        return <Tours adminData={adminData} onEditTour={handleEditTour} />
       case 'import':
         return <ImportExport adminData={adminData} />
       case 'analytics':
         return <Analytics adminData={adminData} />
       case 'settings':
         return <Settings adminData={adminData} />
+      case 'license':
+        return <License adminData={adminData} />
       default:
         return <ChecklistsTable adminData={adminData} onEditChecklist={handleEditChecklist} />
     }
@@ -198,8 +222,10 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     setEditingChecklist({ id: checklistId, type: checklistType })
     setActiveTab('add-new')
     
-    // Update URL without page reload
+    // Update URL without page reload - use new structure
     const url = new URL(window.location)
+    url.searchParams.set('page', 'mcl_checklists')
+    url.searchParams.set('view', 'edit')
     url.searchParams.set('checklist_id', checklistId)
     url.searchParams.set('type', checklistType)
     window.history.pushState({}, '', url)
@@ -209,8 +235,10 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     setEditingChecklist(null)
     setActiveTab('checklists')
     
-    // Update URL without page reload
+    // Update URL without page reload - clean up view parameters
     const url = new URL(window.location)
+    url.searchParams.set('page', 'mcl_checklists')
+    url.searchParams.delete('view')
     url.searchParams.delete('checklist_id')
     url.searchParams.delete('type')
     window.history.pushState({}, '', url)
@@ -237,23 +265,61 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     setEditFormRef(ref)
   }
 
+  const handleEditTour = (tourId) => {
+    // Use 0 for new tours so TourEditor gets rendered (null would keep us on Tours list)
+    setEditingTour(tourId === null ? 0 : tourId)
+    setActiveTab('tours')
+  }
+
+  const handleBackToTours = () => {
+    setEditingTour(null)
+    setActiveTab('tours')
+  }
+
+  const handleTypeSelect = (type) => {
+    if (typeof type === 'object' && type.type === 'tour') {
+      // Handle tour creation
+      setEditingTour(0) // 0 indicates new tour
+      setActiveTab('tours')
+      
+      // Update URL
+      const url = new URL(window.location)
+      url.searchParams.set('page', 'mcl_checklists')
+      url.searchParams.set('view', 'tours')
+      url.searchParams.set('action', 'add')
+      window.history.pushState({}, '', url)
+    } else {
+      // Handle checklist type selection
+      setEditingChecklist({ id: null, type: type })
+      setActiveTab('add-new')
+      
+      // Update URL
+      const url = new URL(window.location)
+      url.searchParams.set('page', 'mcl_checklists')
+      url.searchParams.set('view', 'add-new')
+      url.searchParams.set('type', type)
+      window.history.pushState({}, '', url)
+    }
+  }
+
   return (
     <ThemeProvider theme={customTheme}>
-      <div className={`flex min-h-[100vh] bg-brand-light dark:bg-brand-dark transition-colors duration-300 main-flex-container ${darkMode ? 'dark' : ''}`}>
-        {/* Mobile Overlay */}
-        <div
-          className={`mobile-overlay ${sidebarOpen ? 'show' : ''}`}
-          onClick={handleSidebarClose}
-        />
+      <ToastProvider position="top-right" maxToasts={3}>
+        <div className={`flex min-h-[100vh] bg-brand-light dark:bg-brand-dark transition-colors duration-300 main-flex-container ${darkMode ? 'dark' : ''}`}>
+          {/* Mobile Overlay */}
+          <div
+            className={`mobile-overlay ${sidebarOpen ? 'show' : ''}`}
+            onClick={handleSidebarClose}
+          />
 
         {/* Sidebar */}
         <div
-          className={`sidebar-container ${sidebarOpen ? 'open' : ''} ${
+          className={`sidebar-container sidebar-responsive ${sidebarOpen ? 'open' : ''} ${
             sidebarCollapsed ? 'w-16' : 'w-64'
           } transition-all duration-300 bg-white dark:bg-brand-dark border-r border-gray-200 dark:border-gray-600 lg:translate-x-0 lg:static lg:inset-0 relative flex-shrink-0 z-50`}
         >
           {/* Collapse Toggle Button - Absolutely Positioned */}
-          <div className="sticky top-[32px]">
+          <div className="sticky top-[32px] h-[calc(100vh-32px)]">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="absolute top-5 -right-3 hidden lg:flex items-center justify-center w-6 h-6 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-accent dark:focus:ring-blue-400 transition-colors duration-200"
@@ -300,6 +366,20 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       if (window.innerWidth < 1024) {
                         setSidebarOpen(false)
                       }
+                      // Update URL to reflect the current view
+                      const url = new URL(window.location)
+                      url.searchParams.set('page', 'mcl_checklists')
+                      if (item.id !== 'checklists') {
+                        url.searchParams.set('view', item.id)
+                      } else {
+                        url.searchParams.delete('view')
+                      }
+                      // Clear edit-specific parameters when navigating away
+                      if (item.id !== 'add-new') {
+                        url.searchParams.delete('checklist_id')
+                        url.searchParams.delete('type')
+                      }
+                      window.history.pushState({}, '', url)
                     }}
                     className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium rounded-lg transition-colors duration-150 ${
                       activeTab === item.id
@@ -328,6 +408,36 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
             
             <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
               <ul className="space-y-2">
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveTab('license')
+                      if (window.innerWidth < 1024) {
+                        setSidebarOpen(false)
+                      }
+                      const url = new URL(window.location)
+                      url.searchParams.set('page', 'mcl_checklists')
+                      url.searchParams.set('view', 'license')
+                      window.history.pushState({}, '', url)
+                    }}
+                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium rounded-lg transition-colors duration-150 ${
+                      activeTab === 'license'
+                        ? 'bg-brand-accent text-brand-dark dark:bg-brand-accent dark:text-brand-dark font-bold'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                    title={sidebarCollapsed ? 'License' : undefined}
+                  >
+                    <svg
+                      className={`w-6 h-6 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 13v3h3v3h3v2l2 2h5v-4L12.74 8.74C12.91 8.19 13 7.6 13 7c0-3.31-2.69-6-6-6S1 3.69 1 7a6.005 6.005 0 0 0 8.47 5.47L10 13ZM6 7a1 1 0 1 1 0-2a1 1 0 0 1 0 2Z" />
+                    </svg>
+                    {!sidebarCollapsed && 'License'}
+                  </button>
+                </li>
                 <li>
                   <a
                     href="#"
@@ -392,24 +502,32 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {activeTab === 'add-new' && (
                       editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
                     )}
+                    {activeTab === 'tours' && (
+                      editingTour !== null ? 'Edit Tour' : 'Tours'
+                    )}
                     {activeTab === 'import' && 'Import / Export'}
                     {activeTab === 'analytics' && 'Analytics'}
                     {activeTab === 'settings' && 'Settings'}
+                    {activeTab === 'license' && 'License'}
                   </h1>
                   <p className="text-sm font-normal text-gray-600 dark:text-gray-300">
                     {activeTab === 'checklists' && 'Create and manage interactive checklists that can be accessed from anywhere on your site.'}
                     {activeTab === 'add-new' && (
                       editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist for your site.'
                     )}
+                    {activeTab === 'tours' && (
+                      editingTour !== null ? 'Configure settings and steps for your interactive tour.' : 'Create and manage interactive tours to guide users through your WordPress site.'
+                    )}
                     {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
                     {activeTab === 'analytics' && 'View performance metrics and usage statistics for your checklists.'}
                     {activeTab === 'settings' && 'Configure your MagicChecklists plugin settings.'}
+                    {activeTab === 'license' && 'Manage your MagicChecklists license activation.'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
-                {activeTab === 'add-new' && editingChecklist && (
+                {activeTab === 'add-new' && (
                   <>
                     <button
                       onClick={handleLayoutToggle}
@@ -440,20 +558,51 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
-                      Save Changes
+                      {editingChecklist ? 'Save Changes' : 'Save Checklist'}
                     </button>
                   </>
                 )}
 
-                {!(activeTab === 'add-new' && editingChecklist) && (
+                {activeTab === 'tours' && editingTour !== null && (
                   <button
-                    onClick={() => window.open(`/wp-admin/admin.php?page=mcl_add_new`, '_self')}
+                    onClick={handleBackToTours}
+                    className="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Tours
+                  </button>
+                )}
+
+                {activeTab !== 'add-new' && activeTab !== 'tours' && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('add-new')
+                      if (window.innerWidth < 1024) setSidebarOpen(false)
+                      const url = new URL(window.location)
+                      url.searchParams.set('page', 'mcl_checklists')
+                      url.searchParams.set('view', 'add-new')
+                      window.history.pushState({}, '', url)
+                    }}
                     className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
                   >
                     <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add New
+                  </button>
+                )}
+
+                {activeTab === 'tours' && editingTour === null && (
+                  <button
+                    onClick={() => handleEditTour(null)}
+                    className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add New Tour
                   </button>
                 )}
               </div>
@@ -479,15 +628,19 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       {activeTab === 'add-new' && (
                         editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
                       )}
+                      {activeTab === 'tours' && (
+                        editingTour !== null ? 'Edit Tour' : 'Tours'
+                      )}
                       {activeTab === 'import' && 'Import / Export'}
                       {activeTab === 'analytics' && 'Analytics'}
                       {activeTab === 'settings' && 'Settings'}
+                      {activeTab === 'license' && 'License'}
                     </h1>
                   </div>
                 </div>
 
                 {/* Primary action button - always visible on mobile */}
-                {activeTab === 'add-new' && editingChecklist ? (
+                {activeTab === 'add-new' ? (
                   <button
                     onClick={handleSaveForm}
                     className="flex items-center justify-center px-3 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
@@ -499,7 +652,14 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => window.open(`/wp-admin/admin.php?page=mcl_add_new`, '_self')}
+                    onClick={() => {
+                      setActiveTab('add-new')
+                      if (window.innerWidth < 1024) setSidebarOpen(false)
+                      const url = new URL(window.location)
+                      url.searchParams.set('page', 'mcl_checklists')
+                      url.searchParams.set('view', 'add-new')
+                      window.history.pushState({}, '', url)
+                    }}
                     className="flex items-center justify-center px-3 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
                   >
                     <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -517,14 +677,18 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   {activeTab === 'add-new' && (
                     editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist.'
                   )}
-                  {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
-                  {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
-                  {activeTab === 'settings' && 'Configure your plugin settings.'}
+                  {activeTab === 'tours' && (
+                    editingTour !== null ? 'Configure settings and steps for your interactive tour.' : 'Create and manage interactive tours.'
+                  )}
+                                          {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
+                        {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
+                        {activeTab === 'settings' && 'Configure your plugin settings.'}
+                        {activeTab === 'license' && 'Manage your license activation.'}
                 </p>
               </div>
 
-              {/* Bottom row - Secondary actions (only show when editing) */}
-              {activeTab === 'add-new' && editingChecklist && (
+              {/* Bottom row - Secondary actions (show when on add-new tab) */}
+              {activeTab === 'add-new' && (
                 <div className="flex items-center justify-center gap-2 px-4 pb-3 border-t border-gray-200 dark:border-gray-600 pt-3">
                   <button
                     onClick={handleLayoutToggle}
@@ -564,6 +728,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
           </main>
         </div>
       </div>
+      </ToastProvider>
     </ThemeProvider>
   )
 }

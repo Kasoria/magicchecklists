@@ -165,10 +165,53 @@
   background-color: #6b7280;
 }
 
-/* Hide connecting lines during drag */
-.sortable-ghost.mcl-child-item::before,
-.sortable-ghost.mcl-child-item::after {
-  display: none;
+/* Dark theme general text color override */
+.mcl-theme-dark {
+  /* Default dark theme text color; children can override with utility classes */
+  color: #ffffff;
+}
+
+/* Dark theme button text colors */
+.mcl-theme-dark .mcl-drawer-button-primary {
+  color: #1e293b !important;
+}
+
+.mcl-theme-dark .mcl-drawer-button-secondary {
+  color: #ffffff !important;
+}
+
+/* Dark theme item hover improvements */
+.mcl-theme-dark .mcl-items-list li:hover {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+}
+
+.mcl-theme-dark .mcl-items-list li:hover .mcl-item-content {
+  color: #ffffff !important;
+}
+
+/* Dark theme description text */
+.mcl-theme-dark .mcl-public-description {
+  color: #d1d5db !important;
+}
+
+/* Dark theme content editable focus and hover states */
+.mcl-theme-dark .mcl-item-content:hover {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+}
+
+.mcl-theme-dark .mcl-item-content:focus {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+}
+
+/* Dark theme title focus and hover states */
+.mcl-theme-dark .mcl-drawer-title:hover,
+.mcl-theme-dark .mcl-drawer-title:focus {
+  background-color: #475569 !important;
+  color: #ffffff !important;
 }
 
 /* Ensure proper stacking for modals */
@@ -275,4 +318,42 @@ body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked {
   background-color: initial !important;
   border-color: initial !important;
   background-image: none !important;
+}
+
+/* Custom theme support */
+.mcl-theme-custom {
+  /* Reset any default styling to let custom CSS take over */
+}
+
+.mcl-theme-custom .mcl-item-checkbox {
+  /* Ensure custom checkboxes can be styled properly */
+  position: relative;
+}
+
+.mcl-theme-custom .mcl-item-checkbox:checked::before {
+  /* Base styling for custom checkmark content */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  display: block;
+}
+
+/* Ensure custom theme text colors are properly inherited */
+.mcl-theme-custom * {
+  color: inherit;
+}
+
+/* Make sure custom theme backgrounds work properly */
+.mcl-theme-custom .mcl-drawer-content {
+  border-radius: inherit;
+}
+
+/* Custom theme responsive adjustments */
+@media (max-width: 640px) {
+  .mcl-theme-custom {
+    /* Maintain custom styling on mobile */
+  }
 }

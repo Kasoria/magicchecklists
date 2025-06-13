@@ -63,12 +63,25 @@ class MCL_Theme_Renderer {
     
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-items-list li {
             background-color: <?php echo esc_html($settings['list_item_bg_color']); ?>;
+        }
+    
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-items-list li .mcl-item-content {
             font-size: <?php echo esc_html($settings['list_item_font_size']); ?>px;
+            color: <?php echo esc_html($settings['text_color']); ?>;
+        }
+    
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-items-list li .mcl-item-content * {
+            color: inherit;
         }
     
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-primary {
             background-color: <?php echo esc_html($settings['primary_button_bg']); ?>;
             color: <?php echo esc_html($settings['primary_button_text_color']); ?>;
+        }
+
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-primary:hover {
+            background-color: <?php echo esc_html($settings['primary_button_bg']); ?>;
+            opacity: 0.9;
         }
 
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-primary svg path {
@@ -78,6 +91,11 @@ class MCL_Theme_Renderer {
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-secondary {
             background-color: <?php echo esc_html($settings['secondary_button_bg']); ?>;
             color: <?php echo esc_html($settings['secondary_button_text_color']); ?>;
+        }
+
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-secondary:hover {
+            background-color: <?php echo esc_html($settings['secondary_button_bg']); ?>;
+            opacity: 0.9;
         }
 
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-secondary svg path {
@@ -110,6 +128,14 @@ class MCL_Theme_Renderer {
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom input[type="checkbox"].mcl-item-checkbox {
             background-color: <?php echo esc_html($settings['checkbox_bg_color']); ?> !important;
             border-radius: <?php echo esc_html($settings['checkbox_border_radius']); ?>px !important;
+            border: 2px solid <?php echo esc_html($settings['checkbox_bg_color']); ?> !important;
+            width: 20px !important;
+            height: 20px !important;
+        }
+
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom input[type="checkbox"].mcl-item-checkbox:checked {
+            background-color: <?php echo esc_html($settings['checkbox_bg_color']); ?> !important;
+            border-color: <?php echo esc_html($settings['checkbox_bg_color']); ?> !important;
         }
 
         <?php if ($settings['checkbox_style'] === 'custom' && $settings['checkbox_custom_icon']) : ?>
@@ -125,6 +151,29 @@ class MCL_Theme_Renderer {
         #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-public-description {
             font-size: <?php echo esc_html($settings['description_font_size']); ?>px;
             color: <?php echo esc_html($settings['description_text_color']); ?>;
+        }
+    
+        /* Additional text color rules for comprehensive coverage */
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom,
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom * {
+            color: <?php echo esc_html($settings['text_color']); ?>;
+        }
+
+        /* Ensure buttons maintain their own text colors */
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-primary,
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-primary * {
+            color: <?php echo esc_html($settings['primary_button_text_color']); ?> !important;
+        }
+
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-secondary,
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-drawer-button-secondary * {
+            color: <?php echo esc_html($settings['secondary_button_text_color']); ?> !important;
+        }
+
+        /* Description text color override */
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-public-description,
+        #mcl-drawer[data-checklist-id="<?php echo esc_attr($checklist_id); ?>"].mcl-theme-custom .mcl-public-description * {
+            color: <?php echo esc_html($settings['description_text_color']); ?> !important;
         }
     
         <?php

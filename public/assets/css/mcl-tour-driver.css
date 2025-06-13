@@ -1,0 +1,179 @@
+/**
+ * Tour Driver.js Customization CSS
+ * Minimal styles for customizing driver.js popovers
+ */
+
+/* Driver.js popover customizations */
+.driver-popover .driver-popover-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.driver-popover .driver-popover-description {
+    line-height: 1.5;
+}
+
+.driver-popover .driver-popover-description img {
+    max-width: 100%;
+    height: auto;
+}
+
+.driver-popover .driver-popover-description em {
+    font-style: italic;
+    color: #666;
+    display: block;
+    margin-top: 8px;
+    padding-left: 16px;
+    position: relative;
+}
+
+.driver-popover .driver-popover-description em:before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Theme variations */
+.driver-popover.mcl-theme-dark {
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.driver-popover.mcl-theme-dark .driver-popover-title {
+    color: #ffffff;
+}
+
+.driver-popover.mcl-theme-primary {
+    background: #011326;
+    color: #ffffff;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-title {
+    color: #f2da22;
+}
+
+.driver-popover.mcl-theme-minimal {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.driver-popover.mcl-theme-rounded {
+    border-radius: 12px;
+}
+
+.driver-popover.mcl-theme-large {
+    max-width: 400px;
+}
+
+.driver-popover.mcl-theme-large .driver-popover-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.driver-popover.mcl-theme-large .driver-popover-description {
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Button customizations */
+.driver-popover .driver-popover-footer {
+    margin-top: 16px;
+}
+
+.driver-popover .driver-popover-footer button {
+    margin-right: 8px;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-footer button {
+    background: #f2da22;
+    color: #011326;
+    border: none;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-footer button:hover {
+    background: #d9c31f;
+}
+
+/* Progress text customization */
+.driver-popover .driver-popover-progress-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.driver-popover.mcl-theme-dark .driver-popover-progress-text {
+    color: #ccc;
+}
+
+.driver-popover.mcl-theme-primary .driver-popover-progress-text {
+    color: #f2da22;
+}
+
+/* Loading and navigation styles */
+.mcl-tour-navigation-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mcl-tour-loading-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.mcl-tour-loading-text {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+.mcl-tour-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2271b1;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: mcl-spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes mcl-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Element highlighting for tour creator */
+.mcl-element-highlight {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000001;
+    border: 2px solid #2271b1;
+    background: rgba(34, 113, 177, 0.1);
+    border-radius: 2px;
+}
+
+/* Reselection overlay */
+.mcl-reselect-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 6px;
+    font-size: 14px;
+    z-index: 1000300;
+    pointer-events: none;
+} 

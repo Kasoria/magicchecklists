@@ -20,7 +20,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         'Themes and customization',
         'Shortcode support'
       ],
-      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_add_new&type=classic`,
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=add-new&type=classic`,
       buttonText: 'Create Classic Checklist'
     },
     {
@@ -40,20 +40,42 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         'Link and taxonomy checks',
         'Publishing prevention'
       ],
-      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_add_new&type=publisher`,
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=add-new&type=publisher`,
       buttonText: 'Create Publisher Checklist',
       isNew: true,
       featured: true
+    },
+    {
+      id: 'tour',
+      title: 'Interactive Tour',
+      description: 'Guided tours that lead users through your WordPress admin or frontend. Perfect for onboarding, training, and feature introduction.',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-12 h-12">
+          <path fill="currentColor" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      ),
+      features: [
+        'Step-by-step guidance',
+        'Interactive elements',
+        'Conditional logic',
+        'User targeting',
+        'Progress tracking',
+        'Visual highlights'
+      ],
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=tours&action=add`,
+      buttonText: 'Create Interactive Tour',
+      type: 'tour'
     }
   ]
 
   const comparisonFeatures = [
-    { name: 'Custom Items', classic: true, publisher: false },
-    { name: 'Automatic Verification', classic: false, publisher: true },
-    { name: 'Publishing Control', classic: false, publisher: true },
-    { name: 'Gutenberg Integration', classic: false, publisher: true },
-    { name: 'Keyboard Shortcuts', classic: true, publisher: false },
-    { name: 'Themes & Styling', classic: true, publisher: false }
+    { name: 'Custom Items', classic: true, publisher: false, tour: false },
+    { name: 'Automatic Verification', classic: false, publisher: true, tour: false },
+    { name: 'Publishing Control', classic: false, publisher: true, tour: false },
+    { name: 'Step-by-Step Guidance', classic: false, publisher: false, tour: true },
+    { name: 'Interactive Elements', classic: false, publisher: false, tour: true },
+    { name: 'Keyboard Shortcuts', classic: true, publisher: false, tour: false },
+    { name: 'Visual Highlights', classic: false, publisher: false, tour: true }
   ]
 
   const useCases = {
@@ -68,12 +90,23 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
       'SEO compliance checking',
       'Editorial workflows',
       'Publication standards'
+    ],
+    tour: [
+      'User onboarding',
+      'Feature introduction',
+      'Training workflows',
+      'Navigation guidance'
     ]
   }
 
   const handleTypeSelect = (type) => {
     if (onSelectType) {
-      onSelectType(type)
+      if (type === 'tour') {
+        // For tours, we need to navigate to the tours tab and trigger new tour creation
+        onSelectType({ type: 'tour', action: 'create' })
+      } else {
+        onSelectType(type)
+      }
     } else {
       // Default behavior: navigate to the URL
       const selectedType = checklistTypes.find(t => t.id === type)
@@ -88,15 +121,15 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-brand-dark dark:text-white mb-4">
-          Create New Checklist
+          Create New Item
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-          Choose the type of checklist you want to create. Each type serves different purposes and has unique features.
+          Choose what you want to create. Each type serves different purposes and has unique features.
         </p>
       </div>
 
       {/* Type Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {checklistTypes.map((type) => (
           <Card
             key={type.id}
@@ -181,6 +214,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
                 <th className="px-6 py-4 text-left text-white font-semibold">Feature</th>
                 <th className="px-6 py-4 text-center text-white font-semibold">Classic Checklist</th>
                 <th className="px-6 py-4 text-center text-white font-semibold">Publisher Checklist</th>
+                <th className="px-6 py-4 text-center text-white font-semibold">Interactive Tour</th>
               </tr>
             </thead>
             <tbody>
@@ -203,6 +237,13 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
                       <span className="text-red-500 text-2xl font-bold">✗</span>
                     )}
                   </td>
+                  <td className="px-6 py-4 text-center">
+                    {feature.tour ? (
+                      <span className="text-green-500 text-2xl font-bold">✓</span>
+                    ) : (
+                      <span className="text-red-500 text-2xl font-bold">✗</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -210,7 +251,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         </div>
 
         {/* Use Cases */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border-l-4 border-blue-500">
             <h4 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
               Use Classic Checklist for:
@@ -233,6 +274,20 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
               {useCases.publisher.map((useCase, index) => (
                 <li key={index} className="flex items-start">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <span className="text-gray-700 dark:text-gray-300">{useCase}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border-l-4 border-green-500">
+            <h4 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
+              Use Interactive Tour for:
+            </h4>
+            <ul className="space-y-2">
+              {useCases.tour.map((useCase, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                   <span className="text-gray-700 dark:text-gray-300">{useCase}</span>
                 </li>
               ))}

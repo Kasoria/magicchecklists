@@ -30,6 +30,7 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_get_users', array($this, 'get_users'), 10);
         add_action('wp_ajax_mcl_get_roles', array($this, 'get_roles'), 10);
         add_action('wp_ajax_mcl_get_admin_pages', array($this, 'get_admin_pages'), 10);
+        add_action('wp_ajax_mcl_get_license_status', array($this, 'get_license_status'), 10);
     }
 
     public function add_admin_menu() {
@@ -116,57 +117,69 @@ class MCL_Admin {
             }
         }
 
+        // Add main menu page with new "MagicPlugins" branding
         add_menu_page(
-            __('MagicChecklists', 'magic-checklists'),
-            __('MagicChecklists', 'magic-checklists'),
+            __('MagicPlugins', 'magic-checklists'),
+            __('MagicPlugins', 'magic-checklists'),
             'manage_options',
-            'mcl_checklists',
-            array($this, 'checklists_page'),
+            'magic_plugins',
+            array($this, 'magic_plugins_landing_page'),
             'data:image/svg+xml;base64,' . base64_encode(file_get_contents(MAGIC_CHECKLISTS_PLUGIN_PATH . 'assets/images/menu-icon.svg')),
             $menu_position
         );
     
-        // Keep existing submenu items
+        // Add first submenu item for MagicChecklists
         add_submenu_page(
-            'mcl_checklists',
-            __('Add New Checklist', 'magic-checklists'),
-            __('Add New', 'magic-checklists'),
+            'magic_plugins',
+            __('MagicChecklists', 'magic-checklists'),
+            __('MagicChecklists', 'magic-checklists'),
             'manage_options',
-            'mcl_add_new',
-            array($this, 'render_add_new_page')
+            'mcl_checklists',
+            array($this, 'checklists_page')
         );
-        
+
+        // Add second submenu item for MagicPlugins landing page
         add_submenu_page(
-            'mcl_checklists',
-            __('Import / Export Checklists', 'magic-checklists'),
-            __('Import / Export', 'magic-checklists'),
+            'magic_plugins',
+            __('MagicPlugins', 'magic-checklists'),
+            __('MagicPlugins', 'magic-checklists'),
             'manage_options',
-            'mcl_import',
-            array($this, 'import_checklist_page')
+            'magic_plugins_landing',
+            array($this, 'magic_plugins_landing_page')
         );
-        
-        add_submenu_page(
-            'mcl_checklists',
-            __('Analytics', 'magic-checklists'),
-            __('Analytics', 'magic-checklists'),
-            'manage_options',
-            'mcl_analytics',
-            array($this, 'render_analytics_page')
-        );
+
+        // Remove the duplicate submenu entry created by add_menu_page
+        remove_submenu_page('magic_plugins', 'magic_plugins');
     }
-    
-    public function import_checklist_page() {
-        // Render React app container directly
-        echo '<div id="mcl-admin-root"></div>';
+
+    public function magic_plugins_landing_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html(__('MagicPlugins', 'magic-checklists')); ?></h1>
+            <div class="magic-plugins-landing" style="background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04); margin: 20px 0;">
+                <h2><?php echo esc_html(__('Welcome to MagicPlugins', 'magic-checklists')); ?></h2>
+                <p><?php echo esc_html(__('Select a plugin from the menu to get started:', 'magic-checklists')); ?></p>
+                <ul style="margin: 20px 0;">
+                    <li style="margin: 10px 0;">
+                        <a href="<?php echo admin_url('admin.php?page=mcl_checklists'); ?>" class="button button-primary">
+                            <?php echo esc_html(__('MagicChecklists', 'magic-checklists')); ?>
+                        </a>
+                        <span style="margin-left: 10px; color: #666;">
+                            <?php echo esc_html(__('Create and manage interactive checklists', 'magic-checklists')); ?>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <?php
     }
 
     public function enqueue_admin_scripts($hook) {
-        // Only load on plugin pages - check specific hook names
+        // Load on our plugin pages
         $plugin_pages = array(
-            'toplevel_page_mcl_checklists',
-            'magicchecklists_page_mcl_add_new',
-            'magicchecklists_page_mcl_import',
-            'magicchecklists_page_mcl_analytics'
+            'toplevel_page_magic_plugins',            // Main MagicPlugins page
+            'magicplugins_page_mcl_checklists',       // MagicChecklists submenu
+            'magicplugins_page_magic_plugins_landing' // MagicPlugins landing submenu
         );
         
         if ( ! in_array( $hook, $plugin_pages ) ) {
@@ -454,35 +467,7 @@ class MCL_Admin {
         echo '<div id="mcl-admin-root"></div>';
     }
 
-    /**
-     * Render the add new checklist page
-     */
-    public function render_add_new_page() {
-        $checklist_id = isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0;
-        $checklist_type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : null;
-        
-        // For publisher checklists, use PHP templates (keep this for now)
-        if ($checklist_type === 'publisher') {
-            // Load publisher-specific template
-            include_once MCL_PLUGIN_DIR . 'admin/views/edit-publisher-checklist.php';
-            return;
-        }
-        
-        // Always use React app for classic checklists - remove PHP fallback
-        // This prevents the old PHP interface from interfering
-        $this->render_react_app();
-    }
 
-    /**
-     * Render the React application root
-     */
-    private function render_react_app() {
-        ?>
-        <div class="wrap">
-            <div id="mcl-admin-root"></div>
-        </div>
-        <?php
-    }
 
     public function save_checklist() {
         if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_save_checklist')) {
@@ -612,6 +597,8 @@ class MCL_Admin {
                 'checkmark_color'            => sanitize_hex_color($_POST['shortcode_checkmark_color'] ?? '#ffffff'),
     
                 // Style Options Part 2: Spacing and Dimensions
+                'width'                          => sanitize_text_field($_POST['shortcode_width'] ?? 'full'),
+                'custom_width'                   => absint($_POST['shortcode_custom_width'] ?? 800),
                 'checkbox_dimensions'            => absint($_POST['shortcode_checkbox_dimensions'] ?? 20),
                 'checkbox_border_radius'         => absint($_POST['shortcode_checkbox_border_radius'] ?? 4),
                 'checkbox_border_thickness'      => absint($_POST['shortcode_checkbox_border_thickness'] ?? 2),
@@ -697,6 +684,15 @@ class MCL_Admin {
             // Always save custom theme settings regardless of selected theme
             $this->save_custom_theme_settings($checklist_id);
             update_post_meta($checklist_id, '_mcl_show_description', $show_description);
+            
+            // Save icon settings
+            $checklist_icon_type = isset($_POST['checklist_icon_type']) ? sanitize_text_field($_POST['checklist_icon_type']) : 'preset';
+            $checklist_icon_preset = isset($_POST['checklist_icon_preset']) ? sanitize_text_field($_POST['checklist_icon_preset']) : 'checklist-1';
+            $checklist_icon_custom = isset($_POST['checklist_icon_custom']) ? esc_url_raw($_POST['checklist_icon_custom']) : '';
+            
+            update_post_meta($checklist_id, '_mcl_checklist_icon_type', $checklist_icon_type);
+            update_post_meta($checklist_id, '_mcl_checklist_icon_preset', $checklist_icon_preset);
+            update_post_meta($checklist_id, '_mcl_checklist_icon_custom', $checklist_icon_custom);
         }
     
         wp_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
@@ -1356,15 +1352,46 @@ class MCL_Admin {
      */
     public static function get_shortcode_settings($checklist_id) {
         $defaults = array(
+            // Display Options
             'show_title' => 1,
             'show_description' => 1,
             'show_deadline' => 0,
             'show_priority' => 0,
             'show_numbers' => 1,
-            'width' => 'full',
-            'custom_width' => 800,
+            
+            // Style Options Part 1: Colors
+            'title_text_color' => '#000000',
+            'description_text_color' => '#333333',
+            'deadline_text_color' => '#ff0000',
+            'list_item_text_color' => '#1a1a1a',
             'bg_color' => '#ffffff',
-            'border' => 'none',
+            'border_color' => '#e2e8f0',
+            'checkbox_border_color' => '#cccccc',
+            'checkbox_color_filled' => '#0ea5e9',
+            'checkbox_color_unfilled' => '#ffffff',
+            'checkmark_color' => '#ffffff',
+
+            // Style Options Part 2: Spacing and Dimensions
+            'checkbox_dimensions' => 20,
+            'checkbox_border_radius' => 4,
+            'checkbox_border_thickness' => 2,
+            'border_type' => 'none',
+            'border_radius' => 6,
+            'border_thickness' => 1,
+            'item_spacing' => 'comfortable',
+            'padding_block' => 32,
+            'padding_inline' => 32,
+            'container_gap' => 10,
+            'custom_width' => 800,
+
+            // Style Options Part 3: Typography
+            'title_font_size' => 18,
+            'description_font_size' => 14,
+            'list_item_font_size' => 16,
+            'deadline_font_size' => 14,
+
+            // Behavior Options
+            'width' => 'full',
             'spacing' => 'comfortable',
             'disable_drawer' => 0,
             'enable_reorder' => 0,
@@ -1567,13 +1594,7 @@ class MCL_Admin {
         return false;
     }
 
-    /**
-     * Render analytics page
-     */
-    public function render_analytics_page() {
-        // Render React app container directly
-        echo '<div id="mcl-admin-root"></div>';
-    }
+
 
     public function get_checklists_data() {
         // Verify nonce
@@ -1894,6 +1915,8 @@ class MCL_Admin {
             'custom_days' => $get_meta('_mcl_custom_days', '0'),
             'reset_time' => $get_meta('_mcl_reset_time', '00:00'),
             'enable_shortcode' => $get_meta_boolean('_mcl_enable_shortcode', false),
+            // Shortcode settings
+            'shortcode_settings' => self::get_shortcode_settings($checklist_id),
             // Custom theme settings
             'drawer_bg_color' => $get_meta('_mcl_drawer_bg_color', '#ffffff'),
             'list_item_bg_color' => $get_meta('_mcl_list_item_bg_color', '#f8f9fa'),
@@ -1918,6 +1941,10 @@ class MCL_Admin {
             'float_button_text_color' => $get_meta('_mcl_float_button_text_color', '#1a1a1a'),
             'float_button_font_size' => $get_meta('_mcl_float_button_font_size', '16'),
             'show_float_button_icon' => $get_meta_boolean('_mcl_show_float_button_icon', false), // Changed from true to false
+            // Icon settings
+            'checklist_icon_type' => $get_meta('_mcl_checklist_icon_type', 'preset'),
+            'checklist_icon_preset' => $get_meta('_mcl_checklist_icon_preset', 'checklist-1'),
+            'checklist_icon_custom' => $get_meta('_mcl_checklist_icon_custom', ''),
         );
 
         // Get notification settings from the notification manager
@@ -2066,6 +2093,56 @@ class MCL_Admin {
             error_log('MagicChecklists admin pages error: ' . $e->getMessage());
             wp_send_json_error(array(
                 'message' => 'Error retrieving admin pages',
+                'debug' => WP_DEBUG ? $e->getMessage() : null
+            ));
+        }
+    }
+
+    public function get_license_status() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+            return;
+        }
+
+        try {
+            // Get the SureCart licensing client instance from the global scope
+            global $mcl_licensing_client;
+            
+            if (!$mcl_licensing_client && class_exists('\SureCart\Licensing\Client')) {
+                // If not set globally, try to recreate it
+                $mcl_licensing_client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', MAGIC_CHECKLISTS_PLUGIN_FILE);
+                $mcl_licensing_client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
+            }
+
+            if (!$mcl_licensing_client) {
+                wp_send_json_error(array('message' => 'Licensing client not available'));
+                return;
+            }
+
+            // Get current license information
+            $settings = $mcl_licensing_client->settings();
+            $activation = $settings->get_activation();
+            $license_key = $settings->license_key;
+            $activation_id = $settings->activation_id;
+            
+            $response = array(
+                'isActive' => !empty($activation) && !empty($activation->id),
+                'licenseKey' => $license_key ?: '',
+                'activationId' => $activation_id ?: ''
+            );
+
+            wp_send_json_success($response);
+        } catch (Exception $e) {
+            error_log('MagicChecklists license status error: ' . $e->getMessage());
+            wp_send_json_error(array(
+                'message' => 'Error retrieving license status',
                 'debug' => WP_DEBUG ? $e->getMessage() : null
             ));
         }

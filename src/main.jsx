@@ -11,13 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-const root = ReactDOM.createRoot(document.getElementById('mcl-public-root'))
+const rootElement = document.getElementById('mcl-public-root')
 
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-)
-
-// The App component now handles the initialization timing internally
-// No need for additional setTimeout here as App.jsx manages the proper sequencing 
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement)
+  
+  // Note: StrictMode is disabled to prevent double mounting of tour components
+  // which was causing duplicate driver.js instances and popover elements
+  root.render(<App />)
+} else {
+  
+  // Try to find it after a delay
+  setTimeout(() => {
+    const delayedRootElement = document.getElementById('mcl-public-root')
+    
+    if (delayedRootElement) {
+      const root = ReactDOM.createRoot(delayedRootElement)
+      root.render(<App />)
+    } else {
+    }
+  }, 1000)
+}

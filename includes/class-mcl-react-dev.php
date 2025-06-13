@@ -46,15 +46,28 @@ class MCL_React_Dev {
     public function is_vite_dev_server_running() {
         // Only check in development/staging environments
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 1,
-                    'ignore_errors' => true
-                ]
-            ]);
-            
-            $response = @file_get_contents( $this->vite_dev_server, false, $context );
-            return $response !== false;
+            /*
+             * Use WordPress HTTP API for the availability check instead of
+             * file_get_contents(). The HTTP API will return a WP_Error on
+             * failure instead of triggering the PHP warning:
+             *   "file_get_contents(...): Failed to open stream: Connection refused".
+             * This keeps the admin UI clean while still accurately detecting
+             * whether the Vite dev-server is running.
+             */
+
+            $response = wp_remote_get( $this->vite_dev_server, [
+                'timeout' => 1,
+                'redirection' => 0,
+                'blocking' => true,
+                'sslverify' => false, // Local dev server is usually http
+                'headers' => [],
+            ] );
+
+            // If we didn't get a WP_Error back, the dev-server accepted the
+            // connection – even when it responds with 404 for the root path.
+            // That is enough to know that the server is running.
+
+            return ! is_wp_error( $response );
         }
         
         return false;
@@ -70,8 +83,21 @@ class MCL_React_Dev {
             return; // MCL_Public not loaded yet
         }
         
-        // Check if MCL_Public would load assets using its existing logic
-        if ( ! $mcl_public_instance->should_load_assets() ) {
+        // Check for tour mode parameters first - if present, always load React
+        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        
+        // Force React loading for tour mode, regardless of checklist conditions
+        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id;
+        
+        // Check tour mode cookie as fallback
+        if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
+            $force_load_for_tours = true;
+        }
+        
+        // If not tour mode, check if MCL_Public would load assets using its existing logic
+        if ( !$force_load_for_tours && ! $mcl_public_instance->should_load_assets() ) {
             return;
         }
         
@@ -81,11 +107,9 @@ class MCL_React_Dev {
             $screen = get_current_screen();
             if ( $screen ) {
                 $plugin_pages = array(
-                    'toplevel_page_mcl_checklists',
-                    'magicchecklists_page_mcl_add_new',
-                    'magicchecklists_page_mcl_import',
-                    'magicchecklists_page_mcl_analytics',
-                    'magicchecklists_page_mcl_settings'
+                    'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
+                    'magicplugins_page_mcl_checklists',    // MagicChecklists main page
+                    'magicplugins_page_mcl_manage_license' // License management page
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
@@ -97,6 +121,7 @@ class MCL_React_Dev {
                     // Load public React app for drawer/floating buttons on admin pages
                     $this->enqueue_public_scripts( $hook );
                 }
+            } else {
             }
         } else {
             // Load public React app on frontend
@@ -120,6 +145,7 @@ class MCL_React_Dev {
      * Enqueue public React scripts  
      */
     private function enqueue_public_scripts( $hook ) {
+        
         if ( $this->is_dev_mode ) {
             $this->enqueue_public_dev_scripts( $hook );
         } else {
@@ -131,6 +157,11 @@ class MCL_React_Dev {
      * Enqueue admin development scripts from Vite dev server
      */
     private function enqueue_admin_dev_scripts( $hook ) {
+        // Check if tour assets are needed and enqueue them first
+        if ($this->should_load_tour_assets()) {
+            $this->enqueue_tour_assets();
+        }
+
         // Vite client for HMR
         wp_enqueue_script(
             'vite-client',
@@ -172,6 +203,11 @@ class MCL_React_Dev {
      * Enqueue public development scripts from Vite dev server
      */
     private function enqueue_public_dev_scripts( $hook ) {
+        // Check if tour assets are needed and enqueue them first
+        if ($this->should_load_tour_assets()) {
+            $this->enqueue_tour_assets();
+        }
+
         // Check if we're loading both admin and public on the same page
         $is_plugin_page = is_admin() && $this->is_plugin_admin_page();
         $public_handle_suffix = $is_plugin_page ? '-drawer' : '';
@@ -219,6 +255,11 @@ class MCL_React_Dev {
      * Enqueue admin production built scripts
      */
     private function enqueue_admin_prod_scripts( $hook ) {
+        // Check if tour assets are needed and enqueue them first
+        if ($this->should_load_tour_assets()) {
+            $this->enqueue_tour_assets();
+        }
+
         $dist_path = MAGIC_CHECKLISTS_PLUGIN_PATH . 'dist/';
         $dist_url = MAGIC_CHECKLISTS_PLUGIN_URL . 'dist/';
         
@@ -255,6 +296,11 @@ class MCL_React_Dev {
      * Enqueue public production built scripts
      */
     private function enqueue_public_prod_scripts( $hook ) {
+        // Check if tour assets are needed and enqueue them first
+        if ($this->should_load_tour_assets()) {
+            $this->enqueue_tour_assets();
+        }
+
         $dist_path = MAGIC_CHECKLISTS_PLUGIN_PATH . 'dist/';
         $dist_url = MAGIC_CHECKLISTS_PLUGIN_URL . 'dist/';
         
@@ -440,6 +486,13 @@ class MCL_React_Dev {
                         'checklist_id' => isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0,
                     );
                     break;
+                case 'magicchecklists_page_mcl_tours':
+                    $current_page = 'tours';
+                    $page_params = array(
+                        'edit' => isset($_GET['edit']) ? intval($_GET['edit']) : 0,
+                        'create' => isset($_GET['create']) ? true : false,
+                    );
+                    break;
                 case 'magicchecklists_page_mcl_import':
                     $current_page = 'import';
                     break;
@@ -481,6 +534,7 @@ class MCL_React_Dev {
                 'mcl_save_pdf_settings' => wp_create_nonce( 'mcl_save_pdf_settings' ),
                 'mcl_get_comprehensive_analytics' => wp_create_nonce( 'mcl_get_comprehensive_analytics' ),
                 'mcl_cleanup_test_data' => wp_create_nonce( 'mcl_cleanup_test_data' ),
+                'mcl_tour_admin' => wp_create_nonce( 'mcl_tour_admin' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
             'savedTheme' => get_user_meta( get_current_user_id(), 'mcl_theme', true ),
@@ -488,6 +542,7 @@ class MCL_React_Dev {
             'isDev' => $this->is_dev_mode,
             'pluginUrl' => MAGIC_CHECKLISTS_PLUGIN_URL,
             'admin_url' => admin_url(),
+            'dashboard_url' => admin_url('index.php'),
             'currentPage' => $current_page,
             'pageParams' => $page_params,
             'analytics' => $analytics_data,
@@ -508,7 +563,14 @@ class MCL_React_Dev {
     private function localize_public_data( $public_handle_suffix = '' ) {
         $handle = $this->is_dev_mode ? 'mcl-react-public-dev' . $public_handle_suffix : 'mcl-react-public' . $public_handle_suffix;
         
-        wp_localize_script( $handle, 'mclPublicData', array(
+        // Check if we're in tour mode to provide additional admin data
+        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        $tour_mode_detected = $is_tour_mode || $continue_tour_id || $has_tour_id;
+        
+        // Base public data
+        $public_data = array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'restUrl' => rest_url( 'mcl/v1/' ),
             'nonces' => array(
@@ -516,6 +578,7 @@ class MCL_React_Dev {
                 'mcl_admin' => wp_create_nonce( 'mcl_admin_nonce' ),
                 'mcl_ajax' => wp_create_nonce( 'mcl_ajax_nonce' ),
                 'mcl_ajax_nopriv' => wp_create_nonce( 'mcl_ajax_nopriv_nonce' ),
+                'mcl_tour_public' => wp_create_nonce( 'mcl_tour_public' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
             'isLoggedIn' => is_user_logged_in(),
@@ -532,7 +595,150 @@ class MCL_React_Dev {
                 'delete' => __( 'Delete', 'magic-checklists' ),
                 'edit' => __( 'Edit', 'magic-checklists' ),
             )
-        ));
+        );
+        
+        // Add tour-specific data when in tour mode
+        if ($tour_mode_detected) {
+            $public_data['nonces']['mcl_tour_admin'] = wp_create_nonce( 'mcl_tour_admin' );
+            $public_data['nonces']['mcl_tour_public'] = wp_create_nonce( 'mcl_tour_public' );
+            $public_data['dashboard_url'] = admin_url( 'index.php' );
+            $public_data['admin_url'] = admin_url();
+        }
+        
+        // Always add tour data if tours are available for the current page
+        $tour_data = $this->get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id);
+        if (!empty($tour_data['tours'])) {
+            
+            // Use the same object name that TourPlayback expects
+            wp_localize_script( $handle, 'mclTourPlaybackData', $tour_data );
+        }
+        
+        wp_localize_script( $handle, 'mclPublicData', $public_data );
+    }
+    
+    /**
+     * Get tour data for JavaScript localization
+     */
+    private function get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id) {
+        
+        $tours_data = array();
+        
+        // Handle tour continuation
+        if ($continue_tour_id) {
+            $continue_step = isset($_GET['mcl_continue_step']) ? intval($_GET['mcl_continue_step']) : 0;
+            $tour = get_post($continue_tour_id);
+            if ($tour && $tour->post_type === 'mcl_tour') {
+                $steps = get_post_meta($continue_tour_id, '_mcl_tour_steps', true) ?: array();
+                $settings = get_post_meta($continue_tour_id, '_mcl_tour_settings', true) ?: array();
+                
+                $tours_data[] = array(
+                    'id' => $continue_tour_id,
+                    'title' => $tour->post_title,
+                    'steps' => $steps,
+                    'settings' => $settings,
+                    'autostart' => true,
+                    'active' => true,
+                    'continue_from_step' => $continue_step
+                );
+                
+            }
+        } 
+        
+        // Handle tour creator mode - load specific tour if provided
+        elseif ($is_tour_mode && $has_tour_id) {
+            $tour = get_post($has_tour_id);
+            if ($tour && $tour->post_type === 'mcl_tour') {
+                $steps = get_post_meta($has_tour_id, '_mcl_tour_steps', true) ?: array();
+                $settings = get_post_meta($has_tour_id, '_mcl_tour_settings', true) ?: array();
+                
+                $tours_data[] = array(
+                    'id' => $has_tour_id,
+                    'title' => $tour->post_title,
+                    'steps' => $steps,
+                    'settings' => $settings,
+                    'autostart' => false,
+                    'active' => true,
+                    'trigger_type' => get_post_meta($has_tour_id, '_mcl_tour_trigger_type', true) ?: 'page',
+                    'trigger_value' => get_post_meta($has_tour_id, '_mcl_tour_trigger_value', true) ?: ''
+                );
+                
+            }
+        }
+        
+        // Normal tour loading (only if not in creator mode or continuation mode)
+        elseif (!$is_tour_mode && !$continue_tour_id) {
+            // Only load normal tours if we have the Tour CPT class available
+            if (class_exists('MCL_Tour_CPT')) {
+                $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+                
+                foreach ($active_tours as $tour) {
+                    $tour_id = $tour->ID;
+                    $steps = get_post_meta($tour_id, '_mcl_tour_steps', true) ?: array();
+                    $settings = get_post_meta($tour_id, '_mcl_tour_settings', true) ?: array();
+                    
+                    // Get autostart from settings first, then fall back to meta field
+                    $autostart = false;
+                    if (isset($settings['autostart'])) {
+                        $autostart = $settings['autostart'];
+                    } else {
+                        $autostart_meta = get_post_meta($tour_id, '_mcl_tour_autostart', true);
+                        $autostart = !empty($autostart_meta);
+                    }
+                    
+                    $trigger_type = get_post_meta($tour_id, '_mcl_tour_trigger_type', true) ?: 'page';
+                    $trigger_value = get_post_meta($tour_id, '_mcl_tour_trigger_value', true) ?: '';
+                    $user_condition = get_post_meta($tour_id, '_mcl_tour_user_condition', true) ?: 'all_users';
+                    $specific_users = get_post_meta($tour_id, '_mcl_tour_specific_users', true) ?: array();
+                    $specific_roles = get_post_meta($tour_id, '_mcl_tour_specific_roles', true) ?: array();
+                    $show_once = get_post_meta($tour_id, '_mcl_tour_show_once', true);
+                    
+                    $tours_data[] = array(
+                        'id' => $tour_id,
+                        'title' => $tour->post_title,
+                        'steps' => $steps,
+                        'settings' => $settings,
+                        'autostart' => $autostart,
+                        'active' => true,
+                        'trigger_type' => $trigger_type,
+                        'trigger_value' => $trigger_value,
+                        'user_condition' => $user_condition,
+                        'specific_users' => $specific_users,
+                        'specific_roles' => $specific_roles,
+                        'show_once' => !empty($show_once)
+                    );
+                    
+                }
+            }
+        }
+        
+        return array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => $is_tour_mode ? wp_create_nonce('mcl_tour_admin') : wp_create_nonce('mcl_tour_public'),
+            'tours' => $tours_data,
+            'is_tour_mode' => $is_tour_mode,
+            'continue_tour_id' => $continue_tour_id,
+            'user_id' => get_current_user_id(),
+            'is_logged_in' => is_user_logged_in(),
+            'current_url' => $this->get_current_page_url(),
+            'user_roles' => is_user_logged_in() ? wp_get_current_user()->roles : array()
+        );
+    }
+    
+    /**
+     * Get current page URL for tour matching
+     */
+    private function get_current_page_url() {
+        if (is_admin()) {
+            // For admin pages, use the full URL including query parameters
+            $protocol = is_ssl() ? 'https://' : 'http://';
+            $current_url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        } else {
+            // For frontend pages, use WordPress functions
+            global $wp;
+            $current_url = home_url(add_query_arg(array(), $wp->request));
+        }
+        
+        return $current_url;
     }
     
     /**
@@ -565,8 +771,21 @@ class MCL_React_Dev {
             return; // No point adding roots if MCL_Public isn't even loaded
         }
         
-        // Check if MCL_Public would load assets using its existing logic
-        if ( ! $mcl_public_instance->should_load_assets() ) {
+        // Check for tour mode parameters first - if present, always add React roots
+        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        
+        // Force React roots for tour mode, regardless of checklist conditions
+        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id;
+        
+        // Check tour mode cookie as fallback
+        if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
+            $force_load_for_tours = true;
+        }
+        
+        // If not tour mode, check if MCL_Public would load assets using its existing logic
+        if ( !$force_load_for_tours && ! $mcl_public_instance->should_load_assets() ) {
             return;
         }
         
@@ -578,11 +797,9 @@ class MCL_React_Dev {
             $screen = get_current_screen();
             if ( $screen ) {
                 $plugin_pages = array(
-                    'toplevel_page_mcl_checklists',
-                    'magicchecklists_page_mcl_add_new',
-                    'magicchecklists_page_mcl_import',
-                    'magicchecklists_page_mcl_analytics',
-                    'magicchecklists_page_mcl_settings'
+                    'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
+                    'magicplugins_page_mcl_checklists',    // MagicChecklists main page
+                    'magicplugins_page_mcl_manage_license' // License management page
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
@@ -608,10 +825,9 @@ class MCL_React_Dev {
         }
         
         $plugin_pages = array(
-            'toplevel_page_mcl_checklists',
-            'magicchecklists_page_mcl_add_new',
-            'magicchecklists_page_mcl_import',
-            'magicchecklists_page_mcl_analytics'
+            'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
+            'magicplugins_page_mcl_checklists',    // MagicChecklists main page
+            'magicplugins_page_mcl_manage_license' // License management page
         );
         
         if ( ! in_array( $screen->id, $plugin_pages ) ) {
@@ -636,12 +852,6 @@ class MCL_React_Dev {
             #mcl-admin-root {
                 min-height: calc(100vh - 46px);
             }
-        }
-
-        body.admin-bar #mcl-admin-root ~ .wrap,
-        body.admin-bar #mcl-admin-root ~ .error,
-        body.admin-bar #mcl-admin-root ~ .notice {
-            display: none;
         }
 
         #wpfooter {
@@ -681,13 +891,56 @@ class MCL_React_Dev {
         }
         
         $plugin_pages = array(
-            'toplevel_page_mcl_checklists',
-            'magicchecklists_page_mcl_add_new',
-            'magicchecklists_page_mcl_import',
-            'magicchecklists_page_mcl_analytics',
-            'magicchecklists_page_mcl_settings'
+            'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
+            'magicplugins_page_mcl_checklists',    // MagicChecklists main page
+            'magicplugins_page_mcl_manage_license' // License management page
         );
         
         return in_array( $screen->id, $plugin_pages );
     }
-} 
+
+    private function should_load_tour_assets() {
+        // Check for tour mode parameters
+        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        
+        // Check tour mode cookie as fallback
+        $tour_cookie = isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1';
+        
+        return $is_tour_mode || $continue_tour_id || $has_tour_id || $tour_cookie;
+    }
+
+    /**
+     * Enqueue driver.js and related tour assets when needed
+     */
+    private function enqueue_tour_assets() {
+        // Only enqueue if not already loaded
+        if (wp_script_is('driver-js', 'enqueued') || wp_script_is('driver-js', 'done')) {
+            return;
+        }
+        // Enqueue driver.js
+        wp_enqueue_script(
+            'driver-js',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.js.iife.js',
+            array(),
+            '1.3.1',
+            true
+        );
+
+        wp_enqueue_style(
+            'driver-css',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.css',
+            array(),
+            '1.3.1'
+        );
+
+        // Enqueue tour public styles
+                    wp_enqueue_style(
+                'mcl-tour-driver',
+                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-tour-driver.css',
+                array('driver-css'),
+                MAGIC_CHECKLISTS_VERSION
+            );
+    }
+}

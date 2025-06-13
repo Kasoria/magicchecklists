@@ -1,5 +1,6 @@
 import React from 'react'
 import { Card, Badge, Button } from 'flowbite-react'
+import { formatDate as formatDateUtil } from '../utils/dateUtils'
 
 const AnalyticsDashboard = ({ analyticsData, adminData }) => {
   if (!analyticsData) {
@@ -41,8 +42,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
 
   const formatDate = (timestamp) => {
     try {
-      const date = new Date(timestamp * 1000)
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+      return formatDateUtil(timestamp, 'datetime')
     } catch (e) {
       return 'Invalid date'
     }
@@ -58,7 +58,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
         <Button 
           color="light" 
           size="sm"
-          onClick={() => window.location.href = `${window.location.origin}/wp-admin/admin.php?page=mcl_analytics`}
+          onClick={() => window.location.href = `${window.location.origin}/wp-admin/admin.php?page=mcl_checklists&view=analytics`}
         >
           View Full Analytics
         </Button>

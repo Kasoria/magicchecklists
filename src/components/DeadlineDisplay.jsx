@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDate, formatDeadlineCountdown } from '../utils/dateUtils';
 
 const DeadlineDisplay = ({ deadline }) => {
     const [countdown, setCountdown] = useState('');
@@ -8,40 +9,23 @@ const DeadlineDisplay = ({ deadline }) => {
         if (!deadline) return;
 
         const updateCountdown = () => {
-            const now = new Date();
-            const deadlineDate = new Date(parseInt(deadline) * 1000);
-            const distance = deadlineDate.getTime() - now.getTime();
+            const countdownData = formatDeadlineCountdown(deadline);
+            
+            setCountdown(countdownData.text);
 
-            if (distance < 0) {
-                setCountdown(`Passed (${deadlineDate.toLocaleString()})`);
-                setDeadlineClass('mcl-deadline-passed');
-                return;
-            }
-
-            // Calculate time components
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-            // Format countdown
-            let countdownText;
-            if (days > 0) {
-                countdownText = `${days}d ${hours}h remaining`;
-            } else if (hours > 0) {
-                countdownText = `${hours}h ${minutes}m remaining`;
-            } else {
-                countdownText = `${minutes}m remaining`;
-            }
-
-            setCountdown(countdownText);
-
-            // Set appropriate warning class
-            if (distance < 7200000) { // 2 hours
-                setDeadlineClass('mcl-deadline-2h');
-            } else if (distance < 86400000) { // 24 hours
-                setDeadlineClass('mcl-deadline-24h');
-            } else {
-                setDeadlineClass('');
+            // Set appropriate warning class based on status
+            switch (countdownData.status) {
+                case 'passed':
+                    setDeadlineClass('mcl-deadline-passed');
+                    break;
+                case 'critical':
+                    setDeadlineClass('mcl-deadline-2h');
+                    break;
+                case 'warning':
+                    setDeadlineClass('mcl-deadline-24h');
+                    break;
+                default:
+                    setDeadlineClass('');
             }
         };
 

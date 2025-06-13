@@ -109,6 +109,10 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     float_button_text_color: '#1a1a1a',
     float_button_font_size: '16',
     show_float_button_icon: false,
+    // Icon settings
+    checklist_icon_type: 'preset',
+    checklist_icon_preset: 'checklist-1',
+    checklist_icon_custom: '',
     // Access control
     public_access: false,
     public_description: '',
@@ -170,7 +174,10 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     shortcode_enable_reorder: false,
     invite_permissions: 'interact',
     invite_expiry: '7',
-    invite_usage: '0'
+    invite_usage: '0',
+    shortcode_check_state: 'session',
+    shortcode_width: 'full',
+    shortcode_custom_width: '800'
   })
 
   // UI state
@@ -243,7 +250,22 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       const data = await response.json()
       if (data.success) {
-        setFormData(prevData => ({ ...prevData, ...data.data }))
+        const loadedData = data.data
+        
+        // Handle shortcode settings - flatten them into individual fields
+        if (loadedData.shortcode_settings) {
+          const shortcodeSettings = loadedData.shortcode_settings
+          
+          // Flatten shortcode settings into individual form fields
+          Object.keys(shortcodeSettings).forEach(key => {
+            loadedData[`shortcode_${key}`] = shortcodeSettings[key]
+          })
+          
+          // Remove the nested object since we've flattened it
+          delete loadedData.shortcode_settings
+        }
+        
+        setFormData(prevData => ({ ...prevData, ...loadedData }))
       } else {
         throw new Error(data.data?.message || 'Failed to load checklist')
       }
@@ -561,7 +583,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         shortcode_list_item_font_size: formData.shortcode_list_item_font_size,
         shortcode_deadline_font_size: formData.shortcode_deadline_font_size,
         shortcode_disable_drawer: formData.shortcode_disable_drawer ? '1' : '0',
-        shortcode_enable_reorder: formData.shortcode_enable_reorder ? '1' : '0'
+        shortcode_enable_reorder: formData.shortcode_enable_reorder ? '1' : '0',
+        shortcode_check_state: formData.shortcode_check_state || 'session',
+        shortcode_width: formData.shortcode_width || 'full',
+        shortcode_custom_width: formData.shortcode_custom_width || '800',
+        checklist_icon_type: formData.checklist_icon_type,
+        checklist_icon_preset: formData.checklist_icon_preset,
+        checklist_icon_custom: formData.checklist_icon_custom
       })
 
       // Add items data
@@ -906,6 +934,130 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                 placeholder="Select position..."
               />
             </div>
+            
+            {/* Icon Selection */}
+            <div>
+              <Label className="text-brand-dark dark:text-white">Checklist Icon</Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="icon_type"
+                      value="preset"
+                      checked={formData.checklist_icon_type === 'preset'}
+                      onChange={() => handleInputChange('checklist_icon_type', 'preset')}
+                      className="mr-2"
+                    />
+                    <span>Use Preset Icon</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="icon_type"
+                      value="custom"
+                      checked={formData.checklist_icon_type === 'custom'}
+                      onChange={() => handleInputChange('checklist_icon_type', 'custom')}
+                      className="mr-2"
+                    />
+                    <span>Custom Icon</span>
+                  </label>
+                </div>
+
+                {/* Preset Icon Selection */}
+                {formData.checklist_icon_type === 'preset' && (
+                  <div className="grid grid-cols-5 gap-3 p-3 bg-white dark:bg-gray-800 rounded border">
+                    {[
+                      { id: 'checklist-1', svg: '<path fillRule="evenodd" clipRule="evenodd" d="M15.9701 12.8006H12.8901C12.4701 12.8006 12.1401 12.4706 12.1401 12.0506C12.1401 11.6406 12.4701 11.3006 12.8901 11.3006H15.9701C16.3901 11.3006 16.7201 11.6406 16.7201 12.0506C16.7201 12.4706 16.3901 12.8006 15.9701 12.8006ZM15.9701 17.6506H12.8901C12.4701 17.6506 12.1401 17.3106 12.1401 16.9006C12.1401 16.4906 12.4701 16.1506 12.8901 16.1506H15.9701C16.3901 16.1506 16.7201 16.4906 16.7201 16.9006C16.7201 17.3106 16.3901 17.6506 15.9701 17.6506ZM10.8101 11.2106L9.33007 12.6906C9.18007 12.8406 8.99007 12.9106 8.80007 12.9106C8.60007 12.9106 8.41007 12.8406 8.27007 12.6906L7.50007 11.9306C7.21007 11.6306 7.21007 11.1606 7.50007 10.8706C7.80007 10.5706 8.27007 10.5706 8.57007 10.8706L8.80007 11.1006L9.75007 10.1506C10.0401 9.85056 10.5201 9.85056 10.8101 10.1506C11.1001 10.4406 11.1001 10.9106 10.8101 11.2106ZM10.8101 16.0506L9.33007 17.5406C9.19007 17.6806 9.00007 17.7606 8.80007 17.7606C8.60007 17.7606 8.41007 17.6806 8.27007 17.5406L7.50007 16.7806C7.21007 16.4806 7.21007 16.0106 7.51007 15.7106C7.80007 15.4206 8.27007 15.4206 8.57007 15.7106L8.80007 15.9506L9.75007 14.9906C10.0401 14.7006 10.5201 14.7006 10.8101 14.9906C11.1001 15.2906 11.1001 15.7606 10.8101 16.0506ZM16.8928 4.38212C16.7728 4.34667 16.6552 4.43627 16.6374 4.56011C16.4646 5.75625 15.4285 6.68056 14.1901 6.68056H9.81007C8.57169 6.68056 7.52694 5.75639 7.35293 4.56039C7.3349 4.43647 7.21714 4.34685 7.09711 4.38253C5.34579 4.90305 4.07007 6.53496 4.07007 8.46056V17.3606C4.07007 19.7006 5.97007 21.6106 8.32007 21.6106H15.6801C18.0301 21.6106 19.9301 19.7006 19.9301 17.3606V8.46056C19.9301 6.53445 18.6537 4.90219 16.8928 4.38212Z" fill="currentColor"/><path fillRule="evenodd" clipRule="evenodd" d="M9.81357 5.48062H14.1936C14.8736 5.48062 15.4336 4.94062 15.4536 4.26063C15.4636 4.24063 15.4636 4.22062 15.4636 4.20062V3.66062C15.4636 2.96062 14.8936 2.39062 14.1936 2.39062H9.81357C9.11357 2.39062 8.53357 2.96062 8.53357 3.66062V4.20062C8.53357 4.22062 8.53357 4.23063 8.54357 4.25063C8.56357 4.94062 9.13357 5.48062 9.81357 5.48062Z" fill="currentColor"/>' },
+                      { id: 'tasks-1', svg: '<g fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234"/><rect width="18.5" height="18.5" x="2.75" y="2.75" rx="6"/></g>' },
+                      { id: 'task-2', svg: '<path fill="currentColor" d="M15.25 2h-6.5A6.76 6.76 0 0 0 2 8.75v6.5A6.75 6.75 0 0 0 8.75 22h6.5A6.75 6.75 0 0 0 22 15.25v-6.5A6.76 6.76 0 0 0 15.25 2M8.04 17.48a1.37 1.37 0 1 1 1.37-1.37a1.36 1.36 0 0 1-1.37 1.37m0-4.11A1.37 1.37 0 1 1 9.41 12a1.36 1.36 0 0 1-1.37 1.42zm0-4.11a1.37 1.37 0 1 1 1.37-1.37a1.36 1.36 0 0 1-1.37 1.37m8.15 7.6h-4.52a.75.75 0 1 1 0-1.5h4.52a.75.75 0 1 1 0 1.5m0-4.11h-4.52a.75.75 0 1 1 0-1.5h4.52a.75.75 0 1 1 0 1.5m0-4.11h-4.52a.75.75 0 0 1 0-1.5h4.52a.75.75 0 1 1 0 1.5"/>' },
+                      { id: 'list-1', svg: '<path fill="currentColor" d="M9 8.5a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm0 3a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm0 3a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm-1-6a.75.75 0 1 1-1.5 0a.75.75 0 0 1 1.5 0Zm0 3a.75.75 0 1 1-1.5 0a.75.75 0 0 1 1.5 0Zm-.75 3.75a.75.75 0 1 0 0-1.5a.75.75 0 0 0 0 1.5ZM7.085 3A1.5 1.5 0 0 1 8.5 2h3a1.5 1.5 0 0 1 1.415 1H14.5A1.5 1.5 0 0 1 16 4.5v12a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 4 16.5v-12A1.5 1.5 0 0 1 5.5 3h1.585ZM8.5 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3ZM7.085 4H5.5a.5.5 0 0 0-.5.5v12a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-12a.5.5 0 0 0-.5-.5h-1.585A1.5 1.5 0 0 1 11.5 5h-3a1.5 1.5 0 0 1-1.415-1Z"/>' },
+                      { id: '', svg: '<path fill="#000000" d="M7.085 3H5.5A1.5 1.5 0 0 0 4 4.5v12A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 14.5 3h-1.585A1.5 1.5 0 0 0 11.5 2h-3a1.5 1.5 0 0 0-1.415 1ZM8.5 3h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1ZM9 8.5a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm0 3a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm0 3a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H9.5a.5.5 0 0 1-.5-.5Zm-1-6a.75.75 0 1 1-1.5 0a.75.75 0 0 1 1.5 0Zm0 3a.75.75 0 1 1-1.5 0a.75.75 0 0 1 1.5 0Zm-.75 3.75a.75.75 0 1 1 0-1.5a.75.75 0 0 1 0 1.5Z"/>' },
+                      { id: 'checklist-2', svg: '<text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor">✅</text>' },
+                      { id: 'document-1', svg: '<text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor">📄</text>' },
+                      { id: 'check-square', svg: '<text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor">☑️</text>' },
+                      { id: 'file-text', svg: '<text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor">📝</text>' },
+                      { id: 'folder', svg: '<text x="12" y="18" text-anchor="middle" font-size="20" fill="currentColor">📁</text>' }
+                    ].map((icon) => (
+                      <button
+                        key={icon.id}
+                        type="button"
+                        className={`w-12 h-12 flex items-center justify-center rounded border-2 transition-colors ${
+                          formData.checklist_icon_preset === icon.id
+                            ? 'border-brand-accent bg-brand-accent/10'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onClick={() => handleInputChange('checklist_icon_preset', icon.id)}
+                      >
+                        <svg
+                          className="w-6 h-6 text-gray-700"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          dangerouslySetInnerHTML={{ __html: icon.svg }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Custom Icon Upload */}
+                {formData.checklist_icon_type === 'custom' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          if (typeof wp !== 'undefined' && wp.media) {
+                            const mediaFrame = wp.media({
+                              title: 'Select Icon Image',
+                              library: { type: 'image' },
+                              multiple: false,
+                              button: { text: 'Use as Icon' }
+                            })
+
+                            mediaFrame.on('select', () => {
+                              const attachment = mediaFrame.state().get('selection').first().toJSON()
+                              handleInputChange('checklist_icon_custom', attachment.url)
+                            })
+
+                            mediaFrame.open()
+                          }
+                        }}
+                      >
+                        Choose Icon Image
+                      </Button>
+                      {formData.checklist_icon_custom && (
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={formData.checklist_icon_custom} 
+                            alt="Custom icon" 
+                            className="w-8 h-8 object-contain"
+                          />
+                          <Button
+                            type="button"
+                            size="xs"
+                            color="gray"
+                            onClick={() => handleInputChange('checklist_icon_custom', '')}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    {formData.checklist_icon_custom && (
+                      <TextInput
+                        value={formData.checklist_icon_custom}
+                        onChange={(e) => handleInputChange('checklist_icon_custom', e.target.value)}
+                        placeholder="Or paste image URL"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <Checkbox
               id="disable_in_builders"
               checked={formData.disable_in_builders}
@@ -1256,7 +1408,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                 <Button
                   onClick={handleNext}
                   disabled={currentStep === totalSteps}
-                  className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark"
+                  className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
                 >
                   Next
                 </Button>

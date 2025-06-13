@@ -375,16 +375,24 @@ class MCL_Public {
                 return;
             }
 
+            // Abort if drawer is disabled for this checklist via shortcode settings
+            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            if (!empty($shortcode_settings['disable_drawer'])) {
+                wp_send_json_error(array(
+                    'message' => 'Drawer disabled for this checklist',
+                    'code' => 403
+                ));
+                return;
+            }
+
             // Determine permission levels in one pass
             $user_can_edit = $this->permissions->has_permission($checklist_id, 'edit');
             $user_can_interact = $user_can_edit || $this->permissions->has_permission($checklist_id, 'interact');
             
-            // Lock handling if user has edit permission
-            $user_identifier = $this->get_current_user_identifier();
-            $locked = false;
-            $locked_message = '';
+            // Skip global checklist lock when per-item locking is enabled
+            $item_locking_enabled = get_post_meta($checklist_id, '_mcl_enable_item_locking', true);
 
-            if ($user_can_edit) {
+            if ($user_can_edit && !$item_locking_enabled) {
                 $lock = $this->get_lock($checklist_id);
                 if ($lock && $lock['user'] !== $user_identifier) {
                     $locked = true;
@@ -450,8 +458,8 @@ class MCL_Public {
         $checklist = $checklist_data['post'];
         $meta = $checklist_data['meta'];
         
-        // If item locking enabled, merge per-user modifications with global items
-        if (get_post_meta($checklist_id, '_mcl_enable_item_locking', true) && is_user_logged_in() && !$user_can_edit) {
+        // If item locking enabled, always merge current user's modifications with global items
+        if (get_post_meta($checklist_id, '_mcl_enable_item_locking', true) && is_user_logged_in()) {
             $user_id = get_current_user_id();
             $user_items = get_user_meta($user_id, "_mcl_user_items_{$checklist_id}", true);
             if (is_array($user_items)) {
@@ -502,7 +510,7 @@ class MCL_Public {
         $tags = get_post_meta($checklist_id, '_mcl_tags', true) ?: array();
         $reset_enabled = get_post_meta($checklist_id, '_mcl_auto_reset', true) == '1';
 
-        return array(
+        $return_data = array(
             'id' => $checklist_id,
             'title' => get_the_title($checklist_id),
             'description' => get_post_field('post_content', $checklist_id),
@@ -517,6 +525,7 @@ class MCL_Public {
             'priority' => $meta['_mcl_priority'] ?: 'none',
             'enable_item_priority' => (bool)$meta['_mcl_enable_item_priority'],
             'priority_display_type' => $meta['_mcl_priority_display_type'] ?: 'color',
+            'enable_item_locking' => (bool)get_post_meta($checklist_id, '_mcl_enable_item_locking', true),
             'can_edit' => $user_can_edit,
             'can_check' => $user_can_interact,
             'can_view' => true, // We already checked this
@@ -535,8 +544,36 @@ class MCL_Public {
                 'was_reset' => $was_reset,
                 'reset_counter' => get_post_meta($checklist_id, '_mcl_reset_counter', true) ?: 1,
                 'next_reset' => get_post_meta($checklist_id, '_mcl_reset_next', true)
-            )
+            ),
+            // Custom theme settings - include when theme is 'custom' or any custom settings exist
+            'drawer_bg_color' => get_post_meta($checklist_id, '_mcl_drawer_bg_color', true),
+            'list_item_bg_color' => get_post_meta($checklist_id, '_mcl_list_item_bg_color', true),
+            'text_color' => get_post_meta($checklist_id, '_mcl_text_color', true),
+            'description_text_color' => get_post_meta($checklist_id, '_mcl_description_text_color', true),
+            'heading_font_size' => get_post_meta($checklist_id, '_mcl_heading_font_size', true),
+            'description_font_size' => get_post_meta($checklist_id, '_mcl_description_font_size', true),
+            'list_item_font_size' => get_post_meta($checklist_id, '_mcl_list_item_font_size', true),
+            'primary_button_bg' => get_post_meta($checklist_id, '_mcl_primary_button_bg', true),
+            'primary_button_text_color' => get_post_meta($checklist_id, '_mcl_primary_button_text_color', true),
+            'secondary_button_bg' => get_post_meta($checklist_id, '_mcl_secondary_button_bg', true),
+            'secondary_button_text_color' => get_post_meta($checklist_id, '_mcl_secondary_button_text_color', true),
+            'checkbox_bg_color' => get_post_meta($checklist_id, '_mcl_checkbox_bg_color', true),
+            'checkbox_border_radius' => get_post_meta($checklist_id, '_mcl_checkbox_border_radius', true),
+            'checkbox_style' => get_post_meta($checklist_id, '_mcl_checkbox_style', true),
+            'checkbox_custom_icon' => get_post_meta($checklist_id, '_mcl_checkbox_custom_icon', true),
+            'checkbox_checkmark_color' => get_post_meta($checklist_id, '_mcl_checkbox_checkmark_color', true),
+            'drawer_border_radius' => get_post_meta($checklist_id, '_mcl_drawer_border_radius', true),
+            'drawer_width' => get_post_meta($checklist_id, '_mcl_drawer_width', true),
+            'drawer_height' => get_post_meta($checklist_id, '_mcl_drawer_height', true),
+            'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true),
+            'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true),
+            'float_button_font_size' => get_post_meta($checklist_id, '_mcl_float_button_font_size', true),
+            'show_float_button_icon' => get_post_meta($checklist_id, '_mcl_show_float_button_icon', true)
         );
+        
+
+        
+        return $return_data;
     }
 
     /**
@@ -585,6 +622,12 @@ class MCL_Public {
             // Step 1: Check view permission first (this is crucial and involves its own meta checks)
             if (!$this->has_permission($checklist_id, 'view')) {
                 continue; 
+            }
+
+            // Step 1.5: Check if the drawer is disabled for this checklist via shortcode settings
+            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            if (!empty($shortcode_settings['disable_drawer'])) {
+                continue;
             }
 
             // Step 2: Inline loading condition checks (previously in should_show_checklist)
@@ -743,23 +786,6 @@ class MCL_Public {
         $visible_checklists_for_theme = $this->get_visible_checklists_with_theme();
         $has_floating_buttons = !empty($visible_checklists_for_theme); // Determine if any buttons should show based on this
     
-        wp_enqueue_script(
-            'interactjs', 
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/interact.min.js',
-            array(), 
-            '1.15.3', 
-            true
-        );
-    
-        // OLD mcl-drawer.js - Now replaced by React component
-        // wp_register_script(
-        //     'mcl-drawer',
-        //     MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-drawer.js',
-        //     array('interactjs'),
-        //     MAGIC_CHECKLISTS_VERSION,
-        //     true
-        // );
-    
         wp_enqueue_style(
             'mcl-fonts',
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-fonts.css',
@@ -797,21 +823,6 @@ class MCL_Public {
                 wp_add_inline_style('mcl-drawer', $custom_css);
             }
         }
-    
-        wp_enqueue_script(
-            'mcl-boot',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/mcl-boot.js',
-            array(), // Removed 'mcl-drawer' dependency since React handles it
-            MAGIC_CHECKLISTS_VERSION,
-            true
-        );
-    
-        add_filter('script_loader_tag', function($tag, $handle) {
-            if (in_array($handle, ['mcl-boot'])) { // Removed 'mcl-drawer' since it's no longer loaded
-                return str_replace(' src=', ' type="module" src=', $tag);
-            }
-            return $tag;
-        }, 10, 2);
     
         $localized_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
@@ -853,7 +864,16 @@ class MCL_Public {
         }
 
         $localized_data = apply_filters('mcl_localized_data', $localized_data);
-        wp_localize_script('mcl-boot', 'mcl_checklists', $localized_data);
+        
+        // Register a lightweight handle purely for inline data
+        wp_register_script('mcl-inline-data', '', [], MAGIC_CHECKLISTS_VERSION, true);
+        wp_enqueue_script('mcl-inline-data');
+
+        wp_add_inline_script(
+            'mcl-inline-data',
+            'window.mcl_checklists = ' . wp_json_encode($localized_data) . ';',
+            'before'
+        );
     }
 
     /**
@@ -933,6 +953,12 @@ class MCL_Public {
             $is_visible = false;
             if (!$this->has_permission($id, 'view')) { // Step 1: Check view permission
                 continue; // Not permitted to view, skip this checklist
+            }
+
+            // Step 1.5: Respect 'disable_drawer' shortcode setting – completely skip if enabled
+            $shortcode_settings = MCL_Admin::get_shortcode_settings($id);
+            if (!empty($shortcode_settings['disable_drawer'])) {
+                continue; // Drawer disabled for this checklist
             }
 
             if ($current_meta['_mcl_load_everywhere']) { // Step 2: Check load_everywhere from pre-fetched meta
@@ -1059,9 +1085,11 @@ class MCL_Public {
         $checklist_id = intval($_POST['checklist_id']);
         // Check if item locking is enabled for this checklist
         $enable_locking = get_post_meta($checklist_id, '_mcl_enable_item_locking', true);
+        $has_edit_permission = $this->has_permission($checklist_id, 'edit');
+        
         if ($enable_locking) {
-            // Allow interact-level users to manage their own items
-            if (! $this->has_permission($checklist_id, 'interact')) {
+            // Only users with edit permission may add/modify their personal items
+            if (!$has_edit_permission) {
                 wp_send_json_error('Permission denied');
                 return;
             }
@@ -1116,7 +1144,7 @@ class MCL_Public {
             return;
         }
         // Default behavior: require edit permission for global items
-        if (! $this->has_permission($checklist_id, 'edit')) {
+        if (!$has_edit_permission) {
             wp_send_json_error('Permission denied');
             return;
         }
@@ -1178,11 +1206,18 @@ class MCL_Public {
     private function get_checked_state($checklist_id, $context = 'drawer') {
         $handling = $this->get_checked_state_handling($checklist_id, $context);
         
-        if ($handling === 'per_user' && is_user_logged_in()) {
-            $user_id = get_current_user_id();
-            return get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true) ?: array();
+        if ($handling === 'per_user') {
+            if (is_user_logged_in()) {
+                $user_id = get_current_user_id();
+                return get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true) ?: array();
+            } else {
+                // Per-user checklists with logged-out users should use localStorage on client side
+                // Return empty array as server has no state for anonymous users in per-user mode
+                return array();
+            }
         }
         
+        // Global handling mode
         $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
         return get_post_meta($checklist_id, $meta_key, true) ?: array();
     }
@@ -1223,6 +1258,12 @@ class MCL_Public {
         } else if ($checked_state_handling === 'global') {
             $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
             update_post_meta($checklist_id, $meta_key, $checked_items);
+        } else if ($checked_state_handling === 'per_user' && !is_user_logged_in()) {
+            // Per-user checklists with logged-out users should use localStorage on client side
+            // We don't save to database in this case, just return success
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('MCL: Per-user checklist state from logged-out user - not saving to database');
+            }
         }
     
         foreach ($checked_items as $item_id) {
@@ -1534,22 +1575,18 @@ class MCL_Public {
                     'priority' => $priority,
                     'priorityColor' => $priority_colors[$priority] ?? '#cccccc',
                     'priorityLabel' => $priority_levels[$priority] ?? 'None',
-                    'theme' => $theme
+                    'theme' => $theme,
+                    'checklist_icon_type' => get_post_meta($checklist_id, '_mcl_checklist_icon_type', true) ?: 'preset',
+                    'checklist_icon_preset' => get_post_meta($checklist_id, '_mcl_checklist_icon_preset', true) ?: 'checklist-1',
+                    'checklist_icon_custom' => get_post_meta($checklist_id, '_mcl_checklist_icon_custom', true) ?: '',
+                    'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true) ?: '#ffffff',
+                    'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true) ?: '#1a1a1a'
                 );
-            }
-            
-            // Get the base theme for the drawer
-            $theme = 'light'; // Default theme
-            if (!empty($active_checklists)) {
-                $first_checklist_theme = get_post_meta($active_checklists[0]['id'], '_mcl_theme', true);
-                if ($first_checklist_theme && ($first_checklist_theme === 'light' || $first_checklist_theme === 'dark')) {
-                    $theme = $first_checklist_theme;
-                }
             }
             
             wp_send_json_success(array(
                 'checklists' => $formatted_checklists,
-                'theme' => $theme
+                'theme' => 'light' // Default theme - individual checklists will use their own themes
             ));
         } catch (Exception $e) {
             wp_send_json_error(array(

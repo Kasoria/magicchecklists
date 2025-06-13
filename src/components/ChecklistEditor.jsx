@@ -3,7 +3,7 @@ import ChecklistTypeSelector from './ChecklistTypeSelector'
 import EditChecklist from './EditChecklist'
 import EditPublisherChecklist from './EditPublisherChecklist'
 
-const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, onBackToChecklists, layoutMode = 'stacked', onSetFormRef }) => {
+const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, onBackToChecklists, layoutMode = 'stacked', onSetFormRef, onSelectType }) => {
   const [currentView, setCurrentView] = useState('type-selector')
   const [selectedType, setSelectedType] = useState(checklistType)
   const [editingChecklistId, setEditingChecklistId] = useState(checklistId)
@@ -69,6 +69,13 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
   }
 
   const handleTypeSelect = (type) => {
+    // Check if parent component provided a type selector handler (for tours)
+    if (onSelectType) {
+      onSelectType(type)
+      return
+    }
+    
+    // Default behavior for checklist types
     setSelectedType(type)
     setCurrentView('edit')
     

@@ -40,15 +40,23 @@ const getInitialTab = () => {
   const urlParams = new URLSearchParams(window.location.search)
   const page = urlParams.get('page')
   
-  // Map WordPress admin pages to React tabs
-  if (page === 'mcl_add_new' || page === 'mcl_edit_checklist') {
-    return 'add-new'
-  } else if (page === 'mcl_import') {
-    return 'import'
-  } else if (page === 'mcl_analytics') {
-    return 'analytics'
-  } else if (page === 'mcl_settings') {
-    return 'settings'
+  // Since we now have a single page, check for specific actions/views in URL params
+  if (page === 'mcl_checklists') {
+    // Check for specific view parameters
+    const view = urlParams.get('view')
+    const checklistId = urlParams.get('checklist_id')
+    
+    if (checklistId || view === 'add-new' || view === 'edit') {
+      return 'add-new'
+    } else if (view === 'import') {
+      return 'import'
+    } else if (view === 'analytics') {
+      return 'analytics'
+    } else if (view === 'settings') {
+      return 'settings'
+    } else if (view === 'tours') {
+      return 'tours'
+    }
   }
   
   return 'checklists' // default

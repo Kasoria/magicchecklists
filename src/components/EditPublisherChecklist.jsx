@@ -211,7 +211,7 @@ const RequirementInstance = ({
   }
   
   return (
-    <div className="!mt-0 border border-gray-200 rounded-lg p-3 bg-brand-light h-full flex flex-col">
+    <div className="!mt-0 border border-gray-500 rounded-lg p-3 bg-brand-light dark:bg-gray-800 h-full flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ const RequirementInstance = ({
           />
           <label 
             htmlFor={`requirement_${requirement.type}_${instance.id}`}
-            className="font-medium text-gray-900 text-sm"
+            className="font-medium text-gray-900 text-sm dark:text-gray-100"
           >
             {getDisplayLabel()}
           </label>
@@ -236,7 +236,7 @@ const RequirementInstance = ({
               onChange={(checked) => updateInstance('required', checked)}
               label=""
             />
-            <span className="text-xs font-medium text-brand-dark">
+            <span className="text-xs font-medium text-brand-dark dark:text-gray-100">
               Required
             </span>
           </div>
@@ -260,7 +260,7 @@ const RequirementInstance = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
           {Object.entries(reqDef.config_fields).map(([fieldName, fieldDef]) => (
             <div key={fieldName}>
-              <Label value={fieldDef.label} className="mb-1 text-sm" />
+              <Label className="mb-1 text-sm">{fieldDef.label}</Label>
               {fieldDef.type === 'number' ? (
                 <TextInput
                   type="number"
@@ -302,7 +302,7 @@ const RequirementInstance = ({
       
       {/* Status */}
       {instance.enabled && (
-        <div className="text-sm text-gray-600 flex items-center gap-2">
+        <div className="text-sm text-gray-600 flex items-center gap-2 dark:text-gray-300">
           {reqDef.auto_check ? (
             <>
               <span className="text-green-600">✓</span>
@@ -488,6 +488,32 @@ const EditPublisherChecklist = forwardRef(({
                 type: 'text',
                 label: 'Display Label',
                 placeholder: 'Label for this field...'
+              }
+            }
+          },
+          heading_count: {
+            label: 'Heading Count',
+            description: 'Content must have specific heading counts (H2, H3, H4)',
+            auto_check: true,
+            repeatable: false,
+            config_fields: {
+              min_h2_headings: {
+                type: 'number',
+                label: 'Minimum H2 headings',
+                default: 2,
+                min: 0
+              },
+              min_h3_headings: {
+                type: 'number',
+                label: 'Minimum H3 headings',
+                default: 1,
+                min: 0
+              },
+              min_h4_headings: {
+                type: 'number',
+                label: 'Minimum H4 headings',
+                default: 0,
+                min: 0
               }
             }
           },
@@ -758,7 +784,7 @@ const EditPublisherChecklist = forwardRef(({
               {errors.title && (
                 <p className="text-red-500 text-sm mt-1">{errors.title}</p>
               )}
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm mt-1 dark:text-gray-300">
                 This name will be shown in the Gutenberg sidebar when editing posts/pages.
               </p>
             </div>
@@ -797,7 +823,7 @@ const EditPublisherChecklist = forwardRef(({
               {errors.post_types && (
                 <p className="text-red-500 text-sm mt-1">{errors.post_types}</p>
               )}
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-sm mt-1 dark:text-gray-300">
                 Select which post types this checklist should apply to.
               </p>
             </div>
@@ -810,7 +836,7 @@ const EditPublisherChecklist = forwardRef(({
                   checked={formData.active}
                   onChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                   When active, this checklist will be shown in the Gutenberg editor for the selected post types.
                 </span>
               </div>
@@ -824,7 +850,7 @@ const EditPublisherChecklist = forwardRef(({
                   checked={formData.show_tips}
                   onChange={(checked) => setFormData(prev => ({ ...prev, show_tips: checked }))}
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                   When enabled, the Gutenberg sidebar will show helpful tips for failed requirements to guide content creators.
                 </span>
               </div>

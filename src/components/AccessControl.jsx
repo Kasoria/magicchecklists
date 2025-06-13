@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Button, Label, TextInput, Textarea, Select, Badge, Alert, Spinner } from 'flowbite-react'
 import ReactSelect from 'react-select'
+import { formatDate } from '../utils/dateUtils'
 
 // Improved Toggle Component matching ChecklistsTable style
 const Toggle = ({ checked, onChange, label, disabled = false }) => (
@@ -37,11 +38,6 @@ const AccessControl = ({ formData, onChange, adminData }) => {
     loadUsers()
     loadRoles()
     loadAdminPages()
-    
-    // Debug adminData
-    console.log('AccessControl - adminData:', adminData);
-    console.log('Checklist ID from props:', adminData.checklist_id);
-    console.log('Available nonces:', adminData.nonces);
     
     if (formData.checklist_id || adminData.checklist_id) {
       loadInviteLinks()
@@ -603,8 +599,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
 
           <Button
             onClick={generateInviteLink}
-            color="blue"
-            className="w-full md:w-auto"
+            className="w-full md:w-auto bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
             disabled={!formData.checklist_id && !adminData.checklist_id || generatingInvite}
           >
             {generatingInvite ? (
@@ -658,8 +653,8 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                               <span className="truncate inline-block max-w-md">{link.invite_url}</span>
                             </p>
                             <p>Uses: {link.usage_count}/{link.usage_limit > 0 ? link.usage_limit : '∞'}</p>
-                            <p>Created: {new Date(link.created_at).toLocaleString()}</p>
-                            <p>Expires: {new Date(link.expiry_date).toLocaleString()}</p>
+                                            <p>Created: {formatDate(link.created_at, 'datetime')}</p>
+                <p>Expires: {formatDate(link.expiry_date, 'datetime')}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -711,7 +706,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               {/* WordPress Admin Pages */}
               <div>
-                <label className="font-semibold">WordPress Admin Pages</label>
+                <label className="font-semibold dark:text-white">WordPress Admin Pages</label>
                 {loadingAdminPages ? (
                   <div className="flex items-center space-x-2 py-2">
                     <Spinner size="sm" />
@@ -742,7 +737,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
 
               {/* Custom URLs */}
               <div>
-                <label className="font-semibold">Custom URLs</label>
+                <label className="font-semibold dark:text-white">Custom URLs</label>
                 <div className="space-y-2">
                   {(formData.allowed_urls || []).map((url, index) => (
                     <div key={index} className="flex items-center space-x-2">
@@ -757,6 +752,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                         color="failure"
                         outline
                         onClick={() => removeUrlPattern(index)}
+                        className="bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 hover:dark:bg-red-700"
                       >
                         ×
                       </Button>

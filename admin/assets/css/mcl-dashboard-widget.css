@@ -10,7 +10,6 @@
 }
 
 .mcl-widget-checklist {
-    padding: 12px 0;
     border-bottom: 1px solid #f0f0f1;
 }
 
@@ -252,16 +251,46 @@
     margin: 4px 0 0 0;
     padding: 0;
     list-style: none;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #f0f0f1;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+/* Custom scrollbar styling */
+.mcl-widget-item-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mcl-widget-item-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.mcl-widget-item-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.mcl-widget-item-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .mcl-widget-item {
-    padding: 6px 0;
+    padding: 8px 12px;
     font-size: 12px;
     color: #646970;
     border-bottom: 1px solid #f6f7f7;
     display: flex;
     align-items: center;
     gap: 8px;
+    background: white;
+    transition: background-color 0.2s ease;
+}
+
+.mcl-widget-item:hover {
+    background: #f9f9f9;
 }
 
 .mcl-widget-item:last-child {
@@ -353,12 +382,7 @@
     word-break: break-word;
 }
 
-.mcl-widget-more {
-    padding: 3px 0;
-    font-size: 12px;
-    color: #646970;
-    font-style: italic;
-}
+
 
 .mcl-widget-footer {
     margin-top: 12px;
@@ -467,5 +491,31 @@
     .scheme-dark .mcl-widget-status-indicator.unchecked {
         background-color: #2c3338;
         border-color: #50575e;
+    }
+    
+    .scheme-dark .mcl-widget-item-list {
+        background: #2c3338;
+        border-color: #50575e;
+    }
+    
+    .scheme-dark .mcl-widget-item {
+        background: #1d2327;
+        border-color: #3c434a;
+    }
+    
+    .scheme-dark .mcl-widget-item:hover {
+        background: #2c3338;
+    }
+    
+    .scheme-dark .mcl-widget-item-list::-webkit-scrollbar-track {
+        background: #3c434a;
+    }
+    
+    .scheme-dark .mcl-widget-item-list::-webkit-scrollbar-thumb {
+        background: #50575e;
+    }
+    
+    .scheme-dark .mcl-widget-item-list::-webkit-scrollbar-thumb:hover {
+        background: #6c7781;
     }
 } 

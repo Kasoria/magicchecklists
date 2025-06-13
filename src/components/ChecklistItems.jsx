@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Card, Button, Label, Alert, Modal, ModalHeader, ModalBody, ModalFooter, TextInput } from 'flowbite-react'
 import ReactSelect from 'react-select'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { formatDate } from '../utils/dateUtils'
 
 const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLocking = false, errors = {}, onPriorityToggle, checklistId = null, adminData = null }) => {
   const [draggedItem, setDraggedItem] = useState(null)
@@ -1573,7 +1574,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             <div className="mt-3 flex-shrink-0 text-xs bg-gray-200 px-2 py-1 rounded">
               <div className="flex items-center gap-1">
                 <span>
-                  Due: {new Date(deadline * 1000).toLocaleDateString()}
+                  Due: {formatDate(deadline, 'date')}
                 </span>
                 <button
                   className="text-gray-600 hover:text-red-600 ml-1"

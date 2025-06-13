@@ -10,7 +10,7 @@ const Checkbox = ({ id, checked, onChange, label, className = "" }) => (
         type="checkbox" 
         id={id}
         className="sr-only" 
-        checked={checked}
+        checked={!!checked}
         onChange={(e) => onChange(e.target.checked)}
       />
       <label 
@@ -21,11 +21,11 @@ const Checkbox = ({ id, checked, onChange, label, className = "" }) => (
             : 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600 hover:border-brand-accent'
         }`}
       >
-        {checked && (
+        {checked ? (
           <svg className="w-3 h-3 text-brand-dark absolute top-0.5 left-0.5" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
-        )}
+        ) : null}
       </label>
     </div>
     {label && <span className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{label}</span>}
@@ -465,6 +465,66 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
       <div>
         <h5 className="font-medium text-brand-dark dark:text-white mb-3">Behavior Options</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="shortcode_width" className="text-brand-dark dark:text-white">Container Width</label>
+            <ReactSelect
+              inputId="shortcode_width"
+              value={{ value: formData.shortcode_width || 'full', label: 
+                formData.shortcode_width === 'narrow' ? 'Narrow (600px)' :
+                formData.shortcode_width === 'custom' ? 'Custom' :
+                'Full Width'
+              }}
+              onChange={(selectedOption) => onChange('shortcode_width', selectedOption.value)}
+              options={[
+                { value: 'full', label: 'Full Width' },
+                { value: 'narrow', label: 'Narrow (600px)' },
+                { value: 'custom', label: 'Custom' }
+              ]}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select width..."
+            />
+          </div>
+
+          {formData.shortcode_width === 'custom' && (
+            <div>
+              <label htmlFor="shortcode_custom_width" className="text-brand-dark dark:text-white">Custom Width</label>
+              <div className="flex items-center space-x-2">
+                <TextInput
+                  id="shortcode_custom_width"
+                  type="number"
+                  min="200"
+                  max="2000"
+                  value={formData.shortcode_custom_width || '800'}
+                  onChange={(e) => onChange('shortcode_custom_width', e.target.value)}
+                  className="flex-1"
+                />
+                <span className="text-sm text-gray-500">px</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="shortcode_check_state" className="text-brand-dark dark:text-white">Checked State Storage</label>
+            <ReactSelect
+              inputId="shortcode_check_state"
+              value={{ value: formData.shortcode_check_state || 'session', label: 
+                formData.shortcode_check_state === 'global' ? 'Global (Database)' :
+                formData.shortcode_check_state === 'local' ? 'Local Storage' :
+                'Session Storage'
+              }}
+              onChange={(selectedOption) => onChange('shortcode_check_state', selectedOption.value)}
+              options={[
+                { value: 'session', label: 'Session Storage' },
+                { value: 'local', label: 'Local Storage' },
+                { value: 'global', label: 'Global (Database)' }
+              ]}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder="Select storage type..."
+            />
+          </div>
+
           <Checkbox
             id="shortcode_disable_drawer"
             checked={formData.shortcode_disable_drawer}

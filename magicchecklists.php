@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           2.0.0
+ * Version:           Beta 2.0.0 Phase 2
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
@@ -40,7 +40,8 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '2.0.0');
+            define('MAGIC_CHECKLISTS_VERSION', 'Beta 2.0.0 Phase 2');
+            define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
             define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
@@ -211,24 +212,17 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          */
         private function init_licensing() {
             // Replace 'YOUR_PUBLIC_TOKEN' with your actual public token from SureCart
-            $client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', __FILE__);
+            $client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', MAGIC_CHECKLISTS_PLUGIN_FILE);
 
             // Set your text domain
             $client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
 
-            // Add the pre-built license settings page
-            $client->settings()->add_page(array(
-                'type'                 => 'submenu',
-                'parent_slug'          => 'mcl_checklists',
-                'page_title'           => 'Manage License',
-                'menu_title'           => 'Manage License',
-                'capability'           => 'manage_options',
-                'menu_slug'            => 'mcl_manage_license',
-                'icon_url'             => '',
-                'position'             => null,
-                'activated_redirect'   => admin_url('admin.php?page=mcl_checklists'),
-                'deactivated_redirect' => admin_url('admin.php?page=mcl_checklists'),
-            ));
+            // Store the client globally for access by other classes
+            global $mcl_licensing_client;
+            $mcl_licensing_client = $client;
+
+            // License management is now handled per plugin individually
+            // No global license page needed in the menu
         }
     }
 

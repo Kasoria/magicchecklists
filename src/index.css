@@ -583,6 +583,10 @@ input[type="search"] {
 }
 
 /* Fix react-select input styling issues */
+.react-select__control {
+  border: 1px solid rgb(209 213 219 / var(--tw-border-opacity, 1)) !important;
+}
+
 .react-select-container .react-select__input-container {
   margin: 0 !important;
   padding: 0 !important;
@@ -591,7 +595,6 @@ input[type="search"] {
 .react-select-container .react-select__input {
   margin: 0 !important;
   padding: 0 !important;
-  border: none !important;
   box-shadow: none !important;
   outline: none !important;
   background: transparent !important;
@@ -599,7 +602,6 @@ input[type="search"] {
 }
 
 .react-select-container .react-select__input input {
-  border: none !important;
   box-shadow: none !important;
   outline: none !important;
   padding: 0 !important;
@@ -611,7 +613,7 @@ input[type="search"] {
 }
 
 .react-select-container .react-select__input input:focus {
-  border: none !important;
+  
   box-shadow: none !important;
   outline: none !important;
 }
@@ -684,6 +686,30 @@ input[type="text"], input[type="password"], input[type="date"], input[type="date
   padding-left: 0.75rem;
 }
 
+/* Color input styling */
+input[type="color"] {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 2px !important;
+  border-radius: 0.5rem !important;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 0.375rem;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.375rem;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 0.375rem;
+}
+
 /* Add global scrollbar styles */
 ::-webkit-scrollbar {
   width: 8px;
@@ -707,6 +733,24 @@ input[type="text"], input[type="password"], input[type="date"], input[type="date
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Dark mode scrollbar styles */
+.dark ::-webkit-scrollbar-track {
+  background-color: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #6b7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+/* Firefox dark mode scrollbar styles */
+.dark * {
+  scrollbar-color: #6b7280 #374151;
 }
 
 /* Layout switcher specific styles */
@@ -835,13 +879,21 @@ input[type="text"], input[type="password"], input[type="date"], input[type="date
   transform: translateX(1.25rem);
 }
 
-/* Priority indicator improvements */
+.mcl-priority-indicator {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  z-index: 2;
+}
+
 .mcl-priority-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
   border-radius: 50%;
   border: 2px solid #e5e7eb;
   transition: all 0.2s ease-in-out;

@@ -99,6 +99,7 @@
   font-weight: 600;
   color: var(--mcl-shortcode-title-text-color);
   line-height: 1.4;
+  margin: 0 0 var(--mcl-shortcode-spacing-lg) 0;
 }
 
 /* Description */
@@ -106,6 +107,7 @@
   color: var(--mcl-shortcode-description-text-color);
   font-size: var(--mcl-shortcode-description-font-size);
   line-height: 1.6;
+  margin-bottom: var(--mcl-shortcode-spacing-lg);
 }
 
 /* Deadline */
@@ -125,13 +127,6 @@
   font-size: var(--mcl-shortcode-list-item-font-size);
 }
 
-.mcl-item-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-}
-
 /* Item Spacing Variants */
 .mcl-spacing-compact .mcl-shortcode-items {
   gap: var(--mcl-shortcode-spacing-sm);
@@ -147,15 +142,97 @@
 
 /* List Items */
 .mcl-shortcode-item {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--mcl-shortcode-spacing-md);
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  padding: var(--mcl-shortcode-spacing-sm);
   border-radius: var(--mcl-shortcode-border-radius);
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.mcl-shortcode-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Show action buttons on hover */
+.mcl-shortcode-item:hover .mcl-item-actions {
+  opacity: 1 !important;
+}
+
+.mcl-shortcode-item.mcl-in-progress {
+  background-color: rgba(16, 185, 129, 0.05);
+  border-left: 3px solid #10b981;
+}
+
+/* Drag feedback */
+.mcl-shortcode-items.mcl-dragging-over {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: var(--mcl-shortcode-border-radius);
+  padding: var(--mcl-shortcode-spacing-sm);
+}
+
+.mcl-shortcode-item.mcl-dragging {
+  background-color: var(--mcl-shortcode-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--mcl-shortcode-border-radius);
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
+/* Item Main Container */
+.mcl-item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  flex: 1;
+  position: relative;
+}
+
+/* Item Label */
+.mcl-item-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Content Container */
+.mcl-content-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Drag Handle */
+.mcl-item-drag-handle {
+  cursor: grab;
+  opacity: 0.6;
+  padding: var(--mcl-shortcode-spacing-xs);
+  margin-right: var(--mcl-shortcode-spacing-sm);
+  transition: opacity 0.2s ease;
+  user-select: none;
+  color: var(--mcl-shortcode-list-item-text-color);
+  display: none; /* Hidden by default */
+}
+
+.mcl-item-drag-handle:hover {
+  opacity: 1;
+}
+
+.mcl-item-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Show drag handle when reordering is enabled */
+.mcl-shortcode-container[data-enable-reorder="true"] .mcl-item-drag-handle {
+  display: inline-block;
 }
 
 /* Checkbox Base */
-.mcl-item-label input[type=checkbox] {
+.mcl-item-checkbox {
   appearance: none;
   -webkit-appearance: none;
   padding: 0;
@@ -167,64 +244,95 @@
   position: relative;
   cursor: pointer;
   margin: 0;
+  margin-top: 2px; /* Align with text baseline */
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.mcl-item-label input[type=checkbox]:checked {
+.mcl-item-checkbox:checked {
   background-color: var(--mcl-shortcode-checkbox-color-filled);
   border-color: var(--mcl-shortcode-checkbox-color-filled);
 }
 
-.mcl-item-label input[type=checkbox]:checked::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 4px;
-  height: 8px;
-  border: solid var(--mcl-shortcode-checkmark-color);
-  border-width: 0 2px 2px 0;
-  transform: translate(-50%, -60%) rotate(45deg);
+.mcl-item-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mcl-item-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
 }
 
 /* Item Content */
-.mcl-item-content {
+.mcl-shortcode-item-content {
   flex: 1;
   min-width: 0;
   color: var(--mcl-shortcode-list-item-text-color);
+  font-size: var(--mcl-shortcode-list-item-font-size);
   line-height: 1.5;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.mcl-shortcode-item-content:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.mcl-shortcode-item-content[contenteditable="true"]:hover {
+  border-color: #d1d5db !important;
 }
 
 /* Item content links */
-.mcl-item-content a {
+.mcl-shortcode-item-content a {
   color: #0ea5e9;
   text-decoration: underline;
   background-color: transparent !important;
   transition: color 0.2s;
 }
 
-.mcl-item-content a:hover {
+.mcl-shortcode-item-content a:hover {
   color: #0369a1;
   text-decoration: none;
+}
+
+/* Images in content */
+.mcl-shortcode-item-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 4px 0;
 }
 
 /* Item Numbers */
 .mcl-item-number {
   margin-right: var(--mcl-shortcode-spacing-sm);
   opacity: 0.7;
+  color: var(--mcl-shortcode-list-item-text-color);
+  font-weight: 500;
+  display: none; /* Hidden by default */
+  flex-shrink: 0;
+}
+
+/* Show numbers when enabled */
+.mcl-shortcode-container[data-show-numbers="true"] .mcl-item-number {
+  display: inline;
 }
 
 /* Priority Indicators */
-.mcl-item-priority {
+.mcl-priority-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-right: var(--mcl-shortcode-spacing-sm);
+  flex-shrink: 0;
+  display: none; /* Hidden by default */
+  margin-top: 6px; /* Align with text */
 }
 
 /* Number-based priority indicators */
-.mcl-item-priority.mcl-priority-number {
+.mcl-priority-indicator.mcl-priority-number {
   width: auto;
   height: auto;
   border-radius: 3px;
@@ -235,16 +343,22 @@
   color: #ffffff;
   padding: 0 4px;
   min-width: 14px;
-  display: inline-flex;
+  display: none; /* Hidden by default */
   align-items: center;
   justify-content: center;
+  margin-top: 2px; /* Better alignment */
 }
 
-/* Ensure numbers are visible even when the item is checked */
-.mcl-shortcode-checked .mcl-item-priority.mcl-priority-number {
-  opacity: 0.8;
+/* Show priority indicators when enabled */
+.mcl-shortcode-container[data-priority-enabled="1"] .mcl-priority-indicator {
+  display: inline-block;
 }
 
+.mcl-shortcode-container[data-priority-enabled="1"] .mcl-priority-indicator.mcl-priority-number {
+  display: inline-flex;
+}
+
+/* Priority colors */
 .mcl-priority-low {
   background-color: #22c55e;
 }
@@ -261,21 +375,50 @@
   background-color: #7c3aed;
 }
 
-/* Drag Handle */
-.mcl-item-drag-handle {
-  cursor: grab;
-  opacity: 0.6;
-  padding: var(--mcl-shortcode-spacing-xs);
+/* Deadline Badge */
+.mcl-deadline-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 12px;
+  margin-top: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.mcl-deadline-badge:hover {
+  background-color: #fecaca;
+}
+
+/* Action Buttons */
+.mcl-item-actions {
+  opacity: 0;
   transition: opacity 0.2s ease;
 }
 
-.mcl-item-drag-handle:hover {
-  opacity: 1;
+.mcl-item-actions button {
+  transition: all 0.2s ease;
+}
+
+.mcl-item-actions button:hover {
+  background-color: #f3f4f6 !important;
+  transform: scale(1.05);
 }
 
 /* Checked State */
-.mcl-shortcode-item.mcl-shortcode-checked .mcl-item-content {
+.mcl-shortcode-item.mcl-shortcode-checked .mcl-shortcode-item-content {
   opacity: 0.8;
+  text-decoration: line-through;
+}
+
+.mcl-shortcode-item.mcl-shortcode-checked {
+  opacity: 0.7;
+}
+
+/* Focus within for action buttons */
+.mcl-shortcode-item:focus-within .mcl-item-actions {
+  opacity: 1;
 }
 
 /* Responsive Design */
@@ -286,7 +429,23 @@
   }
 
   .mcl-item-drag-handle {
-    opacity: 0.5;
+    opacity: 0.8; /* More visible on mobile */
+  }
+
+  .mcl-shortcode-item {
+    gap: var(--mcl-shortcode-spacing-xs);
+    padding: var(--mcl-shortcode-spacing-xs);
+  }
+
+  /* Always show action buttons on mobile */
+  .mcl-item-actions {
+    opacity: 0.7 !important;
+  }
+
+  .mcl-item-actions button {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 12px;
   }
 }
 
@@ -297,7 +456,18 @@
     padding: 0;
   }
 
-  .mcl-item-drag-handle {
+  .mcl-item-drag-handle,
+  .mcl-item-actions {
     display: none !important;
+  }
+
+  .mcl-shortcode-item.mcl-dragging {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .mcl-deadline-badge {
+    background-color: #e5e7eb !important;
+    color: #000 !important;
   }
 }

@@ -435,7 +435,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark font-medium"
+            className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark font-medium dark:bg-brand-accent hover:dark:bg-brand-accent/90"
           >
             {loading ? (
               <>

@@ -9,7 +9,10 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     menu_position_type: 'default',
     menu_position_relative_to: '',
     menu_position: 'after',
-    custom_position: ''
+    custom_position: '',
+    speed_dial_bg_color: '#374151',
+    speed_dial_icon_color: '#ffffff',
+    date_format: 'us'
   })
 
   const [menuItems, setMenuItems] = useState([])
@@ -220,12 +223,92 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </p>
         </div>
 
+        {/* Date Format */}
+        <div className="space-y-2">
+          <Label className="text-brand-dark dark:text-white font-medium">
+            Date & Time Format
+          </Label>
+          <select
+            value={formData.date_format}
+            onChange={(e) => handleInputChange('date_format', e.target.value)}
+            className="block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
+          >
+            <option value="us">US Format (MM/DD/YYYY) - 03/15/2024 2:30 PM</option>
+            <option value="eu">European Format (DD/MM/YYYY) - 15/03/2024 14:30</option>
+            <option value="iso">ISO Format (YYYY-MM-DD) - 2024-03-15 14:30</option>
+            <option value="compact">Compact Format (DD MMM YYYY) - 15 Mar 2024 14:30</option>
+            <option value="long">Long Format (Month DD, YYYY) - March 15, 2024 2:30 PM</option>
+          </select>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Choose how dates and times should be displayed throughout the plugin (deadlines, timestamps, etc.).
+          </p>
+        </div>
+
+        {/* Speed Dial Colors */}
+        <div className="space-y-4">
+          <Label className="text-brand-dark dark:text-white font-medium">
+            Speed Dial Appearance
+          </Label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="speed_dial_bg_color" className="text-brand-dark dark:text-white text-sm">
+                Background Color
+              </Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  id="speed_dial_bg_color"
+                  value={formData.speed_dial_bg_color}
+                  onChange={(e) => handleInputChange('speed_dial_bg_color', e.target.value)}
+                  className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={formData.speed_dial_bg_color}
+                  onChange={(e) => handleInputChange('speed_dial_bg_color', e.target.value)}
+                  pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                  className="flex-1 px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
+                  placeholder="#374151"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="speed_dial_icon_color" className="text-brand-dark dark:text-white text-sm">
+                Icon Color
+              </Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  id="speed_dial_icon_color"
+                  value={formData.speed_dial_icon_color}
+                  onChange={(e) => handleInputChange('speed_dial_icon_color', e.target.value)}
+                  className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={formData.speed_dial_icon_color}
+                  onChange={(e) => handleInputChange('speed_dial_icon_color', e.target.value)}
+                  pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                  className="flex-1 px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Customize the appearance of the speed dial trigger button that appears when multiple checklists have floating buttons enabled.
+          </p>
+        </div>
+
         {/* Save Button */}
         <div className="pt-4">
           <Button
             type="submit"
             disabled={loading}
-            className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark font-medium"
+            className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark font-medium dark:bg-brand-accent hover:dark:bg-brand-accent/90"
           >
             {loading ? (
               <>
@@ -241,6 +324,28 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </Button>
         </div>
       </form>
+      
+      <style>{`
+        input[type="color"] {
+          width: 48px;
+          height: 40px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          cursor: pointer;
+          padding: 2px;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+          padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+          border: none;
+          border-radius: 4px;
+        }
+        input[type="color"]::-moz-color-swatch {
+          border: none;
+          border-radius: 4px;
+        }
+      `}</style>
     </div>
   )
 }

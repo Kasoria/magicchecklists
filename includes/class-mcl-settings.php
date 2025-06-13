@@ -27,6 +27,10 @@ class MCL_Settings {
         add_action('wp_ajax_mcl_get_webhook_logs', array($this, 'ajax_get_webhook_logs'));
         add_action('wp_ajax_mcl_test_webhook', array($this, 'ajax_test_webhook'));
         add_action('wp_ajax_mcl_clear_webhook_logs', array($this, 'ajax_clear_webhook_logs'));
+        
+        // Add public AJAX handler for getting general settings (for frontend styling)
+        add_action('wp_ajax_mcl_get_general_settings', array($this, 'ajax_get_general_settings'));
+        add_action('wp_ajax_nopriv_mcl_get_general_settings', array($this, 'ajax_get_general_settings'));
     }
 
     public function enqueue_settings_scripts($hook) {
@@ -142,6 +146,30 @@ class MCL_Settings {
         );
 
         add_settings_field(
+            'speed_dial_bg_color',
+            __('Speed Dial Background Color', 'magic-checklists'),
+            array($this, 'render_speed_dial_bg_color_field'),
+            'mcl_settings',
+            'mcl_general_settings'
+        );
+
+        add_settings_field(
+            'speed_dial_icon_color',
+            __('Speed Dial Icon Color', 'magic-checklists'),
+            array($this, 'render_speed_dial_icon_color_field'),
+            'mcl_settings',
+            'mcl_general_settings'
+        );
+
+        add_settings_field(
+            'date_format',
+            __('Date & Time Format', 'magic-checklists'),
+            array($this, 'render_date_format_field'),
+            'mcl_settings',
+            'mcl_general_settings'
+        );
+
+        add_settings_field(
             'enable_api',
             __('REST API Access', 'magic-checklists'),
             array($this, 'render_enable_api_field'),
@@ -204,6 +232,14 @@ class MCL_Settings {
             'dashboard_widget_show_checklists',
             __('Show Checklists', 'magic-checklists'),
             array($this, 'render_dashboard_widget_show_checklists_field'),
+            'mcl_dashboard_settings',
+            'mcl_dashboard_widget_settings'
+        );
+
+        add_settings_field(
+            'dashboard_widget_selected_checklists',
+            __('Select Checklists to Display', 'magic-checklists'),
+            array($this, 'render_dashboard_widget_selected_checklists_field'),
             'mcl_dashboard_settings',
             'mcl_dashboard_widget_settings'
         );
@@ -446,6 +482,35 @@ class MCL_Settings {
                 $custom_position = isset($input['custom_position']) ? 
                     intval($input['custom_position']) : 0;
                 $sanitized['custom_position'] = max(1, min(99, $custom_position));
+            }
+        }
+        
+        if (isset($input['speed_dial_bg_color'])) {
+            $bg_color = sanitize_text_field($input['speed_dial_bg_color']);
+            if (preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $bg_color)) {
+                $sanitized['speed_dial_bg_color'] = $bg_color;
+            } else {
+                $sanitized['speed_dial_bg_color'] = '#374151'; // Default value
+            }
+        }
+
+        if (isset($input['speed_dial_icon_color'])) {
+            $icon_color = sanitize_text_field($input['speed_dial_icon_color']);
+            if (preg_match('/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/', $icon_color)) {
+                $sanitized['speed_dial_icon_color'] = $icon_color;
+            } else {
+                $sanitized['speed_dial_icon_color'] = '#ffffff'; // Default value
+            }
+        }
+
+        if (isset($input['date_format'])) {
+            $date_format = sanitize_text_field($input['date_format']);
+            // Validate against allowed formats
+            $allowed_formats = array('us', 'eu', 'iso', 'compact', 'long');
+            if (in_array($date_format, $allowed_formats)) {
+                $sanitized['date_format'] = $date_format;
+            } else {
+                $sanitized['date_format'] = 'us'; // Default value
             }
         }
         
@@ -949,9 +1014,108 @@ class MCL_Settings {
                 <span class="mcl-switch-label"></span>
             </label>
             <p class="mcl-description">
-                <?php esc_html_e('Display a list of all checklists with their current status.', 'magic-checklists'); ?>
+                <?php esc_html_e('Display a list of checklists with their current status. Choose which checklists to display below.', 'magic-checklists'); ?>
             </p>
         </div>
+        <?php
+    }
+
+    public function render_dashboard_widget_selected_checklists_field() {
+        $widget_settings = self::get_setting('dashboard_widget', array());
+        $selected_checklists = isset($widget_settings['selected_checklists']) ? $widget_settings['selected_checklists'] : array();
+        
+        // Get all checklists for selection (excluding publisher checklists)
+        $checklists = get_posts(array(
+            'post_type' => 'mcl_checklist',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_checklist_type',
+                    'value' => 'publisher',
+                    'compare' => '!='
+                )
+            )
+        ));
+        ?>
+        <div class="mcl-field-wrapper">
+            <?php if (empty($checklists)): ?>
+                <p class="mcl-description">
+                    <?php esc_html_e('No checklists found. Create some checklists first to display them in the widget.', 'magic-checklists'); ?>
+                </p>
+            <?php else: ?>
+                                 <p class="mcl-description" style="margin-bottom: 10px;">
+                     <?php esc_html_e('Select which checklists to display in the dashboard widget. If none are selected, all checklists will be displayed.', 'magic-checklists'); ?>
+                 </p>
+                
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                    <div style="margin-bottom: 10px;">
+                        <button type="button" id="mcl-select-all-checklists" class="button button-secondary" style="margin-right: 5px;">
+                            <?php esc_html_e('Select All', 'magic-checklists'); ?>
+                        </button>
+                        <button type="button" id="mcl-deselect-all-checklists" class="button button-secondary">
+                            <?php esc_html_e('Deselect All', 'magic-checklists'); ?>
+                        </button>
+                    </div>
+                    
+                    <?php foreach ($checklists as $checklist): ?>
+                        <?php 
+                        // Double-check that this isn't a publisher checklist
+                        $checklist_type = get_post_meta($checklist->ID, '_mcl_checklist_type', true) ?: 'classic';
+                        if ($checklist_type === 'publisher') {
+                            continue; // Skip publisher checklists
+                        }
+                        
+                        $is_active = get_post_meta($checklist->ID, '_mcl_active', true) == '1';
+                        $is_selected = in_array($checklist->ID, array_map('intval', $selected_checklists));
+                        ?>
+                        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                            <label style="display: flex; align-items: center; cursor: pointer; width: 100%;">
+                                <input type="checkbox" 
+                                       name="mcl_dashboard_widget_settings[selected_checklists][]" 
+                                       value="<?php echo esc_attr($checklist->ID); ?>"
+                                       <?php checked($is_selected, true); ?>
+                                       style="margin-right: 8px;">
+                                <span style="flex-grow: 1;">
+                                    <?php echo esc_html($checklist->post_title); ?>
+                                </span>
+                                <span style="font-size: 11px; padding: 2px 6px; border-radius: 3px; margin-left: 8px; <?php echo $is_active ? 'background-color: #d1e7dd; color: #0f5132;' : 'background-color: #f8d7da; color: #721c24;'; ?>">
+                                    <?php echo $is_active ? esc_html__('Active', 'magic-checklists') : esc_html__('Inactive', 'magic-checklists'); ?>
+                                </span>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <p class="mcl-description" style="margin-top: 8px; font-size: 12px; color: #666;">
+                    <?php 
+                    $selected_count = count($selected_checklists);
+                    if ($selected_count === 0) {
+                        esc_html_e('No checklists selected. All checklists will be displayed.', 'magic-checklists');
+                    } else {
+                        echo sprintf(
+                            esc_html(_n('%d checklist selected.', '%d checklists selected.', $selected_count, 'magic-checklists')), 
+                            $selected_count
+                        );
+                    }
+                    ?>
+                </p>
+            <?php endif; ?>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            $('#mcl-select-all-checklists').on('click', function() {
+                $('input[name="mcl_dashboard_widget_settings[selected_checklists][]"]').prop('checked', true);
+            });
+            
+            $('#mcl-deselect-all-checklists').on('click', function() {
+                $('input[name="mcl_dashboard_widget_settings[selected_checklists][]"]').prop('checked', false);
+            });
+        });
+        </script>
         <?php
     }
 
@@ -960,13 +1124,20 @@ class MCL_Settings {
         $show_items = isset($widget_settings['show_checklist_items']) ? $widget_settings['show_checklist_items'] : false;
         $selected_checklist = isset($widget_settings['selected_checklist']) ? $widget_settings['selected_checklist'] : '';
         
-        // Get all checklists for the dropdown
+        // Get all checklists for the dropdown (excluding publisher checklists)
         $checklists = get_posts(array(
             'post_type' => 'mcl_checklist',
             'post_status' => 'publish',
             'posts_per_page' => -1,
             'orderby' => 'title',
-            'order' => 'ASC'
+            'order' => 'ASC',
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_checklist_type',
+                    'value' => 'publisher',
+                    'compare' => '!='
+                )
+            )
         ));
         ?>
         <div class="mcl-toggle-wrapper">
@@ -984,6 +1155,13 @@ class MCL_Settings {
                 <select name="mcl_dashboard_widget_settings[selected_checklist]" class="regular-text">
                     <option value=""><?php esc_html_e('Select a checklist', 'magic-checklists'); ?></option>
                     <?php foreach ($checklists as $checklist): ?>
+                        <?php 
+                        // Double-check that this isn't a publisher checklist
+                        $checklist_type = get_post_meta($checklist->ID, '_mcl_checklist_type', true) ?: 'classic';
+                        if ($checklist_type === 'publisher') {
+                            continue; // Skip publisher checklists
+                        }
+                        ?>
                         <option value="<?php echo esc_attr($checklist->ID); ?>" 
                                 <?php selected($selected_checklist, $checklist->ID); ?>>
                             <?php echo esc_html($checklist->post_title); ?>
@@ -1094,6 +1272,33 @@ class MCL_Settings {
             $sanitized['selected_checklist'] = intval($input['selected_checklist']);
         }
         
+        // Handle multiple checklist selection
+        if (isset($input['selected_checklists'])) {
+            $selected_checklists = $input['selected_checklists'];
+            if (is_array($selected_checklists)) {
+                $sanitized['selected_checklists'] = array_map('intval', array_filter($selected_checklists, 'is_numeric'));
+            } else {
+                $sanitized['selected_checklists'] = array();
+            }
+        } else {
+            // If not set, default to empty array (show all checklists)
+            $sanitized['selected_checklists'] = array();
+        }
+        
+        // Validation: If "Show Checklists" is enabled, at least one checklist must be selected
+        if (!empty($sanitized['show_checklists']) && empty($sanitized['selected_checklists'])) {
+            add_settings_error(
+                'mcl_dashboard_widget_settings',
+                'no_checklists_selected',
+                __('At least one checklist must be selected when "Show Checklists" is enabled.', 'magic-checklists'),
+                'error'
+            );
+            
+            // Keep the previous valid settings if validation fails
+            $current_settings = get_option('mcl_dashboard_widget_settings', array());
+            return $current_settings;
+        }
+        
         if (isset($input['show_deadlines'])) {
             $sanitized['show_deadlines'] = (bool) $input['show_deadlines'];
         }
@@ -1172,6 +1377,16 @@ class MCL_Settings {
                 break;
             case 'dashboard':
                 $sanitized = $this->sanitize_dashboard_widget_settings($settings);
+                
+                // Check if validation failed (settings errors were added)
+                $settings_errors = get_settings_errors('mcl_dashboard_widget_settings');
+                if (!empty($settings_errors)) {
+                    // Get the error message
+                    $error_message = $settings_errors[0]['message'];
+                    wp_send_json_error(array('message' => $error_message));
+                    return;
+                }
+                
                 update_option('mcl_dashboard_widget_settings', $sanitized);
                 break;
             default:
@@ -1283,5 +1498,108 @@ class MCL_Settings {
 
         delete_option('mcl_webhook_logs');
         wp_send_json_success(array('message' => 'Webhook logs cleared'));
+    }
+
+    /**
+     * Public AJAX handler to get general settings for frontend styling
+     */
+    public function ajax_get_general_settings() {
+        // No permission check needed as this is for public frontend styling
+        // But we'll only return safe, non-sensitive settings
+        
+        $general_settings = get_option($this->option_name, array());
+        
+        // Only return frontend-safe settings
+        $safe_settings = array(
+            'speed_dial_bg_color' => isset($general_settings['speed_dial_bg_color']) ? $general_settings['speed_dial_bg_color'] : '#374151',
+            'speed_dial_icon_color' => isset($general_settings['speed_dial_icon_color']) ? $general_settings['speed_dial_icon_color'] : '#ffffff',
+        );
+
+        wp_send_json_success($safe_settings);
+    }
+
+    public function render_speed_dial_bg_color_field() {
+        $options = get_option($this->option_name, array());
+        $bg_color = isset($options['speed_dial_bg_color']) ? $options['speed_dial_bg_color'] : '#374151';
+        ?>
+        <div class="mcl-field-wrapper">
+            <input type="color" 
+                   name="<?php echo esc_attr($this->option_name); ?>[speed_dial_bg_color]" 
+                   value="<?php echo esc_attr($bg_color); ?>"
+                   class="mcl-color-picker">
+            <input type="text" 
+                   name="<?php echo esc_attr($this->option_name); ?>[speed_dial_bg_color]" 
+                   value="<?php echo esc_attr($bg_color); ?>"
+                   class="regular-text mcl-color-text"
+                   pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
+            <p class="mcl-description">
+                <?php esc_html_e('Choose the background color for the speed dial trigger button when multiple checklists are active.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_speed_dial_icon_color_field() {
+        $options = get_option($this->option_name, array());
+        $icon_color = isset($options['speed_dial_icon_color']) ? $options['speed_dial_icon_color'] : '#ffffff';
+        ?>
+        <div class="mcl-field-wrapper">
+            <input type="color" 
+                   name="<?php echo esc_attr($this->option_name); ?>[speed_dial_icon_color]" 
+                   value="<?php echo esc_attr($icon_color); ?>"
+                   class="mcl-color-picker">
+            <input type="text" 
+                   name="<?php echo esc_attr($this->option_name); ?>[speed_dial_icon_color]" 
+                   value="<?php echo esc_attr($icon_color); ?>"
+                   class="regular-text mcl-color-text"
+                   pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
+            <p class="mcl-description">
+                <?php esc_html_e('Choose the icon color for the speed dial trigger button when multiple checklists are active.', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_date_format_field() {
+        $options = get_option($this->option_name, array());
+        $date_format = isset($options['date_format']) ? $options['date_format'] : 'us';
+
+        // Available date format options
+        $format_options = array(
+            'us' => array(
+                'label' => __('US Format (MM/DD/YYYY)', 'magic-checklists'),
+                'example' => '03/15/2024 2:30 PM'
+            ),
+            'eu' => array(
+                'label' => __('European Format (DD/MM/YYYY)', 'magic-checklists'),
+                'example' => '15/03/2024 14:30'
+            ),
+            'iso' => array(
+                'label' => __('ISO Format (YYYY-MM-DD)', 'magic-checklists'),
+                'example' => '2024-03-15 14:30'
+            ),
+            'compact' => array(
+                'label' => __('Compact Format (DD MMM YYYY)', 'magic-checklists'),
+                'example' => '15 Mar 2024 14:30'
+            ),
+            'long' => array(
+                'label' => __('Long Format (Month DD, YYYY)', 'magic-checklists'),
+                'example' => 'March 15, 2024 2:30 PM'
+            )
+        );
+        ?>
+        <div class="mcl-field-wrapper">
+            <select name="<?php echo esc_attr($this->option_name); ?>[date_format]" class="regular-text">
+                <?php foreach ($format_options as $key => $format): ?>
+                    <option value="<?php echo esc_attr($key); ?>" <?php selected($date_format, $key); ?>>
+                        <?php echo esc_html($format['label']); ?> - <?php echo esc_html($format['example']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="mcl-description">
+                <?php esc_html_e('Choose how dates and times should be displayed throughout the plugin (deadlines, timestamps, etc.).', 'magic-checklists'); ?>
+            </p>
+        </div>
+        <?php
     }
 }

@@ -136,11 +136,6 @@ const PublisherChecklistSidebar = () => {
             formData.append('tags', JSON.stringify(tags));
             formData.append('post_meta', JSON.stringify(postMeta));
 
-            // Debug logging for content analysis (can be removed in production)
-            if (window.mclPublisher.debug) {
-                console.log('MCL Publisher: Checking requirements with content length:', editedPostContent?.length || 0);
-            }
-
             const response = await fetch(window.mclPublisher.ajaxurl, {
                 method: 'POST',
                 body: formData
@@ -204,17 +199,6 @@ const PublisherChecklistSidebar = () => {
 
                 // Check if publishing should be blocked
                 updatePublishingLock(updatedChecklists);
-                
-                // Debug logging for new requirements
-                if (window.mclPublisher.debug) {
-                    updatedChecklists.forEach(checklist => {
-                        checklist.requirements.forEach(req => {
-                            if (['excerpt', 'meta_description', 'heading_count', 'image_alt_text', 'image_count'].includes(req.type)) {
-                                console.log(`MCL Publisher: ${req.type} status:`, req.status, req.message);
-                            }
-                        });
-                    });
-                }
             } else {
                 // Also update publishing lock when there are no results
                 updatePublishingLock([]);
@@ -236,11 +220,6 @@ const PublisherChecklistSidebar = () => {
                 }
             });
         });
-
-        // Debug logging
-        if (window.mclPublisher.debug) {
-            console.log('MCL Publisher: Updating publish lock. Has failed required:', hasFailedRequired, 'Current blocking state:', isBlocking);
-        }
 
         // Only update if the blocking state has actually changed
         if (hasFailedRequired !== isBlocking) {
@@ -271,10 +250,6 @@ const PublisherChecklistSidebar = () => {
                 // Remove body class
                 document.body.classList.remove('mcl-requirements-blocking');
                 
-                // Debug logging
-                if (window.mclPublisher.debug) {
-                    console.log('MCL Publisher: All requirements met, publish button should be functional');
-                }
             }
         }
     };
@@ -287,20 +262,12 @@ const PublisherChecklistSidebar = () => {
         // Add listener to the document to catch publish button clicks
         document.addEventListener('click', handlePublishButtonClick, true);
         
-        // Debug logging
-        if (window.mclPublisher.debug) {
-            console.log('MCL Publisher: Added publish button click listener');
-        }
     };
 
     // Function to remove click listener from publish button
     const removePublishButtonListener = () => {
         document.removeEventListener('click', handlePublishButtonClick, true);
         
-        // Debug logging
-        if (window.mclPublisher.debug) {
-            console.log('MCL Publisher: Removed publish button click listener');
-        }
     };
 
     // Handle publish button clicks when requirements are not met
@@ -333,15 +300,7 @@ const PublisherChecklistSidebar = () => {
             // Double-check if we should still be blocking
             if (!document.body.classList.contains('mcl-requirements-blocking')) {
                 // Requirements are met, allow normal publishing
-                if (window.mclPublisher.debug) {
-                    console.log('MCL Publisher: Requirements are met, allowing publish to proceed');
-                }
                 return;
-            }
-            
-            // Debug logging
-            if (window.mclPublisher.debug) {
-                console.log('MCL Publisher: Intercepting publish button click');
             }
             
             // Prevent the default action
