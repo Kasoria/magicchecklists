@@ -3,7 +3,7 @@
   "slug": "magicchecklists",
   "author": "<a href='https://magicplugins.io'>Christian Wenterodt</a>",
   "author_profile": "https://magicplugins.io",
-  "version": "2.0 Beta 2",
+  "version": "2.0 Beta 2.0.1",
   "requires": "6.5",
   "tested": "6.7.1",
   "requires_php": "7.4",

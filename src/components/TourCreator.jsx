@@ -268,19 +268,25 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     removeHighlight()
   }
 
+  const preventForSelection = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (typeof e.stopImmediatePropagation === 'function') {
+      e.stopImmediatePropagation()
+    }
+  }
+
   const handleElementClick = (e) => {
     const mode = currentModeRef.current
     const reselecting = isReselectingRef.current
     const modalOpen = showStepEditorRef.current
     if (mode === 'select' && !reselecting && !modalOpen) {
       if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
-      e.preventDefault()
-      e.stopPropagation()
+      preventForSelection(e)
       selectElement(e.target)
     } else if (reselecting) {
       if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
-      e.preventDefault()
-      e.stopPropagation()
+      preventForSelection(e)
       reselectElement(e.target)
     }
     // In navigation mode (mode === 'navigate'), let clicks pass through
@@ -312,6 +318,17 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   }
 
   const handleLinkClick = (e) => {
+    const mode = currentModeRef.current
+    const reselecting = isReselectingRef.current
+    
+    // In selection mode or reselection mode, prevent ALL link clicks to allow element selection
+    if (mode === 'select' || reselecting) {
+      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      preventForSelection(e)
+      return
+    }
+    
+    // Navigation mode logic (existing behavior)
     const link = e.target.closest('a')
     if (!link) return
     const href = link.getAttribute('href')
@@ -337,14 +354,25 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     }
 
     // For other links, only intercept in navigate mode
-    if (currentModeRef.current !== 'navigate') return
+    if (mode !== 'navigate') return
     e.preventDefault()
     const newUrl = appendTourParams(href)
     window.location.href = newUrl
   }
 
   const handleFormSubmit = (e) => {
-    if (currentModeRef.current !== 'navigate') return
+    const mode = currentModeRef.current
+    const reselecting = isReselectingRef.current
+    
+    // In selection mode or reselection mode, prevent ALL form submissions to allow element selection
+    if (mode === 'select' || reselecting) {
+      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      preventForSelection(e)
+      return
+    }
+    
+    // Navigation mode logic (existing behavior)
+    if (mode !== 'navigate') return
     const form = e.target
     if (form.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal')) return
     if (form.method && form.method.toLowerCase() === 'get') {
@@ -565,54 +593,244 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   }
 
   // Utility functions
+  const cssEscape = (str) => {
+    if (window.CSS && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(str)
+    }
+    return str.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`)
+  }
+
+  const isUnique = (selector) => document.querySelectorAll(selector).length === 1
+
   const generateSelectorWithStrategy = (element) => {
-    // Simplified selector generation - in production, use the full algorithm from the JS file
-    if (element.id) {
+    // Prefer unique selectors in the following order:
+    // 1) ID (if present and unique)
+    // 2) Data attributes that are unique (e.g. [data-item-id="123"])
+    // 3) Unique class name (e.g. .btn-primary)
+    // 4) Tag + class combination (e.g. button.btn-primary) that is unique
+    // 5) Tag + data attribute combination that is unique
+    // 6) Hierarchical path using > and :nth-child until uniqueness is achieved
+    //
+    // Example: For <li class="mcl-widget-item" data-item-id="1749648057375">
+    // This will try [data-item-id="1749648057375"] first (if unique),
+    // then li.mcl-widget-item[data-item-id="1749648057375"],
+    // then build a hierarchical path like: .mcl-widget-items > ul.mcl-widget-item-list > li.mcl-widget-item[data-item-id="1749648057375"]:nth-child(1)
+
+    if (!element || element.nodeType !== 1) {
       return {
-        selector: '#' + element.id,
+        selector: '',
+        strategy: 'invalid',
+        quality: 'poor',
+        message: 'Invalid element selected.'
+      }
+    }
+
+    // 1. ID strategy
+    if (element.id && isUnique(`#${cssEscape(element.id)}`)) {
+      return {
+        selector: `#${cssEscape(element.id)}`,
         strategy: 'id',
         quality: 'excellent',
         message: 'Perfect! Using unique ID selector.'
       }
     }
-    
-    // Handle className safely for both HTML and SVG elements
-    let classNames = ''
-    if (element.className) {
-      if (typeof element.className === 'string') {
-        classNames = element.className
-      } else if (element.className.baseVal !== undefined) {
-        // SVG elements have className as SVGAnimatedString
-        classNames = element.className.baseVal
-      } else if (element.className.toString) {
-        // Fallback for other className types
-        classNames = element.className.toString()
+
+    // Helper: safely get class names list
+    const getClassList = (el) => {
+      if (!el) return []
+      if (typeof el.className === 'string') {
+        return el.className.trim().split(/\s+/).filter(Boolean)
       }
+      if (el.className && typeof el.className.baseVal === 'string') {
+        // SVG elements
+        return el.className.baseVal.trim().split(/\s+/).filter(Boolean)
+      }
+      return []
     }
-    
-    if (classNames) {
-      const classes = classNames.trim().split(/\s+/).filter(cls => cls.length > 0)
-      if (classes.length > 0) {
+
+    // Helper: get data attributes that could be unique identifiers
+    const getDataAttributes = (el) => {
+      const dataAttrs = []
+      if (el.attributes) {
+        for (let attr of el.attributes) {
+          if (attr.name.startsWith('data-') && attr.value) {
+            // Prioritize attributes that look like IDs
+            const priority = /^data-(id|key|item-id|post-id|user-id|unique)/.test(attr.name) ? 1 : 2
+            dataAttrs.push({ name: attr.name, value: attr.value, priority })
+          }
+        }
+      }
+      return dataAttrs.sort((a, b) => a.priority - b.priority)
+    }
+
+    // 2. Data attribute strategy (for unique identifiers)
+    const dataAttrs = getDataAttributes(element)
+    for (const attr of dataAttrs) {
+      const sel = `[${attr.name}="${cssEscape(attr.value)}"]`
+      if (isUnique(sel)) {
         return {
-          selector: '.' + classes[0],
-          strategy: 'class',
-          quality: 'good',
-          message: 'Good! Using class selector.'
+          selector: sel,
+          strategy: 'data-attribute',
+          quality: 'excellent',
+          message: `Perfect! Using unique data attribute selector: ${attr.name}.`
         }
       }
     }
+
+    // 3. Unique single class strategy
+    const classes = getClassList(element)
+    for (const cls of classes) {
+      const sel = `.${cssEscape(cls)}`
+      if (isUnique(sel)) {
+        return {
+          selector: sel,
+          strategy: 'class',
+          quality: 'good',
+          message: 'Great! Using unique class selector.'
+        }
+      }
+    }
+
+    // 4. Tag + class combination
+    for (const cls of classes) {
+      const sel = `${element.tagName.toLowerCase()}.${cssEscape(cls)}`
+      if (isUnique(sel)) {
+        return {
+          selector: sel,
+          strategy: 'tag.class',
+          quality: 'good',
+          message: 'Good! Using tag & class selector.'
+        }
+      }
+    }
+
+    // 5. Tag + data attribute combination
+    for (const attr of dataAttrs) {
+      const sel = `${element.tagName.toLowerCase()}[${attr.name}="${cssEscape(attr.value)}"]`
+      if (isUnique(sel)) {
+        return {
+          selector: sel,
+          strategy: 'tag.data',
+          quality: 'good',
+          message: `Good! Using tag & data attribute selector: ${attr.name}.`
+        }
+      }
+    }
+
+    // 6. Build hierarchical path with :nth-child to guarantee uniqueness
+    const buildPathSelector = (el) => {
+      const parts = []
+      let current = el
+      let maxDepth = 8 // Prevent overly long selectors
+      
+      while (current && current.nodeType === 1 && current !== document.body && current !== document.documentElement && maxDepth > 0) {
+        // Check if current element has a unique identifier we can use to stop traversal
+        if (current.id) {
+          parts.unshift(`#${cssEscape(current.id)}`)
+          break
+        }
+
+        // Check for unique data attributes on current element
+        const currentDataAttrs = getDataAttributes(current)
+        let foundUniqueData = false
+        for (const attr of currentDataAttrs) {
+          const testSel = `[${attr.name}="${cssEscape(attr.value)}"]`
+          if (isUnique(testSel)) {
+            parts.unshift(testSel)
+            foundUniqueData = true
+            break
+          }
+        }
+        if (foundUniqueData) break
+
+        // Build the selector part for current element
+        let part = current.tagName.toLowerCase()
+        
+        // Add the most specific class if available
+        const clsList = getClassList(current)
+        if (clsList.length) {
+          part += `.${cssEscape(clsList[0])}`
+        }
+
+        // Add data attribute if it helps with specificity (even if not unique)
+        if (currentDataAttrs.length > 0 && !foundUniqueData) {
+          const primaryAttr = currentDataAttrs[0]
+          part += `[${primaryAttr.name}="${cssEscape(primaryAttr.value)}"]`
+        }
+
+        // Add :nth-child if there are siblings with same tag
+        if (current.parentNode) {
+          const siblings = Array.from(current.parentNode.children).filter((c) => c.tagName === current.tagName)
+          if (siblings.length > 1) {
+            const index = siblings.indexOf(current) + 1
+            part += `:nth-child(${index})`
+          }
+        }
+
+        parts.unshift(part)
+        current = current.parentNode
+        maxDepth--
+      }
+      
+      return parts.join(' > ')
+    }
+
+    const pathSelector = buildPathSelector(element)
+    if (isUnique(pathSelector)) {
+      return {
+        selector: pathSelector,
+        strategy: 'path',
+        quality: 'okay',
+        message: 'Using unique hierarchical selector.'
+      }
+    }
+
+    // 7. Enhanced fallback: try to make tag selector more specific
+    let fallbackSelector = element.tagName.toLowerCase()
     
+    // Add first class if available
+    if (classes.length > 0) {
+      fallbackSelector += `.${cssEscape(classes[0])}`
+    }
+    
+    // Add first data attribute if available
+    if (dataAttrs.length > 0) {
+      const attr = dataAttrs[0]
+      fallbackSelector += `[${attr.name}="${cssEscape(attr.value)}"]`
+    }
+    
+    // Add nth-child based on immediate parent
+    if (element.parentNode) {
+      const siblings = Array.from(element.parentNode.children).filter((c) => c.tagName === element.tagName)
+      if (siblings.length > 1) {
+        const index = siblings.indexOf(element) + 1
+        fallbackSelector += `:nth-child(${index})`
+      }
+    }
+
+    // Check if our enhanced fallback is unique
+    if (isUnique(fallbackSelector)) {
+      return {
+        selector: fallbackSelector,
+        strategy: 'enhanced-fallback',
+        quality: 'okay',
+        message: 'Using enhanced selector with position.'
+      }
+    }
+
+    // Final fallback to basic tag name
     return {
       selector: element.tagName.toLowerCase(),
       strategy: 'tag',
       quality: 'poor',
-      message: 'Using basic tag selector. Consider adding an ID or class.'
+      message: 'Selector may match multiple elements. Consider adding an ID or unique class.'
     }
   }
 
   const showSelectorGenerationFeedback = (result) => {
-    const { strategy, quality, message } = result
-    const toastType = quality === 'excellent' || quality === 'good' ? 'success' : 'warning'
+    const { quality, message } = result
+    const successQualities = ['excellent', 'good', 'okay']
+    const toastType = successQualities.includes(quality) ? 'success' : 'warning'
     showToast(message, toastType, 3000)
   }
 

@@ -12,7 +12,6 @@
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
  * Version:           2.0.0
- * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://magicplugins.io
