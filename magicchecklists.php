@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           Beta 2.0.0 Phase 2
+ * Version:           2.0.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
@@ -40,7 +40,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', 'Beta 2.0.0 Phase 2');
+            define('MAGIC_CHECKLISTS_VERSION', '2.0.0');
             define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));

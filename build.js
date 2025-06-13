@@ -30,6 +30,8 @@ const includeFiles = [
   'assets', // Root-level assets (fonts, images, etc.)
   'languages',
   'licensing',
+  'uninstall.php',
+  'release.json',
   'dist' // Built React assets
 ];
 

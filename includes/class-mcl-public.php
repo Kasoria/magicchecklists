@@ -384,6 +384,10 @@ class MCL_Public {
                 ));
                 return;
             }
+            
+            $user_identifier = $this->get_current_user_identifier();
+            $locked          = false;
+            $locked_message  = '';
 
             // Determine permission levels in one pass
             $user_can_edit = $this->permissions->has_permission($checklist_id, 'edit');

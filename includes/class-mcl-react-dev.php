@@ -19,9 +19,26 @@ class MCL_React_Dev {
     private $vite_dev_server = 'http://localhost:3000';
     public $is_dev_mode = false;
     
+    /**
+     * Allows developers to explicitly turn dev-mode on or off by defining the
+     * `MCL_DEV_MODE` constant in wp-config.php. If the constant is defined
+     * the plugin will never perform the localhost availability check – this
+     * avoids unnecessary requests on production while still giving full
+     * control in local environments.
+     */
+    private function is_dev_mode_forced() {
+        return defined( 'MCL_DEV_MODE' );
+    }
+    
     public function __construct() {
-        // Check if we're in development mode by checking if Vite dev server is running
-        $this->is_dev_mode = $this->is_vite_dev_server_running();
+        // Decide whether we're in development mode.
+        // 1. Respect explicit override via constant first.
+        if ( $this->is_dev_mode_forced() ) {
+            $this->is_dev_mode = (bool) MCL_DEV_MODE;
+        } else {
+            // 2. Otherwise auto-detect by pinging the dev-server (only when useful).
+            $this->is_dev_mode = $this->is_vite_dev_server_running();
+        }
         
         // If in dev mode, inject React Refresh preamble into head for HMR support
         if ( $this->is_dev_mode ) {
@@ -44,6 +61,11 @@ class MCL_React_Dev {
      * Check if Vite dev server is running by making a test request
      */
     public function is_vite_dev_server_running() {
+        // If the developer forced dev-mode explicitly, never probe the server.
+        if ( $this->is_dev_mode_forced() ) {
+            return (bool) MCL_DEV_MODE;
+        }
+
         // Only check in development/staging environments
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             /*
