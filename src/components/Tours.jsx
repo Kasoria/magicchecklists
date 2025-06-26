@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button, Table, TableHead, TableHeadCell, TableBody, TableRow, TableCell, Badge, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-react'
 import { useToast } from './Toast.jsx'
 import ConfirmationModal from './ConfirmationModal.jsx'
+import { formatDate } from '../utils/dateUtils'
 
 const Tours = ({ adminData, onEditTour }) => {
   const [tours, setTours] = useState([])
@@ -242,13 +243,6 @@ const Tours = ({ adminData, onEditTour }) => {
     }
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
-  }
 
   if (loading) {
     return (
@@ -358,7 +352,7 @@ const Tours = ({ adminData, onEditTour }) => {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {formatDate(tour.date)}
+                      {formatDate(tour.date, 'date')}
                     </span>
                   </TableCell>
                   <TableCell>

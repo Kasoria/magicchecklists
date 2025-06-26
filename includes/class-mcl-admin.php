@@ -6,10 +6,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class MCL_Admin {
     private $nonce_key = 'mcl_invite_links_nonce';
+    private $created_toplevel_menu = false;
 
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+        add_action( 'admin_menu', array( $this, 'add_landing_submenu' ), 999 );
+        add_action( 'admin_menu', array( $this, 'apply_submenu_ordering' ), 9999 );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+        
+        // Migrate individual settings to shared settings on first load
+        add_action( 'admin_init', array( $this, 'migrate_individual_settings_to_shared' ) );
         add_action( 'admin_post_save_checklist', array( $this, 'save_checklist' ) );
         add_action( 'admin_post_delete_checklist', array( $this, 'delete_checklist' ) );
         add_action( 'admin_post_clone_checklist', array( $this, 'clone_checklist' ) );
@@ -34,16 +40,20 @@ class MCL_Admin {
     }
 
     public function add_admin_menu() {
-        $settings = get_option('mcl_settings', array());
-        $position_type = isset($settings['menu_position_type']) ? $settings['menu_position_type'] : 'default';
+        // Get shared settings for menu positioning
+        $shared_settings = get_option('magic_plugins_settings', array());
+        
+        // Use shared settings only (no more individual fallbacks)
+        $position_type = !empty($shared_settings['menu_position_type']) ? 
+            $shared_settings['menu_position_type'] : 'default';
         
         // Default position is 26
         $menu_position = 26;
         
         if ($position_type === 'custom') {
-            // Use custom position if set
-            $menu_position = isset($settings['custom_position']) ? 
-                intval($settings['custom_position']) : $menu_position;
+            // Use shared settings only
+            $menu_position = !empty($shared_settings['custom_position']) ? 
+                intval($shared_settings['custom_position']) : $menu_position;
                 
             // Ensure it's within valid range
             $menu_position = max(1, min(99, $menu_position));
@@ -59,8 +69,10 @@ class MCL_Admin {
                 }
             }
         } elseif ($position_type === 'relative') {
-            $relative_to = isset($settings['menu_position_relative_to']) ? $settings['menu_position_relative_to'] : '';
-            $position = isset($settings['menu_position']) ? $settings['menu_position'] : 'after';
+            $relative_to = !empty($shared_settings['menu_position_relative_to']) ? 
+                $shared_settings['menu_position_relative_to'] : '';
+            $position = !empty($shared_settings['menu_position']) ? 
+                $shared_settings['menu_position'] : 'after';
             
             if (!empty($relative_to)) {
                 global $menu;
@@ -117,7 +129,20 @@ class MCL_Admin {
             }
         }
 
-        // Add main menu page with new "MagicPlugins" branding
+        // Inside add_admin_menu, replace the existing add_menu_page + duplicate removal with conditional check
+        // Add main menu page with new "MagicPlugins" branding only if it hasn't been created by another Magic plugin
+        global $menu;
+        $magic_plugins_exists = false;
+        if ( is_array( $menu ) ) {
+            foreach ( $menu as $item ) {
+                if ( ! empty( $item[2] ) && $item[2] === 'magic_plugins' ) {
+                    $magic_plugins_exists = true;
+                    break;
+                }
+            }
+        }
+
+        if ( ! $magic_plugins_exists ) {
         add_menu_page(
             __('MagicPlugins', 'magic-checklists'),
             __('MagicPlugins', 'magic-checklists'),
@@ -127,6 +152,10 @@ class MCL_Admin {
             'data:image/svg+xml;base64,' . base64_encode(file_get_contents(MAGIC_CHECKLISTS_PLUGIN_PATH . 'assets/images/menu-icon.svg')),
             $menu_position
         );
+
+            // Mark that we created the top-level menu
+            $this->created_toplevel_menu = true;
+        }
     
         // Add first submenu item for MagicChecklists
         add_submenu_page(
@@ -138,7 +167,29 @@ class MCL_Admin {
             array($this, 'checklists_page')
         );
 
-        // Add second submenu item for MagicPlugins landing page
+    }
+
+    // Add landing submenu with high priority to ensure it appears last
+    public function add_landing_submenu() {
+        // If we created the top-level menu, remove the automatic duplicate first
+        if ( $this->created_toplevel_menu ) {
+            remove_submenu_page('magic_plugins', 'magic_plugins');
+        }
+
+        // Before adding the landing submenu, check if it already exists
+        global $submenu;
+        $landing_exists = false;
+        if ( isset( $submenu['magic_plugins'] ) && is_array( $submenu['magic_plugins'] ) ) {
+            foreach ( $submenu['magic_plugins'] as $sub ) {
+                if ( isset( $sub[2] ) && $sub[2] === 'magic_plugins_landing' ) {
+                    $landing_exists = true;
+                    break;
+                }
+            }
+        }
+
+        if ( ! $landing_exists ) {
+            // Add second submenu item for MagicPlugins landing page as last item
         add_submenu_page(
             'magic_plugins',
             __('MagicPlugins', 'magic-checklists'),
@@ -147,30 +198,245 @@ class MCL_Admin {
             'magic_plugins_landing',
             array($this, 'magic_plugins_landing_page')
         );
-
-        // Remove the duplicate submenu entry created by add_menu_page
-        remove_submenu_page('magic_plugins', 'magic_plugins');
+        }
     }
 
     public function magic_plugins_landing_page() {
+        // Handle form submission
+        if (isset($_POST['submit']) && check_admin_referer('magic_plugins_settings', 'magic_plugins_nonce')) {
+            $this->save_shared_settings($_POST);
+            echo '<div class="notice notice-success"><p>' . __('Settings saved successfully!', 'magic-checklists') . '</p></div>';
+        }
+
+        $settings = $this->get_shared_settings();
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html(__('MagicPlugins', 'magic-checklists')); ?></h1>
-            <div class="magic-plugins-landing" style="background: #fff; padding: 20px; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04); margin: 20px 0;">
-                <h2><?php echo esc_html(__('Welcome to MagicPlugins', 'magic-checklists')); ?></h2>
-                <p><?php echo esc_html(__('Select a plugin from the menu to get started:', 'magic-checklists')); ?></p>
-                <ul style="margin: 20px 0;">
-                    <li style="margin: 10px 0;">
-                        <a href="<?php echo admin_url('admin.php?page=mcl_checklists'); ?>" class="button button-primary">
-                            <?php echo esc_html(__('MagicChecklists', 'magic-checklists')); ?>
-                        </a>
-                        <span style="margin-left: 10px; color: #666;">
-                            <?php echo esc_html(__('Create and manage interactive checklists', 'magic-checklists')); ?>
-                        </span>
+            <h1><?php echo esc_html(__('MagicPlugins Settings', 'magic-checklists')); ?></h1>
+            <p><?php echo esc_html(__('Configure shared settings for all Magic plugins.', 'magic-checklists')); ?></p>
+            
+            <form method="post" action="">
+                <?php wp_nonce_field('magic_plugins_settings', 'magic_plugins_nonce'); ?>
+                
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Menu Position', 'magic-checklists'); ?></th>
+                        <td>
+                            <?php $this->render_menu_position_field($settings); ?>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Date & Time Format', 'magic-checklists'); ?></th>
+                        <td>
+                            <?php $this->render_date_format_field($settings); ?>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Submenu Items Order', 'magic-checklists'); ?></th>
+                        <td>
+                            <?php $this->render_submenu_order_field($settings); ?>
+                        </td>
+                    </tr>
+                </table>
+                
+                <?php submit_button(); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    private function get_shared_settings() {
+        $defaults = array(
+            'menu_position_type' => 'default',
+            'menu_position_relative_to' => '',
+            'menu_position' => 'after',
+            'custom_position' => 26,
+            'date_format' => 'us',
+            'submenu_order' => array()
+        );
+        
+        $settings = get_option('magic_plugins_settings', array());
+        return array_merge($defaults, $settings);
+    }
+
+    private function save_shared_settings($post_data) {
+        $settings = array();
+        
+        // Menu position settings
+        $settings['menu_position_type'] = sanitize_text_field($post_data['menu_position_type']);
+        if ($settings['menu_position_type'] === 'relative') {
+            $settings['menu_position_relative_to'] = sanitize_text_field($post_data['menu_position_relative_to']);
+            $settings['menu_position'] = in_array($post_data['menu_position'], ['before', 'after']) ? $post_data['menu_position'] : 'after';
+        } elseif ($settings['menu_position_type'] === 'custom') {
+            $settings['custom_position'] = max(1, min(99, intval($post_data['custom_position'])));
+        }
+        
+        // Date format
+        $allowed_formats = array('us', 'eu', 'iso', 'compact', 'long');
+        $settings['date_format'] = in_array($post_data['date_format'], $allowed_formats) ? $post_data['date_format'] : 'us';
+        
+        // Submenu order
+        if (isset($post_data['submenu_order']) && is_array($post_data['submenu_order'])) {
+            $settings['submenu_order'] = array_map('sanitize_text_field', $post_data['submenu_order']);
+        }
+        
+        update_option('magic_plugins_settings', $settings);
+    }
+
+    private function render_menu_position_field($settings) {
+        $position_type = $settings['menu_position_type'];
+        $relative_to = $settings['menu_position_relative_to'];
+        $position = $settings['menu_position'];
+        $custom_position = $settings['custom_position'];
+        
+        // Get all admin menu items
+        global $menu;
+        $menu_items = array();
+        if (is_array($menu)) {
+            foreach ($menu as $item) {
+                if (!empty($item[0]) && !empty($item[2])) {
+                    $title = strip_tags($item[0]);
+                    $menu_items[$item[2]] = $title;
+                }
+            }
+        }
+        ?>
+        <select name="menu_position_type" id="menu-position-type">
+            <option value="default" <?php selected($position_type, 'default'); ?>><?php esc_html_e('Default Position', 'magic-checklists'); ?></option>
+            <option value="relative" <?php selected($position_type, 'relative'); ?>><?php esc_html_e('Relative to Another Menu Item', 'magic-checklists'); ?></option>
+            <option value="custom" <?php selected($position_type, 'custom'); ?>><?php esc_html_e('Custom Position (1-99)', 'magic-checklists'); ?></option>
+        </select>
+
+        <div id="relative-position-wrapper" style="<?php echo $position_type === 'relative' ? '' : 'display: none;'; ?>">
+            <select name="menu_position">
+                <option value="after" <?php selected($position, 'after'); ?>><?php esc_html_e('After', 'magic-checklists'); ?></option>
+                <option value="before" <?php selected($position, 'before'); ?>><?php esc_html_e('Before', 'magic-checklists'); ?></option>
+            </select>
+            <select name="menu_position_relative_to">
+                <option value=""><?php esc_html_e('Select Menu Item', 'magic-checklists'); ?></option>
+                <?php foreach ($menu_items as $slug => $title): ?>
+                    <option value="<?php echo esc_attr($slug); ?>" <?php selected($relative_to, $slug); ?>><?php echo esc_html($title); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div id="custom-position-wrapper" style="<?php echo $position_type === 'custom' ? '' : 'display: none;'; ?>">
+            <input type="number" name="custom_position" value="<?php echo esc_attr($custom_position); ?>" min="1" max="99" class="small-text">
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const positionType = document.getElementById('menu-position-type');
+            const relativeWrapper = document.getElementById('relative-position-wrapper');
+            const customWrapper = document.getElementById('custom-position-wrapper');
+            
+            positionType.addEventListener('change', function() {
+                relativeWrapper.style.display = this.value === 'relative' ? 'block' : 'none';
+                customWrapper.style.display = this.value === 'custom' ? 'block' : 'none';
+            });
+        });
+        </script>
+        <?php
+    }
+
+    private function render_date_format_field($settings) {
+        $date_format = $settings['date_format'];
+        $format_options = array(
+            'us' => array('label' => __('US Format (MM/DD/YYYY)', 'magic-checklists'), 'example' => '03/15/2024 2:30 PM'),
+            'eu' => array('label' => __('European Format (DD/MM/YYYY)', 'magic-checklists'), 'example' => '15/03/2024 14:30'),
+            'iso' => array('label' => __('ISO Format (YYYY-MM-DD)', 'magic-checklists'), 'example' => '2024-03-15 14:30'),
+            'compact' => array('label' => __('Compact Format (DD MMM YYYY)', 'magic-checklists'), 'example' => '15 Mar 2024 14:30'),
+            'long' => array('label' => __('Long Format (Month DD, YYYY)', 'magic-checklists'), 'example' => 'March 15, 2024 2:30 PM')
+        );
+        ?>
+        <select name="date_format" class="regular-text">
+            <?php foreach ($format_options as $key => $format): ?>
+                <option value="<?php echo esc_attr($key); ?>" <?php selected($date_format, $key); ?>>
+                    <?php echo esc_html($format['label']); ?> - <?php echo esc_html($format['example']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <p class="description"><?php esc_html_e('Choose how dates and times should be displayed throughout Magic plugins.', 'magic-checklists'); ?></p>
+        <?php
+    }
+
+    private function render_submenu_order_field($settings) {
+        $submenu_order = $settings['submenu_order'];
+        
+        // Get current Magic plugin submenu items
+        global $submenu;
+        $magic_submenus = array();
+        if (isset($submenu['magic_plugins']) && is_array($submenu['magic_plugins'])) {
+            foreach ($submenu['magic_plugins'] as $sub) {
+                if (isset($sub[2]) && $sub[2] !== 'magic_plugins_landing') {
+                    $magic_submenus[$sub[2]] = $sub[0];
+                }
+            }
+        }
+        ?>
+        <div id="submenu-order-container">
+            <p class="description"><?php esc_html_e('Drag and drop to reorder Magic plugin submenu items.', 'magic-checklists'); ?></p>
+            <ul id="submenu-sortable" style="list-style: none; padding: 0;">
+                <?php 
+                // Order items based on saved order, then add any new ones
+                $ordered_items = array();
+                foreach ($submenu_order as $slug) {
+                    if (isset($magic_submenus[$slug])) {
+                        $ordered_items[$slug] = $magic_submenus[$slug];
+                        unset($magic_submenus[$slug]);
+                    }
+                }
+                // Add any remaining items
+                $ordered_items = array_merge($ordered_items, $magic_submenus);
+                
+                foreach ($ordered_items as $slug => $title): ?>
+                    <li style="background: #f1f1f1; padding: 10px; margin: 5px 0; cursor: move; border: 1px solid #ddd;">
+                        <input type="hidden" name="submenu_order[]" value="<?php echo esc_attr($slug); ?>">
+                        <?php echo esc_html(strip_tags($title)); ?>
                     </li>
+                <?php endforeach; ?>
                 </ul>
             </div>
-        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simple drag and drop implementation
+            const sortable = document.getElementById('submenu-sortable');
+            if (sortable) {
+                let draggedElement = null;
+                
+                sortable.addEventListener('dragstart', function(e) {
+                    draggedElement = e.target;
+                    e.target.style.opacity = '0.5';
+                });
+                
+                sortable.addEventListener('dragend', function(e) {
+                    e.target.style.opacity = '';
+                    draggedElement = null;
+                });
+                
+                sortable.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+                
+                sortable.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (draggedElement && e.target !== draggedElement && e.target.tagName === 'LI') {
+                        const rect = e.target.getBoundingClientRect();
+                        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                        sortable.insertBefore(draggedElement, next ? e.target.nextSibling : e.target);
+                    }
+                });
+                
+                // Make items draggable
+                const items = sortable.querySelectorAll('li');
+                items.forEach(item => {
+                    item.draggable = true;
+                });
+            }
+        });
+        </script>
         <?php
     }
 
@@ -2146,5 +2412,152 @@ class MCL_Admin {
                 'debug' => WP_DEBUG ? $e->getMessage() : null
             ));
         }
+    }
+
+    // Apply custom submenu ordering after all plugins have added their items
+    public function apply_submenu_ordering() {
+        global $submenu;
+        
+        if (!isset($submenu['magic_plugins']) || !is_array($submenu['magic_plugins'])) {
+            return;
+        }
+        
+        // Get saved submenu order
+        $settings = $this->get_shared_settings();
+        $submenu_order = $settings['submenu_order'];
+        
+        if (empty($submenu_order)) {
+            return; // No custom order set
+        }
+        
+        // Store original submenu items (excluding landing page)
+        $original_items = array();
+        $landing_item = null;
+        
+        foreach ($submenu['magic_plugins'] as $item) {
+            if (isset($item[2])) {
+                if ($item[2] === 'magic_plugins_landing') {
+                    $landing_item = $item; // Save landing page for last
+                } else {
+                    $original_items[$item[2]] = $item;
+                }
+            }
+        }
+        
+        // Rebuild submenu in custom order
+        $new_submenu = array();
+        
+        // Add items in custom order
+        foreach ($submenu_order as $slug) {
+            if (isset($original_items[$slug])) {
+                $new_submenu[] = $original_items[$slug];
+                unset($original_items[$slug]);
+            }
+        }
+        
+        // Add any remaining items that weren't in the custom order
+        foreach ($original_items as $item) {
+            $new_submenu[] = $item;
+        }
+        
+        // Add landing page at the end
+        if ($landing_item) {
+            $new_submenu[] = $landing_item;
+        }
+        
+        // Replace the submenu
+        $submenu['magic_plugins'] = $new_submenu;
+    }
+
+    // Utility method to get shared date format setting
+    public static function get_shared_date_format() {
+        $settings = get_option('magic_plugins_settings', array());
+        
+        // Use shared settings only (no more individual fallbacks)
+        return isset($settings['date_format']) ? $settings['date_format'] : 'us';
+    }
+
+    // Utility method to format date according to shared setting
+    public static function format_date($timestamp, $include_time = true) {
+        $format = self::get_shared_date_format();
+        
+        $formats = array(
+            'us' => $include_time ? 'm/d/Y g:i A' : 'm/d/Y',
+            'eu' => $include_time ? 'd/m/Y H:i' : 'd/m/Y', 
+            'iso' => $include_time ? 'Y-m-d H:i' : 'Y-m-d',
+            'compact' => $include_time ? 'd M Y H:i' : 'd M Y',
+            'long' => $include_time ? 'F j, Y g:i A' : 'F j, Y'
+        );
+        
+        $date_format = isset($formats[$format]) ? $formats[$format] : $formats['us'];
+        return date($date_format, $timestamp);
+    }
+
+    /**
+     * Migrate individual plugin settings to shared settings (one-time migration)
+     */
+    public function migrate_individual_settings_to_shared() {
+        // Check if migration has already been done
+        $migration_done = get_option('mcl_settings_migrated_to_shared', false);
+        if ($migration_done) {
+            return;
+        }
+
+        // Get existing individual settings
+        $individual_settings = get_option('mcl_settings', array());
+        $shared_settings = get_option('magic_plugins_settings', array());
+        
+        $needs_update = false;
+
+        // Migrate menu position settings if they exist in individual settings
+        if (isset($individual_settings['menu_position_type']) && !isset($shared_settings['menu_position_type'])) {
+            $shared_settings['menu_position_type'] = $individual_settings['menu_position_type'];
+            $needs_update = true;
+        }
+        
+        if (isset($individual_settings['menu_position_relative_to']) && !isset($shared_settings['menu_position_relative_to'])) {
+            $shared_settings['menu_position_relative_to'] = $individual_settings['menu_position_relative_to'];
+            $needs_update = true;
+        }
+        
+        if (isset($individual_settings['menu_position']) && !isset($shared_settings['menu_position'])) {
+            $shared_settings['menu_position'] = $individual_settings['menu_position'];
+            $needs_update = true;
+        }
+        
+        if (isset($individual_settings['custom_position']) && !isset($shared_settings['custom_position'])) {
+            $shared_settings['custom_position'] = $individual_settings['custom_position'];
+            $needs_update = true;
+        }
+
+        // Migrate date format settings if they exist in individual settings
+        if (isset($individual_settings['date_format']) && !isset($shared_settings['date_format'])) {
+            $shared_settings['date_format'] = $individual_settings['date_format'];
+            $needs_update = true;
+        }
+
+        // Update shared settings if any migration was needed
+        if ($needs_update) {
+            update_option('magic_plugins_settings', $shared_settings);
+        }
+
+        // Remove migrated settings from individual settings
+        if (isset($individual_settings['menu_position_type']) || 
+            isset($individual_settings['menu_position_relative_to']) || 
+            isset($individual_settings['menu_position']) || 
+            isset($individual_settings['custom_position']) || 
+            isset($individual_settings['date_format'])) {
+            
+            unset($individual_settings['menu_position_type']);
+            unset($individual_settings['menu_position_relative_to']);
+            unset($individual_settings['menu_position']);
+            unset($individual_settings['custom_position']);
+            unset($individual_settings['date_format']);
+            
+            update_option('mcl_settings', $individual_settings);
+        }
+
+        // Mark migration as complete
+        update_option('mcl_settings_migrated_to_shared', true);
     }
 }

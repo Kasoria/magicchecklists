@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { formatDate } from '../utils/dateUtils'
 
 const ShortcodeRenderer = ({ 
   checklistId, 
@@ -559,8 +560,7 @@ const ShortcodeRenderer = ({
   // Format deadline for display
   const formatDeadline = (deadline) => {
     if (!deadline) return ''
-    const date = new Date(deadline * 1000)
-    return date.toLocaleDateString()
+    return formatDate(deadline * 1000, 'date')
   }
 
   // Build CSS variables for styling
@@ -671,7 +671,7 @@ const ShortcodeRenderer = ({
 
       {settings.show_deadline && checklist.deadline && (
         <div className="mcl-shortcode-deadline mcl-countdown" data-deadline={checklist.deadline}>
-          {new Date(parseInt(checklist.deadline) * 1000).toLocaleDateString()}
+          {formatDate(parseInt(checklist.deadline) * 1000, 'date')}
         </div>
       )}
 

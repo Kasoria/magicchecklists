@@ -840,7 +840,8 @@ class MCL_Public {
             ),
             'settings' => array(
                 'enable_navigation' => MCL_Settings::get_setting('enable_checklist_navigation', false),
-                'enable_progress_counter' => MCL_Settings::get_setting('enable_progress_counter', false)
+                'enable_progress_counter' => MCL_Settings::get_setting('enable_progress_counter', false),
+                'dateFormat' => MCL_Admin::get_shared_date_format()
             ),
             'i18n' => array(
                 'uncheckAllConfirm' => __('Are you sure you want to uncheck all items? This cannot be undone.', 'magic-checklists')

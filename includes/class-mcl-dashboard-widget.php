@@ -377,7 +377,7 @@ class MCL_Dashboard_Widget {
                     'item_id' => 'checklist',
                     'item_content' => '<strong>' . esc_html($checklist_title) . '</strong>',
                     'timestamp' => $checklist_deadline,
-                    'formatted_date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $checklist_deadline),
+                                            'formatted_date' => MCL_Admin::format_date($checklist_deadline),
                     'is_checklist_deadline' => true
                 );
             }
@@ -421,7 +421,7 @@ class MCL_Dashboard_Widget {
                     'item_id' => $item_id,
                     'item_content' => $item_content,
                     'timestamp' => $timestamp,
-                    'formatted_date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $timestamp),
+                                            'formatted_date' => MCL_Admin::format_date($timestamp),
                     'is_checklist_deadline' => false
                 );
             }

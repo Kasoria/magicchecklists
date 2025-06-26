@@ -8,6 +8,13 @@ class MCL_Settings {
     private $option_name = 'mcl_settings';
     private $integration_option_name = 'mcl_integration_settings';
     
+    /**
+     * Note: Menu position and date format settings are handled globally
+     * in the MagicPlugins landing page (magic_plugins_settings option).
+     * Use MCL_Admin::get_shared_date_format() and MCL_Admin::format_date()
+     * for date formatting throughout the plugin.
+     */
+    
     public static function get_instance() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -23,7 +30,6 @@ class MCL_Settings {
         // Add AJAX handlers for React settings
         add_action('wp_ajax_mcl_get_settings', array($this, 'ajax_get_settings'));
         add_action('wp_ajax_mcl_save_settings', array($this, 'ajax_save_settings'));
-        add_action('wp_ajax_mcl_get_menu_items', array($this, 'ajax_get_menu_items'));
         add_action('wp_ajax_mcl_get_webhook_logs', array($this, 'ajax_get_webhook_logs'));
         add_action('wp_ajax_mcl_test_webhook', array($this, 'ajax_test_webhook'));
         add_action('wp_ajax_mcl_clear_webhook_logs', array($this, 'ajax_clear_webhook_logs'));
@@ -137,13 +143,7 @@ class MCL_Settings {
             'mcl_general_settings'
         );
 
-        add_settings_field(
-            'menu_position_type',
-            __('Menu Position', 'magic-checklists'),
-            array($this, 'render_menu_position_field'),
-            'mcl_settings',
-            'mcl_general_settings'
-        );
+
 
         add_settings_field(
             'speed_dial_bg_color',
@@ -161,13 +161,7 @@ class MCL_Settings {
             'mcl_general_settings'
         );
 
-        add_settings_field(
-            'date_format',
-            __('Date & Time Format', 'magic-checklists'),
-            array($this, 'render_date_format_field'),
-            'mcl_settings',
-            'mcl_general_settings'
-        );
+
 
         add_settings_field(
             'enable_api',
@@ -471,19 +465,7 @@ class MCL_Settings {
             $sanitized['enable_progress_counter'] = (bool) $input['enable_progress_counter'];
         }
 
-        if (isset($input['menu_position_type'])) {
-            $sanitized['menu_position_type'] = sanitize_text_field($input['menu_position_type']);
-            
-            if ($input['menu_position_type'] === 'relative') {
-                $sanitized['menu_position_relative_to'] = sanitize_text_field($input['menu_position_relative_to']);
-                $sanitized['menu_position'] = in_array($input['menu_position'], ['before', 'after']) ? 
-                    $input['menu_position'] : 'after';
-            } elseif ($input['menu_position_type'] === 'custom') {
-                $custom_position = isset($input['custom_position']) ? 
-                    intval($input['custom_position']) : 0;
-                $sanitized['custom_position'] = max(1, min(99, $custom_position));
-            }
-        }
+
         
         if (isset($input['speed_dial_bg_color'])) {
             $bg_color = sanitize_text_field($input['speed_dial_bg_color']);
@@ -503,16 +485,7 @@ class MCL_Settings {
             }
         }
 
-        if (isset($input['date_format'])) {
-            $date_format = sanitize_text_field($input['date_format']);
-            // Validate against allowed formats
-            $allowed_formats = array('us', 'eu', 'iso', 'compact', 'long');
-            if (in_array($date_format, $allowed_formats)) {
-                $sanitized['date_format'] = $date_format;
-            } else {
-                $sanitized['date_format'] = 'us'; // Default value
-            }
-        }
+
         
         return $sanitized;
     }
@@ -633,169 +606,7 @@ class MCL_Settings {
         <?php
     }
 
-    public function render_menu_position_field() {
-        $options = get_option($this->option_name, array());
-        $position_type = isset($options['menu_position_type']) ? $options['menu_position_type'] : 'default';
-        $relative_to = isset($options['menu_position_relative_to']) ? $options['menu_position_relative_to'] : '';
-        $position = isset($options['menu_position']) ? $options['menu_position'] : 'after';
-        $custom_position = isset($options['custom_position']) ? intval($options['custom_position']) : '';
-        
-        // Get all admin menu items
-        global $menu;
-        $menu_items = array();
-        foreach ($menu as $item) {
-            if (!empty($item[0]) && !empty($item[2])) {
-                $title = strip_tags($item[0]);
-                $menu_items[$item[2]] = $title;
-            }
-        }
-        ?>
-        <div class="mcl-field-wrapper mcl-menu-position-setting">
-            <select name="<?php echo esc_attr($this->option_name); ?>[menu_position_type]" 
-                    id="mcl-menu-position-type" 
-                    class="mcl-menu-position-type">
-                <option value="default" <?php selected($position_type, 'default'); ?>>
-                    <?php esc_html_e('Default Position', 'magic-checklists'); ?>
-                </option>
-                <option value="relative" <?php selected($position_type, 'relative'); ?>>
-                    <?php esc_html_e('Relative to Another Menu Item', 'magic-checklists'); ?>
-                </option>
-                <option value="custom" <?php selected($position_type, 'custom'); ?>>
-                    <?php esc_html_e('Custom Position (1-99)', 'magic-checklists'); ?>
-                </option>
-            </select>
-    
-            <div id="mcl-relative-position-wrapper" 
-                 class="mcl-relative-position-wrapper" 
-                 style="<?php echo $position_type === 'relative' ? '' : 'display: none;'; ?>">
-                <select name="<?php echo esc_attr($this->option_name); ?>[menu_position]" 
-                        class="mcl-position-select">
-                    <option value="after" <?php selected($position, 'after'); ?>>
-                        <?php esc_html_e('After', 'magic-checklists'); ?>
-                    </option>
-                    <option value="before" <?php selected($position, 'before'); ?>>
-                        <?php esc_html_e('Before', 'magic-checklists'); ?>
-                    </option>
-                </select>
-    
-                <select name="<?php echo esc_attr($this->option_name); ?>[menu_position_relative_to]" 
-                        class="mcl-menu-item-select">
-                    <option value=""><?php esc_html_e('Select Menu Item', 'magic-checklists'); ?></option>
-                    <?php foreach ($menu_items as $slug => $title): ?>
-                        <option value="<?php echo esc_attr($slug); ?>" 
-                                <?php selected($relative_to, $slug); ?>>
-                            <?php echo esc_html($title); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-    
-            <div id="mcl-custom-position-wrapper" 
-                 class="mcl-custom-position-wrapper" 
-                 style="<?php echo $position_type === 'custom' ? '' : 'display: none;'; ?>">
-                <input type="number" 
-                       name="<?php echo esc_attr($this->option_name); ?>[custom_position]" 
-                       value="<?php echo esc_attr($custom_position); ?>"
-                       min="1" 
-                       max="99" 
-                       class="small-text"
-                       placeholder="1-99">
-                <p class="mcl-description mcl-custom-position-note" style="display: inline-block; margin-left: 10px;">
-                    <?php esc_html_e('Enter a number between 1 and 99', 'magic-checklists'); ?>
-                </p>
-            </div>
-    
-            <p class="mcl-description">
-                <?php esc_html_e('Choose where to display the MagicChecklists menu item in the admin menu.', 'magic-checklists'); ?>
-            </p>
-        </div>
-    
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const positionTypeSelect = document.getElementById('mcl-menu-position-type');
-            const relativeWrapper = document.getElementById('mcl-relative-position-wrapper');
-            const customWrapper = document.getElementById('mcl-custom-position-wrapper');
-            const menuItemSelect = document.querySelector('.mcl-menu-item-select');
-            const positionSelect = document.querySelector('.mcl-position-select');
-            const customInput = customWrapper.querySelector('input[type="number"]');
-            const form = positionTypeSelect.closest('form');
-            
-            // List of menu items that shouldn't be positioned before
-            const restrictedBeforeItems = ['index.php', 'dashboard'];
-            
-            function validateMenuPosition() {
-                const selectedItem = menuItemSelect.value;
-                const selectedPosition = positionSelect.value;
-                
-                if (selectedPosition === 'before' && restrictedBeforeItems.includes(selectedItem)) {
-                    const warning = document.createElement('div');
-                    warning.className = 'mcl-warning-message';
-                    warning.style.color = '#d63638';
-                    warning.style.marginTop = '5px';
-                    warning.textContent = '<?php esc_html_e("Cannot position menu before this item. Please select 'After' or choose a different menu item.", "magic-checklists"); ?>';
-                    
-                    const existingWarning = menuItemSelect.parentNode.querySelector('.mcl-warning-message');
-                    if (existingWarning) {
-                        existingWarning.remove();
-                    }
-                    
-                    menuItemSelect.parentNode.appendChild(warning);
-                    return false;
-                }
-                
-                const existingWarning = menuItemSelect.parentNode.querySelector('.mcl-warning-message');
-                if (existingWarning) {
-                    existingWarning.remove();
-                }
-                
-                return true;
-            }
-            
-            if (positionTypeSelect) {
-                positionTypeSelect.addEventListener('change', function() {
-                    relativeWrapper.style.display = this.value === 'relative' ? 'block' : 'none';
-                    customWrapper.style.display = this.value === 'custom' ? 'block' : 'none';
-                });
-    
-                menuItemSelect?.addEventListener('change', validateMenuPosition);
-                positionSelect?.addEventListener('change', validateMenuPosition);
-    
-                // Validate custom position input
-                customInput.addEventListener('input', function() {
-                    let value = parseInt(this.value);
-                    if (value < 1) this.value = 1;
-                    if (value > 99) this.value = 99;
-                });
-    
-                // Form validation
-                form.addEventListener('submit', function(e) {
-                    if (positionTypeSelect.value === 'relative') {
-                        if (!menuItemSelect.value || menuItemSelect.value === '') {
-                            e.preventDefault();
-                            alert('<?php esc_html_e("Please select a menu item for relative positioning.", "magic-checklists"); ?>');
-                            menuItemSelect.focus();
-                            return;
-                        }
-                        
-                        if (!validateMenuPosition()) {
-                            e.preventDefault();
-                            alert('<?php esc_html_e("Invalid menu position combination selected. Please adjust your selection.", "magic-checklists"); ?>');
-                            return;
-                        }
-                    } else if (positionTypeSelect.value === 'custom') {
-                        if (!customInput.value) {
-                            e.preventDefault();
-                            alert('<?php esc_html_e("Please enter a position number between 1 and 99.", "magic-checklists"); ?>');
-                            customInput.focus();
-                            return;
-                        }
-                    }
-                });
-            }
-        });
-        </script>
-        <?php
-    }
+
 
     public function render_mainwp_api_key_field() {
         $options = get_option($this->integration_option_name, array());
@@ -1397,33 +1208,7 @@ class MCL_Settings {
         wp_send_json_success(array('message' => 'Settings saved successfully'));
     }
 
-    /**
-     * AJAX handler to get menu items
-     */
-    public function ajax_get_menu_items() {
-        if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
-        }
 
-        check_ajax_referer('mcl_admin_nonce', 'nonce');
-
-        global $menu;
-        $menu_items = array();
-        
-        if (is_array($menu)) {
-            foreach ($menu as $item) {
-                if (!empty($item[0]) && !empty($item[2])) {
-                    $title = strip_tags($item[0]);
-                    $menu_items[] = array(
-                        'slug' => $item[2],
-                        'title' => $title
-                    );
-                }
-            }
-        }
-
-        wp_send_json_success($menu_items);
-    }
 
     /**
      * AJAX handler to get webhook logs
@@ -1560,46 +1345,5 @@ class MCL_Settings {
         <?php
     }
 
-    public function render_date_format_field() {
-        $options = get_option($this->option_name, array());
-        $date_format = isset($options['date_format']) ? $options['date_format'] : 'us';
 
-        // Available date format options
-        $format_options = array(
-            'us' => array(
-                'label' => __('US Format (MM/DD/YYYY)', 'magic-checklists'),
-                'example' => '03/15/2024 2:30 PM'
-            ),
-            'eu' => array(
-                'label' => __('European Format (DD/MM/YYYY)', 'magic-checklists'),
-                'example' => '15/03/2024 14:30'
-            ),
-            'iso' => array(
-                'label' => __('ISO Format (YYYY-MM-DD)', 'magic-checklists'),
-                'example' => '2024-03-15 14:30'
-            ),
-            'compact' => array(
-                'label' => __('Compact Format (DD MMM YYYY)', 'magic-checklists'),
-                'example' => '15 Mar 2024 14:30'
-            ),
-            'long' => array(
-                'label' => __('Long Format (Month DD, YYYY)', 'magic-checklists'),
-                'example' => 'March 15, 2024 2:30 PM'
-            )
-        );
-        ?>
-        <div class="mcl-field-wrapper">
-            <select name="<?php echo esc_attr($this->option_name); ?>[date_format]" class="regular-text">
-                <?php foreach ($format_options as $key => $format): ?>
-                    <option value="<?php echo esc_attr($key); ?>" <?php selected($date_format, $key); ?>>
-                        <?php echo esc_html($format['label']); ?> - <?php echo esc_html($format['example']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <p class="mcl-description">
-                <?php esc_html_e('Choose how dates and times should be displayed throughout the plugin (deadlines, timestamps, etc.).', 'magic-checklists'); ?>
-            </p>
-        </div>
-        <?php
-    }
 }

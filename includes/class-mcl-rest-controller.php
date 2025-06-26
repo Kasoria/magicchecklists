@@ -1156,7 +1156,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             $deadline_timestamp = intval($item_deadlines[$item['id']]);
             $item['deadline'] = date('Y-m-d H:i:s', $deadline_timestamp);
             $item['deadline_timestamp'] = $deadline_timestamp;
-            $item['deadline_formatted'] = date_i18n(get_option('date_format'), $deadline_timestamp);
+                                $item['deadline_formatted'] = MCL_Admin::format_date($deadline_timestamp, false);
         }
     }
     unset($item);

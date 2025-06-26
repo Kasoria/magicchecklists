@@ -37,7 +37,8 @@ export const DATE_FORMAT_OPTIONS = {
 }
 
 /**
- * Get the current date format setting from global settings
+ * Get the current date format setting from shared global settings
+ * This uses the date format from the MagicPlugins shared settings
  */
 const getDateFormatSetting = () => {
   try {

@@ -6,16 +6,9 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     enable_checklist_navigation: false,
     enable_progress_counter: false,
     delete_data_on_uninstall: false,
-    menu_position_type: 'default',
-    menu_position_relative_to: '',
-    menu_position: 'after',
-    custom_position: '',
     speed_dial_bg_color: '#374151',
-    speed_dial_icon_color: '#ffffff',
-    date_format: 'us'
+    speed_dial_icon_color: '#ffffff'
   })
-
-  const [menuItems, setMenuItems] = useState([])
 
   useEffect(() => {
     if (settings) {
@@ -26,35 +19,6 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     }
   }, [settings])
 
-  useEffect(() => {
-    // Fetch menu items for positioning
-    fetchMenuItems()
-  }, [])
-
-  const fetchMenuItems = async () => {
-    try {
-      const response = await fetch(adminData.ajaxurl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          'action': 'mcl_get_menu_items',
-          'nonce': adminData.nonces?.mcl_admin || ''
-        })
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setMenuItems(data.data || [])
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching menu items:', err)
-    }
-  }
-
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
@@ -64,25 +28,6 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    
-    // Validate menu position settings
-    if (formData.menu_position_type === 'relative' && !formData.menu_position_relative_to) {
-      alert('Please select a menu item for relative positioning.')
-      return
-    }
-    
-    if (formData.menu_position_type === 'custom' && !formData.custom_position) {
-      alert('Please enter a position number between 1 and 99.')
-      return
-    }
-
-    // Validate before/after positioning
-    const restrictedBeforeItems = ['index.php', 'dashboard']
-    if (formData.menu_position === 'before' && restrictedBeforeItems.includes(formData.menu_position_relative_to)) {
-      alert("Cannot position menu before this item. Please select 'After' or choose a different menu item.")
-      return
-    }
-
     onSave(formData)
   }
 
@@ -159,90 +104,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </p>
         </div>
 
-        {/* Menu Position */}
-        <div className="space-y-4">
-          <Label className="text-brand-dark dark:text-white font-medium">
-            Menu Position
-          </Label>
-          <div className="space-y-3">
-            <select
-              value={formData.menu_position_type}
-              onChange={(e) => handleInputChange('menu_position_type', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
-            >
-              <option value="default">Default Position</option>
-              <option value="relative">Relative to Another Menu Item</option>
-              <option value="custom">Custom Position (1-99)</option>
-            </select>
 
-            {formData.menu_position_type === 'relative' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <select
-                  value={formData.menu_position}
-                  onChange={(e) => handleInputChange('menu_position', e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
-                >
-                  <option value="after">After</option>
-                  <option value="before">Before</option>
-                </select>
-
-                <select
-                  value={formData.menu_position_relative_to}
-                  onChange={(e) => handleInputChange('menu_position_relative_to', e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
-                >
-                  <option value="">Select Menu Item</option>
-                  {menuItems.map((item) => (
-                    <option key={item.slug} value={item.slug}>
-                      {item.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {formData.menu_position_type === 'custom' && (
-              <div className="flex items-center space-x-3">
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={formData.custom_position}
-                  onChange={(e) => handleInputChange('custom_position', e.target.value)}
-                  placeholder="1-99"
-                  className="block w-20 px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Enter a number between 1 and 99
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Choose where to display the MagicChecklists menu item in the admin menu.
-          </p>
-        </div>
-
-        {/* Date Format */}
-        <div className="space-y-2">
-          <Label className="text-brand-dark dark:text-white font-medium">
-            Date & Time Format
-          </Label>
-          <select
-            value={formData.date_format}
-            onChange={(e) => handleInputChange('date_format', e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
-          >
-            <option value="us">US Format (MM/DD/YYYY) - 03/15/2024 2:30 PM</option>
-            <option value="eu">European Format (DD/MM/YYYY) - 15/03/2024 14:30</option>
-            <option value="iso">ISO Format (YYYY-MM-DD) - 2024-03-15 14:30</option>
-            <option value="compact">Compact Format (DD MMM YYYY) - 15 Mar 2024 14:30</option>
-            <option value="long">Long Format (Month DD, YYYY) - March 15, 2024 2:30 PM</option>
-          </select>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Choose how dates and times should be displayed throughout the plugin (deadlines, timestamps, etc.).
-          </p>
-        </div>
 
         {/* Speed Dial Colors */}
         <div className="space-y-4">
