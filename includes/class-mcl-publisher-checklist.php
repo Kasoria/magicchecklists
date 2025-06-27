@@ -158,7 +158,7 @@ class MCL_Publisher_Checklist {
                         'type' => $req['type'],
                         'instance_id' => $req['instance_id'],
                         'label' => $display_label,
-                        'config' => $req['config'],
+                        'config' => $req['config'], // This will include use_custom_tip and custom_tip
                         'required' => $req['required'],
                         'auto_check' => $requirement_def['auto_check'],
                         'status' => 'pending' // Will be updated by JS

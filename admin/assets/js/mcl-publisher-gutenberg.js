@@ -437,6 +437,12 @@ const PublisherChecklistSidebar = () => {
     };
 
     const getRequirementTip = (requirement) => {
+        // Check if requirement has a custom tip configured
+        if (requirement.config && requirement.config.use_custom_tip && requirement.config.custom_tip) {
+            return requirement.config.custom_tip;
+        }
+        
+        // Fallback to default tips
         const tips = {
             'excerpt': 'Excerpt helps users understand your content before reading. Check character limits in the excerpt section.',
             'meta_description': 'Meta descriptions appear in search results. Keep within SEO-recommended character limits.',

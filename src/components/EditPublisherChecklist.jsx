@@ -258,8 +258,14 @@ const RequirementInstance = ({
       {/* Configuration Fields */}
       {instance.enabled && reqDef.config_fields && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          {Object.entries(reqDef.config_fields).map(([fieldName, fieldDef]) => (
-            <div key={fieldName}>
+          {Object.entries(reqDef.config_fields).map(([fieldName, fieldDef]) => {
+            // Hide custom_tip field if use_custom_tip is not enabled
+            if (fieldName === 'custom_tip' && !instance.config.use_custom_tip) {
+              return null
+            }
+            
+            return (
+            <div key={fieldName} className={fieldName === 'custom_tip' ? 'md:col-span-2' : ''}>
               <Label className="mb-1 text-sm">{fieldDef.label}</Label>
               {fieldDef.type === 'number' ? (
                 <TextInput
@@ -271,12 +277,20 @@ const RequirementInstance = ({
                   className="w-full"
                 />
               ) : fieldDef.type === 'text' ? (
-                <TextInput
-                  value={instance.config[fieldName] || fieldDef.default || ''}
-                  onChange={(e) => updateConfig(fieldName, e.target.value)}
-                  placeholder={fieldDef.placeholder}
-                  className="w-full"
-                />
+                                  <TextInput
+                    value={instance.config[fieldName] || fieldDef.default || ''}
+                    onChange={(e) => updateConfig(fieldName, e.target.value)}
+                    placeholder={fieldDef.placeholder}
+                    className="w-full"
+                  />
+                ) : fieldDef.type === 'checkbox' ? (
+                  <Checkbox
+                    id={`${requirement.type}_${instance.id}_${fieldName}`}
+                    checked={instance.config[fieldName] === true || instance.config[fieldName] === '1'}
+                    onChange={(checked) => updateConfig(fieldName, checked)}
+                    label=""
+                    className="mt-1"
+                  />
               ) : fieldDef.type === 'select' && requirement.type === 'custom_field' && fieldName === 'field_name' ? (
                 <MetaFieldSelector
                   value={instance.config[fieldName] || ''}
@@ -290,13 +304,14 @@ const RequirementInstance = ({
                   onChange={(e) => updateConfig(fieldName, e.target.value)}
                 >
                   <option value="">{fieldDef.placeholder || 'Select...'}</option>
-                  {fieldDef.options && Object.entries(fieldDef.options).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </Select>
-              )}
-            </div>
-          ))}
+                                      {fieldDef.options && Object.entries(fieldDef.options).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
       
@@ -415,6 +430,17 @@ const EditPublisherChecklist = forwardRef(({
                 label: 'Minimum Words',
                 default: 300,
                 min: 1
+              },
+              use_custom_tip: {
+                type: 'checkbox',
+                label: 'Use custom tip',
+                default: false
+              },
+              custom_tip: {
+                type: 'text',
+                label: 'Custom helpful tip',
+                default: '',
+                placeholder: 'Enter your custom tip for this requirement...'
               }
             }
           },
@@ -423,7 +449,19 @@ const EditPublisherChecklist = forwardRef(({
             description: 'Require a featured image to be set',
             auto_check: true,
             repeatable: false,
-            config_fields: {}
+            config_fields: {
+              use_custom_tip: {
+                type: 'checkbox',
+                label: 'Use custom tip',
+                default: false
+              },
+              custom_tip: {
+                type: 'text',
+                label: 'Custom helpful tip',
+                default: '',
+                placeholder: 'Enter your custom tip for this requirement...'
+              }
+            }
           },
           excerpt: {
             label: 'Excerpt',
@@ -442,6 +480,17 @@ const EditPublisherChecklist = forwardRef(({
                 label: 'Maximum Length',
                 default: 300,
                 min: 1
+              },
+              use_custom_tip: {
+                type: 'checkbox',
+                label: 'Use custom tip',
+                default: false
+              },
+              custom_tip: {
+                type: 'text',
+                label: 'Custom helpful tip',
+                default: '',
+                placeholder: 'Enter your custom tip for this requirement...'
               }
             }
           },
@@ -456,6 +505,17 @@ const EditPublisherChecklist = forwardRef(({
                 label: 'Minimum Categories',
                 default: 1,
                 min: 1
+              },
+              use_custom_tip: {
+                type: 'checkbox',
+                label: 'Use custom tip',
+                default: false
+              },
+              custom_tip: {
+                type: 'text',
+                label: 'Custom helpful tip',
+                default: '',
+                placeholder: 'Enter your custom tip for this requirement...'
               }
             }
           },
@@ -470,6 +530,17 @@ const EditPublisherChecklist = forwardRef(({
                 label: 'Minimum Tags',
                 default: 1,
                 min: 1
+              },
+              use_custom_tip: {
+                type: 'checkbox',
+                label: 'Use custom tip',
+                default: false
+              },
+              custom_tip: {
+                type: 'text',
+                label: 'Custom helpful tip',
+                default: '',
+                placeholder: 'Enter your custom tip for this requirement...'
               }
             }
           },

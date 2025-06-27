@@ -271,6 +271,17 @@ class MCL_DB_Manager {
                         'default' => 300,
                         'min' => 1,
                         'max' => 10000
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -279,7 +290,19 @@ class MCL_DB_Manager {
             'featured_image' => [
                 'label' => 'Featured Image',
                 'description' => 'Post must have a featured image',
-                'config_fields' => [],
+                'config_fields' => [
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
+                    ]
+                ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
@@ -300,6 +323,17 @@ class MCL_DB_Manager {
                         'default' => 300,
                         'min' => 1,
                         'max' => 1000
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -315,6 +349,17 @@ class MCL_DB_Manager {
                         'default' => 1,
                         'min' => 1,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -330,6 +375,17 @@ class MCL_DB_Manager {
                         'default' => 3,
                         'min' => 1,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -345,6 +401,17 @@ class MCL_DB_Manager {
                         'default' => 1,
                         'min' => 0,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -360,6 +427,17 @@ class MCL_DB_Manager {
                         'default' => 2,
                         'min' => 0,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -382,6 +460,17 @@ class MCL_DB_Manager {
                         'default' => 60,
                         'min' => 1,
                         'max' => 200
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -404,6 +493,17 @@ class MCL_DB_Manager {
                         'default' => 160,
                         'min' => 1,
                         'max' => 500
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -426,6 +526,17 @@ class MCL_DB_Manager {
                         'default' => 60,
                         'min' => 1,
                         'max' => 200
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -434,7 +545,19 @@ class MCL_DB_Manager {
             'image_alt_text' => [
                 'label' => 'Image Alt Text',
                 'description' => 'All images must have alt text for accessibility',
-                'config_fields' => [],
+                'config_fields' => [
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
+                    ]
+                ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
@@ -462,6 +585,17 @@ class MCL_DB_Manager {
                         'default' => 0,
                         'min' => 0,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -477,6 +611,17 @@ class MCL_DB_Manager {
                         'default' => 1,
                         'min' => 0,
                         'max' => 50
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -498,6 +643,17 @@ class MCL_DB_Manager {
                         'label' => 'Display name',
                         'default' => '',
                         'placeholder' => 'e.g., Author Bio'
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => true,
@@ -518,6 +674,17 @@ class MCL_DB_Manager {
                         'label' => 'Description (optional)',
                         'default' => '',
                         'placeholder' => 'Additional instructions...'
+                    ],
+                    'use_custom_tip' => [
+                        'type' => 'checkbox',
+                        'label' => 'Use custom tip',
+                        'default' => false
+                    ],
+                    'custom_tip' => [
+                        'type' => 'text',
+                        'label' => 'Custom helpful tip',
+                        'default' => '',
+                        'placeholder' => 'Enter your custom tip for this requirement...'
                     ]
                 ],
                 'auto_check' => false,
