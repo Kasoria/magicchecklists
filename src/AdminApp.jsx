@@ -440,7 +440,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="https://magicplugins.io/docs/" target="_blank"
                     className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
                     title={sidebarCollapsed ? 'Help' : undefined}
                   >
