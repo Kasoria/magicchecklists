@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           2.0.0
+ * Version:           2.0.1
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://magicplugins.io
@@ -39,7 +39,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '2.0');
+            define('MAGIC_CHECKLISTS_VERSION', '2.0.1');
             define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -123,9 +123,15 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             new MCL_Tour_CPT();
             new MCL_Tour_Public();
 
-            // Initialize React development environment and store globally
             global $mcl_react_dev;
-            $mcl_react_dev = new MCL_React_Dev();
+            
+            if ( defined( 'MCL_DEV_MODE' ) && MCL_DEV_MODE && class_exists( 'MCL_React_Dev' ) ) {
+                // Development mode - only when explicitly enabled via constant and class exists
+                $mcl_react_dev = new MCL_React_Dev();
+            } else {
+                // Production mode - default, no external dependencies
+                $mcl_react_dev = new MCL_React_Prod();
+            }
 
             // Load AJAX handler for test notifications
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-ajax-manager.php';
