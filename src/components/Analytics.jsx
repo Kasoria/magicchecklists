@@ -43,7 +43,6 @@ const Analytics = ({ adminData }) => {
         const response = await fetch(adminData.ajaxurl, { method: 'POST', body: formData })
         const json = await response.json()
         if (json.success) {
-          console.log('Fetched analytics data:', json.data) // Debug log
           setAnalyticsData(json.data)
         } else {
           console.error('Failed to fetch analytics:', json.data)

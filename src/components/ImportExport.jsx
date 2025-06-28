@@ -53,7 +53,6 @@ const ImportExport = ({ adminData }) => {
     // Fetch all checklists via AJAX
     const fetchData = async () => {
       try {
-        console.log('Fetching checklists data...', adminData)
         
         const formData = new FormData()
         formData.append('action', 'mcl_get_checklists')
@@ -69,7 +68,6 @@ const ImportExport = ({ adminData }) => {
         }
         
         const result = await response.json()
-        console.log('API Response:', result)
         
         if (result.success && result.data && Array.isArray(result.data.data)) {
           // Only classic checklists for import/export

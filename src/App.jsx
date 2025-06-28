@@ -73,13 +73,11 @@ const App = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
         if (attempts % 10 === 0) {
-          console.log('MCL: Waiting for React bridge...', attempts);
+          console.log('MCL: Waiting for React bridge...');
         }
       }
       
       if (window.mclDrawer) {
-        console.log('MCL: React bridge found, initializing...');
-        
         // Set up global reference for compatibility
         window.MagicChecklist = window.mclDrawer;
         
@@ -176,8 +174,6 @@ const App = () => {
           setTourData(window.mclTourPlaybackData)
         } else if (window.mclTourData) {
           setTourData(window.mclTourData)
-        } else {
-          console.log('MCL: No tour data found')
         }
       } catch (error) {
         console.error('Error loading checklist data:', error)
