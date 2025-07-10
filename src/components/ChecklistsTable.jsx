@@ -19,7 +19,7 @@ import ConfirmationModal from './ConfirmationModal.jsx'
 import AnalyticsDashboard from './AnalyticsDashboard.jsx'
 import { useToast } from './Toast.jsx'
 
-const ChecklistsTable = ({ adminData, onEditChecklist }) => {
+const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarOpen }) => {
   const [checklists, setChecklists] = useState([])
   const [filteredChecklists, setFilteredChecklists] = useState([])
   const [loading, setLoading] = useState(true)
@@ -611,7 +611,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist }) => {
       {/* Table Card */}
       <Card className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-600">
         {filteredChecklists.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="flex flex-col text-center py-12 justify-center items-center">
             <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.75 2.75h6.5c3.31 0 6 2.69 6 6v6.5c0 3.31-2.69 6-6 6h-6.5c-3.31 0-6-2.69-6-6v-6.5c0-3.31 2.69-6 6-6z M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234" />
             </svg>
@@ -626,10 +626,21 @@ const ChecklistsTable = ({ adminData, onEditChecklist }) => {
             </p>
             {checklists.length === 0 && (
               <Button
-                onClick={() => window.open(`/wp-admin/admin.php?page=mcl_add_new`, '_self')}
-                className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent"
+                onClick={() => {
+                  if (typeof setActiveTab === 'function') {
+                    setActiveTab('add-new')
+                  }
+                  if (window.innerWidth < 1024 && typeof setSidebarOpen === 'function') {
+                    setSidebarOpen(false)
+                  }
+                  const url = new URL(window.location)
+                  url.searchParams.set('page', 'mcl_checklists')
+                  url.searchParams.set('view', 'add-new')
+                  window.history.pushState({}, '', url)
+                }}
+                className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark"
               >
-                Create First Checklist
+                Add New Checklist
               </Button>
             )}
           </div>
