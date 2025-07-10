@@ -37,6 +37,8 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_get_roles', array($this, 'get_roles'), 10);
         add_action('wp_ajax_mcl_get_admin_pages', array($this, 'get_admin_pages'), 10);
         add_action('wp_ajax_mcl_get_license_status', array($this, 'get_license_status'), 10);
+        add_action('wp_ajax_mcl_activate_license', array($this, 'handle_license_activation'), 10);
+        add_action('wp_ajax_mcl_deactivate_license', array($this, 'handle_license_deactivation'), 10);
     }
 
     public function add_admin_menu() {
@@ -455,9 +457,13 @@ class MCL_Admin {
         // React will handle all functionality, but we still need some basic WordPress media support
         wp_enqueue_media();
         
+        // Check if React dev class exists and is handling script loading
+        global $mcl_react_dev;
+        
         // Don't localize script if React dev class is handling it
         // The React dev class provides more comprehensive data including proper nonces
         if (!class_exists('MCL_React_Dev')) {
+            error_log('MCL_React_Dev not available, providing fallback localization');
             // Fallback localization for remaining PHP functionality (AJAX handlers) when React dev is not available
             wp_localize_script('jquery', 'mclAdminData', array(
                 'ajaxurl' => admin_url('admin-ajax.php'),
@@ -2378,33 +2384,33 @@ class MCL_Admin {
         }
 
         try {
-            // Get the SureCart licensing client instance from the global scope
-            global $mcl_licensing_client;
+            $licensing_client = $this->get_licensing_client();
             
-            if (!$mcl_licensing_client && class_exists('\SureCart\Licensing\Client')) {
-                // If not set globally, try to recreate it
-                $mcl_licensing_client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', MAGIC_CHECKLISTS_PLUGIN_FILE);
-                $mcl_licensing_client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
-            }
-
-            if (!$mcl_licensing_client) {
+            if (!$licensing_client) {
                 wp_send_json_error(array('message' => 'Licensing client not available'));
                 return;
             }
 
-            // Get current license information
-            $settings = $mcl_licensing_client->settings();
-            $activation = $settings->get_activation();
-            $license_key = $settings->license_key;
-            $activation_id = $settings->activation_id;
+            $activation = $licensing_client->settings()->get_activation();
+            $license_key = $licensing_client->settings()->license_key;
             
-            $response = array(
-                'isActive' => !empty($activation) && !empty($activation->id),
-                'licenseKey' => $license_key ?: '',
-                'activationId' => $activation_id ?: ''
+            $status = array(
+                'isActive' => !empty($activation->id),
+                'activationId' => $activation->id ?? null,
+                'licenseKey' => $this->mask_license_key($license_key),
+                'siteName' => get_bloginfo('name'),
+                'siteUrl' => get_site_url(),
+                'productName' => $licensing_client->name
             );
+            
+            if (!empty($activation->id) && !empty($activation->created_at)) {
+                // Use the shared date formatting system
+                $timestamp = is_numeric($activation->created_at) ? $activation->created_at : strtotime($activation->created_at);
+                $status['activatedAt'] = MCL_Admin::format_date($timestamp, true);
+                $status['activatedAtRaw'] = $activation->created_at; // Keep raw value for debugging
+            }
 
-            wp_send_json_success($response);
+            wp_send_json_success($status);
         } catch (Exception $e) {
             error_log('MagicChecklists license status error: ' . $e->getMessage());
             wp_send_json_error(array(
@@ -2559,5 +2565,169 @@ class MCL_Admin {
 
         // Mark migration as complete
         update_option('mcl_settings_migrated_to_shared', true);
+    }
+
+    public function handle_license_activation() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+            return;
+        }
+
+        $license_key = isset($_POST['license_key']) ? sanitize_text_field($_POST['license_key']) : '';
+        
+        if (empty($license_key)) {
+            wp_send_json_error(array('message' => 'License key is required'));
+            return;
+        }
+
+        try {
+            $licensing_client = $this->get_licensing_client();
+            
+            if (!$licensing_client) {
+                wp_send_json_error(array('message' => 'Licensing client not available'));
+                return;
+            }
+
+            // Activate the license
+            $activation = $licensing_client->license()->activate($license_key);
+            
+            if ($activation === true) {
+                // Get the activation details after successful activation
+                $activation_data = $licensing_client->settings()->get_activation();
+                
+                // Format activation date using shared date formatting
+                $activated_at_raw = $activation_data->created_at ?? current_time('mysql');
+                $timestamp = is_numeric($activated_at_raw) ? $activated_at_raw : strtotime($activated_at_raw);
+                $activated_at_formatted = MCL_Admin::format_date($timestamp, true);
+
+                wp_send_json_success(array(
+                    'message' => 'License activated successfully',
+                    'data' => array(
+                        'isActive' => true,
+                        'activationId' => $licensing_client->settings()->activation_id,
+                        'licenseKey' => $this->mask_license_key($licensing_client->settings()->license_key),
+                        'activatedAt' => $activated_at_formatted,
+                        'activatedAtRaw' => $activated_at_raw
+                    )
+                ));
+            } else {
+                // Handle WP_Error or other error responses
+                $error_message = 'Failed to activate license';
+                
+                if (is_wp_error($activation)) {
+                    // Extract the first error message from WP_Error
+                    $error_messages = $activation->get_error_messages();
+                    if (!empty($error_messages)) {
+                        $error_message = $error_messages[0];
+                    }
+                }
+                
+                wp_send_json_error(array('message' => $error_message));
+            }
+        } catch (Exception $e) {
+            error_log('MagicChecklists license activation error: ' . $e->getMessage());
+            wp_send_json_error(array(
+                'message' => 'Error activating license: ' . $e->getMessage()
+            ));
+        }
+    }
+
+    public function handle_license_deactivation() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Insufficient permissions'));
+            return;
+        }
+
+        try {
+            $licensing_client = $this->get_licensing_client();
+            
+            if (!$licensing_client) {
+                wp_send_json_error(array('message' => 'Licensing client not available'));
+                return;
+            }
+
+            // Deactivate the license
+            $result = $licensing_client->license()->deactivate($licensing_client->settings()->activation_id);
+            
+            if ($result === true) {
+                // License key and activation ID are automatically cleared by the SureCart client
+                wp_send_json_success(array(
+                    'message' => 'License deactivated successfully'
+                ));
+            } else {
+                // Handle WP_Error or other error responses
+                $error_message = 'Failed to deactivate license';
+                
+                if (is_wp_error($result)) {
+                    // Extract the first error message from WP_Error
+                    $error_messages = $result->get_error_messages();
+                    if (!empty($error_messages)) {
+                        $error_message = $error_messages[0];
+                    }
+                }
+                
+                wp_send_json_error(array('message' => $error_message));
+            }
+        } catch (Exception $e) {
+            error_log('MagicChecklists license deactivation error: ' . $e->getMessage());
+            wp_send_json_error(array(
+                'message' => 'Error deactivating license: ' . $e->getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get licensing client instance
+     */
+    private function get_licensing_client() {
+        // First try to get from global
+        global $mcl_licensing_client;
+        if ($mcl_licensing_client) {
+            return $mcl_licensing_client;
+        }
+        
+        // If not available globally, try to create it
+        if (class_exists('\SureCart\Licensing\Client')) {
+            try {
+                $mcl_licensing_client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', MAGIC_CHECKLISTS_PLUGIN_FILE);
+                $mcl_licensing_client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
+                return $mcl_licensing_client;
+            } catch (Exception $e) {
+                error_log('MagicChecklists: Failed to create licensing client: ' . $e->getMessage());
+                return null;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Mask a license key for display
+     */
+    private function mask_license_key($license_key) {
+        if (empty($license_key)) {
+            return '';
+        }
+        
+        $length = strlen($license_key);
+        if ($length <= 10) {
+            return str_repeat('X', $length);
+        }
+        
+        return substr($license_key, 0, 5) . str_repeat('X', $length - 10) . substr($license_key, -5);
     }
 }
