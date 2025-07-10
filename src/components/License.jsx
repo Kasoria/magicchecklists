@@ -10,7 +10,7 @@ const License = ({ adminData }) => {
     loading: true,
     submitting: false
   })
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToast()
 
   // Function to mask license key for display
   const maskLicenseKey = (key) => {
@@ -62,33 +62,33 @@ const License = ({ adminData }) => {
     setLicenseData(prev => ({ ...prev, submitting: true }))
 
     try {
-      const formData = new FormData(e.target)
-      const response = await fetch(e.target.action || adminData.ajaxurl, {
+      const formData = new FormData()
+      const action = licenseData.isActive ? 'mcl_deactivate_license' : 'mcl_activate_license'
+      
+      formData.append('action', action)
+      formData.append('nonce', adminData.nonces?.mcl_admin || '')
+      
+      if (!licenseData.isActive) {
+        // For activation, send the license key
+        formData.append('license_key', licenseData.licenseKey)
+      }
+
+      const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
         body: formData
       })
 
-      // For license operations, SureCart typically redirects or shows settings_errors
-      // We need to handle both JSON responses and HTML redirects
-      const contentType = response.headers.get('content-type')
+      const data = await response.json()
       
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json()
-        if (data.success) {
-          showToast(data.message || 'License operation completed successfully', 'success')
-          loadLicenseStatus() // Reload the license status
-        } else {
-          showToast(data.message || 'License operation failed', 'error')
-        }
+      if (data.success) {
+        showSuccess(data.data?.message || (licenseData.isActive ? 'License deactivated successfully' : 'License activated successfully'))
+        loadLicenseStatus() // Reload the license status
       } else {
-        // If it's an HTML response, it might be a redirect or settings_errors
-        // For now, we'll reload the license status and show a generic message
-        await loadLicenseStatus()
-        showToast('License operation completed', 'success')
+        showError(data.data?.message || 'License operation failed')
       }
     } catch (error) {
       console.error('Error processing license:', error)
-      showToast('An error occurred while processing the license', 'error')
+      showError('An error occurred while processing the license')
     } finally {
       setLicenseData(prev => ({ ...prev, submitting: false }))
     }
@@ -132,15 +132,9 @@ const License = ({ adminData }) => {
       <div className="mcl-content bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <form 
           method="post" 
-          action="" 
           className="mcl-form"
           onSubmit={handleSubmit}
         >
-          <input type="hidden" name="_action" value={action} />
-          <input type="hidden" name="_nonce" value={window.mclCreateNonce ? window.mclCreateNonce('MagicChecklists') : ''} />
-          <input type="hidden" name="activation_id" value={licenseData.activationId} />
-          <input type="hidden" name="submit" value="1" />
-          
           <div className="mcl-form-section">
             <div className="mcl-form-group">
               {action === 'activate' ? (
