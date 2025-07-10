@@ -199,7 +199,12 @@ const App = () => {
 
   // Initialize the bridge functionality after React components are ready
   useEffect(() => {
-    if (!componentsReady || loading) return
+    // Only initialize checklist bridge when there is at least one active checklist.
+    // Otherwise the legacy mclDrawer bootstrapping churns, causing React 301 errors
+    // on pages that only contain tours.
+    if (!componentsReady || loading || activeChecklists.length === 0) {
+      return
+    }
 
     // Make the initialization function globally available (replacing mcl-boot.js functionality)
     window.initializeMagicChecklist = initializeMagicChecklist
@@ -288,7 +293,7 @@ const App = () => {
         window.mcl_cleanup()
       }
     }
-  }, [componentsReady, loading, initializeMagicChecklist])
+  }, [componentsReady, loading, initializeMagicChecklist, activeChecklists.length])
 
   // Re-initialize floating buttons when activeChecklists changes
   useEffect(() => {
@@ -349,15 +354,17 @@ const App = () => {
 
   return (
     <div className={`mcl-react-app ${isTourMode ? 'mcl-tour-mode' : ''}`}>
-      {/* The ChecklistDrawer component provides the drawer structure that mcl-drawer.js expects */}
-      <ChecklistDrawer theme={drawerTheme} />
-      
-      {/* The FloatingButtons component provides the floating button structure that mcl-drawer.js expects */}
-      <FloatingButtons activeChecklists={activeChecklists} settings={generalSettings} />
-      
+      {/* Render checklist UI only when at least one checklist is active */}
+      {activeChecklists.length > 0 && (
+        <>
+          <ChecklistDrawer theme={drawerTheme} />
+          <FloatingButtons activeChecklists={activeChecklists} settings={generalSettings} />
+        </>
+      )}
+
       {/* Tour components when in tour mode */}
       {tourWrapperComponent}
-      
+
       {/* Tour playback component for regular tour playback (always mounted) */}
       {!isTourMode && (() => {
         const urlParams = new URLSearchParams(window.location.search)
