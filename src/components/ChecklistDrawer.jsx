@@ -2989,7 +2989,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
               <div 
           id="mcl-drawer" 
           className={`
-            fixed inset-x-0 mx-auto w-full max-w-[700px] min-w-0 z-50
+            fixed inset-x-0 mx-auto w-full max-w-[700px] min-w-0 z-[99999]
             ${themeColors.bg} ${themeColors.border}
             rounded-t-2xl border-t border-l border-r shadow-2xl
             font-sans
