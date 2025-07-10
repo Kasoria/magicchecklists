@@ -31,13 +31,10 @@ class MCL_React_Dev {
     }
     
     public function __construct() {
-        // Decide whether we're in development mode.
-        // 1. Respect explicit override via constant first.
         if ( $this->is_dev_mode_forced() ) {
             $this->is_dev_mode = (bool) MCL_DEV_MODE;
         } else {
-            // 2. Otherwise auto-detect by pinging the dev-server (only when useful).
-            $this->is_dev_mode = $this->is_vite_dev_server_running();
+            $this->is_dev_mode = false;
         }
         
         // If in dev mode, inject React Refresh preamble into head for HMR support
@@ -47,8 +44,8 @@ class MCL_React_Dev {
         }
         
         // Hook into the existing MCL_Public enqueue logic
-        add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 6 ); // After MCL_Public (priority 5)
-        add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 6 );
+        add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 9 ); // After MCL_Public (priority 5)
+        add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 9 );
         
         // Add React root elements to both frontend and admin
         add_action( 'wp_footer', array( $this, 'add_react_root_elements' ) );
@@ -99,6 +96,13 @@ class MCL_React_Dev {
      * Hook into existing MCL_Public enqueue logic to provide React scripts
      */
     public function maybe_enqueue_react_scripts( $hook ) {
+        // Prevent multiple enqueue attempts
+        static $enqueue_attempted = false;
+        if ( $enqueue_attempted ) {
+            return;
+        }
+        $enqueue_attempted = true;
+        
         // Get the global MCL_Public instance
         global $mcl_public_instance;
         if ( ! $mcl_public_instance ) {
@@ -110,17 +114,22 @@ class MCL_React_Dev {
         $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         
+        // Check for active tours via Tour CPT
+        $has_active_tours = false;
+        if (class_exists('MCL_Tour_CPT')) {
+            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            $has_active_tours = !empty($active_tours);
+        }
+        
         // Force React loading for tour mode, regardless of checklist conditions
-        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id;
+        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id || $has_active_tours;
         
         // Check tour mode cookie as fallback
         if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
             $force_load_for_tours = true;
         }
         
-        // If not tour mode, check if MCL_Public would load assets using its existing logic
-        if ( !$force_load_for_tours && ! $mcl_public_instance->should_load_assets() ) {
-            return;
+        if ($force_load_for_tours) {
         }
         
         // Determine which React app to load based on context
@@ -135,19 +144,27 @@ class MCL_React_Dev {
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
-                    // Load admin React app
+                    // Always load admin React app on plugin admin pages, regardless of checklist conditions
                     $this->enqueue_admin_scripts( $hook );
-                    // Also load public React app for drawer/floating buttons on admin pages
-                    $this->enqueue_public_scripts( $hook );
+                                         // Only load public React app if there are actual checklists that need drawer/floating buttons
+                     // This prevents React instance conflicts on fresh installs
+                     if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                         $this->enqueue_public_scripts( $hook );
+                     }
                 } else {
-                    // Load public React app for drawer/floating buttons on admin pages
-                    $this->enqueue_public_scripts( $hook );
+                    // For non-plugin admin pages, check if we should load public assets
+                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                        // Load public React app for drawer/floating buttons on admin pages
+                        $this->enqueue_public_scripts( $hook );
+                    }
                 }
-            } else {
             }
         } else {
-            // Load public React app on frontend
-            $this->enqueue_public_scripts( $hook );
+            // For frontend pages, check if we should load public assets
+            if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                // Load public React app on frontend
+                $this->enqueue_public_scripts( $hook );
+            }
         }
     }
 
@@ -179,6 +196,7 @@ class MCL_React_Dev {
      * Enqueue admin development scripts from Vite dev server
      */
     private function enqueue_admin_dev_scripts( $hook ) {
+        
         // Check if tour assets are needed and enqueue them first
         if ($this->should_load_tour_assets()) {
             $this->enqueue_tour_assets();
@@ -234,6 +252,9 @@ class MCL_React_Dev {
         $is_plugin_page = is_admin() && $this->is_plugin_admin_page();
         $public_handle_suffix = $is_plugin_page ? '-drawer' : '';
         
+        // Apply dual-loading protection when admin React OR tour assets might clash with public React
+        $needs_dual_protection = $is_plugin_page || $this->should_load_tour_assets();
+        
         // Vite client for HMR - only enqueue if not already enqueued
         if ( ! wp_script_is( 'vite-client', 'enqueued' ) ) {
             wp_enqueue_script(
@@ -271,12 +292,20 @@ class MCL_React_Dev {
         
         // Localize script data for React
         $this->localize_public_data( $public_handle_suffix );
+        
+        // Add script isolation when dual React loading is detected
+        if ( $needs_dual_protection ) {
+            $this->add_script_isolation_for_dual_loading( $public_handle_suffix );
+        }
+        
+        // React isolation will be handled globally via enqueue_public_* methods
     }
     
     /**
      * Enqueue admin production built scripts
      */
     private function enqueue_admin_prod_scripts( $hook ) {
+        
         // Check if tour assets are needed and enqueue them first
         if ($this->should_load_tour_assets()) {
             $this->enqueue_tour_assets();
@@ -292,11 +321,16 @@ class MCL_React_Dev {
         $this->enqueue_main_css( $dist_path, $dist_url );
         
         // Admin React app
-        if ( file_exists( $dist_path . 'admin.js' ) ) {
+        $admin_js_path = $dist_path . 'admin.js';
+        
+        if ( file_exists( $admin_js_path ) ) {
+            // If no vendor handles were loaded, try loading without dependencies as fallback
+            $dependencies = !empty($vendor_handles) ? $vendor_handles : array();
+            
             wp_enqueue_script(
                 'mcl-react-admin',
                 $dist_url . 'admin.js',
-                $vendor_handles,
+                $dependencies,
                 MAGIC_CHECKLISTS_VERSION,
                 true
             );
@@ -308,6 +342,46 @@ class MCL_React_Dev {
                 }
                 return $tag;
             }, 10, 2 );
+            
+            // Check what files exist in the dist directory
+            if (file_exists($dist_path)) {
+                $files = scandir($dist_path);
+                
+                // Try to find admin script with different naming patterns
+                $admin_js_files = array_filter($files, function($file) {
+                    return strpos($file, 'admin') !== false && substr($file, -3) === '.js';
+                });
+                
+                                if (!empty($admin_js_files)) {
+                    $admin_file = reset($admin_js_files);
+                    
+                    // If no vendor handles were loaded, try loading without dependencies as fallback
+                    $dependencies = !empty($vendor_handles) ? $vendor_handles : array();
+                    
+                    wp_enqueue_script(
+                        'mcl-react-admin',
+                        $dist_url . $admin_file,
+                        $dependencies,
+                        MAGIC_CHECKLISTS_VERSION,
+                        true
+                    );
+                    
+                    // Add type="module" to admin script
+                    add_filter( 'script_loader_tag', function( $tag, $handle ) {
+                        if ( $handle === 'mcl-react-admin' ) {
+                            return str_replace( ' src=', ' type="module" src=', $tag );
+                        }
+                        return $tag;
+                    }, 10, 2 );
+                } else {
+                    // As a last resort, try loading any JS file that might work
+                    $any_js_files = array_filter($files, function($file) {
+                        return substr($file, -3) === '.js' && $file !== '.' && $file !== '..';
+                    });
+                    if (!empty($any_js_files)) {
+                    }
+                }
+            }
         }
         
         // Localize script data for React
@@ -329,6 +403,9 @@ class MCL_React_Dev {
         // Check if we're loading both admin and public on the same page
         $is_plugin_page = $this->is_plugin_admin_page();
         $public_handle_suffix = $is_plugin_page ? '-drawer' : '';
+        
+        // Apply dual-loading protection when admin React OR tour assets might clash with public React
+        $needs_dual_protection = $is_plugin_page || $this->should_load_tour_assets();
         
         // Load vendor chunks first
         $vendor_handles = $this->enqueue_vendor_chunks( $dist_path, $dist_url );
@@ -357,6 +434,13 @@ class MCL_React_Dev {
         
         // Localize script data for React
         $this->localize_public_data( $public_handle_suffix );
+        
+        // Add script isolation when dual React loading is detected
+        if ( $needs_dual_protection ) {
+            $this->add_script_isolation_for_dual_loading( $public_handle_suffix );
+        }
+        
+        // React isolation will be handled globally via enqueue_public_* methods
     }
     
     /**
@@ -382,6 +466,7 @@ class MCL_React_Dev {
         } else {
             // Fallback: check for index-[hash].css pattern (from previous builds)
             $css_files = glob( $dist_path . 'assets/index-*.css' );
+            
             if ( ! empty( $css_files ) ) {
                 $css_file = str_replace( $dist_path, '', $css_files[0] );
                 wp_enqueue_style(
@@ -399,6 +484,12 @@ class MCL_React_Dev {
                         array(),
                         MAGIC_CHECKLISTS_VERSION
                     );
+                } else {
+                    // Check what CSS files exist in the assets directory
+                    $assets_path = $dist_path . 'assets/';
+                    if (file_exists($assets_path)) {
+                        $all_css_files = glob( $assets_path . '*.css' );
+                    }
                 }
             }
         }
@@ -413,6 +504,7 @@ class MCL_React_Dev {
         
         // Load vendor chunk (React, ReactDOM) - only enqueue if not already enqueued
         $vendor_files = glob( $dist_path . 'vendor-*.js' );
+        
         if ( ! empty( $vendor_files ) && ! wp_script_is( 'mcl-vendor-chunk', 'enqueued' ) ) {
             $vendor_file = str_replace( $dist_path, '', $vendor_files[0] );
             wp_enqueue_script(
@@ -429,6 +521,37 @@ class MCL_React_Dev {
                 }
                 return $tag;
             }, 10, 2 );
+        } else {
+            if (empty($vendor_files)) {
+                // Try to find any JS files that might be vendor chunks
+                $all_js_files = glob( $dist_path . '*.js' );
+                $possible_vendor_files = array_filter($all_js_files, function($file) {
+                    $basename = basename($file);
+                    return strpos($basename, 'vendor') !== false || 
+                           strpos($basename, 'chunk') !== false ||
+                           strpos($basename, 'react') !== false;
+                });
+                
+                if (!empty($possible_vendor_files)) {
+                    $vendor_file = str_replace( $dist_path, '', $possible_vendor_files[0] );
+                    wp_enqueue_script(
+                        'mcl-vendor-chunk',
+                        $dist_url . $vendor_file,
+                        array(),
+                        MAGIC_CHECKLISTS_VERSION,
+                        true
+                    );
+                    
+                    add_filter( 'script_loader_tag', function( $tag, $handle ) {
+                        if ( $handle === 'mcl-vendor-chunk' ) {
+                            return str_replace( ' src=', ' type="module" src=', $tag );
+                        }
+                        return $tag;
+                    }, 10, 2 );
+                    $vendor_handles[] = 'mcl-vendor-chunk';
+                }
+            } else {
+            }
         }
         
         if ( wp_script_is( 'mcl-vendor-chunk', 'enqueued' ) || wp_script_is( 'mcl-vendor-chunk', 'done' ) ) {
@@ -437,6 +560,7 @@ class MCL_React_Dev {
         
         // Load Flowbite chunk - only enqueue if not already enqueued
         $flowbite_files = glob( $dist_path . 'flowbite-*.js' );
+        
         if ( ! empty( $flowbite_files ) && ! wp_script_is( 'mcl-flowbite-chunk', 'enqueued' ) ) {
             $flowbite_file = str_replace( $dist_path, '', $flowbite_files[0] );
             wp_enqueue_script(
@@ -461,6 +585,7 @@ class MCL_React_Dev {
         
         // Load utils chunk - only enqueue if not already enqueued
         $utils_files = glob( $dist_path . 'utils-*.js' );
+        
         if ( ! empty( $utils_files ) && ! wp_script_is( 'mcl-utils-chunk', 'enqueued' ) ) {
             $utils_file = str_replace( $dist_path, '', $utils_files[0] );
             wp_enqueue_script(
@@ -491,6 +616,11 @@ class MCL_React_Dev {
      */
     private function localize_admin_data() {
         $handle = $this->is_dev_mode ? 'mcl-react-admin-dev' : 'mcl-react-admin';
+        
+        // Check if script has already been localized to prevent duplicates
+        if ( wp_script_is( $handle, 'done' ) ) {
+            return;
+        }
         
         $current_page = 'main';
         $page_params = array();
@@ -584,6 +714,11 @@ class MCL_React_Dev {
      */
     private function localize_public_data( $public_handle_suffix = '' ) {
         $handle = $this->is_dev_mode ? 'mcl-react-public-dev' . $public_handle_suffix : 'mcl-react-public' . $public_handle_suffix;
+        
+        // Check if script has already been localized to prevent duplicates
+        if ( wp_script_is( $handle, 'done' ) ) {
+            return;
+        }
         
         // Check if we're in tour mode to provide additional admin data
         $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
@@ -764,6 +899,99 @@ class MCL_React_Dev {
     }
     
     /**
+     * Add script isolation to prevent React render loops when both admin and public apps are loaded
+     */
+    private function add_script_isolation_for_dual_loading( $public_handle_suffix = '' ) {
+        $public_handle = $this->is_dev_mode ? 'mcl-react-public-dev' . $public_handle_suffix : 'mcl-react-public' . $public_handle_suffix;
+
+        // Only add once per handle
+        if ( did_action( 'mcl_isolation_added_' . $public_handle ) ) {
+            return;
+        }
+        do_action( 'mcl_isolation_added_' . $public_handle );
+
+        $isolation_script = "
+        (function() {
+            // Flag to indicate admin React presence
+            window.mclAdminReactPresent = true;
+
+            // Store original public data temporarily
+            if (typeof window.mclPublicData !== 'undefined') {
+                window.mclPublicDataOriginal = { ...window.mclPublicData };
+                window.mclPublicData.delayInit = true;
+                window.mclPublicData.dualLoadMode = true;
+
+                let maxWaitTime = 2000;
+                let startTime = Date.now();
+
+                const checkAdminReady = function() {
+                    const adminRoot = document.querySelector('#mcl-admin-root');
+                    if (adminRoot && adminRoot.children.length > 0) {
+                        return true;
+                    }
+                    return Date.now() - startTime > maxWaitTime;
+                };
+
+                const initPublicReact = function() {
+                    if (window.mclPublicDataOriginal) {
+                        window.mclPublicDataOriginal.delayInit = false;
+                        window.mclPublicDataOriginal.dualLoadMode = true;
+                        const evt = new CustomEvent('mclInitPublicReact', { detail: window.mclPublicDataOriginal });
+                        document.dispatchEvent(evt);
+                    }
+                };
+
+                const waitLoop = function() {
+                    if (checkAdminReady()) {
+                        initPublicReact();
+                    } else {
+                        setTimeout(waitLoop, 100);
+                    }
+                };
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() { setTimeout(waitLoop, 100); });
+                } else {
+                    waitLoop();
+                }
+            }
+        })();
+        ";
+
+        wp_add_inline_script( $public_handle, $isolation_script, 'before' );
+    }
+
+    /**
+     * Add tour script isolation to prevent driver.js conflicts when multiple instances load
+     */
+    private function add_tour_script_isolation( $handle_suffix = '' ) {
+        $tour_handle = 'mcl-driver-js' . $handle_suffix;
+
+        // Only add once per handle
+        if ( did_action( 'mcl_tour_isolation_added_' . $tour_handle ) ) {
+            return;
+        }
+        do_action( 'mcl_tour_isolation_added_' . $tour_handle );
+
+        $tour_script = "
+        (function() {
+            if (window.mclDriverInstance || window.mclDriverInitializing) { return; }
+            window.mclDriverInitializing = true;
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    if (typeof window.Driver !== 'undefined' && !window.mclDriverInstance) {
+                        window.mclDriverInstance = new window.Driver();
+                    }
+                    window.mclDriverInitializing = false;
+                }, 100);
+            });
+        })();
+        ";
+
+        wp_add_inline_script( $tour_handle, $tour_script, 'before' );
+    }
+
+    /**
      * Get development status
      */
     public function is_development_mode() {
@@ -787,6 +1015,12 @@ class MCL_React_Dev {
      * Add React root element to the DOM
      */
     public function add_react_root_elements() {
+        // Prevent multiple root additions
+        static $roots_added = false;
+        if ( $roots_added ) {
+            return;
+        }
+        
         // Get the MCL_Public instance to leverage its existing logic
         global $mcl_public_instance;
         if ( ! $mcl_public_instance ) {
@@ -798,22 +1032,31 @@ class MCL_React_Dev {
         $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         
+        // Check for active tours via Tour CPT
+        $has_active_tours = false;
+        if (class_exists('MCL_Tour_CPT')) {
+            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            $has_active_tours = !empty($active_tours);
+        }
+        
         // Force React roots for tour mode, regardless of checklist conditions
-        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id;
+        $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id || $has_active_tours;
         
         // Check tour mode cookie as fallback
         if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
             $force_load_for_tours = true;
         }
         
-        // If not tour mode, check if MCL_Public would load assets using its existing logic
-        if ( !$force_load_for_tours && ! $mcl_public_instance->should_load_assets() ) {
-            return;
+        if ($force_load_for_tours) {
         }
         
         if ( ! is_admin() ) {
-            // Add public root element on frontend pages
-            echo '<div id="mcl-public-root"></div>';
+            // For frontend pages, check if we should add public root
+            if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                // Add public root element on frontend pages
+                echo '<div id="mcl-public-root"></div>';
+                $roots_added = true;
+            }
         } else {
             // Check if this is a plugin admin page
             $screen = get_current_screen();
@@ -825,12 +1068,19 @@ class MCL_React_Dev {
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
+                    // Only add public root if there are actual checklists that need drawer/floating buttons
                     // MCL_Admin already creates the mcl-admin-root div in page content
-                    // Only add public root for drawer/floating buttons on admin pages
-                    echo '<div id="mcl-public-root"></div>';
+                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                        echo '<div id="mcl-public-root"></div>';
+                        $roots_added = true;
+                    }
                 } else {
-                    // Public React handles drawer/floating buttons on admin pages
-                    echo '<div id="mcl-public-root"></div>';
+                    // For non-plugin admin pages, check if we should add public root
+                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                        // Public React handles drawer/floating buttons on admin pages
+                        echo '<div id="mcl-public-root"></div>';
+                        $roots_added = true;
+                    }
                 }
             }
         }
@@ -937,32 +1187,47 @@ class MCL_React_Dev {
      * Enqueue driver.js and related tour assets when needed
      */
     private function enqueue_tour_assets() {
-        // Only enqueue if not already loaded
-        if (wp_script_is('driver-js', 'enqueued') || wp_script_is('driver-js', 'done')) {
+        // Only enqueue if not already loaded - check multiple possible handles
+        if (wp_script_is('driver-js', 'enqueued') || wp_script_is('driver-js', 'done') ||
+            wp_script_is('mcl-driver-js', 'enqueued') || wp_script_is('mcl-driver-js', 'done')) {
             return;
         }
-        // Enqueue driver.js
+        
+        // Determine handle suffix based on context to prevent conflicts
+        $handle_suffix = '';
+        if (is_admin() && $this->is_plugin_admin_page()) {
+            $handle_suffix = '-admin';
+        } elseif (isset($_GET['mcl_tour_mode']) || isset($_GET['mcl_continue_tour']) || isset($_GET['tour_id'])) {
+            $handle_suffix = '-tour';
+        }
+        
+        // Enqueue driver.js with unique handle
         wp_enqueue_script(
-            'driver-js',
+            'mcl-driver-js' . $handle_suffix,
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.js.iife.js',
             array(),
             '1.3.1',
             true
         );
 
-        wp_enqueue_style(
-            'driver-css',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.css',
-            array(),
-            '1.3.1'
-        );
+        // Only enqueue CSS once globally (no conflicts with CSS)
+        if (!wp_style_is('mcl-driver-css', 'enqueued') && !wp_style_is('mcl-driver-css', 'done')) {
+            wp_enqueue_style(
+                'mcl-driver-css',
+                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.css',
+                array(),
+                '1.3.1'
+            );
 
-        // Enqueue tour public styles
-                    wp_enqueue_style(
+            // Enqueue tour public styles
+            wp_enqueue_style(
                 'mcl-tour-driver',
                 MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-tour-driver.css',
-                array('driver-css'),
+                array('mcl-driver-css'),
                 MAGIC_CHECKLISTS_VERSION
             );
+        }
+        
+        // React isolation will be handled globally via enqueue_public_* methods
     }
 }
