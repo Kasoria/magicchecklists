@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Button, Badge } from 'flowbite-react'
+import { Card, Button } from 'flowbite-react'
 
 const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
   const checklistTypes = [
@@ -41,13 +41,11 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         'Publishing prevention'
       ],
       url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=add-new&type=publisher`,
-      buttonText: 'Create Publisher Checklist',
-      isNew: true,
-      featured: true
+      buttonText: 'Create Publisher Checklist'
     },
     {
       id: 'tour',
-      title: 'Interactive Tour',
+      title: 'Tour',
       description: 'Guided tours that lead users through your WordPress admin or frontend. Perfect for onboarding, training, and feature introduction.',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-12 h-12">
@@ -67,37 +65,6 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
       type: 'tour'
     }
   ]
-
-  const comparisonFeatures = [
-    { name: 'Custom Items', classic: true, publisher: false, tour: false },
-    { name: 'Automatic Verification', classic: false, publisher: true, tour: false },
-    { name: 'Publishing Control', classic: false, publisher: true, tour: false },
-    { name: 'Step-by-Step Guidance', classic: false, publisher: false, tour: true },
-    { name: 'Interactive Elements', classic: false, publisher: false, tour: true },
-    { name: 'Keyboard Shortcuts', classic: true, publisher: false, tour: false },
-    { name: 'Visual Highlights', classic: false, publisher: false, tour: true }
-  ]
-
-  const useCases = {
-    classic: [
-      'Personal task management',
-      'Team project tracking',
-      'General purpose checklists',
-      'Client-facing requirements'
-    ],
-    publisher: [
-      'Content quality control',
-      'SEO compliance checking',
-      'Editorial workflows',
-      'Publication standards'
-    ],
-    tour: [
-      'User onboarding',
-      'Feature introduction',
-      'Training workflows',
-      'Navigation guidance'
-    ]
-  }
 
   const handleTypeSelect = (type) => {
     if (onSelectType) {
@@ -133,29 +100,12 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         {checklistTypes.map((type) => (
           <Card
             key={type.id}
-            className={`relative h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer ${
-              type.featured 
-                ? 'border-2 border-brand-accent bg-gradient-to-br from-white to-yellow-50 dark:from-gray-800 dark:to-yellow-900/10' 
-                : 'border border-gray-200 dark:border-gray-700'
-            }`}
+            className="relative h-full border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
             onClick={() => handleTypeSelect(type.id)}
           >
-            {/* New Badge */}
-            {type.isNew && (
-              <div className="absolute -top-3 right-4 z-10">
-                <Badge color="warning" size="sm" className="font-semibold">
-                  New!
-                </Badge>
-              </div>
-            )}
-
-            <div className="p-8 text-center h-full flex flex-col">
+            <div className="text-center h-full flex flex-col">
               {/* Icon */}
-              <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${
-                type.featured 
-                  ? 'bg-brand-accent text-brand-dark' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-              }`}>
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                 {type.icon}
               </div>
 
@@ -165,29 +115,14 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
               </h3>
 
               {/* Description */}
-              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed flex-grow">
+              <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed flex-grow">
                 {type.description}
               </p>
 
-              {/* Features */}
-              <div className="mb-8">
-                <ul className="space-y-3 text-left">
-                  {type.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
               {/* Button */}
               <Button
-                color={type.featured ? 'yellow' : 'blue'}
-                size="lg"
-                className="w-full font-semibold"
+                size="md"
+                className="w-auto font-semibold bg-brand-dark text-white hover:bg-brand-dark/90"
                 onClick={(e) => {
                   e.stopPropagation()
                   handleTypeSelect(type.id)
@@ -199,102 +134,6 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
           </Card>
         ))}
       </div>
-
-      {/* Comparison Section */}
-      <Card className="p-8">
-        <h3 className="text-2xl font-bold text-brand-dark dark:text-white text-center mb-8">
-          Need help choosing?
-        </h3>
-
-        {/* Comparison Table */}
-        <div className="overflow-x-auto mb-8">
-          <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-            <thead>
-              <tr className="bg-brand-dark dark:bg-gray-900">
-                <th className="px-6 py-4 text-left text-white font-semibold">Feature</th>
-                <th className="px-6 py-4 text-center text-white font-semibold">Classic Checklist</th>
-                <th className="px-6 py-4 text-center text-white font-semibold">Publisher Checklist</th>
-                <th className="px-6 py-4 text-center text-white font-semibold">Interactive Tour</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonFeatures.map((feature, index) => (
-                <tr key={index} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 font-medium text-brand-dark dark:text-white">
-                    {feature.name}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {feature.classic ? (
-                      <span className="text-green-500 text-2xl font-bold">✓</span>
-                    ) : (
-                      <span className="text-red-500 text-2xl font-bold">✗</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {feature.publisher ? (
-                      <span className="text-green-500 text-2xl font-bold">✓</span>
-                    ) : (
-                      <span className="text-red-500 text-2xl font-bold">✗</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {feature.tour ? (
-                      <span className="text-green-500 text-2xl font-bold">✓</span>
-                    ) : (
-                      <span className="text-red-500 text-2xl font-bold">✗</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Use Cases */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border-l-4 border-blue-500">
-            <h4 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
-              Use Classic Checklist for:
-            </h4>
-            <ul className="space-y-2">
-              {useCases.classic.map((useCase, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="text-gray-700 dark:text-gray-300">{useCase}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border-l-4 border-yellow-500">
-            <h4 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
-              Use Publisher Checklist for:
-            </h4>
-            <ul className="space-y-2">
-              {useCases.publisher.map((useCase, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="text-gray-700 dark:text-gray-300">{useCase}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg border-l-4 border-green-500">
-            <h4 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
-              Use Interactive Tour for:
-            </h4>
-            <ul className="space-y-2">
-              {useCases.tour.map((useCase, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                  <span className="text-gray-700 dark:text-gray-300">{useCase}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </Card>
     </div>
   )
 }
