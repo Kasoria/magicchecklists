@@ -158,33 +158,53 @@ class MCL_Permissions {
      * @return bool True if permission is granted, false otherwise.
      */
     public function has_permission($checklist_id, $required_permission = 'view') {
+        
+        // Check 1: Administrator access
         if ($this->is_administrator()) {
             return true;
         }
 
-        $token_data = $this->get_invite_token_data(); // This now uses the class method
+        // Check 2: Invite token access
+        $token_data = $this->get_invite_token_data();
         if ($token_data && isset($token_data->checklist_id) && $token_data->checklist_id == $checklist_id) {
             if ($this->token_grants_permission($token_data, $required_permission)) {
                 return true;
             }
+        } else {
+            if ($token_data) {
+            } else {
+            }
         }
 
-        $public_access = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
-        if ($public_access) {
+        // Check 3: Public access
+        $public_access = get_post_meta($checklist_id, '_mcl_public_access', true);
+        
+        if ($public_access == '1') {
             $public_permission_setting = get_post_meta($checklist_id, '_mcl_public_permission', true) ?: 'interact';
+            
             if ($this->permission_sufficient($public_permission_setting, $required_permission)) {
                 return true;
             }
+        } else {
         }
 
+        // Check 4: User-specific access (only for logged in users)
         if (is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            $user = wp_get_current_user();
+            $user_roles = $user->roles;
+            
+            // Check role-based access
             if ($this->has_role_access($checklist_id, $required_permission)) {
                 return true;
             }
+            
+            // Check user-specific access
             if ($this->has_user_access($checklist_id, $required_permission)) {
                 return true;
             }
         }
+        
         return false;
     }
 
@@ -203,7 +223,9 @@ class MCL_Permissions {
     }
 
     private function has_role_access($checklist_id, $required_permission = 'view') {
-        if (!is_user_logged_in()) return false;
+        if (!is_user_logged_in()) {
+            return false;
+        }
 
         $user = wp_get_current_user();
         $allowed_roles = get_post_meta($checklist_id, '_mcl_access_roles', true) ?: array();
@@ -212,21 +234,31 @@ class MCL_Permissions {
         $user_roles = (array) $user->roles;
         $has_allowed_role = !empty(array_intersect($allowed_roles, $user_roles));
 
-        if (!$has_allowed_role) return false;
+        if (!$has_allowed_role) {
+            return false;
+        }
 
-        return $this->permission_sufficient($roles_permission_setting, $required_permission);
+        $permission_check = $this->permission_sufficient($roles_permission_setting, $required_permission);
+        return $permission_check;
     }
 
     private function has_user_access($checklist_id, $required_permission = 'view') {
-        if (!is_user_logged_in()) return false;
+        if (!is_user_logged_in()) {
+            return false;
+        }
 
         $user_id = get_current_user_id();
         $allowed_users = get_post_meta($checklist_id, '_mcl_access_users', true) ?: array();
         $users_permission_setting = get_post_meta($checklist_id, '_mcl_access_users_permission', true) ?: 'interact';
 
-        if (!in_array($user_id, $allowed_users)) return false;
+        $user_is_allowed = in_array($user_id, $allowed_users);
 
-        return $this->permission_sufficient($users_permission_setting, $required_permission);
+        if (!$user_is_allowed) {
+            return false;
+        }
+
+        $permission_check = $this->permission_sufficient($users_permission_setting, $required_permission);
+        return $permission_check;
     }
 
     /**
