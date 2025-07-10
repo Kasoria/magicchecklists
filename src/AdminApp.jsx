@@ -103,21 +103,31 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
   }
 
   const navigationItems = [
-    {
-      id: 'checklists',
-      label: 'All Checklists',
-      icon: "M8.75 2.75h6.5c3.31 0 6 2.69 6 6v6.5c0 3.31-2.69 6-6 6h-6.5c-3.31 0-6-2.69-6-6v-6.5c0-3.31 2.69-6 6-6z M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234"
-    },
+    // Primary quick action
     {
       id: 'add-new',
       label: 'Add New',
       icon: "M12 6v6m0 0v6m0-6h6m-6 0H6"
+    },
+    // Divider 1  
+    { id: 'divider-1', divider: true },
+
+    // Core content sections
+    {
+      id: 'checklists',
+      label: 'Checklists',
+      icon: "M8.75 2.75h6.5c3.31 0 6 2.69 6 6v6.5c0 3.31-2.69 6-6 6h-6.5c-3.31 0-6-2.69-6-6v-6.5c0-3.31 2.69-6 6-6z M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234"
     },
     {
       id: 'tours',
       label: 'Tours',
       icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"
     },
+
+    // Divider 2
+    { id: 'divider-2', divider: true },
+
+    // Remaining sections
     {
       id: 'analytics',
       label: 'Analytics',
@@ -213,7 +223,14 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       case 'license':
         return <License adminData={adminData} />
       default:
-        return <ChecklistsTable adminData={adminData} onEditChecklist={handleEditChecklist} />
+        return (
+          <ChecklistsTable
+            adminData={adminData}
+            onEditChecklist={handleEditChecklist}
+            setActiveTab={setActiveTab}
+            setSidebarOpen={setSidebarOpen}
+          />
+        )
     }
   }
 
@@ -358,6 +375,11 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
           <nav className="px-4 pb-4">
             <ul className="space-y-2">
               {navigationItems.map((item) => (
+                item.divider ? (
+                  <li key={item.id} className="my-2">
+                    <hr className="border-gray-200 dark:border-gray-600" />
+                  </li>
+                ) : (
                 <li key={item.id}>
                   <button
                     onClick={() => {
@@ -403,11 +425,57 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {!sidebarCollapsed && item.label}
                   </button>
                 </li>
+                )
               ))}
             </ul>
             
             <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
               <ul className="space-y-2">
+                <li>
+                  <button
+                    onClick={toggleDarkMode}
+                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                    title={sidebarCollapsed ? (darkMode ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
+                  >
+                    {darkMode ? (
+                      <svg
+                        className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                      </svg>
+                    )}
+                    {!sidebarCollapsed && (darkMode ? 'Light Mode' : 'Dark Mode')}
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href="https://magicplugins.io/docs/" target="_blank"
+                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
+                    title={sidebarCollapsed ? 'Help' : undefined}
+                  >
+                    <svg
+                      className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {!sidebarCollapsed && 'Help'}
+                  </a>
+                </li>
                 <li>
                   <button
                     onClick={() => {
@@ -436,51 +504,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 13v3h3v3h3v2l2 2h5v-4L12.74 8.74C12.91 8.19 13 7.6 13 7c0-3.31-2.69-6-6-6S1 3.69 1 7a6.005 6.005 0 0 0 8.47 5.47L10 13ZM6 7a1 1 0 1 1 0-2a1 1 0 0 1 0 2Z" />
                     </svg>
                     {!sidebarCollapsed && 'License'}
-                  </button>
-                </li>
-                <li>
-                  <a
-                    href="https://magicplugins.io/docs/" target="_blank"
-                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={sidebarCollapsed ? 'Help' : undefined}
-                  >
-                    <svg
-                      className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {!sidebarCollapsed && 'Help'}
-                  </a>
-                </li>
-                <li>
-                  <button
-                    onClick={toggleDarkMode}
-                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={sidebarCollapsed ? (darkMode ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
-                  >
-                    {darkMode ? (
-                      <svg
-                        className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                      </svg>
-                    )}
-                    {!sidebarCollapsed && (darkMode ? 'Light Mode' : 'Dark Mode')}
                   </button>
                 </li>
               </ul>
@@ -529,19 +552,21 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
               <div className="flex items-center space-x-4">
                 {activeTab === 'add-new' && (
                   <>
-                    <button
-                      onClick={handleLayoutToggle}
-                      className="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors duration-200"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {layoutMode === 'stacked' ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                        )}
-                      </svg>
-                      {layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}
-                    </button>
+                    {editingChecklist?.type === 'classic' && (
+                      <button
+                        onClick={handleLayoutToggle}
+                        className="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {layoutMode === 'stacked' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                          )}
+                        </svg>
+                        {layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}
+                      </button>
+                    )}
                     <button
                       onClick={handleBackToChecklists}
                       className="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-600 transition-colors duration-200"
@@ -551,18 +576,19 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       </svg>
                       Back to List
                     </button>
-                    <button
-                      onClick={handleSaveForm}
-                      className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
-                    >
-                      <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      {editingChecklist ? 'Save Changes' : 'Save Checklist'}
-                    </button>
+                    {editingChecklist?.type && (
+                      <button
+                        onClick={handleSaveForm}
+                        className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        {editingChecklist?.id ? 'Save Changes' : 'Save Checklist'}
+                      </button>
+                    )}
                   </>
                 )}
-
                 {activeTab === 'tours' && editingTour !== null && (
                   <button
                     onClick={handleBackToTours}
@@ -572,37 +598,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                     Back to Tours
-                  </button>
-                )}
-
-                {activeTab !== 'add-new' && activeTab !== 'tours' && (
-                  <button
-                    onClick={() => {
-                      setActiveTab('add-new')
-                      if (window.innerWidth < 1024) setSidebarOpen(false)
-                      const url = new URL(window.location)
-                      url.searchParams.set('page', 'mcl_checklists')
-                      url.searchParams.set('view', 'add-new')
-                      window.history.pushState({}, '', url)
-                    }}
-                    className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add New
-                  </button>
-                )}
-
-                {activeTab === 'tours' && editingTour === null && (
-                  <button
-                    onClick={() => handleEditTour(null)}
-                    className="flex-shrink-0 flex items-center justify-center px-4 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add New Tour
                   </button>
                 )}
               </div>
@@ -640,33 +635,46 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                 </div>
 
                 {/* Primary action button - always visible on mobile */}
-                {activeTab === 'add-new' ? (
-                  <button
-                    onClick={handleSaveForm}
-                    className="flex items-center justify-center px-3 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    <span className="hidden sm:inline">Save</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setActiveTab('add-new')
-                      if (window.innerWidth < 1024) setSidebarOpen(false)
-                      const url = new URL(window.location)
-                      url.searchParams.set('page', 'mcl_checklists')
-                      url.searchParams.set('view', 'add-new')
-                      window.history.pushState({}, '', url)
-                    }}
-                    className="flex items-center justify-center px-3 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <span className="hidden sm:inline">Add New</span>
-                  </button>
+                {activeTab === 'add-new' && (
+                  <>
+                    {editingChecklist?.type === 'classic' && (
+                      <button
+                        onClick={handleLayoutToggle}
+                        className="flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {layoutMode === 'stacked' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                          )}
+                        </svg>
+                        <span className="hidden sm:inline">{layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}</span>
+                        <span className="sm:hidden">Layout</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={handleBackToChecklists}
+                      className="flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span className="hidden sm:inline">Back to List</span>
+                      <span className="sm:hidden">Back</span>
+                    </button>
+                    {editingChecklist?.type && (
+                      <button
+                        onClick={handleSaveForm}
+                        className="flex items-center justify-center px-3 py-2 text-sm font-medium text-brand-dark bg-brand-accent border border-transparent rounded-lg hover:bg-brand-accent/90 focus:outline-none focus:ring-4 focus:ring-brand-accent transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        <span className="hidden sm:inline">Save</span>
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -680,30 +688,32 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   {activeTab === 'tours' && (
                     editingTour !== null ? 'Configure settings and steps for your interactive tour.' : 'Create and manage interactive tours.'
                   )}
-                                          {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
-                        {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
-                        {activeTab === 'settings' && 'Configure your plugin settings.'}
-                        {activeTab === 'license' && 'Manage your license activation.'}
+                  {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
+                  {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
+                  {activeTab === 'settings' && 'Configure your plugin settings.'}
+                  {activeTab === 'license' && 'Manage your license activation.'}
                 </p>
               </div>
 
-              {/* Bottom row - Secondary actions (show when on add-new tab) */}
+              {/* Bottom row - Secondary actions (show when on add-new classic checklist) */}
               {activeTab === 'add-new' && (
                 <div className="flex items-center justify-center gap-2 px-4 pb-3 border-t border-gray-200 dark:border-gray-600 pt-3">
-                  <button
-                    onClick={handleLayoutToggle}
-                    className="flex items-center justify-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                  >
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {layoutMode === 'stacked' ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                      )}
-                    </svg>
-                    <span className="hidden sm:inline">{layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}</span>
-                    <span className="sm:hidden">Layout</span>
-                  </button>
+                  {editingChecklist?.type === 'classic' && (
+                    <button
+                      onClick={handleLayoutToggle}
+                      className="flex items-center justify-center px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {layoutMode === 'stacked' ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                        )}
+                      </svg>
+                      <span className="hidden sm:inline">{layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}</span>
+                      <span className="sm:hidden">Layout</span>
+                    </button>
+                  )}
                   
                   <button
                     onClick={handleBackToChecklists}
