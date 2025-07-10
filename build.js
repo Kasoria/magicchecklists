@@ -61,11 +61,6 @@ const excludePatterns = [
   'jsconfig.json'
 ];
 
-// Files to exclude specifically from includes directory
-const excludeIncludeFiles = [
-  'class-mcl-react-dev.php' // Development-only React class
-];
-
 console.log(`🚀 Building MagicChecklists v${PLUGIN_VERSION}...`);
 
 // Check if package.json version matches plugin file
@@ -207,12 +202,6 @@ function copyDirectoryRecursively(sourceDir, targetDir, relativePath = '') {
     // Special handling for the main src directory (only exclude if at root level)
     if (item === 'src' && relativePath === '') {
       continue; // Exclude only the main React src directory
-    }
-    
-    // Exclude specific files from includes directory
-    if (relativePath === 'includes' && excludeIncludeFiles.includes(item)) {
-      console.log(`  🚫 Excluding development file: includes/${item}`);
-      continue;
     }
     
     // Skip .DS_Store files everywhere
