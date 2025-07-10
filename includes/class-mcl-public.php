@@ -82,7 +82,20 @@ class MCL_Public {
      * Determine if assets should be loaded for the current page
      */
     public function should_load_assets() {
-        // for these posts (either directly here or within has_permission) should be efficient.
+        
+        // Check for tour mode parameters first - if present, always load assets for tours
+        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        
+        // Check for active tours that match the current context
+        if (class_exists('MCL_Tour_CPT')) {
+            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
+                return true;
+            }
+        }
+        
         $active_checklists = get_posts(array(
             'post_type' => 'mcl_checklist',
             'meta_key' => '_mcl_active',
@@ -94,24 +107,36 @@ class MCL_Public {
             return false; // No active checklists, so no assets to load.
         }
 
+        // Debug current user context
+        $current_user_id = get_current_user_id();
+        $is_logged_in = is_user_logged_in();
+        $user_roles = $is_logged_in ? wp_get_current_user()->roles : array();
+
         foreach ($active_checklists as $checklist_post_obj) {
             $checklist_id = $checklist_post_obj->ID;
+            $checklist_title = $checklist_post_obj->post_title;
+
+            // Debug checklist settings
+            $public_access = get_post_meta($checklist_id, '_mcl_public_access', true);
+            $access_roles = get_post_meta($checklist_id, '_mcl_access_roles', true) ?: array();
+            $access_users = get_post_meta($checklist_id, '_mcl_access_users', true) ?: array();
+            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+            $trigger_button = get_post_meta($checklist_id, '_mcl_trigger_button', true);
 
             // First, check if the user has permission to view this specific checklist.
-            if (!$this->permissions->has_permission($checklist_id, 'view')) {
+            $has_permission = $this->permissions->has_permission($checklist_id, 'view');
+            
+            if (!$has_permission) {
                 continue;
             }
 
             // Check if the drawer is disabled for this checklist via shortcode settings.
-            // This is an external call; assuming MCL_Admin class handles any caching for its settings if needed.
             $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
                 continue;
             }
 
             // Now check the specific loading conditions for this checklist.
-            // These get_post_meta calls should hit the WP object cache.
-            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
             if ($load_everywhere) {
                 return true; // Found a reason to load assets, no need to check further.
             }
@@ -133,6 +158,7 @@ class MCL_Public {
                 if (empty($allowed_pages) && empty($allowed_urls)) {
                     return true;
                 }
+            } else {
             }
         }
 
@@ -585,6 +611,17 @@ class MCL_Public {
      * Returns an array of [ 'id' => checklist_id, 'theme' => theme_value ]
      */
     private function get_visible_checklists_with_theme() {
+        // First check if tours are active - tours don't show floating buttons but indicate assets should be loaded
+        if (class_exists('MCL_Tour_CPT')) {
+            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+            $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+            $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+            
+            if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
+
+            }
+        }
         $query_args_base = array(
             'post_type' => 'mcl_checklist',
             'meta_query' => array(
@@ -762,29 +799,6 @@ class MCL_Public {
         if (current_user_can('upload_files')) {
             wp_enqueue_media();
         }
-
-        $is_bricks = false;
-        $is_bricks_iframe = false;
-        if (isset($_GET['bricks']) || 
-            (function_exists('bricks_is_builder') && bricks_is_builder())) {
-            $is_bricks = true;
-            if (function_exists('bricks_is_builder_iframe') && bricks_is_builder_iframe()) {
-                $is_bricks_iframe = true;
-            }
-        }
-
-        if ($is_bricks) {
-            wp_enqueue_script(
-                'mcl-window-checker',
-                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/modules/mcl-bricks-iframe-checker.js',
-                array(),
-                MAGIC_CHECKLISTS_VERSION,
-                true
-            );
-            if ($is_bricks_iframe) {
-                return;
-            }
-        }
     
         // Use the new method to get visible checklists with their themes
         $visible_checklists_for_theme = $this->get_visible_checklists_with_theme();
@@ -885,6 +899,17 @@ class MCL_Public {
      * Get shortcuts only for accessible checklists
      */
     private function get_accessible_shortcuts() {
+        // Check if tours are active first - tours might need shortcuts too
+        if (class_exists('MCL_Tour_CPT')) {
+            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
+            $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+            $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+            
+            if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
+
+            }
+        }
         global $wpdb;
 
         // Expanded list of meta keys to fetch
