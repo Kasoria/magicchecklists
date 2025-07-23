@@ -132,18 +132,77 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
     const handleTouchStart = (e) => {
       const touch = e.touches[0]
-      handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY, target: touch.target, preventDefault: () => e.preventDefault() })
-      document.addEventListener('touchmove', handleTouchMove)
+      const target = touch.target
+      
+      // Only start dragging when clicking on the wrapper element
+      const wrapperEl = container.querySelector('.mcl-speed-dial-wrapper') || container.querySelector('.mcl-single-button-wrapper')
+      if (!wrapperEl || !wrapperEl.contains(target)) return
+
+      // Store initial touch info without preventing defaults yet
+      isDragging = false
+      startX = touch.clientX
+      startY = touch.clientY
+      const rect = container.getBoundingClientRect()
+      origLeft = rect.left
+      origTop = rect.top
+      moved = false
+
+      // Set up temporary listeners for this touch session
+      document.addEventListener('touchmove', handleTouchMove, { passive: false })
       document.addEventListener('touchend', handleTouchEnd)
     }
 
     const handleTouchMove = (e) => {
       const touch = e.touches[0]
-      handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY })
+      const dx = touch.clientX - startX
+      const dy = touch.clientY - startY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      // Only start dragging if user moves more than threshold (10px)
+      if (!isDragging && distance > 10) {
+        isDragging = true
+        container.classList.add('mcl-dragging')
+        e.preventDefault() // Now prevent scrolling since we're dragging
+      }
+
+      if (isDragging) {
+        moved = true
+        const newLeft = origLeft + dx
+        const newTop = origTop + dy
+        const { width, height } = container.getBoundingClientRect()
+        const maxLeft = window.innerWidth - width
+        const maxTop = window.innerHeight - height
+        
+        let constrainedLeft = newLeft
+        let constrainedTop = newTop
+        
+        if (constrainedLeft < 0) constrainedLeft = 0
+        else if (constrainedLeft > maxLeft) constrainedLeft = maxLeft
+        if (constrainedTop < 0) constrainedTop = 0
+        else if (constrainedTop > maxTop) constrainedTop = maxTop
+        
+        container.style.left = `${constrainedLeft}px`
+        container.style.top = `${constrainedTop}px`
+        container.style.right = 'auto'
+        container.style.bottom = 'auto'
+      }
     }
 
     const handleTouchEnd = () => {
-      handleMouseUp()
+      if (isDragging) {
+        container.classList.remove('mcl-dragging')
+        if (moved) {
+          const swallowClick = (evt) => {
+            evt.preventDefault()
+            evt.stopPropagation()
+            container.removeEventListener('click', swallowClick, true)
+          }
+          container.addEventListener('click', swallowClick, true)
+        }
+      }
+      
+      isDragging = false
+      moved = false
       document.removeEventListener('touchmove', handleTouchMove)
       document.removeEventListener('touchend', handleTouchEnd)
     }

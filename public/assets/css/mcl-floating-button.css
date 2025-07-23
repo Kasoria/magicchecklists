@@ -104,7 +104,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 .mcl-speed-dial-wrapper[data-draggable="true"] {
     cursor: grab;
     user-select: none;
-    touch-action: none;
+    touch-action: manipulation;
 }
 
 /* ============================================================
@@ -164,9 +164,11 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     transition: all 0.2s ease !important;
 }
 
-.mcl-speed-dial-item .mcl-speed-dial-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+@media (hover: hover) {
+    .mcl-speed-dial-item .mcl-speed-dial-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    }
 }
 
 /* ============================================================
@@ -192,7 +194,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 .mcl-single-button-wrapper[data-draggable="true"] {
     cursor: grab;
     user-select: none;
-    touch-action: none;
+    touch-action: manipulation;
 }
 
 .mcl-single-floating-button {
@@ -207,9 +209,11 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     transition: all 0.2s ease !important;
 }
 
-.mcl-single-floating-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+@media (hover: hover) {
+    .mcl-single-floating-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
 }
 
 /* ============================================================
@@ -351,6 +355,8 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     .mcl-speed-dial-container {
         /* Reduce spacing on mobile */
     }
+    
+    /* Touch experience improvements handled by global hover media queries */
     
     .mcl-speed-dial-container.mcl-multi-fab.position-bottom-right,
     .mcl-speed-dial-container.mcl-multi-fab.position-bottom-left,
