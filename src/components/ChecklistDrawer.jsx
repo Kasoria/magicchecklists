@@ -749,7 +749,10 @@ const useTourIntegration = () => {
     window.location.href = tourUrl
   }, [makeRequest])
 
-  return { checkTourConnections, startTourFromConnection }
+  return useMemo(() => ({ 
+    checkTourConnections, 
+    startTourFromConnection 
+  }), [checkTourConnections, startTourFromConnection])
 }
 
 // Content editing utilities
@@ -1514,6 +1517,7 @@ const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
 
 // Drawer component – theme is determined per-checklist but falls back to provided default
 const ChecklistDrawer = ({ theme = 'light' }) => {
+  
   // Track the active theme of the *currently open* checklist
   const [drawerTheme, setDrawerTheme] = useState(theme)
 
@@ -1589,7 +1593,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const imageManager = useImageManager(canEdit, currentChecklistId, items, title, setItems)
   const linkManager = useLinkManager()
   const contentEditing = useContentEditing()
-  const tourIntegration = useTourIntegration()
+  const { checkTourConnections, startTourFromConnection } = useTourIntegration()
 
   // Check tour connections for all items once when checklist loads
   const checkAllItemTourConnections = useCallback(async (checklistId, itemList) => {
@@ -1604,7 +1608,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       // Check each item for tour connections
       for (const item of itemList) {
         try {
-          const connections = await tourIntegration.checkTourConnections(checklistId, item.id)
+          const connections = await checkTourConnections(checklistId, item.id)
           if (connections.length > 0) {
             connectedItems.add(item.id)
           }
@@ -1618,19 +1622,19 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       console.error('Error checking tour connections:', error)
       setItemsWithTourConnections(new Set())
     }
-  }, [toursEnabled, tourIntegration])
+  }, [toursEnabled, checkTourConnections])
 
   // Simple tour button handler
   const handleTourButtonClick = useCallback(async (itemId) => {
     try {
-      const connections = await tourIntegration.checkTourConnections(currentChecklistId, itemId)
+      const connections = await checkTourConnections(currentChecklistId, itemId)
       if (connections.length > 0) {
-        await tourIntegration.startTourFromConnection(connections)
+        await startTourFromConnection(connections)
       }
     } catch (error) {
       console.error('Error starting tour:', error)
     }
-  }, [currentChecklistId, tourIntegration])
+  }, [currentChecklistId, checkTourConnections, startTourFromConnection])
 
   // Colours depend on the live theme (light / dark / custom)
   const themeColors = useMemo(() => getThemeColors(drawerTheme), [drawerTheme])
@@ -1834,25 +1838,23 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const [activeChecklists, setActiveChecklists] = useState([])
   const [currentIndex, setCurrentIndex] = useState(-1)
 
-  // Get active checklists for navigation
-  const getActiveChecklists = useCallback(() => {
+  // Initialize active checklists once on mount
+  useEffect(() => {
     try {
-      if (!activeChecklists.length) {
-        const shortcuts = window.mcl_checklists?.shortcuts || {}
-        const checklists = Object.entries(shortcuts)
-          .filter(([id, data]) => data && id)
-          .map(([id]) => id)
-          .sort((a, b) => parseInt(a) - parseInt(b))
-        
-        setActiveChecklists(checklists)
-        return checklists
-      }
-      return activeChecklists
+      const shortcuts = window.mcl_checklists?.shortcuts || {}
+      const checklists = Object.entries(shortcuts)
+        .filter(([id, data]) => data && id)
+        .map(([id]) => id)
+        .sort((a, b) => parseInt(a) - parseInt(b))
+      
+      setActiveChecklists(checklists)
     } catch (error) {
       console.error('Error getting active checklists:', error)
-      return []
     }
-  }, [activeChecklists])
+  }, [])
+
+  // Use activeChecklists directly - it's already stable
+  const memoizedActiveChecklists = activeChecklists
 
   // Core checklist operations
   const closeDrawer = useCallback(() => {
@@ -2039,7 +2041,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       return
     }
 
-    const checklists = getActiveChecklists()
+    const checklists = memoizedActiveChecklists
     
     if (checklists.length <= 1) {
       return
@@ -2061,7 +2063,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     const nextChecklistId = checklists[newIndex]
     setCurrentIndex(newIndex)
     await loadChecklist(nextChecklistId)
-  }, [currentIndex, getActiveChecklists, currentChecklistId, checkRateLimit, loadChecklist])
+  }, [currentIndex, memoizedActiveChecklists, currentChecklistId, checkRateLimit, loadChecklist])
 
   // Listen for tour-initiated checklist item changes
   useEffect(() => {
@@ -2449,7 +2451,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         newItemElement.focus()
       }
     }, 0)
-  }, [canEdit, locked, items.length, currentChecklistId, title, saveChecklistData, checklistData])
+  }, [canEdit, locked, items, currentChecklistId, title, saveChecklistData, checklistData])
 
   const removeItem = useCallback((itemId) => {
     const target = items.find(i => i.id === itemId)
@@ -2542,7 +2544,9 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   // Floating button management - prevent duplicate bindings
   const bindFloatingButtons = useCallback(() => {
-    if (bindingRef.current) return // Prevent duplicate bindings
+    if (bindingRef.current) {
+      return // Prevent duplicate bindings
+    }
     
     bindingRef.current = true
     
@@ -2555,7 +2559,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       
       const checklistId = e.currentTarget.getAttribute('data-checklist-id')
       if (checklistId) {
-        await toggleChecklist(checklistId)
+        // Use the current toggleChecklist function from the bridge instead of the dependency
+        if (window.mclDrawer && window.mclDrawer.toggleChecklist) {
+          await window.mclDrawer.toggleChecklist(checklistId)
+        }
       }
     }
     
@@ -2567,7 +2574,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     setTimeout(() => {
       bindingRef.current = false
     }, 1000)
-  }, [toggleChecklist])
+  }, []) // Remove toggleChecklist dependency to prevent infinite loop
 
   // Click outside handler - fixed to prevent interference
   useEffect(() => {
@@ -2759,9 +2766,16 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
   }, [addNewItemAfter])
 
+  // Track if bridge is already set up to prevent multiple setups
+  const bridgeSetupRef = useRef(false)
+  
   // Expose methods globally for compatibility - only set up once
   useEffect(() => {
-    if (window.mclDrawer) return // Already set up
+    if (window.mclDrawer || bridgeSetupRef.current) {
+      return // Already set up
+    }
+    
+    bridgeSetupRef.current = true
     
     const drawerBridge = {
       // Toggle checklist (main method used by floating buttons)
@@ -2822,17 +2836,23 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     window.mclDrawer = drawerBridge
 
     // Auto-bind floating buttons when this component mounts
-    setTimeout(() => {
+    // Use a delayed binding to allow FloatingButtons to render first
+    const bindingTimeout = setTimeout(() => {
       bindFloatingButtons()
       drawerBridge.checkDOM()
     }, 100)
-
-    // Clean up on unmount
-    return () => {
+    
+    // Clean up the timeout if component unmounts before it fires
+    const cleanup = () => {
+      clearTimeout(bindingTimeout)
       window.removeEventListener('mclChecklistItemChanged', globalTourEventHandler)
       delete window.mclDrawerBridge
       delete window.mclDrawer
+      bridgeSetupRef.current = false
     }
+
+    // Clean up on unmount
+    return cleanup
   }, []) // Empty dependency array - only run once
 
   // Add save deadline function
@@ -3032,7 +3052,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
           {/* Drawer header */}
           <div className="flex-shrink-0">
-            {getActiveChecklists().length > 1 && window.mcl_checklists?.settings?.enable_navigation ? (
+            {memoizedActiveChecklists.length > 1 && window.mcl_checklists?.settings?.enable_navigation ? (
               <div className="flex items-center gap-2">
                 <button 
                   className={`p-2 rounded-lg ${themeColors.textSecondary} hover:${themeColors.surface} transition-colors disabled:opacity-50 flex-shrink-0 ${themeColors.surface}`}
