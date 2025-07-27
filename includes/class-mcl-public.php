@@ -607,6 +607,87 @@ class MCL_Public {
     }
 
     /**
+     * Get ALL active checklists that should be loaded on the current page.
+     * Returns an array of [ 'id' => checklist_id, 'theme' => theme_value ]
+     */
+    private function get_all_active_checklists_for_page() {
+        $query_args_base = array(
+            'post_type' => 'mcl_checklist',
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_active',
+                    'value' => '1'
+                )
+            ),
+            'posts_per_page' => -1,
+        );
+    
+        if ($this->is_inside_pagebuilder()) {
+            $query_args_base['meta_query'][] = array(
+                'relation' => 'OR',
+                array(
+                    'key' => '_mcl_disable_in_builders',
+                    'compare' => 'NOT EXISTS'
+                ),
+                array(
+                    'key' => '_mcl_disable_in_builders',
+                    'value' => '0'
+                )
+            );
+        }
+    
+        $active_checklists_posts = get_posts($query_args_base);
+        $visible_checklists_data = [];
+    
+        foreach ($active_checklists_posts as $checklist_post) {
+            $checklist_id = $checklist_post->ID;
+
+            // Check view permission
+            if (!$this->has_permission($checklist_id, 'view')) {
+                continue; 
+            }
+
+            // Check if the drawer is disabled for this checklist via shortcode settings
+            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            if (!empty($shortcode_settings['disable_drawer'])) {
+                continue;
+            }
+
+            // Check loading conditions
+            $is_visible_based_on_conditions = false;
+            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+
+            if ($load_everywhere) {
+                $is_visible_based_on_conditions = true;
+            } else {
+                $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+                if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
+                    $is_visible_based_on_conditions = true;
+                } else {
+                    $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+                    if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
+                        $is_visible_based_on_conditions = true;
+                    } else {
+                        // For frontend pages, show if no specific restrictions are set
+                        if (!is_admin() && empty($allowed_pages) && empty($allowed_urls)) {
+                            $is_visible_based_on_conditions = true;
+                        }
+                    }
+                }
+            }
+
+            if ($is_visible_based_on_conditions) {
+                $theme = get_post_meta($checklist_id, '_mcl_theme', true);
+                $visible_checklists_data[] = [
+                    'id' => $checklist_id,
+                    'theme' => $theme ?: 'light'
+                ];
+            }
+        }
+        return $visible_checklists_data;
+    }
+    
+    /**
      * Get active checklists that should show floating buttons, along with their theme.
      * Returns an array of [ 'id' => checklist_id, 'theme' => theme_value ]
      */
@@ -1574,8 +1655,8 @@ class MCL_Public {
                 }
             }
             
-            // Get active checklists with trigger button enabled
-            $active_checklists = $this->get_visible_checklists_with_theme();
+            // Get ALL active checklists that should be loaded on this page
+            $active_checklists = $this->get_all_active_checklists_for_page();
             
             // Format the checklists for React
             $formatted_checklists = array();
@@ -1593,6 +1674,7 @@ class MCL_Public {
                 $short_title = get_post_meta($checklist_id, '_mcl_short_title', true) ?: '';
                 $button_position = get_post_meta($checklist_id, '_mcl_button_position', true) ?: 'bottom-right';
                 $theme = get_post_meta($checklist_id, '_mcl_theme', true) ?: 'light';
+                $trigger_button = get_post_meta($checklist_id, '_mcl_trigger_button', true);
                 
                 $priority_colors = MCL_Priority_Utils::get_priority_colors();
                 $priority_levels = MCL_Priority_Utils::get_priority_levels();
@@ -1610,7 +1692,8 @@ class MCL_Public {
                     'checklist_icon_preset' => get_post_meta($checklist_id, '_mcl_checklist_icon_preset', true) ?: 'checklist-1',
                     'checklist_icon_custom' => get_post_meta($checklist_id, '_mcl_checklist_icon_custom', true) ?: '',
                     'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true) ?: '#ffffff',
-                    'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true) ?: '#1a1a1a'
+                    'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true) ?: '#1a1a1a',
+                    'has_floating_button' => $trigger_button == '1'
                 );
             }
             
