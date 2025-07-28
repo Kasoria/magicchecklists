@@ -923,6 +923,11 @@ const useGlobalKeyboardShortcuts = (toggleChecklist, isClosing) => {
         return
       }
       
+      // Don't process shortcuts if shortcut input field is active
+      if (window.mclShortcutInputActive) {
+        return
+      }
+      
       for (const [checklistId, checklistData] of Object.entries(activeChecklists)) {
         if (matchesShortcut(event, checklistData.shortcut)) {
           event.preventDefault()

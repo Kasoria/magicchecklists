@@ -287,10 +287,30 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     }
   }
 
+  const handleShortcutInputFocus = () => {
+    // Signal to global shortcut listeners to temporarily disable
+    window.mclShortcutInputActive = true
+  }
+
+  const handleShortcutInputBlur = () => {
+    // Re-enable global shortcut listeners
+    window.mclShortcutInputActive = false
+  }
+
   const handleShortcutCapture = async (e) => {
     if (e.key === 'Tab' || e.key === 'Enter') return
     
+    // Only process keydown events to avoid duplicate processing
+    if (e.type !== 'keydown') return
+    
+    // Aggressively prevent the event from propagating to global shortcut listeners
     e.preventDefault()
+    e.stopPropagation()
+    
+    // Access the native event for stopImmediatePropagation if available
+    if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
+      e.nativeEvent.stopImmediatePropagation()
+    }
     
     const keyParts = []
     if (e.ctrlKey) keyParts.push('Ctrl')
@@ -875,11 +895,16 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           id="keyboard_shortcut"
           value={formData.keyboard_shortcut}
           onKeyDown={handleShortcutCapture}
-          color={errors.keyboard_shortcut ? 'failure' : 'gray'}
+          onKeyUp={handleShortcutCapture}
+          onFocus={handleShortcutInputFocus}
+          onBlur={handleShortcutInputBlur}
+          color={errors.keyboard_shortcut || shortcutError ? 'failure' : 'gray'}
           placeholder="Click and press your desired key combination"
           readOnly
         />
-        {errors.keyboard_shortcut && <HelperText color="failure">{errors.keyboard_shortcut}</HelperText>}
+        {(errors.keyboard_shortcut || shortcutError) && (
+          <HelperText color="failure">{errors.keyboard_shortcut || shortcutError}</HelperText>
+        )}
       </div>
 
       {/* Trigger Methods */}

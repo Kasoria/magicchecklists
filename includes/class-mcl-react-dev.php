@@ -676,6 +676,7 @@ class MCL_React_Dev {
                 'mcl_toggle_active' => wp_create_nonce( 'mcl_toggle_active' ),
                 'mcl_save_theme_mode' => wp_create_nonce( 'mcl_save_theme_mode' ),
                 'mcl_save_checklist' => wp_create_nonce( 'mcl_save_checklist' ),
+                'checkShortcut' => wp_create_nonce( 'mcl_check_shortcut_nonce' ),
                 'inviteLinks' => wp_create_nonce( 'mcl_invite_links_nonce' ),
                 'testWebhook' => wp_create_nonce( 'mcl_test_webhook' ),
                 'mcl_import_checklist' => wp_create_nonce( 'mcl_import_checklist' ),
