@@ -992,7 +992,7 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
   if (!isOpen) return null
 
   return (
-    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
+    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999] p-4" onClick={onClose}>
       <div className={`mcl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
