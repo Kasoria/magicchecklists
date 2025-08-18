@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 class MCL_DB_Manager {
     private static $instance = null;
-    private $db_version = '1.5'; // Increment version for new tables
+    private $db_version = '1.7'; // Increment version for task comments table
     
     public static function get_instance() {
         if (self::$instance === null) {
@@ -118,6 +118,65 @@ class MCL_DB_Manager {
             KEY instance_id (instance_id)
         ) $charset_collate;";
         dbDelta($sql);
+
+        // Create Kanban board state table
+        $kanban_state_table = $wpdb->prefix . 'mcl_kanban_state';
+        $sql = "CREATE TABLE IF NOT EXISTS $kanban_state_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            item_id bigint(20) UNSIGNED NOT NULL,
+            column_id varchar(100) NOT NULL,
+            position int(11) NOT NULL DEFAULT 0,
+            assigned_user_id bigint(20) UNSIGNED DEFAULT NULL,
+            due_date datetime DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY item_checklist (item_id, checklist_id),
+            KEY checklist_id (checklist_id),
+            KEY column_id (column_id),
+            KEY assigned_user_id (assigned_user_id),
+            KEY position (position)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create Kanban columns configuration table
+        $kanban_columns_table = $wpdb->prefix . 'mcl_kanban_columns';
+        $sql = "CREATE TABLE IF NOT EXISTS $kanban_columns_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            column_id varchar(100) NOT NULL,
+            title varchar(255) NOT NULL,
+            color varchar(7) DEFAULT '#3B82F6',
+            position int(11) NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY checklist_column (checklist_id, column_id),
+            KEY checklist_id (checklist_id),
+            KEY position (position)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create task comments table
+        $task_comments_table = $wpdb->prefix . 'mcl_task_comments';
+        $sql = "CREATE TABLE IF NOT EXISTS $task_comments_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            item_id bigint(20) UNSIGNED NOT NULL,
+            user_id bigint(20) UNSIGNED DEFAULT NULL,
+            user_name varchar(255) NOT NULL,
+            user_email varchar(255) NOT NULL,
+            comment_content longtext NOT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY checklist_id (checklist_id),
+            KEY item_id (item_id),
+            KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        dbDelta($sql);
     
         // Log any errors silently instead of outputting them
         if ($wpdb->last_error) {
@@ -198,6 +257,21 @@ class MCL_DB_Manager {
                 }
             }
         }
+
+        if (version_compare($from_version, '1.6', '<')) {
+            // Add Kanban tables
+            $this->create_tables();
+            
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 1.6 - Kanban tables created');
+        }
+        if (version_compare($from_version, '1.7', '<')) {
+            // Add task comments table
+            $this->create_tables();
+            
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 1.7 - Task comments table created');
+        }
     }
 
     public function uninstall() {
@@ -208,7 +282,10 @@ class MCL_DB_Manager {
             'mcl_invite_links',
             'mcl_notification_settings',
             'mcl_notification_queue',
-            'mcl_publisher_requirements'
+            'mcl_publisher_requirements',
+            'mcl_kanban_state',
+            'mcl_kanban_columns',
+            'mcl_task_comments'
         );
 
         foreach ($tables as $table) {
@@ -226,7 +303,10 @@ class MCL_DB_Manager {
             'mcl_invite_links' => 'Invite links table',
             'mcl_notification_settings' => 'Notification settings table',
             'mcl_notification_queue' => 'Notification queue table',
-            'mcl_publisher_requirements' => 'Publisher requirements table'
+            'mcl_publisher_requirements' => 'Publisher requirements table',
+            'mcl_kanban_state' => 'Kanban state table',
+            'mcl_kanban_columns' => 'Kanban columns table',
+            'mcl_task_comments' => 'Task comments table'
         );
         
         $result = array(

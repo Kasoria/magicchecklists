@@ -688,6 +688,7 @@ class MCL_React_Dev {
                 'mcl_get_comprehensive_analytics' => wp_create_nonce( 'mcl_get_comprehensive_analytics' ),
                 'mcl_cleanup_test_data' => wp_create_nonce( 'mcl_cleanup_test_data' ),
                 'mcl_tour_admin' => wp_create_nonce( 'mcl_tour_admin' ),
+                'mcl_kanban' => wp_create_nonce( 'mcl_admin_nonce' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
             'savedTheme' => get_user_meta( get_current_user_id(), 'mcl_theme', true ),

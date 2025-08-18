@@ -1430,13 +1430,22 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                 >
                   Previous
                 </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={currentStep === totalSteps}
-                  className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
-                >
-                  Next
-                </Button>
+                {currentStep === totalSteps ? (
+                  <Button
+                    onClick={handleSubmit}
+                    className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
+                    type="submit"
+                  >
+                    Save
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
+                  >
+                    Next
+                  </Button>
+                )}
               </div>
             </Card>
           </div>

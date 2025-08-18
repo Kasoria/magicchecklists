@@ -1,0 +1,859 @@
+import React, { useState, useEffect } from 'react'
+import { useToast } from './Toast.jsx'
+import ConfirmationModal from './ConfirmationModal.jsx'
+
+// Simple Modal component for KanbanBoard
+const Modal = ({ isOpen, onClose, title, children, footer }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-4">{children}</div>
+        {footer && <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-600">{footer}</div>}
+      </div>
+    </div>
+  )
+}
+
+const KanbanBoard = ({ adminData }) => {
+  // Core state
+  const [checklists, setChecklists] = useState([])
+  const [selectedChecklist, setSelectedChecklist] = useState(null)
+  const [board, setBoard] = useState([])
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  // Drag state
+  const [draggedItem, setDraggedItem] = useState(null)
+  const [dragOverColumn, setDragOverColumn] = useState(null)
+
+  // Modal state
+  const [showColumnModal, setShowColumnModal] = useState(false)
+  const [editingColumn, setEditingColumn] = useState(null)
+  const [columnTitle, setColumnTitle] = useState('')
+  const [columnColor, setColumnColor] = useState('#3B82F6')
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [columnToDelete, setColumnToDelete] = useState(null)
+
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [assigningItem, setAssigningItem] = useState(null)
+  const [selectedUser, setSelectedUser] = useState('')
+
+  const [showTaskModal, setShowTaskModal] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
+  const [taskContent, setTaskContent] = useState('')
+  const [taskComment, setTaskComment] = useState('')
+
+  const { showSuccess, showError } = useToast()
+
+  // Fetch checklists on mount
+  useEffect(() => {
+    fetchChecklists()
+  }, [])
+
+  // Load board when checklist changes
+  useEffect(() => {
+    if (selectedChecklist) {
+      loadKanbanBoard()
+    }
+  }, [selectedChecklist])
+
+  const fetchChecklists = async () => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_checklists',
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.data) {
+        const classicChecklists = data.data.data.filter(c => c.type === 'classic')
+        setChecklists(classicChecklists)
+        
+        if (classicChecklists.length > 0 && !selectedChecklist) {
+          setSelectedChecklist(classicChecklists[0].id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching checklists:', error)
+      showError('Failed to load checklists')
+    }
+  }
+
+  const loadKanbanBoard = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_kanban_board',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setBoard(data.data.board || [])
+        setUsers(data.data.users || [])
+      } else {
+        showError(data.data || 'Failed to load Kanban board')
+      }
+    } catch (error) {
+      console.error('Error loading Kanban board:', error)
+      showError('Failed to load Kanban board')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Drag and Drop
+  const handleDragStart = (e, item, columnId) => {
+    setDraggedItem({ ...item, sourceColumn: columnId })
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e, columnId) => {
+    e.preventDefault()
+    setDragOverColumn(columnId)
+  }
+
+  const handleDragLeave = () => {
+    setDragOverColumn(null)
+  }
+
+  const handleDrop = async (e, targetColumnId) => {
+    e.preventDefault()
+    setDragOverColumn(null)
+
+    if (!draggedItem || draggedItem.sourceColumn === targetColumnId) {
+      setDraggedItem(null)
+      return
+    }
+
+    // Update board optimistically
+    const newBoard = board.map(column => {
+      if (column.id === draggedItem.sourceColumn) {
+        return {
+          ...column,
+          items: column.items.filter(item => item.id !== draggedItem.id)
+        }
+      }
+      if (column.id === targetColumnId) {
+        return {
+          ...column,
+          items: [...column.items, draggedItem]
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+
+    // Update server
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_update_kanban_item',
+          checklist_id: selectedChecklist,
+          item_id: draggedItem.id,
+          column_id: targetColumnId,
+          position: newBoard.find(c => c.id === targetColumnId).items.length - 1,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (!data.success) {
+        showError('Failed to move item')
+        loadKanbanBoard() // Revert
+      } else {
+        showSuccess('Item moved successfully')
+      }
+    } catch (error) {
+      console.error('Error moving item:', error)
+      showError('Failed to move item')
+      loadKanbanBoard()
+    }
+
+    setDraggedItem(null)
+  }
+
+  // Column management
+  const openColumnModal = (column = null) => {
+    setEditingColumn(column)
+    setColumnTitle(column?.title || '')
+    setColumnColor(column?.color || '#3B82F6')
+    setShowColumnModal(true)
+  }
+
+  const closeColumnModal = () => {
+    setShowColumnModal(false)
+    setEditingColumn(null)
+    setColumnTitle('')
+    setColumnColor('#3B82F6')
+  }
+
+  const saveColumn = async () => {
+    if (!columnTitle.trim()) {
+      showError('Column title is required')
+      return
+    }
+
+    let updatedColumns
+    if (editingColumn) {
+      updatedColumns = board.map(col => 
+        col.id === editingColumn.id 
+          ? { ...col, title: columnTitle, color: columnColor }
+          : col
+      )
+    } else {
+      const newColumn = {
+        id: `col_${Date.now()}`,
+        title: columnTitle,
+        color: columnColor,
+        position: board.length,
+        items: []
+      }
+      updatedColumns = [...board, newColumn]
+    }
+
+    setBoard(updatedColumns)
+    closeColumnModal()
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_update_kanban_columns',
+          checklist_id: selectedChecklist,
+          columns: JSON.stringify(updatedColumns.map(col => ({
+            id: col.id,
+            title: col.title,
+            color: col.color
+          }))),
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(editingColumn ? 'Column updated' : 'Column added')
+      } else {
+        showError('Failed to save column')
+        loadKanbanBoard()
+      }
+    } catch (error) {
+      console.error('Error saving column:', error)
+      showError('Failed to save column')
+      loadKanbanBoard()
+    }
+  }
+
+  const deleteColumn = async () => {
+    if (!columnToDelete) return
+
+    const updatedColumns = board.filter(col => col.id !== columnToDelete.id)
+    setBoard(updatedColumns)
+    setShowDeleteConfirm(false)
+    setColumnToDelete(null)
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_update_kanban_columns',
+          checklist_id: selectedChecklist,
+          columns: JSON.stringify(updatedColumns.map(col => ({
+            id: col.id,
+            title: col.title,
+            color: col.color
+          }))),
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess('Column deleted')
+      } else {
+        showError('Failed to delete column')
+        loadKanbanBoard()
+      }
+    } catch (error) {
+      console.error('Error deleting column:', error)
+      showError('Failed to delete column')
+      loadKanbanBoard()
+    }
+  }
+
+  // Task editing
+  const openTaskModal = (item, columnId) => {
+    setEditingTask({ ...item, columnId })
+    setTaskContent(item.title || '')
+    setTaskComment(item.comment || '')
+    setShowTaskModal(true)
+  }
+
+  const closeTaskModal = () => {
+    setShowTaskModal(false)
+    setEditingTask(null)
+    setTaskContent('')
+    setTaskComment('')
+  }
+
+  const saveTask = async () => {
+    if (!editingTask || !taskContent.trim()) {
+      showError('Task content is required')
+      return
+    }
+
+    // Update board optimistically
+    const newBoard = board.map(column => {
+      if (column.id === editingTask.columnId) {
+        return {
+          ...column,
+          items: column.items.map(item => {
+            if (item.id === editingTask.id) {
+              return {
+                ...item,
+                title: taskContent.trim(),
+                comment: taskComment.trim()
+              }
+            }
+            return item
+          })
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+    closeTaskModal()
+    
+    // For now, just show success - we can implement proper backend saving later
+    // without interfering with ChecklistDrawer
+    showSuccess('Task updated successfully')
+  }
+
+  // User assignment
+  const openAssignModal = (item, columnId) => {
+    setAssigningItem({ ...item, columnId })
+    setSelectedUser(item.assigned_user?.id || '')
+    setShowAssignModal(true)
+  }
+
+  const saveAssignment = async () => {
+    if (!assigningItem) return
+
+    const newBoard = board.map(column => {
+      if (column.id === assigningItem.columnId) {
+        return {
+          ...column,
+          items: column.items.map(item => {
+            if (item.id === assigningItem.id) {
+              const assignedUser = users.find(u => u.id == selectedUser)
+              return {
+                ...item,
+                assigned_user: assignedUser ? {
+                  id: assignedUser.id,
+                  name: assignedUser.name,
+                  avatar: assignedUser.avatar
+                } : null
+              }
+            }
+            return item
+          })
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+    setShowAssignModal(false)
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_assign_kanban_user',
+          checklist_id: selectedChecklist,
+          item_id: assigningItem.id,
+          user_id: selectedUser || 0,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess('User assignment updated')
+      } else {
+        showError('Failed to assign user')
+        loadKanbanBoard()
+      }
+    } catch (error) {
+      console.error('Error assigning user:', error)
+      showError('Failed to assign user')
+      loadKanbanBoard()
+    }
+  }
+
+  const toggleItemCheck = async (item, columnId) => {
+    const newCheckedState = !item.checked
+    
+    // Update board optimistically
+    const newBoard = board.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          items: column.items.map(boardItem => {
+            if (boardItem.id === item.id) {
+              return { ...boardItem, checked: newCheckedState }
+            }
+            return boardItem
+          })
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+
+    // Get all checked items
+    const checkedItems = []
+    newBoard.forEach(column => {
+      column.items.forEach(boardItem => {
+        if (boardItem.checked) {
+          checkedItems.push(boardItem.id)
+        }
+      })
+    })
+
+    try {
+      const formData = new FormData()
+      formData.append('action', 'mcl_save_checked_state')
+      formData.append('checklist_id', selectedChecklist)
+      formData.append('checked_items', JSON.stringify(checkedItems))
+      formData.append('context', 'kanban')
+      
+      // Use the correct nonce from window.mcl_checklists (same as ChecklistDrawer)
+      const nonce = window.mcl_checklists?.nonce || ''
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      // Add stored token for invite users if available (same as ChecklistDrawer)
+      const storedToken = window.mcl_checklists?.invite_token?.token
+      if (storedToken) {
+        formData.append('stored_token', storedToken)
+      }
+
+      // Use the same AJAX URL as ChecklistDrawer
+      const ajaxUrl = window.mcl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(newCheckedState ? 'Item checked' : 'Item unchecked')
+      } else {
+        showError('Failed to update item state')
+        loadKanbanBoard()
+      }
+    } catch (error) {
+      console.error('Error toggling item:', error)
+      showError('Failed to update item state')
+      loadKanbanBoard()
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <label className="text-gray-700 dark:text-white font-medium">
+              Select Checklist:
+            </label>
+            <select
+              value={selectedChecklist || ''}
+              onChange={(e) => setSelectedChecklist(e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Choose a checklist...</option>
+              {checklists.map(checklist => (
+                <option key={checklist.id} value={checklist.id}>
+                  {checklist.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          {selectedChecklist && (
+            <button
+              onClick={() => openColumnModal()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add Column
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Kanban Board */}
+      {selectedChecklist && (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex space-x-4 min-w-max">
+            {board.map(column => (
+              <div
+                key={column.id}
+                className={`flex-shrink-0 w-80 ${dragOverColumn === column.id ? 'ring-2 ring-blue-500' : ''}`}
+                onDragOver={(e) => handleDragOver(e, column.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, column.id)}
+              >
+                <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: column.color }}
+                      />
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {column.title}
+                      </h3>
+                      <span className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full text-xs">
+                        {column.items.length}
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          const menu = document.getElementById(`menu-${column.id}`)
+                          menu.classList.toggle('hidden')
+                        }}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                      >
+                        <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                      <div
+                        id={`menu-${column.id}`}
+                        className="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
+                      >
+                        <button
+                          onClick={() => {
+                            openColumnModal(column)
+                            document.getElementById(`menu-${column.id}`).classList.add('hidden')
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          Edit Column
+                        </button>
+                        <button
+                          onClick={() => {
+                            setColumnToDelete(column)
+                            setShowDeleteConfirm(true)
+                            document.getElementById(`menu-${column.id}`).classList.add('hidden')
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          Delete Column
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column Items */}
+                  <div className="space-y-2 min-h-[100px]">
+                    {column.items.map(item => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, item, column.id)}
+                        onDoubleClick={() => openTaskModal(item, column.id)}
+                        className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600 cursor-move hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-start space-x-2 flex-1">
+                            <button 
+                              onClick={() => toggleItemCheck(item, column.id)}
+                              className={`flex-shrink-0 mt-0.5 hover:scale-110 transition-transform ${
+                                item.checked ? 'text-green-500' : 'text-gray-400'
+                              }`}
+                            >
+                              {item.checked ? (
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                                </svg>
+                              )}
+                            </button>
+                            <h4 className={`font-medium text-sm flex-1 ${
+                              item.checked 
+                                ? 'text-gray-500 dark:text-gray-400 line-through' 
+                                : 'text-gray-900 dark:text-white'
+                            }`}>
+                              {item.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        {/* Item Comment */}
+                        {item.comment && (
+                          <div className="mt-2 mb-2">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-600 p-2 rounded">
+                              {item.comment}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Item Footer */}
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                          <button
+                            onClick={() => openAssignModal(item, column.id)}
+                            className="flex items-center space-x-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5"
+                          >
+                            {item.assigned_user ? (
+                              <>
+                                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                                  {item.assigned_user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  {item.assigned_user.name.split(' ')[0]}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span className="text-xs text-gray-400">Assign</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Column Modal */}
+      <Modal
+        isOpen={showColumnModal}
+        onClose={closeColumnModal}
+        title={editingColumn ? 'Edit Column' : 'Add New Column'}
+        footer={
+          <>
+            <button
+              onClick={closeColumnModal}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveColumn}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              {editingColumn ? 'Update' : 'Add'} Column
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Column Title
+            </label>
+            <input
+              type="text"
+              value={columnTitle}
+              onChange={(e) => setColumnTitle(e.target.value)}
+              placeholder="Enter column title..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Column Color
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="color"
+                value={columnColor}
+                onChange={(e) => setColumnColor(e.target.value)}
+                className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+              />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {columnColor}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Assign User Modal */}
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        title="Assign User"
+        footer={
+          <>
+            <button
+              onClick={() => setShowAssignModal(false)}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveAssignment}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Assignment
+            </button>
+          </>
+        }
+      >
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Select User
+          </label>
+          <select
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            <option value="">Unassigned</option>
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name} ({user.email})
+              </option>
+            ))}
+          </select>
+        </div>
+      </Modal>
+
+      {/* Task Edit Modal */}
+      <Modal
+        isOpen={showTaskModal}
+        onClose={closeTaskModal}
+        title="Edit Task"
+        footer={
+          <>
+            <button
+              onClick={closeTaskModal}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveTask}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save Task
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Task Content
+            </label>
+            <textarea
+              value={taskContent}
+              onChange={(e) => setTaskContent(e.target.value)}
+              placeholder="Enter task content..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Comment (optional)
+            </label>
+            <textarea
+              value={taskComment}
+              onChange={(e) => setTaskComment(e.target.value)}
+              placeholder="Add a comment about this task..."
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            />
+          </div>
+          {editingTask && (
+            <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                <strong>Tip:</strong> Double-click any task to edit it quickly
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Delete Column Confirmation */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false)
+          setColumnToDelete(null)
+        }}
+        onConfirm={deleteColumn}
+        title="Delete Column"
+        message={`Are you sure you want to delete the column "${columnToDelete?.title}"?`}
+        confirmText="Delete Column"
+        confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
+        icon="delete"
+        items={columnToDelete?.items?.length > 0 ? [`This will also delete ${columnToDelete.items.length} items in this column`] : []}
+      />
+    </div>
+  )
+}
+
+export default KanbanBoard

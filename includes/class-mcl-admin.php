@@ -39,6 +39,20 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_get_license_status', array($this, 'get_license_status'), 10);
         add_action('wp_ajax_mcl_activate_license', array($this, 'handle_license_activation'), 10);
         add_action('wp_ajax_mcl_deactivate_license', array($this, 'handle_license_deactivation'), 10);
+
+        // Kanban board AJAX handlers
+        add_action('wp_ajax_mcl_get_kanban_board', array($this, 'get_kanban_board'));
+        add_action('wp_ajax_mcl_update_kanban_item', array($this, 'update_kanban_item'));
+        add_action('wp_ajax_mcl_update_kanban_columns', array($this, 'update_kanban_columns'));
+        add_action('wp_ajax_mcl_assign_kanban_user', array($this, 'assign_kanban_user'));
+        add_action('wp_ajax_mcl_set_kanban_due_date', array($this, 'set_kanban_due_date'));
+        
+        // Task editing and comments AJAX handlers
+        add_action('wp_ajax_mcl_update_task_content', array($this, 'update_task_content'));
+        add_action('wp_ajax_mcl_get_task_comments', array($this, 'get_task_comments'));
+        add_action('wp_ajax_mcl_add_task_comment', array($this, 'add_task_comment'));
+        add_action('wp_ajax_mcl_update_task_comment', array($this, 'update_task_comment'));
+        add_action('wp_ajax_mcl_delete_task_comment', array($this, 'delete_task_comment'));
     }
 
     public function add_admin_menu() {
@@ -2730,4 +2744,682 @@ class MCL_Admin {
         
         return substr($license_key, 0, 5) . str_repeat('X', $length - 10) . substr($license_key, -5);
     }
+
+    /**
+     * Get Kanban board data for a checklist
+     */
+    public function get_kanban_board() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        
+        if (!$checklist_id) {
+            wp_send_json_error('Invalid checklist ID');
+        }
+
+        global $wpdb;
+        
+        // Get checklist items
+        $checklist = get_post($checklist_id);
+        if (!$checklist || $checklist->post_type !== 'mcl_checklist') {
+            wp_send_json_error('Checklist not found');
+        }
+
+        // Get items with steps
+        $items_data = get_post_meta($checklist_id, '_mcl_items', true);
+        if (!is_array($items_data)) {
+            $items_data = array();
+        }
+
+        // Get Kanban columns for this checklist (or create defaults)
+        $columns_table = $wpdb->prefix . 'mcl_kanban_columns';
+        $columns = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $columns_table WHERE checklist_id = %d ORDER BY position ASC",
+            $checklist_id
+        ));
+
+        // If no columns exist, create default columns based on steps
+        if (empty($columns)) {
+            $steps = get_post_meta($checklist_id, '_mcl_steps', true);
+            if (!is_array($steps) || empty($steps)) {
+                // Create default columns if no steps defined
+                $default_columns = array(
+                    array('column_id' => 'backlog', 'title' => 'Backlog', 'color' => '#6B7280'),
+                    array('column_id' => 'todo', 'title' => 'To Do', 'color' => '#3B82F6'),
+                    array('column_id' => 'in_progress', 'title' => 'In Progress', 'color' => '#F59E0B'),
+                    array('column_id' => 'review', 'title' => 'Review', 'color' => '#8B5CF6'),
+                    array('column_id' => 'done', 'title' => 'Done', 'color' => '#10B981')
+                );
+            } else {
+                // Create columns from steps
+                $default_columns = array();
+                $colors = array('#3B82F6', '#F59E0B', '#8B5CF6', '#10B981', '#EF4444', '#EC4899', '#6B7280');
+                $color_index = 0;
+                
+                foreach ($steps as $step_index => $step) {
+                    $default_columns[] = array(
+                        'column_id' => 'step_' . $step_index,
+                        'title' => $step,
+                        'color' => $colors[$color_index % count($colors)]
+                    );
+                    $color_index++;
+                }
+            }
+
+            // Insert default columns
+            foreach ($default_columns as $index => $column) {
+                $wpdb->insert(
+                    $columns_table,
+                    array(
+                        'checklist_id' => $checklist_id,
+                        'column_id' => $column['column_id'],
+                        'title' => $column['title'],
+                        'color' => $column['color'],
+                        'position' => $index
+                    ),
+                    array('%d', '%s', '%s', '%s', '%d')
+                );
+            }
+
+            // Re-fetch columns
+            $columns = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $columns_table WHERE checklist_id = %d ORDER BY position ASC",
+                $checklist_id
+            ));
+        }
+
+        // Get Kanban state for all items
+        $state_table = $wpdb->prefix . 'mcl_kanban_state';
+        $kanban_state_results = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $state_table WHERE checklist_id = %d",
+            $checklist_id
+        ));
+        
+        // Index by item_id for easy lookup
+        $kanban_state = array();
+        foreach ($kanban_state_results as $state) {
+            $kanban_state[$state->item_id] = $state;
+        }
+        
+        // Get checked state - implement the logic directly since the method is private
+        $checked_state_handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+        
+        if ($checked_state_handling === 'per_user') {
+            if (is_user_logged_in()) {
+                $user_id = get_current_user_id();
+                $checked_state = get_user_meta($user_id, "_mcl_kanban_checked_state_" . $checklist_id, true) ?: array();
+            } else {
+                // Per-user checklists with logged-out users should use localStorage on client side
+                $checked_state = array();
+            }
+        } else {
+            // Global handling mode
+            $checked_state = get_post_meta($checklist_id, '_mcl_checked_state', true) ?: array();
+        }
+
+        // Process items and assign to columns
+        $board_data = array();
+        foreach ($columns as $column) {
+            $board_data[$column->column_id] = array(
+                'id' => $column->column_id,
+                'title' => $column->title,
+                'color' => $column->color,
+                'position' => $column->position,
+                'items' => array()
+            );
+        }
+
+        // Add items to their respective columns
+        foreach ($items_data as $item_index => $item) {
+            $item_id = isset($item['id']) ? $item['id'] : $item_index;
+            
+            // Check if item has Kanban state
+            $state = isset($kanban_state[$item_id]) ? $kanban_state[$item_id] : null;
+            
+            if ($state) {
+                $column_id = $state->column_id;
+                $assigned_user = $state->assigned_user_id;
+                $due_date = $state->due_date;
+                $position = $state->position;
+            } else {
+                // Default to first column for new items (if columns exist)
+                if (!empty($columns)) {
+                    $column_id = $columns[0]->column_id;
+                } else {
+                    // Skip this item if no columns exist yet
+                    continue;
+                }
+                $assigned_user = null;
+                $due_date = null;
+                $position = 999;
+                
+                // Insert default state (use INSERT IGNORE to avoid duplicates)
+                $wpdb->query($wpdb->prepare(
+                    "INSERT IGNORE INTO $state_table (checklist_id, item_id, column_id, position) VALUES (%d, %d, %s, %d)",
+                    $checklist_id, $item_id, $column_id, $position
+                ));
+            }
+
+            // Get user info if assigned
+            $user_info = null;
+            if ($assigned_user) {
+                $user = get_user_by('id', $assigned_user);
+                if ($user) {
+                    $user_info = array(
+                        'id' => $user->ID,
+                        'name' => $user->display_name,
+                        'avatar' => get_avatar_url($user->ID, array('size' => 32))
+                    );
+                }
+            }
+
+            // Add to board
+            if (isset($board_data[$column_id])) {
+                $board_data[$column_id]['items'][] = array(
+                    'id' => $item_id,
+                    'title' => isset($item['content']) ? $item['content'] : '',
+                    'description' => '', // Items don't have separate descriptions
+                    'checked' => in_array((string)$item_id, $checked_state) || in_array($item_id, $checked_state),
+                    'priority' => isset($item['priority']) ? $item['priority'] : 'normal',
+                    'tags' => isset($item['tags']) ? $item['tags'] : array(),
+                    'assigned_user' => $user_info,
+                    'due_date' => $due_date,
+                    'position' => $position,
+                    'step' => isset($item['step']) ? $item['step'] : null
+                );
+            }
+        }
+
+        // Sort items within each column by position
+        foreach ($board_data as &$column) {
+            usort($column['items'], function($a, $b) {
+                return $a['position'] - $b['position'];
+            });
+        }
+
+        // Get all users for assignment dropdown
+        $users = get_users(array('fields' => array('ID', 'display_name', 'user_email')));
+        $users_data = array();
+        foreach ($users as $user) {
+            $users_data[] = array(
+                'id' => $user->ID,
+                'name' => $user->display_name,
+                'email' => $user->user_email,
+                'avatar' => get_avatar_url($user->ID, array('size' => 32))
+            );
+        }
+
+        wp_send_json_success(array(
+            'board' => array_values($board_data),
+            'users' => $users_data,
+            'checklist' => array(
+                'id' => $checklist_id,
+                'title' => $checklist->post_title
+            )
+        ));
+    }
+
+    /**
+     * Update Kanban item position and column
+     */
+    public function update_kanban_item() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+        $column_id = isset($_POST['column_id']) ? sanitize_text_field($_POST['column_id']) : '';
+        $position = isset($_POST['position']) ? intval($_POST['position']) : 0;
+
+        if (!$checklist_id || $item_id === false || !$column_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $state_table = $wpdb->prefix . 'mcl_kanban_state';
+
+        // Update or insert the Kanban state
+        $existing = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $state_table WHERE checklist_id = %d AND item_id = %d",
+            $checklist_id, $item_id
+        ));
+
+        if ($existing) {
+            $result = $wpdb->update(
+                $state_table,
+                array(
+                    'column_id' => $column_id,
+                    'position' => $position
+                ),
+                array(
+                    'checklist_id' => $checklist_id,
+                    'item_id' => $item_id
+                ),
+                array('%s', '%d'),
+                array('%d', '%d')
+            );
+        } else {
+            $result = $wpdb->insert(
+                $state_table,
+                array(
+                    'checklist_id' => $checklist_id,
+                    'item_id' => $item_id,
+                    'column_id' => $column_id,
+                    'position' => $position
+                ),
+                array('%d', '%d', '%s', '%d')
+            );
+        }
+
+        if ($result === false) {
+            wp_send_json_error('Failed to update item position');
+        }
+
+        wp_send_json_success(array('message' => 'Item position updated'));
+    }
+
+    /**
+     * Update Kanban columns configuration
+     */
+    public function update_kanban_columns() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $columns = isset($_POST['columns']) ? json_decode(stripslashes($_POST['columns']), true) : array();
+
+        if (!$checklist_id || !is_array($columns)) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $columns_table = $wpdb->prefix . 'mcl_kanban_columns';
+
+        // Delete existing columns
+        $wpdb->delete($columns_table, array('checklist_id' => $checklist_id), array('%d'));
+
+        // Insert new columns
+        foreach ($columns as $index => $column) {
+            $wpdb->insert(
+                $columns_table,
+                array(
+                    'checklist_id' => $checklist_id,
+                    'column_id' => sanitize_text_field($column['id']),
+                    'title' => sanitize_text_field($column['title']),
+                    'color' => sanitize_hex_color($column['color']),
+                    'position' => $index
+                ),
+                array('%d', '%s', '%s', '%s', '%d')
+            );
+        }
+
+        wp_send_json_success(array('message' => 'Columns updated successfully'));
+    }
+
+    /**
+     * Assign user to Kanban item
+     */
+    public function assign_kanban_user() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : null;
+
+        if (!$checklist_id || $item_id === false) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $state_table = $wpdb->prefix . 'mcl_kanban_state';
+
+        // Update assigned user
+        $result = $wpdb->update(
+            $state_table,
+            array('assigned_user_id' => $user_id),
+            array(
+                'checklist_id' => $checklist_id,
+                'item_id' => $item_id
+            ),
+            array('%d'),
+            array('%d', '%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Failed to assign user');
+        }
+
+        // Get user info
+        $user_info = null;
+        if ($user_id) {
+            $user = get_user_by('id', $user_id);
+            if ($user) {
+                $user_info = array(
+                    'id' => $user->ID,
+                    'name' => $user->display_name,
+                    'avatar' => get_avatar_url($user->ID, array('size' => 32))
+                );
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => 'User assigned successfully',
+            'user' => $user_info
+        ));
+    }
+
+    /**
+     * Set due date for Kanban item
+     */
+    public function set_kanban_due_date() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+        $due_date = isset($_POST['due_date']) ? sanitize_text_field($_POST['due_date']) : null;
+
+        if (!$checklist_id || $item_id === false) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        // Validate date format if provided
+        if ($due_date && !strtotime($due_date)) {
+            wp_send_json_error('Invalid date format');
+        }
+
+        global $wpdb;
+        $state_table = $wpdb->prefix . 'mcl_kanban_state';
+
+        // Update due date
+        $result = $wpdb->update(
+            $state_table,
+            array('due_date' => $due_date),
+            array(
+                'checklist_id' => $checklist_id,
+                'item_id' => $item_id
+            ),
+            array('%s'),
+            array('%d', '%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Failed to set due date');
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Due date set successfully',
+            'due_date' => $due_date
+        ));
+    }
+
+    /**
+     * Update task content
+     */
+    public function update_task_content() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+        $content = isset($_POST['content']) ? wp_kses_post($_POST['content']) : '';
+
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        // Get the checklist items
+        $items = get_post_meta($checklist_id, '_mcl_items', true);
+        if (!is_array($items)) {
+            $items = array();
+        }
+
+        // Update the specific item content
+        $updated = false;
+        foreach ($items as &$item) {
+            if ($item['id'] == $item_id) {
+                $item['content'] = $content;
+                $updated = true;
+                break;
+            }
+        }
+
+        if (!$updated) {
+            wp_send_json_error('Item not found');
+        }
+
+        // Save the updated items
+        $result = update_post_meta($checklist_id, '_mcl_items', $items);
+
+        if ($result === false) {
+            wp_send_json_error('Failed to update content');
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Content updated successfully',
+            'content' => $content
+        ));
+    }
+
+    /**
+     * Get task comments
+     */
+    public function get_task_comments() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        $comments = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $comments_table 
+             WHERE checklist_id = %d AND item_id = %d 
+             ORDER BY created_at ASC",
+            $checklist_id,
+            $item_id
+        ));
+
+        wp_send_json_success(array(
+            'comments' => $comments
+        ));
+    }
+
+    /**
+     * Add task comment
+     */
+    public function add_task_comment() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+
+        if (!$checklist_id || !$item_id || empty($comment_content)) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        $current_user = wp_get_current_user();
+        
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        $result = $wpdb->insert(
+            $comments_table,
+            array(
+                'checklist_id' => $checklist_id,
+                'item_id' => $item_id,
+                'user_id' => $current_user->ID,
+                'user_name' => $current_user->display_name,
+                'user_email' => $current_user->user_email,
+                'comment_content' => $comment_content,
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql')
+            ),
+            array('%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Failed to add comment');
+        }
+
+        $comment_id = $wpdb->insert_id;
+        $new_comment = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $comments_table WHERE id = %d",
+            $comment_id
+        ));
+
+        wp_send_json_success(array(
+            'message' => 'Comment added successfully',
+            'comment' => $new_comment
+        ));
+    }
+
+    /**
+     * Update task comment
+     */
+    public function update_task_comment() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+
+        if (!$comment_id || empty($comment_content)) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        $result = $wpdb->update(
+            $comments_table,
+            array(
+                'comment_content' => $comment_content,
+                'updated_at' => current_time('mysql')
+            ),
+            array('id' => $comment_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Failed to update comment');
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Comment updated successfully'
+        ));
+    }
+
+    /**
+     * Delete task comment
+     */
+    public function delete_task_comment() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+
+        if (!$comment_id) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        $result = $wpdb->delete(
+            $comments_table,
+            array('id' => $comment_id),
+            array('%d')
+        );
+
+        if ($result === false) {
+            wp_send_json_error('Failed to delete comment');
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Comment deleted successfully'
+        ));
+    }
+
 }
