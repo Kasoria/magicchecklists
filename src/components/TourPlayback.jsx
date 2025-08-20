@@ -985,7 +985,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center w-full h-full mcl-tour-exit-modal"
           style={{ 
-            zIndex: 1000500, // Higher than all tour creator elements (highest is 1000300)
+            zIndex: 99999999, // Higher than all other elements including tour creator
             pointerEvents: 'auto', // Ensure pointer events work
             position: 'fixed', // Ensure it's positioned correctly
             display: 'flex !important', // Force display
