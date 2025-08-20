@@ -700,15 +700,22 @@ class MCL_React_Dev {
             'currentPage' => $current_page,
             'pageParams' => $page_params,
             'analytics' => $analytics_data,
-            'i18n' => array(
-                'loading' => __( 'Loading...', 'magic-checklists' ),
-                'error' => __( 'An error occurred', 'magic-checklists' ),
-                'save' => __( 'Save', 'magic-checklists' ),
-                'cancel' => __( 'Cancel', 'magic-checklists' ),
-                'delete' => __( 'Delete', 'magic-checklists' ),
-                'edit' => __( 'Edit', 'magic-checklists' ),
-            )
+            'i18n' => $this->get_localization_data(),
         ));
+    }
+    
+    /**
+     * Get localization data from i18n class
+     * 
+     * @return array
+     */
+    private function get_localization_data() {
+        // Include the i18n class if not already loaded
+        if (!class_exists('MCL_I18n')) {
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-i18n.php';
+        }
+        
+        return MCL_I18n::get_all_translations();
     }
     
     /**

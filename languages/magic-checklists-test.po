@@ -1,0 +1,144 @@
+# Test translation file for MagicChecklists Analytics
+# This demonstrates how translations would work
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en_US\n"
+
+msgid "Total Views"
+msgstr "Total Views"
+
+msgid "Total Checks"
+msgstr "Total Checks"
+
+msgid "Active Checklists"
+msgstr "Active Checklists"
+
+msgid "Total Checklists"
+msgstr "Total Checklists"
+
+msgid "Usage Trends"
+msgstr "Usage Trends"
+
+msgid "Item Usage Distribution"
+msgstr "Item Usage Distribution"
+
+msgid "Top Performing Checklists"
+msgstr "Top Performing Checklists"
+
+msgid "All Checklists Analytics"
+msgstr "All Checklists Analytics"
+
+msgid "Recent Activity"
+msgstr "Recent Activity"
+
+msgid "Clear Analytics Data"
+msgstr "Clear Analytics Data"
+
+msgid "Checklist"
+msgstr "Checklist"
+
+msgid "Views"
+msgstr "Views"
+
+msgid "Checks"
+msgstr "Checks"
+
+msgid "Last Viewed"
+msgstr "Last Viewed"
+
+msgid "Most Checked Items"
+msgstr "Most Checked Items"
+
+msgid "Never"
+msgstr "Never"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "No usage data"
+msgstr "No usage data"
+
+msgid "No analytics data available yet. Data will appear once your checklists are being used."
+msgstr "No analytics data available yet. Data will appear once your checklists are being used."
+
+msgid "No recent activity to display."
+msgstr "No recent activity to display."
+
+msgid "This will permanently delete all analytics data including views, item checks, and activity history."
+msgstr "This will permanently delete all analytics data including views, item checks, and activity history."
+
+msgid "Clear All Analytics"
+msgstr "Clear All Analytics"
+
+msgid "Clearing..."
+msgstr "Clearing..."
+
+msgid "Clear All Analytics Data?"
+msgstr "Clear All Analytics Data?"
+
+msgid "This will permanently delete all analytics data including view counts, item check history, and activity logs. This action cannot be undone."
+msgstr "This will permanently delete all analytics data including view counts, item check history, and activity logs. This action cannot be undone."
+
+msgid "Yes, clear all data"
+msgstr "Yes, clear all data"
+
+msgid "All checklist view counts"
+msgstr "All checklist view counts"
+
+msgid "All item check history"
+msgstr "All item check history"
+
+msgid "All activity logs"
+msgstr "All activity logs"
+
+msgid "Chart and trend data"
+msgstr "Chart and trend data"
+
+msgid "Last 7 Days"
+msgstr "Last 7 Days"
+
+msgid "Last 30 Days"
+msgstr "Last 30 Days"
+
+msgid "Last 90 Days"
+msgstr "Last 90 Days"
+
+msgid "High Usage (10+)"
+msgstr "High Usage (10+)"
+
+msgid "Medium Usage (3-9)"
+msgstr "Medium Usage (3-9)"
+
+msgid "Low Usage (1-2)"
+msgstr "Low Usage (1-2)"
+
+msgid "Unused"
+msgstr "Unused"
+
+msgid "Checklist \"{title}\" was viewed"
+msgstr "Checklist \"{title}\" was viewed"
+
+msgid "Item {item} was checked in \"{title}\""
+msgstr "Item {item} was checked in \"{title}\""
+
+msgid "minute"
+msgstr "minute"
+
+msgid "minutes"
+msgstr "minutes"
+
+msgid "hour"
+msgstr "hour"
+
+msgid "hours"
+msgstr "hours"
+
+msgid "day"
+msgstr "day"
+
+msgid "days"
+msgstr "days"
+
+msgid "ago"
+msgstr "ago"

@@ -98,6 +98,9 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Load plugin textdomain
          */
         public function load_textdomain() {
+            // For testing German translations: uncomment the next line
+            // switch_to_locale('de_DE');
+            
             load_plugin_textdomain(
                 'magic-checklists',
                 false,
@@ -135,6 +138,9 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
 
             // Initialize image upload/select AJAX handlers
             new MCL_Image_Handler();
+            
+            // Load i18n class
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-i18n.php';
 
             if (is_admin()) {
                 new MCL_Admin();

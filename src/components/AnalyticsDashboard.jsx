@@ -3,6 +3,9 @@ import { Card, Badge, Button } from 'flowbite-react'
 import { formatDate as formatDateUtil } from '../utils/dateUtils'
 
 const AnalyticsDashboard = ({ analyticsData, adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   if (!analyticsData) {
     return null
   }
@@ -19,7 +22,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
 
   const formatTimeRemaining = (timeRemaining) => {
     if (timeRemaining < 0) {
-      return <Badge color="failure" className="inline-flex">Overdue</Badge>
+      return <Badge color="failure" className="inline-flex">{i18n.analyticsDashboard?.timeFormatting?.overdue || 'Overdue'}</Badge>
     }
 
     const hours = Math.floor(timeRemaining / 3600)
@@ -28,13 +31,13 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
     if (days > 0) {
       return (
         <Badge color={days <= 1 ? "warning" : "gray"} className="inline-flex">
-          {days} {days === 1 ? 'day' : 'days'}
+          {days} {days === 1 ? (i18n.analyticsDashboard?.timeFormatting?.day || 'day') : (i18n.analyticsDashboard?.timeFormatting?.days || 'days')}
         </Badge>
       )
     } else {
       return (
         <Badge color={hours < 12 ? "failure" : hours < 24 ? "warning" : "gray"} className="inline-flex">
-          {hours} {hours === 1 ? 'hour' : 'hours'}
+          {hours} {hours === 1 ? (i18n.analyticsDashboard?.timeFormatting?.hour || 'hour') : (i18n.analyticsDashboard?.timeFormatting?.hours || 'hours')}
         </Badge>
       )
     }
@@ -44,7 +47,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
     try {
       return formatDateUtil(timestamp, 'datetime')
     } catch (e) {
-      return 'Invalid date'
+      return i18n.analyticsDashboard?.timeFormatting?.invalidDate || 'Invalid date'
     }
   }
 
@@ -53,14 +56,14 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Checklist Analytics Overview
+          {i18n.analyticsDashboard?.header?.title || 'Checklist Analytics Overview'}
         </h2>
         <Button 
           color="light" 
           size="sm"
           onClick={() => window.location.href = `${window.location.origin}/wp-admin/admin.php?page=mcl_checklists&view=analytics`}
         >
-          View Full Analytics
+          {i18n.analyticsDashboard?.header?.viewFullAnalytics || 'View Full Analytics'}
         </Button>
       </div>
 
@@ -77,7 +80,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Views</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.analyticsDashboard?.summaryCards?.totalViews || 'Total Views'}</h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {total_views.toLocaleString()}
               </p>
@@ -95,7 +98,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Checks</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.analyticsDashboard?.summaryCards?.totalChecks || 'Total Checks'}</h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {total_checks.toLocaleString()}
               </p>
@@ -113,7 +116,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Checklists</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.analyticsDashboard?.summaryCards?.activeChecklists || 'Active Checklists'}</h3>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {active_checklists}
               </p>
@@ -127,17 +130,17 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
         <Card>
           <div className="mb-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-              Approaching Deadlines
+              {i18n.analyticsDashboard?.deadlines?.title || 'Approaching Deadlines'}
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th className="px-4 py-2">Checklist</th>
-                  <th className="px-4 py-2">Item</th>
-                  <th className="px-4 py-2">Deadline</th>
-                  <th className="px-4 py-2">Time Remaining</th>
+                  <th className="px-4 py-2">{i18n.analyticsDashboard?.deadlines?.checklistColumn || 'Checklist'}</th>
+                  <th className="px-4 py-2">{i18n.analyticsDashboard?.deadlines?.itemColumn || 'Item'}</th>
+                  <th className="px-4 py-2">{i18n.analyticsDashboard?.deadlines?.deadlineColumn || 'Deadline'}</th>
+                  <th className="px-4 py-2">{i18n.analyticsDashboard?.deadlines?.timeRemainingColumn || 'Time Remaining'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,7 +156,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
                         </a>
                         {deadline.is_checklist_deadline && (
                           <Badge color="info" className="inline-flex" size="xs">
-                            Checklist Deadline
+                            {i18n.analyticsDashboard?.deadlines?.checklistDeadline || 'Checklist Deadline'}
                           </Badge>
                         )}
                       </div>
@@ -183,7 +186,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
           <Card>
             <div className="mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Most Popular Checklist
+                {i18n.analyticsDashboard?.mostPopular?.title || 'Most Popular Checklist'}
               </h3>
             </div>
             <div className="flex justify-between items-center">
@@ -197,8 +200,8 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
               </div>
               <Badge color="gray">
                 {most_popular.view_count === 1 
-                  ? `${most_popular.view_count.toLocaleString()} view`
-                  : `${most_popular.view_count.toLocaleString()} views`
+                  ? `${most_popular.view_count.toLocaleString()} ${i18n.analyticsDashboard?.mostPopular?.view || 'view'}`
+                  : `${most_popular.view_count.toLocaleString()} ${i18n.analyticsDashboard?.mostPopular?.views || 'views'}`
                 }
               </Badge>
             </div>
@@ -210,7 +213,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
           <Card>
             <div className="mb-4">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Most Checked Item
+                {i18n.analyticsDashboard?.mostChecked?.title || 'Most Checked Item'}
               </h3>
             </div>
             <div className="space-y-2">
@@ -220,7 +223,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
               />
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500 dark:text-gray-400">
-                  in{' '}
+                  {i18n.analyticsDashboard?.mostChecked?.in || 'in'}{' '}
                   <a 
                     href={`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${most_checked_item.checklist_id}`}
                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
@@ -230,8 +233,8 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
                 </span>
                 <Badge color="gray">
                   {most_checked_item.check_count === 1 
-                    ? `${most_checked_item.check_count.toLocaleString()} check`
-                    : `${most_checked_item.check_count.toLocaleString()} checks`
+                    ? `${most_checked_item.check_count.toLocaleString()} ${i18n.analyticsDashboard?.mostChecked?.check || 'check'}`
+                    : `${most_checked_item.check_count.toLocaleString()} ${i18n.analyticsDashboard?.mostChecked?.checks || 'checks'}`
                   }
                 </Badge>
               </div>

@@ -1,0 +1,525 @@
+# German translation for MagicChecklists Analytics
+# This demonstrates how translations would work with actual translation
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: de_DE\n"
+
+msgid "Total Views"
+msgstr "Gesamte Aufrufe"
+
+msgid "Total Checks"
+msgstr "Gesamte Abhaken"
+
+msgid "Active Checklists"
+msgstr "Aktive Checklisten"
+
+msgid "Total Checklists"
+msgstr "Gesamte Checklisten"
+
+msgid "Usage Trends"
+msgstr "Nutzungstrends"
+
+msgid "Item Usage Distribution"
+msgstr "Elementnutzungsverteilung"
+
+msgid "Top Performing Checklists"
+msgstr "Beste Checklisten"
+
+msgid "All Checklists Analytics"
+msgstr "Alle Checklisten Analysen"
+
+msgid "Recent Activity"
+msgstr "Letzte Aktivität"
+
+msgid "Clear Analytics Data"
+msgstr "Analysedaten löschen"
+
+msgid "Checklist"
+msgstr "Checkliste"
+
+msgid "Views"
+msgstr "Aufrufe"
+
+msgid "Checks"
+msgstr "Abhaken"
+
+msgid "Last Viewed"
+msgstr "Zuletzt angesehen"
+
+msgid "Most Checked Items"
+msgstr "Am meisten abgehakte Elemente"
+
+msgid "Never"
+msgstr "Niemals"
+
+msgid "Unknown"
+msgstr "Unbekannt"
+
+msgid "No usage data"
+msgstr "Keine Nutzungsdaten"
+
+msgid "No analytics data available yet. Data will appear once your checklists are being used."
+msgstr "Noch keine Analysedaten verfügbar. Daten werden angezeigt, sobald Ihre Checklisten verwendet werden."
+
+msgid "No recent activity to display."
+msgstr "Keine aktuelle Aktivität anzuzeigen."
+
+msgid "This will permanently delete all analytics data including views, item checks, and activity history."
+msgstr "Dies wird alle Analysedaten dauerhaft löschen, einschließlich Aufrufe, Elementprüfungen und Aktivitätsverlauf."
+
+msgid "Clear All Analytics"
+msgstr "Alle Analysen löschen"
+
+msgid "Clearing..."
+msgstr "Wird gelöscht..."
+
+msgid "Clear All Analytics Data?"
+msgstr "Alle Analysedaten löschen?"
+
+msgid "This will permanently delete all analytics data including view counts, item check history, and activity logs. This action cannot be undone."
+msgstr "Dies wird alle Analysedaten dauerhaft löschen, einschließlich Aufrufzähler, Element-Prüfverlauf und Aktivitätsprotokolle. Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "Yes, clear all data"
+msgstr "Ja, alle Daten löschen"
+
+msgid "All checklist view counts"
+msgstr "Alle Checklisten-Aufrufzähler"
+
+msgid "All item check history"
+msgstr "Alle Element-Prüfverläufe"
+
+msgid "All activity logs"
+msgstr "Alle Aktivitätsprotokolle"
+
+msgid "Chart and trend data"
+msgstr "Diagramm- und Trenddaten"
+
+msgid "Last 7 Days"
+msgstr "Letzte 7 Tage"
+
+msgid "Last 30 Days"
+msgstr "Letzte 30 Tage"
+
+msgid "Last 90 Days"
+msgstr "Letzte 90 Tage"
+
+msgid "High Usage (10+)"
+msgstr "Hohe Nutzung (10+)"
+
+msgid "Medium Usage (3-9)"
+msgstr "Mittlere Nutzung (3-9)"
+
+msgid "Low Usage (1-2)"
+msgstr "Niedrige Nutzung (1-2)"
+
+msgid "Unused"
+msgstr "Unbenutzt"
+
+msgid "Checklist \"{title}\" was viewed"
+msgstr "Checkliste \"{title}\" wurde angesehen"
+
+msgid "Item {item} was checked in \"{title}\""
+msgstr "Element {item} wurde in \"{title}\" abgehakt"
+
+msgid "minute"
+msgstr "Minute"
+
+msgid "minutes"
+msgstr "Minuten"
+
+msgid "hour"
+msgstr "Stunde"
+
+msgid "hours"
+msgstr "Stunden"
+
+msgid "day"
+msgstr "Tag"
+
+msgid "days"
+msgstr "Tage"
+
+msgid "ago"
+msgstr "vor"
+
+msgid "Public Access"
+msgstr "Öffentlicher Zugang"
+
+msgid "Enable this if you want any website visitor without authentication to have access to the checklist."
+msgstr "Aktivieren Sie dies, wenn Sie möchten, dass jeder Website-Besucher ohne Authentifizierung Zugang zur Checkliste hat."
+
+msgid "Public Description"
+msgstr "Öffentliche Beschreibung"
+
+msgid "Description visible to public users"
+msgstr "Beschreibung, die für öffentliche Benutzer sichtbar ist"
+
+msgid "Public Checked State Handling"
+msgstr "Öffentliche Behandlung des Abhak-Status"
+
+msgid "Per User (using browser storage)"
+msgstr "Pro Benutzer (Browser-Speicher verwenden)"
+
+msgid "Global (shared between all users)"
+msgstr "Global (geteilt zwischen allen Benutzern)"
+
+msgid "Public Access Level"
+msgstr "Öffentliche Zugriffsebene"
+
+msgid "Enable Rate Limiting"
+msgstr "Ratenbegrenzung aktivieren"
+
+msgid "Limit how frequently users can perform actions on this checklist."
+msgstr "Begrenzen Sie, wie häufig Benutzer Aktionen in dieser Checkliste ausführen können."
+
+msgid "Allowed User Roles"
+msgstr "Erlaubte Benutzerrollen"
+
+msgid "Select user roles"
+msgstr "Benutzerrollen auswählen"
+
+msgid "Permission Level"
+msgstr "Berechtigungsebene"
+
+msgid "Select permission level..."
+msgstr "Berechtigungsebene auswählen..."
+
+msgid "Select the user roles that are allowed to access this checklist and their permission level."
+msgstr "Wählen Sie die Benutzerrollen aus, die auf diese Checkliste zugreifen dürfen, und deren Berechtigungsebene."
+
+msgid "Allowed Users"
+msgstr "Erlaubte Benutzer"
+
+msgid "Select individual users"
+msgstr "Einzelne Benutzer auswählen"
+
+msgid "Select individual users who are allowed to access this checklist and their permission level."
+msgstr "Wählen Sie einzelne Benutzer aus, die auf diese Checkliste zugreifen dürfen, und deren Berechtigungsebene."
+
+msgid "Invite Links"
+msgstr "Einladungslinks"
+
+msgid "Generate invite links to share this checklist with anyone, even if they don't have a WordPress account."
+msgstr "Erstellen Sie Einladungslinks, um diese Checkliste mit jedem zu teilen, auch wenn sie kein WordPress-Konto haben."
+
+msgid "Save checklist first to enable"
+msgstr "Zuerst speichern, zum Aktivieren"
+
+msgid "Please save the checklist first to generate invite links"
+msgstr "Bitte speichern Sie die Checkliste zuerst, um Einladungslinks zu erstellen"
+
+msgid "Expires After"
+msgstr "Läuft ab nach"
+
+msgid "Usage Limit"
+msgstr "Nutzungsgrenze"
+
+msgid "0 for unlimited"
+msgstr "0 für unbegrenzt"
+
+msgid "Set to 0 for unlimited uses"
+msgstr "Auf 0 setzen für unbegrenzte Nutzung"
+
+msgid "Generate Invite Link"
+msgstr "Einladungslink erstellen"
+
+msgid "Generating..."
+msgstr "Wird erstellt..."
+
+msgid "Loading invite links..."
+msgstr "Einladungslinks werden geladen..."
+
+msgid "Existing Invite Links"
+msgstr "Vorhandene Einladungslinks"
+
+msgid "Expired"
+msgstr "Abgelaufen"
+
+msgid "Limit Reached"
+msgstr "Grenze erreicht"
+
+msgid "Link:"
+msgstr "Link:"
+
+msgid "Uses:"
+msgstr "Verwendungen:"
+
+msgid "Created:"
+msgstr "Erstellt:"
+
+msgid "Expires:"
+msgstr "Läuft ab:"
+
+msgid "Copy"
+msgstr "Kopieren"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Are you sure you want to delete this invite link?"
+msgstr "Sind Sie sicher, dass Sie diesen Einladungslink löschen möchten?"
+
+msgid "Invite link generated and copied to clipboard!"
+msgstr "Einladungslink erstellt und in die Zwischenablage kopiert!"
+
+msgid "Link copied to clipboard!"
+msgstr "Link in die Zwischenablage kopiert!"
+
+msgid "Invite link deleted successfully"
+msgstr "Einladungslink erfolgreich gelöscht"
+
+msgid "Failed to generate invite link:"
+msgstr "Fehler beim Erstellen des Einladungslinks:"
+
+msgid "Failed to copy link to clipboard"
+msgstr "Fehler beim Kopieren des Links in die Zwischenablage"
+
+msgid "Failed to delete invite link:"
+msgstr "Fehler beim Löschen des Einladungslinks:"
+
+msgid "Failed to load invite links"
+msgstr "Fehler beim Laden der Einladungslinks"
+
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+msgid "1 Day"
+msgstr "1 Tag"
+
+msgid "7 Days"
+msgstr "7 Tage"
+
+msgid "30 Days"
+msgstr "30 Tage"
+
+msgid "Loading Conditions"
+msgstr "Ladebedingungen"
+
+msgid "Control where this checklist should be available."
+msgstr "Steuern Sie, wo diese Checkliste verfügbar sein soll."
+
+msgid "Load Everywhere (Default)"
+msgstr "Überall laden (Standard)"
+
+msgid "WordPress Admin Pages"
+msgstr "WordPress Admin-Seiten"
+
+msgid "Loading admin pages..."
+msgstr "Admin-Seiten werden geladen..."
+
+msgid "Select admin pages"
+msgstr "Admin-Seiten auswählen"
+
+msgid "No admin pages found"
+msgstr "Keine Admin-Seiten gefunden"
+
+msgid "Select the WordPress admin pages where this checklist should be available."
+msgstr "Wählen Sie die WordPress Admin-Seiten aus, auf denen diese Checkliste verfügbar sein soll."
+
+msgid "Custom URLs"
+msgstr "Benutzerdefinierte URLs"
+
+msgid "Enter URL pattern (e.g., /posts/*)"
+msgstr "URL-Muster eingeben (z.B. /posts/*)"
+
+msgid "Add URL Pattern"
+msgstr "URL-Muster hinzufügen"
+
+msgid "Force Delete Lock"
+msgstr "Sperre zwangsweise löschen"
+
+msgid "Use this button to forcefully remove the lock on this checklist if it is stuck. Only use this if you are sure no one else is editing this checklist."
+msgstr "Verwenden Sie diese Schaltfläche, um die Sperre dieser Checkliste zwangsweise zu entfernen, falls sie hängt. Verwenden Sie dies nur, wenn Sie sicher sind, dass niemand sonst diese Checkliste bearbeitet."
+
+msgid "Are you sure you want to force delete the lock?"
+msgstr "Sind Sie sicher, dass Sie die Sperre zwangsweise löschen möchten?"
+
+msgid "Lock has been successfully deleted."
+msgstr "Sperre wurde erfolgreich gelöscht."
+
+msgid "Failed to delete the lock:"
+msgstr "Fehler beim Löschen der Sperre:"
+
+msgid "An error occurred while deleting the lock."
+msgstr "Ein Fehler ist beim Löschen der Sperre aufgetreten."
+
+msgid "Can View"
+msgstr "Kann anzeigen"
+
+msgid "Can Interact"
+msgstr "Kann interagieren"
+
+msgid "Can Edit"
+msgstr "Kann bearbeiten"
+
+msgid "Checklist Analytics Overview"
+msgstr "Checklisten-Analyse Übersicht"
+
+msgid "View Full Analytics"
+msgstr "Vollständige Analysen anzeigen"
+
+msgid "Approaching Deadlines"
+msgstr "Nahende Fristen"
+
+msgid "Item"
+msgstr "Element"
+
+msgid "Deadline"
+msgstr "Frist"
+
+msgid "Time Remaining"
+msgstr "Verbleibende Zeit"
+
+msgid "Checklist Deadline"
+msgstr "Checklisten-Frist"
+
+msgid "Most Popular Checklist"
+msgstr "Beliebteste Checkliste"
+
+msgid "view"
+msgstr "Anzeige"
+
+msgid "Most Checked Item"
+msgstr "Am meisten abgehaktes Element"
+
+msgid "in"
+msgstr "in"
+
+msgid "check"
+msgstr "Abhaken"
+
+msgid "Overdue"
+msgstr "Überfällig"
+
+msgid "Invalid date"
+msgstr "Ungültiges Datum"
+
+msgid "Entire Checklist"
+msgstr "Gesamte Checkliste"
+
+msgid "views"
+msgstr "Aufrufe"
+
+msgid "checks"
+msgstr "Abhaken"
+
+msgid "Insert Image"
+msgstr "Bild einfügen"
+
+msgid "Upload or Select Image"
+msgstr "Bild hochladen oder auswählen"
+
+msgid "Choose how you would like to add an image:"
+msgstr "Wählen Sie, wie Sie ein Bild hinzufügen möchten:"
+
+msgid "WordPress Media Library"
+msgstr "WordPress Mediathek"
+
+msgid "Quick Upload"
+msgstr "Schnell hochladen"
+
+msgid "Upload New"
+msgstr "Neu hochladen"
+
+msgid "Select Existing"
+msgstr "Vorhandenes auswählen"
+
+msgid "Drag and drop image here or click to select"
+msgstr "Bild hierher ziehen oder zum Auswählen klicken"
+
+msgid "Maximum file size: 10MB. Supported formats: JPG, PNG, GIF"
+msgstr "Maximale Dateigröße: 10MB. Unterstützte Formate: JPG, PNG, GIF"
+
+msgid "Loading images..."
+msgstr "Bilder werden geladen..."
+
+msgid "No images found"
+msgstr "Keine Bilder gefunden"
+
+msgid "Enter URL..."
+msgstr "URL eingeben..."
+
+msgid "Upload Image"
+msgstr "Bild hochladen"
+
+msgid "Uploading..."
+msgstr "Wird hochgeladen..."
+
+msgid "Select Image"
+msgstr "Bild auswählen"
+
+msgid "Set Item Deadline"
+msgstr "Aufgaben-Frist setzen"
+
+msgid "Deadline Date & Time"
+msgstr "Frist Datum & Zeit"
+
+msgid "Leave empty to remove deadline"
+msgstr "Leer lassen, um Frist zu entfernen"
+
+msgid "Clear Deadline"
+msgstr "Frist löschen"
+
+msgid "Save Deadline"
+msgstr "Frist speichern"
+
+msgid "items"
+msgstr "Aufgaben"
+
+msgid "completed"
+msgstr "abgeschlossen"
+
+msgid "complete"
+msgstr "vollständig"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Loading checklist..."
+msgstr "Checkliste wird geladen..."
+
+msgid "This checklist has been automatically reset."
+msgstr "Diese Checkliste wurde automatisch zurückgesetzt."
+
+msgid "This checklist is locked by another user. You can still interact but cannot edit structure."
+msgstr "Diese Checkliste ist von einem anderen Benutzer gesperrt. Sie können noch interagieren, aber die Struktur nicht bearbeiten."
+
+msgid "Deadline passed"
+msgstr "Frist abgelaufen"
+
+msgid "Start tour from this step"
+msgstr "Tour von diesem Schritt starten"
+
+msgid "Invalid file type. Please upload a JPG, PNG, or GIF image."
+msgstr "Ungültiger Dateityp. Bitte laden Sie ein JPG-, PNG- oder GIF-Bild hoch."
+
+msgid "Add Item"
+msgstr "Aufgabe hinzufügen"
+
+msgid "Uncheck All"
+msgstr "Alle abhaken rückgängig machen"
+
+msgid "Drag to reorder"
+msgstr "Ziehen zum Sortieren"
+
+msgid "Mark as in progress"
+msgstr "Als in Bearbeitung markieren"
+
+msgid "Remove from in progress"
+msgstr "Aus in Bearbeitung entfernen"
+
+msgid "Set deadline"
+msgstr "Frist setzen"
+
+msgid "Add image"
+msgstr "Bild hinzufügen"
+
+msgid "Remove item"
+msgstr "Aufgabe entfernen"
+
+msgid "Add link"
+msgstr "Link hinzufügen"
+
+msgid "Remove link"
+msgstr "Link entfernen"

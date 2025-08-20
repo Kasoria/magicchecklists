@@ -11,6 +11,10 @@ const Analytics = ({ adminData }) => {
   const chartInstancesRef = useRef({})
   const [isCleaningUp, setIsCleaningUp] = useState(false)
   const [showClearModal, setShowClearModal] = useState(false)
+  
+  // Get i18n strings from localized data
+  const i18n = adminData.i18n?.analytics || {}
+  const commonI18n = adminData.i18n?.common || {}
 
   // Get analytics data from adminData
   const {
@@ -135,12 +139,12 @@ const Analytics = ({ adminData }) => {
         },
         series: [
           {
-            name: 'Views',
+            name: i18n.chartLabels?.views || 'Views',
             data: trends.views || [],
             color: '#3B82F6'
           },
           {
-            name: 'Checks',
+            name: i18n.chartLabels?.checks || 'Checks',
             data: trends.checks || [],
             color: '#10B981'
           }
@@ -192,12 +196,12 @@ const Analytics = ({ adminData }) => {
         },
         series: [
           {
-            name: 'Views',
+            name: i18n.chartLabels?.views || 'Views',
             data: performance.views || [],
             color: '#3B82F6'
           },
           {
-            name: 'Checks',
+            name: i18n.chartLabels?.checks || 'Checks',
             data: performance.checks || [],
             color: '#10B981'
           }
@@ -254,7 +258,12 @@ const Analytics = ({ adminData }) => {
           completion_rates.low_completion || 0,
           completion_rates.not_used || 0
         ],
-        labels: ['High Usage (10+)', 'Medium Usage (3-9)', 'Low Usage (1-2)', 'Unused'],
+        labels: [
+          i18n.chartLabels?.highUsage || 'High Usage (10+)', 
+          i18n.chartLabels?.mediumUsage || 'Medium Usage (3-9)', 
+          i18n.chartLabels?.lowUsage || 'Low Usage (1-2)', 
+          i18n.chartLabels?.unused || 'Unused'
+        ],
         colors: ['#10B981', '#3B82F6', '#F59E0B', '#6B7280'],
         legend: {
           labels: {
@@ -289,23 +298,26 @@ const Analytics = ({ adminData }) => {
       const diffDays = Math.floor(diffHours / 24)
 
       if (diffMins < 60) {
-        return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
+        const unit = diffMins === 1 ? (i18n.timeAgo?.minute || 'minute') : (i18n.timeAgo?.minutes || 'minutes')
+        return `${diffMins} ${unit} ${i18n.timeAgo?.ago || 'ago'}`
       } else if (diffHours < 24) {
-        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
+        const unit = diffHours === 1 ? (i18n.timeAgo?.hour || 'hour') : (i18n.timeAgo?.hours || 'hours')
+        return `${diffHours} ${unit} ${i18n.timeAgo?.ago || 'ago'}`
       } else {
-        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
+        const unit = diffDays === 1 ? (i18n.timeAgo?.day || 'day') : (i18n.timeAgo?.days || 'days')
+        return `${diffDays} ${unit} ${i18n.timeAgo?.ago || 'ago'}`
       }
     } catch (e) {
-      return 'Unknown'
+      return i18n.dashboard?.unknown || 'Unknown'
     }
   }
 
   const getTimeFilterLabel = (filter) => {
     switch (filter) {
-      case '7': return 'Last 7 Days'
-      case '30': return 'Last 30 Days'
-      case '90': return 'Last 90 Days'
-      default: return 'Last 7 Days'
+      case '7': return i18n.timeFilters?.last7Days || 'Last 7 Days'
+      case '30': return i18n.timeFilters?.last30Days || 'Last 30 Days'
+      case '90': return i18n.timeFilters?.last90Days || 'Last 90 Days'
+      default: return i18n.timeFilters?.last7Days || 'Last 7 Days'
     }
   }
 
@@ -325,7 +337,7 @@ const Analytics = ({ adminData }) => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Views</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.dashboard?.totalViews || 'Total Views'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{total_views.toLocaleString()}</p>
             </div>
           </div>
@@ -341,7 +353,7 @@ const Analytics = ({ adminData }) => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Checks</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.dashboard?.totalChecks || 'Total Checks'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{total_checks.toLocaleString()}</p>
             </div>
           </div>
@@ -357,7 +369,7 @@ const Analytics = ({ adminData }) => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Checklists</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.dashboard?.activeChecklists || 'Active Checklists'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{active_checklists}</p>
             </div>
           </div>
@@ -373,7 +385,7 @@ const Analytics = ({ adminData }) => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Checklists</p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{i18n.dashboard?.totalChecklists || 'Total Checklists'}</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{total_checklists}</p>
             </div>
           </div>
@@ -385,11 +397,11 @@ const Analytics = ({ adminData }) => {
         {/* Usage Trends Chart */}
         <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Usage Trends ({getTimeFilterLabel(timeFilter)})</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">{i18n.dashboard?.usageTrends || 'Usage Trends'} ({getTimeFilterLabel(timeFilter)})</h3>
             <Dropdown label={getTimeFilterLabel(timeFilter)} color="light" size="sm">
-              <DropdownItem onClick={() => setTimeFilter('7')}>Last 7 Days</DropdownItem>
-              <DropdownItem onClick={() => setTimeFilter('30')}>Last 30 Days</DropdownItem>
-              <DropdownItem onClick={() => setTimeFilter('90')}>Last 90 Days</DropdownItem>
+              <DropdownItem onClick={() => setTimeFilter('7')}>{i18n.timeFilters?.last7Days || 'Last 7 Days'}</DropdownItem>
+              <DropdownItem onClick={() => setTimeFilter('30')}>{i18n.timeFilters?.last30Days || 'Last 30 Days'}</DropdownItem>
+              <DropdownItem onClick={() => setTimeFilter('90')}>{i18n.timeFilters?.last90Days || 'Last 90 Days'}</DropdownItem>
             </Dropdown>
           </div>
           <div id="trends-chart"></div>
@@ -398,7 +410,7 @@ const Analytics = ({ adminData }) => {
         {/* Completion Rates Chart */}
         <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Item Usage Distribution</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">{i18n.dashboard?.itemUsageDistribution || 'Item Usage Distribution'}</h3>
           </div>
           <div id="completion-chart"></div>
         </Card>
@@ -407,7 +419,7 @@ const Analytics = ({ adminData }) => {
       {/* Performance Chart - Full Width */}
       <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Top Performing Checklists</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{i18n.dashboard?.topPerformingChecklists || 'Top Performing Checklists'}</h3>
         </div>
         <div id="performance-chart"></div>
       </Card>
@@ -415,17 +427,17 @@ const Analytics = ({ adminData }) => {
       {/* Analytics Table */}
       <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">All Checklists Analytics</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{i18n.dashboard?.allChecklistsAnalytics || 'All Checklists Analytics'}</h3>
         </div>
         {all_analytics && all_analytics.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeadCell>Checklist</TableHeadCell>
-                  <TableHeadCell>Views</TableHeadCell>
-                  <TableHeadCell>Last Viewed</TableHeadCell>
-                  <TableHeadCell>Most Checked Items</TableHeadCell>
+                  <TableHeadCell>{i18n.dashboard?.checklist || 'Checklist'}</TableHeadCell>
+                  <TableHeadCell>{i18n.dashboard?.views || 'Views'}</TableHeadCell>
+                  <TableHeadCell>{i18n.dashboard?.lastViewed || 'Last Viewed'}</TableHeadCell>
+                  <TableHeadCell>{i18n.dashboard?.mostCheckedItems || 'Most Checked Items'}</TableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -441,11 +453,11 @@ const Analytics = ({ adminData }) => {
                     </TableCell>
                     <TableCell>
                       <Badge color="gray" className="inline-flex">
-                        {item.view_count?.toLocaleString() || '0'} views
+                        {item.view_count?.toLocaleString() || '0'} {i18n.dashboard?.views?.toLowerCase() || 'views'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500 dark:text-gray-400">
-                      {item.last_viewed ? formatDate(item.last_viewed, 'datetime') : 'Never'}
+                      {item.last_viewed ? formatDate(item.last_viewed, 'datetime') : (i18n.dashboard?.never || 'Never')}
                     </TableCell>
                     <TableCell>
                       {item.most_checked_items && item.most_checked_items.length > 0 ? (
@@ -463,7 +475,7 @@ const Analytics = ({ adminData }) => {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-gray-500 dark:text-gray-400 italic text-sm">No usage data</span>
+                        <span className="text-gray-500 dark:text-gray-400 italic text-sm">{i18n.dashboard?.noUsageData || 'No usage data'}</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -473,7 +485,7 @@ const Analytics = ({ adminData }) => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">No analytics data available yet. Data will appear once your checklists are being used.</p>
+            <p className="text-gray-500 dark:text-gray-400">{i18n.dashboard?.noAnalyticsData || 'No analytics data available yet. Data will appear once your checklists are being used.'}</p>
           </div>
         )}
       </Card>
@@ -481,7 +493,7 @@ const Analytics = ({ adminData }) => {
       {/* Recent Activity */}
       <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Recent Activity</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{i18n.dashboard?.recentActivity || 'Recent Activity'}</h3>
         </div>
         {recent_activity && recent_activity.length > 0 ? (
           <div className="space-y-4">
@@ -508,14 +520,16 @@ const Analytics = ({ adminData }) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900 dark:text-white">
                     {activity.activity_type === 'view' ? (
-                      <>
-                        Checklist <span className="font-medium">"{activity.post_title}"</span> was viewed
-                      </>
+                      <span dangerouslySetInnerHTML={{ 
+                        __html: (i18n.activityMessages?.checklistViewed || 'Checklist "<span class="font-medium">{title}</span>" was viewed')
+                          .replace('{title}', activity.post_title) 
+                      }} />
                     ) : (
-                      <>
-                        Item <span className="font-medium" dangerouslySetInnerHTML={{ __html: activity.item_content }} /> 
-                        was checked in <span className="font-medium">"{activity.post_title}"</span>
-                      </>
+                      <span dangerouslySetInnerHTML={{ 
+                        __html: (i18n.activityMessages?.itemChecked || 'Item <span class="font-medium">{item}</span> was checked in "<span class="font-medium">{title}</span>"')
+                          .replace('{item}', activity.item_content)
+                          .replace('{title}', activity.post_title)
+                      }} />
                     )}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -527,7 +541,7 @@ const Analytics = ({ adminData }) => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">No recent activity to display.</p>
+            <p className="text-gray-500 dark:text-gray-400">{i18n.dashboard?.noRecentActivity || 'No recent activity to display.'}</p>
           </div>
         )}
       </Card>
@@ -537,10 +551,10 @@ const Analytics = ({ adminData }) => {
         <div className="text-center py-6 flex flex-col items-center">
           <div className="mb-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Clear Analytics Data
+              {i18n.dashboard?.clearAnalyticsData || 'Clear Analytics Data'}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              This will permanently delete all analytics data including views, item checks, and activity history.
+              {i18n.dashboard?.clearAnalyticsDescription || 'This will permanently delete all analytics data including views, item checks, and activity history.'}
             </p>
           </div>
           <Button 
@@ -549,7 +563,7 @@ const Analytics = ({ adminData }) => {
             onClick={() => setShowClearModal(true)}
             disabled={isCleaningUp}
           >
-            {isCleaningUp ? 'Clearing...' : 'Clear All Analytics'}
+            {isCleaningUp ? (i18n.dashboard?.clearing || 'Clearing...') : (i18n.dashboard?.clearAllAnalytics || 'Clear All Analytics')}
           </Button>
         </div>
       </Card>
@@ -559,17 +573,17 @@ const Analytics = ({ adminData }) => {
         isOpen={showClearModal}
         onClose={() => setShowClearModal(false)}
         onConfirm={clearAllAnalytics}
-        title="Clear All Analytics Data?"
-        message="This will permanently delete all analytics data including view counts, item check history, and activity logs. This action cannot be undone."
-        confirmText="Yes, clear all data"
-        cancelText="Cancel"
+        title={i18n.clearModal?.title || 'Clear All Analytics Data?'}
+        message={i18n.clearModal?.message || 'This will permanently delete all analytics data including view counts, item check history, and activity logs. This action cannot be undone.'}
+        confirmText={i18n.clearModal?.confirmButton || 'Yes, clear all data'}
+        cancelText={commonI18n?.cancel || 'Cancel'}
         confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900"
         icon="delete"
         items={[
-          "All checklist view counts",
-          "All item check history", 
-          "All activity logs",
-          "Chart and trend data"
+          i18n.clearModal?.items?.viewCounts || "All checklist view counts",
+          i18n.clearModal?.items?.checkHistory || "All item check history", 
+          i18n.clearModal?.items?.activityLogs || "All activity logs",
+          i18n.clearModal?.items?.chartData || "Chart and trend data"
         ]}
       />
     </div>

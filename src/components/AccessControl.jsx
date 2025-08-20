@@ -21,6 +21,42 @@ const Toggle = ({ checked, onChange, label, disabled = false }) => (
 )
 
 const AccessControl = ({ formData, onChange, adminData }) => {
+  // Create a state for i18n data that can be updated when available
+  const [i18n, setI18n] = useState({});
+  
+  useEffect(() => {
+    // Function to get i18n data from available sources
+    const getI18nData = () => {
+      let i18nData = {};
+      
+      // First try adminData prop
+      if (adminData?.i18n) {
+        i18nData = adminData.i18n;
+      }
+      // Then try window.mclAdminData
+      else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
+        i18nData = window.mclAdminData.i18n;
+      }
+      
+      return i18nData;
+    };
+    
+    const i18nData = getI18nData();
+    
+    // If we have i18n data, set it
+    if (Object.keys(i18nData).length > 0) {
+      setI18n(i18nData);
+    } else {
+      // If not available yet, try again after a short delay
+      // This handles cases where window.mclAdminData is loaded after component mount
+      setTimeout(() => {
+        const retryI18nData = getI18nData();
+        if (Object.keys(retryI18nData).length > 0) {
+          setI18n(retryI18nData);
+        }
+      }, 100);
+    }
+  }, [adminData]);
   const [inviteLinks, setInviteLinks] = useState([])
   const [loadingInvites, setLoadingInvites] = useState(false)
   const [generatingInvite, setGeneratingInvite] = useState(false)
@@ -179,11 +215,11 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         setInviteLinks(data.data)
       } else {
         console.error('Failed to load invite links:', data.data?.message || 'Unknown error')
-        setInviteError('Failed to load invite links')
+        setInviteError(i18n.accessControl?.inviteLinks?.loadError || 'Failed to load invite links')
       }
     } catch (error) {
       console.error('Error loading invite links:', error)
-      setInviteError('Error loading invite links')
+      setInviteError(i18n.accessControl?.inviteLinks?.loadError || 'Error loading invite links')
     } finally {
       setLoadingInvites(false)
     }
@@ -191,7 +227,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
 
   const generateInviteLink = async () => {
     if (!formData.checklist_id && !adminData.checklist_id) {
-      setInviteError('Please save the checklist first to generate invite links')
+      setInviteError(i18n.accessControl?.inviteLinks?.saveFirstError || 'Please save the checklist first to generate invite links')
       return
     }
     
@@ -222,7 +258,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       if (data.success) {
         // Copy to clipboard
         await navigator.clipboard.writeText(data.data.invite_url)
-        setInviteSuccess('Invite link generated and copied to clipboard!')
+        setInviteSuccess(i18n.accessControl?.inviteLinks?.generatedSuccess || 'Invite link generated and copied to clipboard!')
         loadInviteLinks() // Refresh the list
         
         // Reset invite form
@@ -230,7 +266,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         onChange('invite_expiry', '7')
         onChange('invite_usage', '0')
       } else {
-        setInviteError('Failed to generate invite link: ' + (data.data?.message || 'Unknown error'))
+        setInviteError((i18n.accessControl?.inviteLinks?.generateError || 'Failed to generate invite link:') + ' ' + (data.data?.message || (i18n.accessControl?.inviteLinks?.unknownError || 'Unknown error')))
       }
     } catch (error) {
       console.error('Error generating invite link:', error)
@@ -241,7 +277,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
   }
 
   const deleteInviteLink = async (linkId) => {
-    if (!confirm('Are you sure you want to delete this invite link?')) return
+    if (!confirm(i18n.accessControl?.inviteLinks?.deleteConfirm || 'Are you sure you want to delete this invite link?')) return
     
     try {
       // Get the nonce
@@ -259,10 +295,10 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       })
       const data = await response.json()
       if (data.success) {
-        setInviteSuccess('Invite link deleted successfully')
+        setInviteSuccess(i18n.accessControl?.inviteLinks?.deleteSuccess || 'Invite link deleted successfully')
         loadInviteLinks() // Refresh the list
       } else {
-        setInviteError('Failed to delete invite link: ' + (data.data?.message || 'Unknown error'))
+        setInviteError((i18n.accessControl?.inviteLinks?.deleteError || 'Failed to delete invite link:') + ' ' + (data.data?.message || (i18n.accessControl?.inviteLinks?.unknownError || 'Unknown error')))
       }
     } catch (error) {
       console.error('Error deleting invite link:', error)
@@ -273,7 +309,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
   const copyLinkToClipboard = async (url) => {
     try {
       await navigator.clipboard.writeText(url)
-      setInviteSuccess('Link copied to clipboard!')
+      setInviteSuccess(i18n.accessControl?.inviteLinks?.copiedSuccess || 'Link copied to clipboard!')
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -281,7 +317,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       }, 3000)
     } catch (error) {
       console.error('Error copying to clipboard:', error)
-      setInviteError('Failed to copy link to clipboard')
+      setInviteError(i18n.accessControl?.inviteLinks?.copyError || 'Failed to copy link to clipboard')
     }
   }
 
@@ -303,9 +339,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
 
   const formatPermission = (permission) => {
     switch (permission) {
-      case 'view': return 'Can View';
-      case 'interact': return 'Can Interact';
-      case 'edit': return 'Can Edit';
+      case 'view': return i18n.accessControl?.permissions?.canView || 'Can View';
+      case 'interact': return i18n.accessControl?.permissions?.canInteract || 'Can Interact';
+      case 'edit': return i18n.accessControl?.permissions?.canEdit || 'Can Edit';
       default: return permission;
     }
   }
@@ -320,9 +356,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
   }
 
   const permissionOptions = [
-    { value: 'view', label: 'Can View' },
-    { value: 'interact', label: 'Can Interact' },
-    { value: 'edit', label: 'Can Edit' }
+    { value: 'view', label: i18n.accessControl?.permissions?.canView || 'Can View' },
+    { value: 'interact', label: i18n.accessControl?.permissions?.canInteract || 'Can Interact' },
+    { value: 'edit', label: i18n.accessControl?.permissions?.canEdit || 'Can Edit' }
   ]
 
   // Function to get the invite links nonce
@@ -372,9 +408,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-brand-dark dark:text-white font-semibold">Public Access</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.publicAccess?.title || 'Public Access'}</label>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Enable this if you want any website visitor without authentication to have access to the checklist.
+                {i18n.accessControl?.publicAccess?.description || 'Enable this if you want any website visitor without authentication to have access to the checklist.'}
               </p>
             </div>
             <Toggle
@@ -386,30 +422,30 @@ const AccessControl = ({ formData, onChange, adminData }) => {
           {formData.public_access && (
             <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div>
-                <label htmlFor="public_description" className="text-brand-dark dark:text-white">Public Description</label>
+                <label htmlFor="public_description" className="text-brand-dark dark:text-white">{i18n.accessControl?.publicAccess?.publicDescription || 'Public Description'}</label>
                 <Textarea
                   id="public_description"
                   value={formData.public_description || ''}
                   onChange={(e) => onChange('public_description', e.target.value)}
                   rows={3}
-                  placeholder="Description visible to public users"
+                  placeholder={i18n.accessControl?.publicAccess?.publicDescriptionPlaceholder || 'Description visible to public users'}
                 />
               </div>
 
               <div>
-                <label htmlFor="public_checked_state_handling" className="text-brand-dark dark:text-white">Public Checked State Handling</label>
+                <label htmlFor="public_checked_state_handling" className="text-brand-dark dark:text-white">{i18n.accessControl?.publicAccess?.checkedStateHandling || 'Public Checked State Handling'}</label>
                 <Select
                   id="public_checked_state_handling"
                   value={formData.public_checked_state_handling || 'per_user'}
                   onChange={(e) => onChange('public_checked_state_handling', e.target.value)}
                 >
-                  <option value="per_user">Per User (using browser storage)</option>
-                  <option value="global">Global (shared between all users)</option>
+                  <option value="per_user">{i18n.accessControl?.publicAccess?.perUser || 'Per User (using browser storage)'}</option>
+                  <option value="global">{i18n.accessControl?.publicAccess?.global || 'Global (shared between all users)'}</option>
                 </Select>
               </div>
 
               <div>
-                <label htmlFor="public_permission" className="text-brand-dark dark:text-white">Public Access Level</label>
+                <label htmlFor="public_permission" className="text-brand-dark dark:text-white">{i18n.accessControl?.publicAccess?.accessLevel || 'Public Access Level'}</label>
                 <Select
                   id="public_permission"
                   value={formData.public_permission || 'interact'}
@@ -429,9 +465,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-brand-dark dark:text-white font-semibold">Enable Rate Limiting</label>
+            <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.rateLimiting?.title || 'Enable Rate Limiting'}</label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Limit how frequently users can perform actions on this checklist.
+              {i18n.accessControl?.rateLimiting?.description || 'Limit how frequently users can perform actions on this checklist.'}
             </p>
           </div>
           <Toggle
@@ -444,7 +480,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       {/* User Roles Access */}
       <Card>
         <div className="space-y-4">
-          <label className="text-brand-dark dark:text-white font-semibold">Allowed User Roles</label>
+          <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.userRoles?.title || 'Allowed User Roles'}</label>
           
           <ReactSelect
             isMulti
@@ -453,13 +489,13 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             onChange={(selectedRoles) => {
               onChange('access_roles', selectedRoles.map(role => role.value))
             }}
-            placeholder="Select user roles"
+            placeholder={i18n.accessControl?.userRoles?.placeholder || 'Select user roles'}
             className="react-select-container"
             classNamePrefix="react-select"
           />
 
           <div>
-            <label htmlFor="access_roles_permission" className="text-brand-dark dark:text-white">Permission Level</label>
+            <label htmlFor="access_roles_permission" className="text-brand-dark dark:text-white">{i18n.accessControl?.userRoles?.permissionLevel || 'Permission Level'}</label>
             <ReactSelect
               inputId="access_roles_permission"
               value={permissionOptions.find(option => option.value === (formData.access_roles_permission || 'interact'))}
@@ -467,12 +503,12 @@ const AccessControl = ({ formData, onChange, adminData }) => {
               options={permissionOptions}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select permission level..."
+              placeholder={i18n.accessControl?.userRoles?.permissionPlaceholder || 'Select permission level...'}
             />
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Select the user roles that are allowed to access this checklist and their permission level.
+            {i18n.accessControl?.userRoles?.description || 'Select the user roles that are allowed to access this checklist and their permission level.'}
           </p>
         </div>
       </Card>
@@ -480,7 +516,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       {/* Individual Users Access */}
       <Card>
         <div className="space-y-4">
-          <label className="text-brand-dark dark:text-white font-semibold">Allowed Users</label>
+          <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.individualUsers?.title || 'Allowed Users'}</label>
           
           <ReactSelect
             isMulti
@@ -489,13 +525,13 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             onChange={(selectedUsers) => {
               onChange('access_users', selectedUsers.map(user => user.value))
             }}
-            placeholder="Select individual users"
+            placeholder={i18n.accessControl?.individualUsers?.placeholder || 'Select individual users'}
             className="react-select-container"
             classNamePrefix="react-select"
           />
 
           <div>
-            <label htmlFor="access_users_permission" className="text-brand-dark dark:text-white">Permission Level</label>
+            <label htmlFor="access_users_permission" className="text-brand-dark dark:text-white">{i18n.accessControl?.individualUsers?.permissionLevel || 'Permission Level'}</label>
             <ReactSelect
               inputId="access_users_permission"
               value={permissionOptions.find(option => option.value === (formData.access_users_permission || 'interact'))}
@@ -503,12 +539,12 @@ const AccessControl = ({ formData, onChange, adminData }) => {
               options={permissionOptions}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select permission level..."
+              placeholder={i18n.accessControl?.individualUsers?.permissionPlaceholder || 'Select permission level...'}
             />
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Select individual users who are allowed to access this checklist and their permission level.
+            {i18n.accessControl?.individualUsers?.description || 'Select individual users who are allowed to access this checklist and their permission level.'}
           </p>
         </div>
       </Card>
@@ -518,14 +554,14 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-brand-dark dark:text-white font-semibold">Invite Links</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.inviteLinks?.title || 'Invite Links'}</label>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Generate invite links to share this checklist with anyone, even if they don't have a WordPress account.
+                {i18n.accessControl?.inviteLinks?.description || 'Generate invite links to share this checklist with anyone, even if they don\'t have a WordPress account.'}
               </p>
             </div>
             {(formData.checklist_id || adminData.checklist_id) ? null : (
               <Badge color="yellow">
-                Save checklist first to enable
+{i18n.accessControl?.inviteLinks?.saveFirstBadge || 'Save checklist first to enable'}
               </Badge>
             )}
           </div>
@@ -544,7 +580,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="invite_permissions" className="text-brand-dark dark:text-white">Permission Level</label>
+              <label htmlFor="invite_permissions" className="text-brand-dark dark:text-white">{i18n.accessControl?.inviteLinks?.permissionLevel || 'Permission Level'}</label>
               <ReactSelect
                 inputId="invite_permissions"
                 value={permissionOptions.find(option => option.value === (formData.invite_permissions || 'interact'))}
@@ -558,20 +594,20 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             </div>
 
             <div>
-              <label htmlFor="invite_expiry" className="text-brand-dark dark:text-white">Expires After</label>
+              <label htmlFor="invite_expiry" className="text-brand-dark dark:text-white">{i18n.accessControl?.inviteLinks?.expiresAfter || 'Expires After'}</label>
               <ReactSelect
                 inputId="invite_expiry"
                 value={{ 
                   value: formData.invite_expiry || '7', 
-                  label: formData.invite_expiry === '1' ? '1 Day' : 
-                         formData.invite_expiry === '30' ? '30 Days' : 
-                         '7 Days' 
+                  label: formData.invite_expiry === '1' ? (i18n.accessControl?.inviteLinks?.oneDayLabel || '1 Day') : 
+                         formData.invite_expiry === '30' ? (i18n.accessControl?.inviteLinks?.thirtyDaysLabel || '30 Days') : 
+                         (i18n.accessControl?.inviteLinks?.sevenDaysLabel || '7 Days') 
                 }}
                 onChange={(selectedOption) => onChange('invite_expiry', selectedOption.value)}
                 options={[
-                  { value: '1', label: '1 Day' },
-                  { value: '7', label: '7 Days' },
-                  { value: '30', label: '30 Days' }
+                  { value: '1', label: i18n.accessControl?.inviteLinks?.oneDayLabel || '1 Day' },
+                  { value: '7', label: i18n.accessControl?.inviteLinks?.sevenDaysLabel || '7 Days' },
+                  { value: '30', label: i18n.accessControl?.inviteLinks?.thirtyDaysLabel || '30 Days' }
                 ]}
                 className="react-select-container"
                 classNamePrefix="react-select"
@@ -581,18 +617,18 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             </div>
 
             <div>
-              <label htmlFor="invite_usage" className="text-brand-dark dark:text-white">Usage Limit</label>
+              <label htmlFor="invite_usage" className="text-brand-dark dark:text-white">{i18n.accessControl?.inviteLinks?.usageLimit || 'Usage Limit'}</label>
               <TextInput
                 id="invite_usage"
                 type="number"
                 min="0"
                 value={formData.invite_usage || '0'}
                 onChange={(e) => onChange('invite_usage', e.target.value)}
-                placeholder="0 for unlimited"
+                placeholder={i18n.accessControl?.inviteLinks?.usageLimitPlaceholder || '0 for unlimited'}
                 disabled={!formData.checklist_id && !adminData.checklist_id || generatingInvite}
               />
               <p className="text-xs text-gray-600 mt-1">
-                Set to 0 for unlimited uses
+                {i18n.accessControl?.inviteLinks?.usageLimitNote || 'Set to 0 for unlimited uses'}
               </p>
             </div>
           </div>
@@ -605,10 +641,10 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             {generatingInvite ? (
               <>
                 <Spinner size="sm" className="mr-2" />
-                Generating...
+                {i18n.accessControl?.inviteLinks?.generating || 'Generating...'}
               </>
             ) : (
-              'Generate Invite Link'
+              i18n.accessControl?.inviteLinks?.generateButton || 'Generate Invite Link'
             )}
           </Button>
 
@@ -616,12 +652,12 @@ const AccessControl = ({ formData, onChange, adminData }) => {
           {loadingInvites ? (
             <div className="flex justify-center items-center p-4">
               <Spinner size="lg" />
-              <span className="ml-2">Loading invite links...</span>
+              <span className="ml-2">{i18n.accessControl?.inviteLinks?.loadingLinks || 'Loading invite links...'}</span>
             </div>
           ) : (
             inviteLinks.length > 0 && (
               <div className="space-y-3">
-                <label className="font-semibold">Existing Invite Links</label>
+                <label className="font-semibold">{i18n.accessControl?.inviteLinks?.existingLinks || 'Existing Invite Links'}</label>
                 {inviteLinks.map((link) => {
                   const isExpired = new Date(link.expiry_date) < new Date()
                   const isLimitReached = link.usage_limit > 0 && link.usage_count >= link.usage_limit
@@ -643,18 +679,18 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                             </Badge>
                             {(isExpired || isLimitReached) && (
                               <Badge color="failure">
-                                {isExpired ? 'Expired' : 'Limit Reached'}
+                                {isExpired ? (i18n.accessControl?.inviteLinks?.expired || 'Expired') : (i18n.accessControl?.inviteLinks?.limitReached || 'Limit Reached')}
                               </Badge>
                             )}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-300">
                             <p className="mb-1">
-                              <span className="font-medium">Link:</span>{' '}
+                              <span className="font-medium">{i18n.accessControl?.inviteLinks?.linkLabel || 'Link:'}</span>{' '}
                               <span className="truncate inline-block max-w-md">{link.invite_url}</span>
                             </p>
-                            <p>Uses: {link.usage_count}/{link.usage_limit > 0 ? link.usage_limit : '∞'}</p>
-                                            <p>Created: {formatDate(link.created_at, 'datetime')}</p>
-                <p>Expires: {formatDate(link.expiry_date, 'datetime')}</p>
+                            <p>{i18n.accessControl?.inviteLinks?.uses || 'Uses:'} {link.usage_count}/{link.usage_limit > 0 ? link.usage_limit : '∞'}</p>
+                                            <p>{i18n.accessControl?.inviteLinks?.created || 'Created:'} {formatDate(link.created_at, 'datetime')}</p>
+                <p>{i18n.accessControl?.inviteLinks?.expires || 'Expires:'} {formatDate(link.expiry_date, 'datetime')}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -664,7 +700,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                             onClick={() => copyLinkToClipboard(link.invite_url)}
                             disabled={isExpired || isLimitReached}
                           >
-                            Copy
+                            {i18n.accessControl?.inviteLinks?.copyButton || 'Copy'}
                           </Button>
                           <Button
                             size="sm"
@@ -672,7 +708,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                             outline
                             onClick={() => deleteInviteLink(link.id)}
                           >
-                            Delete
+                            {i18n.accessControl?.inviteLinks?.deleteButton || 'Delete'}
                           </Button>
                         </div>
                       </div>
@@ -690,15 +726,15 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <label className="text-brand-dark dark:text-white font-semibold">Loading Conditions</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.loadingConditions?.title || 'Loading Conditions'}</label>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Control where this checklist should be available.
+                {i18n.accessControl?.loadingConditions?.description || 'Control where this checklist should be available.'}
               </p>
             </div>
             <Toggle
               checked={formData.load_everywhere}
               onChange={(checked) => onChange('load_everywhere', checked)}
-              label="Load Everywhere (Default)"
+              label={i18n.accessControl?.loadingConditions?.loadEverywhere || 'Load Everywhere (Default)'}
             />
           </div>
 
@@ -706,11 +742,11 @@ const AccessControl = ({ formData, onChange, adminData }) => {
             <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               {/* WordPress Admin Pages */}
               <div>
-                <label className="font-semibold dark:text-white">WordPress Admin Pages</label>
+                <label className="font-semibold dark:text-white">{i18n.accessControl?.loadingConditions?.adminPagesTitle || 'WordPress Admin Pages'}</label>
                 {loadingAdminPages ? (
                   <div className="flex items-center space-x-2 py-2">
                     <Spinner size="sm" />
-                    <span className="text-sm">Loading admin pages...</span>
+                    <span className="text-sm">{i18n.accessControl?.loadingConditions?.loadingAdminPages || 'Loading admin pages...'}</span>
                   </div>
                 ) : adminPagesError ? (
                   <Alert color="failure" className="mt-2 mb-2">
@@ -724,27 +760,27 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                     onChange={(selectedPages) => {
                       onChange('allowed_pages', selectedPages.map(page => page.value))
                     }}
-                    placeholder="Select admin pages"
+                    placeholder={i18n.accessControl?.loadingConditions?.adminPagesPlaceholder || 'Select admin pages'}
                     className="react-select-container"
                     classNamePrefix="react-select"
-                    noOptionsMessage={() => "No admin pages found"}
+                    noOptionsMessage={() => i18n.accessControl?.loadingConditions?.noAdminPages || 'No admin pages found'}
                   />
                 )}
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  Select the WordPress admin pages where this checklist should be available.
+                  {i18n.accessControl?.loadingConditions?.adminPagesDescription || 'Select the WordPress admin pages where this checklist should be available.'}
                 </p>
               </div>
 
               {/* Custom URLs */}
               <div>
-                <label className="font-semibold dark:text-white">Custom URLs</label>
+                <label className="font-semibold dark:text-white">{i18n.accessControl?.loadingConditions?.customUrlsTitle || 'Custom URLs'}</label>
                 <div className="space-y-2">
                   {(formData.allowed_urls || []).map((url, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <TextInput
                         value={url}
                         onChange={(e) => updateUrlPattern(index, e.target.value)}
-                        placeholder="Enter URL pattern (e.g., /posts/*)"
+                        placeholder={i18n.accessControl?.loadingConditions?.urlPlaceholder || 'Enter URL pattern (e.g., /posts/*)'}
                         className="flex-1"
                       />
                       <Button
@@ -764,7 +800,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                     outline
                     onClick={addUrlPattern}
                   >
-                    Add URL Pattern
+                    {i18n.accessControl?.loadingConditions?.addUrlButton || 'Add URL Pattern'}
                   </Button>
                 </div>
               </div>
@@ -777,14 +813,14 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       {formData.checklist_id && (
         <Card className="p-6">
           <div className="space-y-4">
-            <label className="text-brand-dark dark:text-white font-semibold">Force Delete Lock</label>
+            <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.forceDeleteLock?.title || 'Force Delete Lock'}</label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Use this button to forcefully remove the lock on this checklist if it is stuck. Only use this if you are sure no one else is editing this checklist.
+              {i18n.accessControl?.forceDeleteLock?.description || 'Use this button to forcefully remove the lock on this checklist if it is stuck. Only use this if you are sure no one else is editing this checklist.'}
             </p>
             <Button
               color="failure"
               onClick={async () => {
-                if (!confirm('Are you sure you want to force delete the lock?')) return
+                if (!confirm(i18n.accessControl?.forceDeleteLock?.confirmMessage || 'Are you sure you want to force delete the lock?')) return
                 
                 try {
                   const response = await fetch(adminData.ajaxurl, {
@@ -798,17 +834,17 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                   })
                   const data = await response.json()
                   if (data.success) {
-                    alert('Lock has been successfully deleted.')
+                    alert(i18n.accessControl?.forceDeleteLock?.successMessage || 'Lock has been successfully deleted.')
                   } else {
-                    alert('Failed to delete the lock: ' + (data.data?.message || 'Unknown error.'))
+                    alert((i18n.accessControl?.forceDeleteLock?.errorMessage || 'Failed to delete the lock:') + ' ' + (data.data?.message || (i18n.accessControl?.inviteLinks?.unknownError || 'Unknown error.')))
                   }
                 } catch (error) {
                   console.error('Error deleting lock:', error)
-                  alert('An error occurred while deleting the lock.')
+                  alert(i18n.accessControl?.forceDeleteLock?.genericError || 'An error occurred while deleting the lock.')
                 }
               }}
             >
-              Force Delete Lock
+              {i18n.accessControl?.forceDeleteLock?.button || 'Force Delete Lock'}
             </Button>
           </div>
         </Card>

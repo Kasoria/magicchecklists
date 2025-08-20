@@ -1243,7 +1243,7 @@ class MCL_Public {
                     // New or unlocked: sanitize
                     $processed[] = array(
                         'id' => $id,
-                        'content' => wp_kses_post($item['content']),
+                        'content' => MCL_Sanitization::sanitize_item_content($item['content']),
                         'parent_id' => isset($item['parent_id']) ? sanitize_text_field($item['parent_id']) : '',
                         'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                         'locked' => false,
@@ -1302,7 +1302,7 @@ class MCL_Public {
                 // New or unlocked existing item: sanitize input and set locked to false
                 $processed_items[] = array(
                     'id' => $item_id,
-                    'content' => wp_kses_post($item['content']),
+                    'content' => MCL_Sanitization::sanitize_item_content($item['content']),
                     'parent_id' => isset($item['parent_id']) ? sanitize_text_field($item['parent_id']) : '',
                     'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                     'locked' => false
@@ -1751,7 +1751,7 @@ class MCL_Public {
         // Sanitize new item
         $new_item = array(
             'id' => sanitize_text_field($item_data['id']),
-            'content' => wp_kses_post($item_data['content']),
+            'content' => MCL_Sanitization::sanitize_item_content($item_data['content']),
             'parent_id' => isset($item_data['parent_id']) ? sanitize_text_field($item_data['parent_id']) : '',
             'priority' => isset($item_data['priority']) ? sanitize_text_field($item_data['priority']) : 'none',
             'locked' => false

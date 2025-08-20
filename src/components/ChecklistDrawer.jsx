@@ -317,6 +317,9 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
       return
     }
 
+    // Close the React modal immediately but keep the item context
+    setModal(null)
+
     const mediaFrame = wp.media({
       title: 'Select Image',
       library: { type: 'image' },
@@ -327,7 +330,9 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     mediaFrame.on('select', () => {
       const attachment = mediaFrame.state().get('selection').first().toJSON()
       insertImageRef.current?.(attachment)
-      closeModal()
+      // Clear the current item after successful insertion
+      setCurrentItem(null)
+      setExistingImages([])
     })
 
     mediaFrame.on('open', () => {
@@ -338,10 +343,15 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     mediaFrame.on('close', () => {
       const drawer = document.getElementById('mcl-drawer')
       if (drawer) { drawer.style.zIndex = '999999' }
+      // Clean up if user cancels
+      if (currentItem) {
+        setCurrentItem(null)
+        setExistingImages([])
+      }
     })
 
     mediaFrame.open()
-  }, [closeModal])
+  }, [])
 
   const loadExistingImages = useCallback(async (checklistId) => {
     if (!checklistId) return;
@@ -431,8 +441,27 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     // Insert image
     contentDiv.appendChild(img)
     
+    // Save the checklist after inserting image
+    if (canEdit && currentChecklistId) {
+      const listItem = currentItem.closest('[data-item-id]')
+      if (listItem) {
+        const itemId = listItem.getAttribute('data-item-id')
+        if (itemId) {
+          // Update the item content in state with the new image
+          const updatedItems = items.map(item => 
+            item.id === itemId ? { ...item, content: contentDiv.innerHTML } : item
+          )
+          setItems(updatedItems)
+          
+          // Save to server
+          saveChecklistData(currentChecklistId, title, updatedItems)
+            .catch(err => console.warn('Error saving after image insertion:', err))
+        }
+      }
+    }
+    
     setCurrentItem(null)
-  }, [currentItem])
+  }, [currentItem, canEdit, currentChecklistId, items, title, saveChecklistData, setItems])
 
   // Image resizing functions
   const startImageResize = useCallback((e, img) => {
@@ -587,11 +616,15 @@ const useLinkManager = () => {
     if (!url) return false
     
     url = url.trim()
+    if (!url) return false
     
+    // If it doesn't start with a protocol, check if it's a valid domain
     if (!/^https?:\/\//i.test(url)) {
-      return /^([a-z0-9-]+\.)+[a-z]{2,}$/i.test(url)
+      // Basic domain validation (allows domains like example.com, sub.example.com)
+      return /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/i.test(url)
     }
     
+    // If it has a protocol, validate it as a full URL
     try {
       const urlObject = new URL(url)
       return ['http:', 'https:'].includes(urlObject.protocol)
@@ -992,7 +1025,7 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
   if (!isOpen) return null
 
   return (
-    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999] p-4" onClick={onClose}>
+    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
       <div className={`mcl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -1021,30 +1054,33 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
 const ImageChoiceModal = ({ isOpen, onClose, onMediaLibrary, onQuickUpload }) => {
   if (!isOpen) return null
 
+  // Get i18n data
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Insert Image">
-      <p className="text-gray-600 mb-4">Choose how you would like to add an image:</p>
+    <Modal isOpen={isOpen} onClose={onClose} title={i18n.checklistDrawer?.imageModal?.insertImageTitle || 'Insert Image'}>
+      <p className="text-gray-600 mb-4">{i18n.checklistDrawer?.imageModal?.chooseHowToAdd || 'Choose how you would like to add an image:'}</p>
       <div className="flex flex-col gap-3">
         <button 
           type="button" 
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           onClick={onMediaLibrary}
         >
-          WordPress Media Library
+          {i18n.checklistDrawer?.imageModal?.wordPressMediaLibrary || 'WordPress Media Library'}
         </button>
         <button 
           type="button" 
           className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
           onClick={onQuickUpload}
         >
-          Quick Upload
+          {i18n.checklistDrawer?.imageModal?.quickUpload || 'Quick Upload'}
         </button>
         <button 
           type="button" 
           className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
           onClick={onClose}
         >
-          Cancel
+          {i18n.checklistDrawer?.buttons?.cancel || 'Cancel'}
         </button>
       </div>
     </Modal>
@@ -1073,7 +1109,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
 
     if (!allowedTypes.includes(selectedFile.type)) {
-      setError('Invalid file type. Please upload a JPG, PNG, or GIF image.')
+      setError(i18n.checklistDrawer?.messages?.invalidFileType || 'Invalid file type. Please upload a JPG, PNG, or GIF image.')
       return
     }
 
@@ -1121,10 +1157,11 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
   }, [])
 
   const getButtonText = () => {
+    const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
     if (activeTab === 'upload') {
-      return uploading ? 'Uploading...' : 'Upload Image'
+      return uploading ? (i18n.checklistDrawer?.imageModal?.uploading || 'Uploading...') : (i18n.checklistDrawer?.imageModal?.uploadImage || 'Upload Image')
     }
-    return 'Select Image'
+    return i18n.checklistDrawer?.imageModal?.selectImage || 'Select Image'
   }
 
   const isButtonDisabled = () => {
@@ -1134,6 +1171,8 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
     return !selectedExisting
   }
 
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+
   const actions = (
     <>
       <button 
@@ -1141,7 +1180,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
         className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors" 
         onClick={onClose}
       >
-        Cancel
+        {i18n.checklistDrawer?.buttons?.cancel || 'Cancel'}
       </button>
       <button 
         type="button" 
@@ -1157,7 +1196,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
   if (!isOpen) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Upload or Select Image" actions={actions} className="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={i18n.checklistDrawer?.imageModal?.uploadOrSelectTitle || 'Upload or Select Image'} actions={actions} className="max-w-2xl">
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4">
         <button 
@@ -1169,7 +1208,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
           }`}
           onClick={() => handleTabSwitch('upload')}
         >
-          Upload New
+          {i18n.checklistDrawer?.imageModal?.uploadNew || 'Upload New'}
         </button>
         <button 
           type="button" 
@@ -1180,7 +1219,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
           }`}
           onClick={() => handleTabSwitch('select')}
         >
-          Select Existing
+          {i18n.checklistDrawer?.imageModal?.selectExisting || 'Select Existing'}
         </button>
       </div>
 
@@ -1206,8 +1245,8 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
                 <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                   <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <p className="text-gray-600">Drag and drop image here or click to select</p>
-                <p className="text-sm text-gray-500">Maximum file size: 10MB. Supported formats: JPG, PNG, GIF</p>
+                <p className="text-gray-600">{i18n.checklistDrawer?.imageModal?.dragAndDrop || 'Drag and drop image here or click to select'}</p>
+                <p className="text-sm text-gray-500">{i18n.checklistDrawer?.imageModal?.fileRestrictions || 'Maximum file size: 10MB. Supported formats: JPG, PNG, GIF'}</p>
               </div>
             ) : (
               <div className="relative">
@@ -1240,7 +1279,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
       {activeTab === 'select' && (
         <div>
           {loadingImages ? (
-            <div className="text-center py-8 text-gray-500">Loading images...</div>
+            <div className="text-center py-8 text-gray-500">{i18n.checklistDrawer?.imageModal?.loadingImages || 'Loading images...'}</div>
           ) : existingImages.length > 0 ? (
             <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
               {existingImages.map((image) => (
@@ -1262,7 +1301,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
               ))}
             </div>
           ) : (
-            <p className="text-center py-8 text-gray-500">No images found</p>
+            <p className="text-center py-8 text-gray-500">{i18n.checklistDrawer?.imageModal?.noImagesFound || 'No images found'}</p>
           )}
         </div>
       )}
@@ -1280,40 +1319,56 @@ const LinkToolbar = ({
   onClose,
   isValidUrl
 }) => {
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   if (!isVisible) return null
+
+  const handleCreateLink = (url) => {
+    if (url && url.trim() && isValidUrl(url.trim())) {
+      onCreateLink(url.trim())
+    }
+  }
 
   return (
     <div
-      className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-2"
+      className="fixed bg-white border border-gray-200 rounded-lg shadow-lg p-2"
+      data-link-toolbar="true"
       style={{
         top: position?.y || 0,
         left: position?.x || 0,
-        transform: 'translateX(-50%)'
+        transform: 'translateX(-50%)',
+        zIndex: 100001
       }}
     >
       <div className="flex items-center gap-2">
         <input
           type="text"
           className="px-3 py-1 border border-gray-300 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Enter URL..."
+          placeholder={i18n.checklistDrawer?.imageModal?.enterUrl || "Enter URL..."}
           value={linkUrl}
           onChange={(e) => setLinkUrl(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault()
-              if (isValidUrl(linkUrl)) {
-                onCreateLink(linkUrl)
-              }
+              e.stopPropagation()
+              handleCreateLink(linkUrl)
             } else if (e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
               onClose()
             }
           }}
           autoFocus
         />
         <button
+          type="button"
           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={() => onCreateLink(linkUrl)}
-          disabled={!isValidUrl(linkUrl)}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            handleCreateLink(linkUrl)
+          }}
+          disabled={!linkUrl || !linkUrl.trim() || !isValidUrl(linkUrl.trim())}
         >
           ✓
         </button>
@@ -1325,6 +1380,7 @@ const LinkToolbar = ({
 // Add deadline modal component
 const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
   const [dateTime, setDateTime] = useState('')
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
   
   useEffect(() => {
     if (isOpen && currentDeadline) {
@@ -1362,11 +1418,11 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
   if (!isOpen) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Set Item Deadline">
+    <Modal isOpen={isOpen} onClose={onClose} title={i18n.checklistDrawer?.deadlineModal?.setDeadlineTitle || 'Set Item Deadline'}>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Deadline Date & Time
+            {i18n.checklistDrawer?.deadlineModal?.deadlineDateTimeLabel || 'Deadline Date & Time'}
           </label>
           <input
             type="datetime-local"
@@ -1375,7 +1431,7 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-sm text-gray-500 mt-1">
-            Leave empty to remove deadline
+            {i18n.checklistDrawer?.deadlineModal?.leaveEmptyHint || 'Leave empty to remove deadline'}
           </p>
         </div>
       </div>
@@ -1389,7 +1445,7 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
           }}
           disabled={!currentDeadline}
         >
-          Clear Deadline
+          {i18n.checklistDrawer?.deadlineModal?.clearDeadline || 'Clear Deadline'}
         </button>
         <div className="flex gap-2">
           <button
@@ -1397,14 +1453,14 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
             className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
             onClick={onClose}
           >
-            Cancel
+            {i18n.checklistDrawer?.buttons?.cancel || 'Cancel'}
           </button>
           <button
             type="button"
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             onClick={handleSave}
           >
-            Save Deadline
+            {i18n.checklistDrawer?.deadlineModal?.saveDeadline || 'Save Deadline'}
           </button>
         </div>
       </div>
@@ -1468,6 +1524,7 @@ const ResetInfoDisplay = ({ resetInfo, themeColors }) => {
 const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
   const [timeLeft, setTimeLeft] = useState('')
   const [status, setStatus] = useState('normal')
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
 
   useEffect(() => {
     if (!deadline) return
@@ -1520,7 +1577,7 @@ const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
                 return formatDate(deadline, 'datetime')
               } catch (error) {
                 console.error('ChecklistDeadlineDisplay formatDate error:', error, 'for deadline:', deadline)
-                return 'Invalid date'
+                return i18n.checklistDrawer?.messages?.invalidDate || 'Invalid date'
               }
             })() : 'No deadline'}
           </div>
@@ -1562,7 +1619,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Track which items have tour connections
   const [itemsWithTourConnections, setItemsWithTourConnections] = useState(new Set())
   
-
+  // Get i18n data
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
   
   // Permission states
   const [canEdit, setCanEdit] = useState(false)
@@ -1579,7 +1637,6 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // UI states
   const [selectedText, setSelectedText] = useState(null)
   const [linkToolbarVisible, setLinkToolbarVisible] = useState(false)
-  const [linkUrl, setLinkUrl] = useState('')
   const [tooltip, setTooltip] = useState(null)
   const [tooltipTimer, setTooltipTimer] = useState(null)
   const [linkToolbarPosition, setLinkToolbarPosition] = useState({ x: 0, y: 0 })
@@ -2199,7 +2256,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   const formatItemDeadlineCountdown = useCallback((timeLeft) => {
     if (timeLeft < 0) {
-      return 'Deadline passed'
+      return i18n.checklistDrawer?.checklistStates?.deadlinePassed || 'Deadline passed'
     }
 
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
@@ -2226,7 +2283,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         notification.className = 'fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded shadow-lg z-50'
         notification.innerHTML = `
           <div class="flex items-center gap-3">
-            <span>This checklist has been automatically reset.</span>
+            <span>{i18n.checklistDrawer?.checklistStates?.checklistReset || 'This checklist has been automatically reset.'}</span>
             <button type="button" class="text-yellow-600 hover:text-yellow-800 font-bold">×</button>
           </div>
         `
@@ -2621,10 +2678,11 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         const isNotModal = !e.target.closest('.modal, [data-modal]')
         const isNotMediaModal = !e.target.closest('.media-modal')
         const isNotMediaFrame = !e.target.closest('.media-frame')
-        // Add exclusions for our image modals
+        // Add exclusions for our image modals and link toolbar
         const isNotImageModal = !e.target.closest('.mcl-modal-overlay, .mcl-modal')
+        const isNotLinkToolbar = !e.target.closest('[data-link-toolbar="true"]')
         
-        if (isOutsideDrawer && isNotFloatingButton && isNotModal && isNotMediaModal && isNotMediaFrame && isNotImageModal) {
+        if (isOutsideDrawer && isNotFloatingButton && isNotModal && isNotMediaModal && isNotMediaFrame && isNotImageModal && isNotLinkToolbar) {
           closeDrawer()
         }
       }
@@ -2641,9 +2699,14 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
   }, [isVisible, closeDrawer])
 
-  // Placeholder function to prevent onClick errors - can be removed once onClick is removed
+  // Handle item clicks - allow link clicks to work properly
   const handleItemClick = useCallback((e, itemId) => {
-    // No-op - all functionality moved to direct button handlers
+    // Allow link clicks to work properly
+    if (e.target.tagName === 'A' || e.target.closest('a')) {
+      // Don't prevent default for link clicks
+      return
+    }
+    // No-op for other clicks - all functionality moved to direct button handlers
   }, [])
 
   // Handle deadline click
@@ -2750,35 +2813,251 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     updateItemContent(itemId, content)
   }, [updateItemContent])
 
-  // Handle text selection for link creation
+  // Handle text selection for link creation/removal
+  const [selectionLinkButton, setSelectionLinkButton] = useState(null)
+  const [currentTextSelection, setCurrentTextSelection] = useState(null)
+
   const handleTextSelection = useCallback((e) => {
-    const selection = window.getSelection()
-    
-    if (selection.rangeCount > 0 && !selection.isCollapsed) {
-      const selectedText = selection.toString().trim()
+    // Small delay to let selection settle
+    setTimeout(() => {
+      const selection = window.getSelection()
       
-      if (selectedText.length > 0) {
-        // Get the range and its position
-        const range = selection.getRangeAt(0)
-        const rect = range.getBoundingClientRect()
+      if (selection.rangeCount > 0 && !selection.isCollapsed) {
+        const selectedText = selection.toString().trim()
         
-        // Position the link toolbar
+        if (selectedText.length > 0) {
+          // Get the range and its position
+          const range = selection.getRangeAt(0)
+          const rect = range.getBoundingClientRect()
+          
+          // Check if the selected text contains a link
+          const containsLink = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+            ? range.commonAncestorContainer.parentElement?.tagName === 'A' ||
+              range.commonAncestorContainer.parentElement?.closest('a') !== null
+            : range.commonAncestorContainer.querySelector?.('a') !== null ||
+              range.commonAncestorContainer.closest?.('a') !== null
+          
+          // Store the current selection for later use
+          setCurrentTextSelection({
+            selection,
+            range,
+            text: selectedText,
+            containsLink
+          })
+          
+          // Show small link/unlink button above selected text
+          setSelectionLinkButton({
+            x: rect.left + rect.width / 2,
+            y: rect.top - 35,
+            isUnlink: containsLink
+          })
+        } else {
+          setSelectionLinkButton(null)
+          setCurrentTextSelection(null)
+        }
+      } else {
+        // Hide button when no text is selected
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+      }
+    }, 10)
+  }, [])
+
+  // Handle selection changes globally to hide link button when selection is lost
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      // Don't clear selection if link toolbar is visible - we need it for link creation
+      if (linkToolbarVisible) return
+      
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+      }
+    }
+
+    const handleClickAnywhere = (e) => {
+      // Don't clear selection if clicking on link toolbar elements
+      if (e.target.closest('[data-link-toolbar="true"]')) {
+        return
+      }
+
+      // Don't clear selection if link toolbar is visible - we need it for link creation
+      if (linkToolbarVisible) return
+      
+      // Small delay to allow selection to complete first
+      setTimeout(() => {
+        const selection = window.getSelection()
+        if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
+          setSelectionLinkButton(null)
+          setCurrentTextSelection(null)
+        }
+      }, 50)
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
+    document.addEventListener('mousedown', handleClickAnywhere)
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange)
+      document.removeEventListener('mousedown', handleClickAnywhere)
+    }
+  }, [linkToolbarVisible])
+
+  // Remove link from selected text
+  const removeLinkFromSelection = useCallback(() => {
+    if (!currentTextSelection || !currentTextSelection.containsLink) return
+
+    try {
+      const range = currentTextSelection.range
+      
+      // Find the link element(s) within the selection
+      let linkElement = null
+      
+      // Check if the selection is entirely within a single link
+      if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+        linkElement = range.commonAncestorContainer.parentElement?.closest('a')
+      } else {
+        linkElement = range.commonAncestorContainer.querySelector?.('a') || 
+                      range.commonAncestorContainer.closest?.('a')
+      }
+      
+      if (linkElement) {
+        // Get the text content of the link
+        const linkText = linkElement.textContent
+        
+        // Create a text node to replace the link
+        const textNode = document.createTextNode(linkText)
+        
+        // Replace the link with the text node
+        linkElement.parentNode.replaceChild(textNode, linkElement)
+        
+        // Clear the selection and hide any toolbars
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+        window.getSelection().removeAllRanges()
+        
+        // Update the item content after removing the link
+        const itemElement = textNode.parentElement?.closest('[data-item-id]')
+        if (itemElement) {
+          const itemId = itemElement.getAttribute('data-item-id')
+          const contentElement = itemElement.querySelector('.mcl-item-content')
+          if (contentElement && itemId) {
+            // Update local state immediately
+            const newContent = contentElement.innerHTML
+            const updatedItems = items.map(item => 
+              item.id === itemId ? { ...item, content: newContent } : item
+            )
+            setItems(updatedItems)
+            
+            // Save to backend immediately
+            if (canEdit && currentChecklistId) {
+              saveChecklistData(currentChecklistId, title, updatedItems)
+                .catch(err => console.warn('Error saving after link removal:', err))
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error removing link:', error)
+    }
+  }, [currentTextSelection, items, setItems, canEdit, currentChecklistId, title, saveChecklistData])
+
+  const handleSelectionLinkButtonClick = useCallback(() => {
+    if (currentTextSelection) {
+      if (currentTextSelection.containsLink) {
+        // If selection contains a link, remove it
+        removeLinkFromSelection()
+      } else {
+        // If selection doesn't contain a link, show link creation toolbar
+        // Position the link toolbar near the button
         setLinkToolbarPosition({
-          x: rect.left + rect.width / 2,
-          y: rect.top - 10
+          x: selectionLinkButton.x,
+          y: selectionLinkButton.y - 50
         })
         
         // Show the link toolbar
-        linkManager.showLinkToolbar(selection)
-        setSelectedText(selectedText)
+        linkManager.showLinkToolbar(currentTextSelection.selection)
+        setSelectedText(currentTextSelection.text)
         setLinkToolbarVisible(true)
+        
+        // DON'T clear currentTextSelection here - we need it for link creation
+        // Hide the selection button since we're showing the toolbar
+        setSelectionLinkButton(null)
       }
-    } else {
-      // Hide toolbar when no text is selected
+    }
+  }, [linkManager, currentTextSelection, selectionLinkButton, removeLinkFromSelection])
+
+  // Custom link creation function that works with our selection state
+  const createLinkFromSelection = useCallback((url) => {
+    if (!currentTextSelection || !url) {
+      return
+    }
+
+    try {
+      // Normalize URL - trim whitespace first
+      url = url.trim()
+      if (!url) {
+        return
+      }
+
+      // Add https:// if no protocol is present
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url
+      }
+
+      // Validate the URL is properly formed
+      try {
+        new URL(url)
+      } catch (e) {
+        console.error('Invalid URL:', url)
+        return
+      }
+
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.className = 'text-blue-600 hover:text-blue-800 underline'
+      link.textContent = currentTextSelection.text
+
+      // Replace selected text with link
+      const range = currentTextSelection.range
+      range.deleteContents()
+      range.insertNode(link)
+
+      // Clear selection
+      window.getSelection().removeAllRanges()
+      
+      // Clear the selection and hide toolbar AFTER successfully creating the link
       linkManager.hideLinkToolbar()
       setLinkToolbarVisible(false)
+      setCurrentTextSelection(null)
+
+      // Update the item content after creating the link
+      const itemElement = link.closest('[data-item-id]')
+      if (itemElement) {
+        const itemId = itemElement.getAttribute('data-item-id')
+        const contentElement = itemElement.querySelector('.mcl-item-content')
+        if (contentElement && itemId) {
+          // Update local state immediately
+          const newContent = contentElement.innerHTML
+          const updatedItems = items.map(item => 
+            item.id === itemId ? { ...item, content: newContent } : item
+          )
+          setItems(updatedItems)
+
+          // Save to backend immediately
+          if (canEdit && currentChecklistId) {
+            saveChecklistData(currentChecklistId, title, updatedItems)
+              .catch(err => console.warn('Error saving after link creation:', err))
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error creating link:', error)
     }
-  }, [linkManager])
+  }, [currentTextSelection, linkManager, items, setItems, canEdit, currentChecklistId, title, saveChecklistData])
 
   const handleContentKeyDown = useCallback((e, itemId) => {
     if (e.key === 'Enter') {
@@ -2977,7 +3256,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       {/* Tooltip */}
       {tooltip && (
         <div 
-          className="fixed z-[9999] bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none transform -translate-x-1/2"
+          className="fixed z-[100001] bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none transform -translate-x-1/2"
           style={{
             left: tooltip.x,
             top: tooltip.y - 15
@@ -2988,15 +3267,58 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         </div>
       )}
 
+      {/* Selection Link Button */}
+      {selectionLinkButton && (
+        <div 
+          className="fixed z-[100002] transform -translate-x-1/2"
+          data-link-toolbar="true"
+          style={{
+            left: selectionLinkButton.x,
+            top: selectionLinkButton.y
+          }}
+        >
+          <button
+            className={`text-white p-1 rounded-full shadow-lg transition-colors ${
+              selectionLinkButton.isUnlink 
+                ? 'bg-red-600 hover:bg-red-700' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+            onClick={handleSelectionLinkButtonClick}
+            onMouseDown={(e) => e.preventDefault()} // Prevent losing text selection
+            title={selectionLinkButton.isUnlink ? (i18n.checklistDrawer?.tooltips?.removeLink || 'Remove link') : (i18n.checklistDrawer?.tooltips?.addLink || 'Add link')}
+          >
+            {selectionLinkButton.isUnlink ? (
+              // Unlink icon
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                <line x1="8" y1="8" x2="16" y2="16" />
+              </svg>
+            ) : (
+              // Link icon
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                <line x1="11" y1="13" x2="13" y2="11" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Link Toolbar */}
       <LinkToolbar
-        isVisible={linkManager.isToolbarVisible}
+        isVisible={linkToolbarVisible}
         position={linkToolbarPosition}
-        linkUrl={linkManager.linkUrl || linkUrl}
-        setLinkUrl={linkManager.setLinkUrl || setLinkUrl}
-        onCreateLink={linkManager.createLink}
-        onClose={linkManager.hideLinkToolbar}
-        isValidUrl={linkManager.isValidUrl || contentEditing.isValidUrl}
+        linkUrl={linkManager.linkUrl}
+        setLinkUrl={linkManager.setLinkUrl}
+        onCreateLink={createLinkFromSelection}
+        onClose={() => {
+          linkManager.hideLinkToolbar()
+          setLinkToolbarVisible(false)
+          setCurrentTextSelection(null) // Clear selection when closing
+        }}
+        isValidUrl={linkManager.isValidUrl}
       />
 
       {/* Image Choice Modal */}
@@ -3082,7 +3404,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
               </svg>
-              <span>This checklist is locked by another user. You can still interact but cannot edit structure.</span>
+              <span>{i18n.checklistDrawer?.checklistStates?.checklistLocked || 'This checklist is locked by another user. You can still interact but cannot edit structure.'}</span>
             </div>
           )}
 
@@ -3201,10 +3523,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           {items.length > 0 && window.mcl_checklists?.settings?.enable_progress_counter && (
             <div className={`${themeColors.surface} rounded-lg p-2 flex-shrink-0`}>
               <div className="flex justify-between text-xs mb-1">
-                <span className={themeColors.textSecondary}>{progressStats.total} items</span>
-                <span className={themeColors.textSecondary}>{progressStats.completed} completed</span>
+                <span className={themeColors.textSecondary}>{progressStats.total} {i18n.checklistDrawer?.progressCounter?.items || 'items'}</span>
+                <span className={themeColors.textSecondary}>{progressStats.completed} {i18n.checklistDrawer?.progressCounter?.completed || 'completed'}</span>
                 <span className={`${progressStats.percentage === 100 ? 'text-yellow-600 font-semibold' : themeColors.textSecondary}`}>
-                  {progressStats.percentage}% complete
+                  {progressStats.percentage}% {i18n.checklistDrawer?.progressCounter?.complete || 'complete'}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -3221,7 +3543,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-3">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current"></div>
-                <span className={themeColors.textSecondary}>Loading checklist...</span>
+                <span className={themeColors.textSecondary}>{i18n.checklistDrawer?.checklistStates?.loadingChecklist || 'Loading checklist...'}</span>
               </div>
             </div>
           )}
@@ -3281,7 +3603,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                 <div 
                                   {...providedDraggable.dragHandleProps}
                                   className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-200 flex-shrink-0 text-gray-500 hover:text-gray-700 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100"
-                                  onMouseEnter={(e) => showTooltip(e.target, 'Drag to reorder')}
+                                  onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.tooltips?.dragToReorder || 'Drag to reorder')}
                                   onMouseLeave={hideTooltip}
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3399,8 +3721,22 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                   suppressContentEditableWarning={true}
                                   onBlur={(e) => handleContentBlur(e, item.id)}
                                   onKeyDown={(e) => handleContentKeyDown(e, item.id)}
+                                  onKeyUp={handleTextSelection}
                                   onPaste={(e) => contentEditing.handlePaste(e)}
                                   onMouseUp={handleTextSelection}
+                                  onClick={(e) => {
+                                    // Allow links to be clicked
+                                    if (e.target.tagName === 'A') {
+                                      e.stopPropagation() // Prevent item click handler
+                                      // Manually open the link to ensure it works
+                                      const url = e.target.href
+                                      if (url) {
+                                        window.open(url, '_blank', 'noopener,noreferrer')
+                                        e.preventDefault() // Prevent default since we're handling it manually
+                                      }
+                                      return
+                                    }
+                                  }}
                                   dangerouslySetInnerHTML={{ __html: item.content }}
                                 />
 
@@ -3442,7 +3778,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                         e.stopPropagation()
                                         toggleInProgress(item.id)
                                       }}
-                                      onMouseEnter={(e) => showTooltip(e.target, isInProgress ? 'Remove from in progress' : 'Mark as in progress')}
+                                      onMouseEnter={(e) => showTooltip(e.target, isInProgress ? (i18n.checklistDrawer?.tooltips?.removeFromInProgress || 'Remove from in progress') : (i18n.checklistDrawer?.tooltips?.markAsInProgress || 'Mark as in progress'))}
                                       onMouseLeave={hideTooltip}
                                     >
                                       {isInProgress ? (
@@ -3465,7 +3801,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                         e.stopPropagation()
                                         handleDeadlineClick(item.id)
                                       }}
-                                      onMouseEnter={(e) => showTooltip(e.target, 'Set deadline')}
+                                      onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.tooltips?.setDeadline || 'Set deadline')}
                                       onMouseLeave={hideTooltip}
                                     >
                                       <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -3489,7 +3825,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                         e.stopPropagation()
                                         imageManager.handleImageButtonClick(e.target.closest('li'))
                                       }}
-                                      onMouseEnter={(e) => showTooltip(e.target, 'Add image')}
+                                      onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.tooltips?.addImage || 'Add image')}
                                       onMouseLeave={hideTooltip}
                                     >
                                       <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -3507,9 +3843,9 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                           e.stopPropagation()
                                           handleTourButtonClick(item.id)
                                         }}
-                                        onMouseEnter={(e) => showTooltip(e.target, 'Start tour from this step')}
+                                        onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.buttons?.startTour || 'Start tour from this step')}
                                         onMouseLeave={hideTooltip}
-                                        title="Start tour from this step"
+                                        title={i18n.checklistDrawer?.buttons?.startTour || "Start tour from this step"}
                                       >
                                         <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                           <path d="M6.5 13.5V21q0 .213-.144.356q-.144.144-.357.144t-.356-.144Q5.5 21.213 5.5 21V3q0-.213.144-.356q.144-.144.357-.144t.356.144Q6.5 2.787 6.5 3v1.5h12.583q.429 0 .661.351q.233.35.071.755L18.462 9l1.353 3.394q.162.404-.07.755q-.233.351-.662.351H6.5Zm6-3q.633 0 1.066-.434Q14 9.633 14 9t-.434-1.066Q13.133 7.5 12.5 7.5t-1.066.434Q11 8.367 11 9t.434 1.066q.433.434 1.066.434Z"/>
@@ -3527,7 +3863,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                           e.stopPropagation()
                                           removeItem(item.id)
                                         }}
-                                        onMouseEnter={(e) => showTooltip(e.target, 'Remove item')}
+                                        onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.tooltips?.removeItem || 'Remove item')}
                                         onMouseLeave={hideTooltip}
                                       >
                                         ×
@@ -3566,7 +3902,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Add Item
+                    {i18n.checklistDrawer?.buttons?.addItem || 'Add Item'}
                   </button>
                 )}
                 
@@ -3584,7 +3920,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
-                    Uncheck All
+                    {i18n.checklistDrawer?.buttons?.uncheckAll || 'Uncheck All'}
                   </button>
                 )}
               </div>
