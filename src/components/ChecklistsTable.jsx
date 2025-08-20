@@ -648,7 +648,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto relative">
             <Table hoverable className="dark:divide-gray-600">
               <TableHead className="bg-gray-50 dark:bg-gray-700">
                 <TableRow>
@@ -753,7 +753,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                         <span className="text-gray-400 dark:text-gray-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="relative">
                       <div className="flex items-center space-x-2">
                         <Button
                           size="xs"
@@ -771,6 +771,8 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                         <Dropdown
                           arrowIcon={false}
                           inline
+                          placement="bottom-end"
+                          className="z-50"
                           label={
                             <div className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-600 cursor-pointer transition-colors duration-200">
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

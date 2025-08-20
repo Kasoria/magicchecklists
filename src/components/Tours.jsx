@@ -283,7 +283,7 @@ const Tours = ({ adminData, onEditTour }) => {
     <div className="space-y-6">
       {/* Tours Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative">
           <Table>
           <TableHead>
             <TableRow>
@@ -355,10 +355,12 @@ const Tours = ({ adminData, onEditTour }) => {
                       {formatDate(tour.date, 'date')}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="relative">
                     <Dropdown
                       label=""
                       dismissOnClick={true}
+                      placement="bottom-end"
+                      className="z-50"
                       renderTrigger={() => (
                         <button className="inline-flex items-center p-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

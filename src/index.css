@@ -787,6 +787,55 @@ input[type="color"]::-moz-color-swatch {
   margin-bottom: 0;
 }
 
+/* Fix dropdown overflow in tables */
+.overflow-x-auto.relative {
+  overflow-y: visible !important;
+}
+
+/* Ensure dropdowns can escape table containers */
+.overflow-x-auto .relative .z-50 {
+  position: fixed !important;
+}
+
+/* Ensure dropdown positioning works correctly */
+[data-popper-placement] {
+  z-index: 9999 !important;
+}
+
+/* Alternative approach: allow dropdowns to escape parent overflow */
+.table-cell-dropdown {
+  position: static !important;
+}
+
+.table-cell-dropdown > div[data-floating-ui-portal] {
+  z-index: 9999 !important;
+}
+
+/* Flowbite dropdown portal fixes */
+div[data-floating-ui-portal] {
+  z-index: 9999 !important;
+}
+
+/* Specific fixes for Flowbite Dropdown component */
+[data-testid="flowbite-dropdown"] {
+  z-index: 9999 !important;
+}
+
+/* Ensure table cells with dropdowns don't clip content */
+.relative .overflow-visible {
+  overflow: visible !important;
+}
+
+/* For tables with horizontal scroll, ensure dropdowns render above */
+.overflow-x-auto table tbody tr td.relative {
+  position: static;
+}
+
+.overflow-x-auto table tbody tr td.relative > div {
+  position: relative;
+  z-index: 10;
+}
+
 /* Form grid improvements */
 .mcl-form-grid-stacked {
   display: grid;
