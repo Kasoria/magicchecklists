@@ -53,6 +53,16 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_add_task_comment', array($this, 'add_task_comment'));
         add_action('wp_ajax_mcl_update_task_comment', array($this, 'update_task_comment'));
         add_action('wp_ajax_mcl_delete_task_comment', array($this, 'delete_task_comment'));
+        add_action('wp_ajax_mcl_save_task_comment', array($this, 'save_task_comment'));
+        
+        // Enhanced comments with threading and likes
+        add_action('wp_ajax_mcl_get_threaded_comments', array($this, 'get_threaded_comments'));
+        add_action('wp_ajax_nopriv_mcl_get_threaded_comments', array($this, 'get_threaded_comments'));
+        add_action('wp_ajax_mcl_add_threaded_comment', array($this, 'add_threaded_comment'));
+        add_action('wp_ajax_nopriv_mcl_add_threaded_comment', array($this, 'add_threaded_comment'));
+        add_action('wp_ajax_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment'));
+        add_action('wp_ajax_mcl_toggle_comment_like', array($this, 'toggle_comment_like'));
+        add_action('wp_ajax_nopriv_mcl_toggle_comment_like', array($this, 'toggle_comment_like'));
     }
 
     public function add_admin_menu() {
@@ -783,7 +793,22 @@ class MCL_Admin {
         $enable_shortcode = (isset($_POST['enable_shortcode']) && $_POST['enable_shortcode'] === '1') ? 1 : 0;
         $auto_reset = (isset($_POST['auto_reset']) && $_POST['auto_reset'] === '1') ? 1 : 0;
         
-        $time_date = !empty($_POST['time_date']) ? strtotime($_POST['time_date']) : '';
+        // Handle time_date with proper WordPress timezone conversion
+        $time_date = '';
+        if (!empty($_POST['time_date'])) {
+            // Get WordPress timezone
+            $wp_timezone = wp_timezone();
+            
+            try {
+                // Create DateTime object from the input, treating it as WordPress local time
+                $datetime = new DateTime($_POST['time_date'], $wp_timezone);
+                // Convert to UTC timestamp for storage
+                $time_date = $datetime->getTimestamp();
+            } catch (Exception $e) {
+                // Fallback to original behavior if DateTime creation fails
+                $time_date = strtotime($_POST['time_date']);
+            }
+        }
         $keyboard_shortcut = sanitize_text_field( $_POST['keyboard_shortcut'] );
         $checked_state_handling = sanitize_text_field( $_POST['checked_state'] );
         $theme = sanitize_text_field( $_POST['theme'] );
@@ -852,11 +877,11 @@ class MCL_Admin {
             'notify_on_check_item' => (isset($_POST['notify_on_check_item']) && $_POST['notify_on_check_item'] === '1'),
             'notify_on_uncheck_item' => (isset($_POST['notify_on_uncheck_item']) && $_POST['notify_on_uncheck_item'] === '1'),
             'notify_on_deadline' => (isset($_POST['notify_on_deadline']) && $_POST['notify_on_deadline'] === '1'),
+            'notify_on_comments' => (isset($_POST['notify_on_comments']) && $_POST['notify_on_comments'] === '1'),
             'deadline_threshold_hours' => absint($_POST['deadline_threshold_hours'] ?? 24),
             'batch_interval' => sanitize_text_field($_POST['batch_interval'] ?? 'fifteen_minutes')
         );
-        $notification_manager = MCL_Notification_Manager::get_instance();
-        $notification_manager->save_notification_settings($checklist_id, $notification_settings);
+        // Notification settings will be saved after deadline is updated
 
         // Add enable_shortcode update
         update_post_meta($checklist_id, '_mcl_enable_shortcode', $enable_shortcode);
@@ -939,6 +964,12 @@ class MCL_Admin {
             }
             update_post_meta($checklist_id, '_mcl_enable_item_locking', $enable_item_locking);
             update_post_meta( $checklist_id, '_mcl_time_date', $time_date);
+            
+            // Now save notification settings after deadline is updated
+            // This ensures the trigger time is calculated with the correct deadline value
+            $notification_manager = MCL_Notification_Manager::get_instance();
+            $notification_manager->save_notification_settings($checklist_id, $notification_settings);
+            
             update_post_meta( $checklist_id, '_mcl_items', $processed_items );
             update_post_meta( $checklist_id, '_mcl_checklist_type', $checklist_type);
             update_post_meta( $checklist_id, '_mcl_keyboard_shortcut', $keyboard_shortcut );
@@ -2149,10 +2180,23 @@ class MCL_Admin {
             return is_array($value) ? $value : $default;
         };
 
-        // Format time_date properly
+        // Format time_date properly with WordPress timezone handling
         $time_date = $get_meta('_mcl_time_date', '');
         if (!empty($time_date) && is_numeric($time_date)) {
-            $time_date = date('Y-m-d\TH:i', intval($time_date));
+            try {
+                // Get WordPress timezone
+                $wp_timezone = wp_timezone();
+                
+                // Create DateTime from UTC timestamp and convert to WordPress timezone
+                $datetime = new DateTime('@' . intval($time_date));
+                $datetime->setTimezone($wp_timezone);
+                
+                // Format for datetime-local input
+                $time_date = $datetime->format('Y-m-d\TH:i');
+            } catch (Exception $e) {
+                // Fallback to original behavior
+                $time_date = date('Y-m-d\TH:i', intval($time_date));
+            }
         } else {
             $time_date = '';
         }
@@ -2249,6 +2293,7 @@ class MCL_Admin {
             $response['notify_on_check_item'] = (bool) $notification_settings->notify_on_check_item;
             $response['notify_on_uncheck_item'] = (bool) $notification_settings->notify_on_uncheck_item;
             $response['notify_on_deadline'] = (bool) $notification_settings->notify_on_deadline;
+            $response['notify_on_comments'] = (bool) ($notification_settings->notify_on_comments ?? false);
             $response['deadline_threshold_hours'] = $notification_settings->deadline_threshold_hours;
             $response['batch_interval'] = $notification_settings->batch_interval;
         } else {
@@ -2264,6 +2309,7 @@ class MCL_Admin {
             $response['notify_on_check_item'] = false;
             $response['notify_on_uncheck_item'] = false;
             $response['notify_on_deadline'] = false;
+            $response['notify_on_comments'] = false;
             $response['deadline_threshold_hours'] = '24';
             $response['batch_interval'] = 'fifteen_minutes';
         }
@@ -2848,6 +2894,40 @@ class MCL_Admin {
         foreach ($kanban_state_results as $state) {
             $kanban_state[$state->item_id] = $state;
         }
+
+        // Get all comments for this checklist in one query
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+        $comments_results = $wpdb->get_results($wpdb->prepare(
+            "SELECT item_id, comment_content FROM $comments_table 
+             WHERE checklist_id = %d 
+             ORDER BY item_id, created_at DESC",
+            $checklist_id
+        ));
+
+        // Get comment counts per item
+        $comment_counts = $wpdb->get_results($wpdb->prepare(
+            "SELECT item_id, COUNT(*) as comment_count FROM $comments_table 
+             WHERE checklist_id = %d 
+             GROUP BY item_id",
+            $checklist_id
+        ));
+
+        // Index comments by item_id (taking the latest comment for each item)
+        $item_comments = array();
+        foreach ($comments_results as $comment) {
+            if (!isset($item_comments[$comment->item_id])) {
+                $item_comments[$comment->item_id] = $comment->comment_content;
+            }
+        }
+
+        // Index comment counts by item_id - handle both string and numeric IDs
+        $item_comment_counts = array();
+        foreach ($comment_counts as $count) {
+            // Store count for both numeric ID and potential string ID formats
+            $item_comment_counts[$count->item_id] = $count->comment_count;
+            $item_comment_counts["item_{$count->item_id}_1"] = $count->comment_count;
+            $item_comment_counts["item_{$count->item_id}"] = $count->comment_count;
+        }
         
         // Get checked state - implement the logic directly since the method is private
         $checked_state_handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
@@ -2927,6 +3007,8 @@ class MCL_Admin {
                     'id' => $item_id,
                     'title' => isset($item['content']) ? $item['content'] : '',
                     'description' => '', // Items don't have separate descriptions
+                    'comment' => isset($item_comments[$item_id]) ? $item_comments[$item_id] : '', // Add comment field
+                    'comment_count' => isset($item_comment_counts[$item_id]) ? intval($item_comment_counts[$item_id]) : 0,
                     'checked' => in_array((string)$item_id, $checked_state) || in_array($item_id, $checked_state),
                     'priority' => isset($item['priority']) ? $item['priority'] : 'normal',
                     'tags' => isset($item['tags']) ? $item['tags'] : array(),
@@ -3421,5 +3503,545 @@ class MCL_Admin {
             'message' => 'Comment deleted successfully'
         ));
     }
+
+    /**
+     * Save task comment - simplified version for KanbanBoard 
+     * This creates or updates a comment for a task
+     */
+    public function save_task_comment() {
+        // Verify nonce
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid security token'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
+
+        if (!$checklist_id || empty($item_id)) {
+            wp_send_json_error('Invalid parameters');
+        }
+
+        $current_user = wp_get_current_user();
+        $user_id = $current_user->ID ?: null;
+        
+        // Use provided user info if available, otherwise use current user
+        if (empty($user_name)) {
+            $user_name = $current_user->display_name;
+        }
+        if (empty($user_email)) {
+            $user_email = $current_user->user_email;
+        }
+
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        // Check if a comment already exists for this item (for update)
+        $existing_comment = $wpdb->get_row($wpdb->prepare(
+            "SELECT id FROM $comments_table 
+             WHERE checklist_id = %d AND item_id = %s",
+            $checklist_id,
+            $item_id
+        ));
+
+        if (empty($comment_content)) {
+            // If comment is empty, delete existing comment if any
+            if ($existing_comment) {
+                $result = $wpdb->delete(
+                    $comments_table,
+                    array('id' => $existing_comment->id),
+                    array('%d')
+                );
+            } else {
+                // No existing comment and empty content - nothing to do
+                $result = true;
+            }
+        } else {
+            // Save/update comment
+            if ($existing_comment) {
+                // Update existing comment
+                $result = $wpdb->update(
+                    $comments_table,
+                    array(
+                        'comment_content' => $comment_content,
+                        'user_name' => $user_name,
+                        'user_email' => $user_email,
+                        'updated_at' => current_time('mysql')
+                    ),
+                    array(
+                        'id' => $existing_comment->id
+                    ),
+                    array('%s', '%s', '%s', '%s'),
+                    array('%d')
+                );
+            } else {
+                // Insert new comment
+                $result = $wpdb->insert(
+                    $comments_table,
+                    array(
+                        'checklist_id' => $checklist_id,
+                        'item_id' => $item_id,
+                        'user_id' => $user_id,
+                        'user_name' => $user_name,
+                        'user_email' => $user_email,
+                        'comment_content' => $comment_content,
+                        'created_at' => current_time('mysql'),
+                        'updated_at' => current_time('mysql')
+                    ),
+                    array('%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s')
+                );
+            }
+        }
+
+        if ($result === false) {
+            wp_send_json_error('Failed to save comment');
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Comment saved successfully',
+            'comment_id' => $existing_comment ? $existing_comment->id : $wpdb->insert_id
+        ));
+    }
+
+    /**
+     * Get threaded comments for a task with like information
+     */
+    public function get_threaded_comments() {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+                wp_send_json_error(array('message' => 'Invalid security token'));
+                return;
+            }
+
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error('Insufficient permissions');
+            }
+
+            $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+            $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+
+            if (!$checklist_id || !$item_id) {
+                wp_send_json_error('Invalid parameters');
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                MCL_DB_Manager::get_instance()->install();
+            }
+        
+            $current_user = wp_get_current_user();
+            $current_user_email = $current_user->user_email;
+
+            // First get all comments
+            $comments = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $comments_table 
+                 WHERE checklist_id = %d AND item_id = %d 
+                 ORDER BY parent_id IS NULL DESC, created_at ASC",
+                $checklist_id,
+                $item_id
+            ));
+
+            // Then get like information for each comment
+            foreach ($comments as &$comment) {
+                // Get like count
+                $like_count = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM $likes_table WHERE comment_id = %d",
+                    $comment->id
+                ));
+                $comment->like_count = intval($like_count);
+
+                // Check if current user liked this comment
+                $user_liked = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM $likes_table WHERE comment_id = %d AND user_email = %s",
+                    $comment->id,
+                    $current_user_email
+                ));
+                $comment->user_liked = intval($user_liked) > 0 ? 1 : 0;
+            }
+
+            // Organize comments into threaded structure
+            $threaded_comments = $this->organize_threaded_comments($comments);
+
+            wp_send_json_success(array(
+                'comments' => $threaded_comments
+            ));
+        } catch (Exception $e) {
+            error_log('Error in get_threaded_comments: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to load comments'));
+        }
+    }
+
+    /**
+     * Add a threaded comment (can be a reply to another comment)
+     */
+    public function add_threaded_comment() {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+                wp_send_json_error(array('message' => 'Invalid security token'));
+                return;
+            }
+
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error('Insufficient permissions');
+            }
+
+            $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+            $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+            $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
+            $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+
+            if (!$checklist_id || !$item_id || empty($comment_content)) {
+                wp_send_json_error('Invalid parameters');
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                MCL_DB_Manager::get_instance()->install();
+            }
+
+            // Validate parent comment exists and belongs to same item (if replying)
+            if ($parent_id) {
+                $parent_comment = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM $comments_table WHERE id = %d AND checklist_id = %d AND item_id = %d",
+                    $parent_id,
+                    $checklist_id,
+                    $item_id
+                ));
+
+                if (!$parent_comment) {
+                    wp_send_json_error('Invalid parent comment');
+                }
+
+                // Don't allow replies to replies (max 2 levels)
+                if ($parent_comment->parent_id !== null) {
+                    wp_send_json_error('Cannot reply to a reply');
+                }
+            }
+
+            $current_user = wp_get_current_user();
+            $user_avatar = get_avatar_url($current_user->ID, array('size' => 40));
+
+            $result = $wpdb->insert(
+                $comments_table,
+                array(
+                    'checklist_id' => $checklist_id,
+                    'item_id' => $item_id,
+                    'parent_id' => $parent_id,
+                    'user_id' => $current_user->ID,
+                    'user_name' => $current_user->display_name,
+                    'user_email' => $current_user->user_email,
+                    'user_avatar' => $user_avatar,
+                    'comment_content' => $comment_content,
+                    'like_count' => 0,
+                    'created_at' => current_time('mysql'),
+                    'updated_at' => current_time('mysql')
+                ),
+                array('%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
+            );
+
+            if ($result === false) {
+                wp_send_json_error('Failed to add comment');
+            }
+
+            $comment_id = $wpdb->insert_id;
+            $new_comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+        
+            // Add user_liked field for consistency
+            $new_comment->user_liked = 0;
+
+            // Trigger notification for comment events
+            if ($parent_id) {
+                // This is a reply
+                do_action('mcl_comment_replied', $parent_id, $comment_id, $checklist_id, $item_id);
+            } else {
+                // This is a new top-level comment
+                do_action('mcl_comment_added', $checklist_id, $item_id, array(
+                    'id' => $comment_id,
+                    'content' => $comment_content
+                ));
+            }
+
+            wp_send_json_success(array(
+                'message' => 'Comment added successfully',
+                'comment' => $new_comment
+            ));
+        } catch (Exception $e) {
+            error_log('Error in add_threaded_comment: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to add comment'));
+        }
+    }
+
+    /**
+     * Toggle like on a comment
+     */
+    public function toggle_comment_like() {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+                wp_send_json_error(array('message' => 'Invalid security token'));
+                return;
+            }
+
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error('Insufficient permissions');
+            }
+
+            $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+
+            if (!$comment_id) {
+                wp_send_json_error('Invalid parameters');
+            }
+
+            $current_user = wp_get_current_user();
+            
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                MCL_DB_Manager::get_instance()->install();
+            }
+
+            // Check if comment exists
+            $comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            if (!$comment) {
+                wp_send_json_error('Comment not found');
+            }
+
+            // Check if user already liked this comment
+            $existing_like = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $likes_table WHERE comment_id = %d AND user_email = %s",
+                $comment_id,
+                $current_user->user_email
+            ));
+
+            if ($existing_like) {
+                // Unlike - remove the like
+                $wpdb->delete(
+                    $likes_table,
+                    array('id' => $existing_like->id),
+                    array('%d')
+                );
+                
+                // Update comment like count
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $comments_table SET like_count = like_count - 1 WHERE id = %d",
+                    $comment_id
+                ));
+                
+                $action = 'unliked';
+            } else {
+                // Like - add the like
+                $wpdb->insert(
+                    $likes_table,
+                    array(
+                        'comment_id' => $comment_id,
+                        'user_id' => $current_user->ID,
+                        'user_email' => $current_user->user_email,
+                        'user_name' => $current_user->display_name,
+                        'created_at' => current_time('mysql')
+                    ),
+                    array('%d', '%d', '%s', '%s', '%s')
+                );
+                
+                // Update comment like count
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $comments_table SET like_count = like_count + 1 WHERE id = %d",
+                    $comment_id
+                ));
+                
+                // Trigger notification for comment like
+                do_action('mcl_comment_liked', $comment_id, $comment->checklist_id, $comment->item_id);
+                
+                $action = 'liked';
+            }
+
+            // Get updated like count
+            $updated_comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT like_count FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            wp_send_json_success(array(
+                'message' => "Comment $action successfully",
+                'action' => $action,
+                'like_count' => $updated_comment->like_count,
+                'user_liked' => $action === 'liked' ? 1 : 0
+            ));
+        } catch (Exception $e) {
+            error_log('Error in toggle_comment_like: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to toggle like'));
+        }
+    }
+
+    /**
+     * Delete threaded comment (admin only)
+     */
+    public function delete_threaded_comment() {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+                wp_send_json_error(array('message' => 'Invalid security token'));
+                return;
+            }
+
+            // Check if user is admin
+            if (!current_user_can('administrator')) {
+                wp_send_json_error('Insufficient permissions - admin required');
+            }
+
+            $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+
+            if (!$comment_id) {
+                wp_send_json_error('Invalid parameters');
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table) {
+                wp_send_json_error('Comments table not found');
+            }
+
+            // Check if comment exists
+            $comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            if (!$comment) {
+                wp_send_json_error('Comment not found');
+            }
+
+            // Start transaction
+            $wpdb->query('START TRANSACTION');
+
+            try {
+                // Delete all likes for this comment (if likes table exists)
+                if ($wpdb->get_var("SHOW TABLES LIKE '$likes_table'") == $likes_table) {
+                    $wpdb->delete(
+                        $likes_table,
+                        array('comment_id' => $comment_id),
+                        array('%d')
+                    );
+                }
+
+                // Delete replies first (if any)
+                $replies = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id FROM $comments_table WHERE parent_id = %d",
+                    $comment_id
+                ));
+
+                foreach ($replies as $reply) {
+                    // Delete likes for replies
+                    if ($wpdb->get_var("SHOW TABLES LIKE '$likes_table'") == $likes_table) {
+                        $wpdb->delete(
+                            $likes_table,
+                            array('comment_id' => $reply->id),
+                            array('%d')
+                        );
+                    }
+                    
+                    // Delete reply
+                    $wpdb->delete(
+                        $comments_table,
+                        array('id' => $reply->id),
+                        array('%d')
+                    );
+                }
+
+                // Delete the main comment
+                $result = $wpdb->delete(
+                    $comments_table,
+                    array('id' => $comment_id),
+                    array('%d')
+                );
+
+                if ($result === false) {
+                    $wpdb->query('ROLLBACK');
+                    wp_send_json_error('Failed to delete comment');
+                }
+
+                $wpdb->query('COMMIT');
+
+                wp_send_json_success(array(
+                    'message' => 'Comment deleted successfully',
+                    'comment_id' => $comment_id
+                ));
+
+            } catch (Exception $e) {
+                $wpdb->query('ROLLBACK');
+                throw $e;
+            }
+
+        } catch (Exception $e) {
+            error_log('Error in delete_threaded_comment: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to delete comment'));
+        }
+    }
+
+    /**
+     * Organize flat comments array into threaded structure
+     */
+    private function organize_threaded_comments($comments) {
+        $threaded = array();
+        $replies = array();
+        
+        // Separate parent comments and replies
+        foreach ($comments as $comment) {
+            if ($comment->parent_id === null) {
+                $comment->replies = array();
+                $threaded[] = $comment;
+            } else {
+                if (!isset($replies[$comment->parent_id])) {
+                    $replies[$comment->parent_id] = array();
+                }
+                $replies[$comment->parent_id][] = $comment;
+            }
+        }
+        
+        // Attach replies to their parent comments
+        foreach ($threaded as &$parent_comment) {
+            if (isset($replies[$parent_comment->id])) {
+                $parent_comment->replies = $replies[$parent_comment->id];
+            }
+        }
+        
+        return $threaded;
+    }
+
 
 }

@@ -138,6 +138,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     notify_on_check_item: false,
     notify_on_uncheck_item: false,
     notify_on_deadline: false,
+    notify_on_comments: false,
     deadline_threshold_hours: '24',
     batch_interval: 'fifteen_minutes',
     // Shortcode settings
@@ -537,6 +538,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         notify_on_check_item: formData.notify_on_check_item ? '1' : '0',
         notify_on_uncheck_item: formData.notify_on_uncheck_item ? '1' : '0',
         notify_on_deadline: formData.notify_on_deadline ? '1' : '0',
+        notify_on_comments: formData.notify_on_comments ? '1' : '0',
         deadline_threshold_hours: formData.deadline_threshold_hours,
         batch_interval: formData.batch_interval,
         auto_reset: formData.auto_reset ? '1' : '0',

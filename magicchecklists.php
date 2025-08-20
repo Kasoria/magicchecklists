@@ -118,6 +118,8 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             MCL_Settings::get_instance();
             MCL_Export_Handler::get_instance();
             MCL_Analytics::get_instance();
+            MCL_Notification_Manager::get_instance();
+            MCL_Global_Notification_Manager::get_instance();
             
             // Initialize tour functionality
             new MCL_Tour_CPT();

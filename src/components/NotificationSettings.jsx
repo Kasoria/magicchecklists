@@ -355,7 +355,13 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                   checked={formData.notify_on_deadline}
                   onChange={(checked) => onChange('notify_on_deadline', checked)}
                   label="Deadline approaching"
-                  className="md:col-span-2"
+                />
+
+                <Checkbox
+                  id="notify_on_comments"
+                  checked={formData.notify_on_comments}
+                  onChange={(checked) => onChange('notify_on_comments', checked)}
+                  label="Comments and replies"
                 />
               </div>
 

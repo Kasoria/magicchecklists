@@ -59,6 +59,22 @@ const getDateFormatSetting = () => {
 }
 
 /**
+ * Create a Date object from a WordPress timestamp
+ * WordPress timestamps are saved in the local timezone, so we need to create
+ * Date objects that represent the correct local time.
+ * @param {number|string} timestamp - WordPress timestamp 
+ * @returns {Date} Date object
+ */
+const createWordPressDate = (timestamp) => {
+  // Convert to number and then milliseconds if needed
+  const numericTimestamp = typeof timestamp === 'string' ? Number(timestamp) : timestamp
+  const ms = numericTimestamp < 10000000000 ? numericTimestamp * 1000 : numericTimestamp
+  
+  // WordPress timestamps are already in the correct local timezone
+  return new Date(ms)
+}
+
+/**
  * Format a date using the user's preferred format
  * @param {Date|number|string} date - Date to format (Date object, timestamp, or date string)
  * @param {string} type - Type of formatting: 'date', 'time', 'datetime', 'short'
@@ -72,7 +88,7 @@ export const formatDate = (date, type = 'datetime', customOptions = {}) => {
   }
   
   try {
-    // Convert input to Date object
+    // Convert input to Date object with WordPress timezone correction
     let dateObj
     if (typeof date === 'number') {
       // Handle both seconds and milliseconds timestamps
@@ -80,12 +96,12 @@ export const formatDate = (date, type = 'datetime', customOptions = {}) => {
       if (date < 0) {
         throw new Error('Negative timestamp')
       }
-      dateObj = new Date(date < 10000000000 ? date * 1000 : date)
+      dateObj = createWordPressDate(date)
     } else if (typeof date === 'string') {
       // Check if it's a numeric string (like '1749585600')
       if (!isNaN(Number(date))) {
         const numDate = Number(date)
-        dateObj = new Date(numDate < 10000000000 ? numDate * 1000 : numDate)
+        dateObj = createWordPressDate(numDate)
       } else {
         dateObj = new Date(date)
       }
@@ -212,36 +228,18 @@ export const formatRelativeTime = (date, baseDate = new Date()) => {
  */
 export const formatDeadlineCountdown = (deadline, currentTime = null) => {
   try {
-    // Handle both numbers and numeric strings
-    let deadlineTimestamp
-    if (typeof deadline === 'number') {
-      deadlineTimestamp = deadline < 10000000000 ? deadline * 1000 : deadline
-    } else if (typeof deadline === 'string' && !isNaN(Number(deadline))) {
-      // Convert numeric string to number, then apply timestamp logic
-      const numDeadline = Number(deadline)
-      deadlineTimestamp = numDeadline < 10000000000 ? numDeadline * 1000 : numDeadline
-    } else {
-      // Try to parse as date string
-      deadlineTimestamp = new Date(deadline).getTime()
-    }
+    // Convert deadline timestamp to Date object
+    const deadlineDate = new Date(deadline * 1000)
     
-    const deadlineObj = new Date(deadlineTimestamp)
-    
-    // Always get current time as timestamp for consistent handling
-    const nowTimestamp = currentTime 
-      ? (typeof currentTime === 'number' 
-          ? (currentTime < 10000000000 ? currentTime * 1000 : currentTime)
-          : new Date(currentTime).getTime())
-      : Date.now()
-    
-    const currentObj = new Date(nowTimestamp)
+    // Get current time
+    const currentDate = currentTime ? new Date(currentTime) : new Date()
 
     // Validate both dates
-    if (isNaN(deadlineObj.getTime()) || isNaN(currentObj.getTime())) {
+    if (isNaN(deadlineDate.getTime()) || isNaN(currentDate.getTime())) {
       throw new Error('Invalid date objects')
     }
 
-    const timeLeft = deadlineObj.getTime() - currentObj.getTime()
+    const timeLeft = deadlineDate.getTime() - currentDate.getTime()
 
     if (timeLeft < 0) {
       return {

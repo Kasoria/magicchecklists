@@ -1,18 +1,166 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useToast } from './Toast.jsx'
 import ConfirmationModal from './ConfirmationModal.jsx'
 
-// Simple Modal component for KanbanBoard
-const Modal = ({ isOpen, onClose, title, children, footer }) => {
-  if (!isOpen) return null
+// Comment component for threaded display
+const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false }) => {
+  const [showReplyForm, setShowReplyForm] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const replyFormRef = useRef(null)
+  const replyInputRef = useRef(null)
+
+  const handleReply = async () => {
+    if (replyText.trim()) {
+      await onReply(comment.id, replyText)
+      setReplyText('')
+      setShowReplyForm(false)
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleReply()
+    }
+  }
+
+  const handleShowReplyForm = () => {
+    setShowReplyForm(true)
+    // Use setTimeout to ensure the form is rendered before scrolling and focusing
+    setTimeout(() => {
+      if (replyFormRef.current) {
+        replyFormRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        })
+      }
+      if (replyInputRef.current) {
+        replyInputRef.current.focus()
+      }
+    }, 100)
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className={`${level > 0 ? 'ml-6 border-l-2 border-gray-200 pl-4' : ''} mb-4`}>
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              {comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div>
+              <span className="font-medium text-gray-900 dark:text-white text-sm">
+                {comment.user_name || 'Anonymous'}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                {new Date(comment.created_at).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(comment.id)}
+              className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+              title="Delete comment"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
+        
+        <div className="text-gray-800 dark:text-gray-200 text-sm mb-3" 
+             dangerouslySetInnerHTML={{ __html: comment.comment_content?.replace(/\\'/g, "'").replace(/\\"/g, '"') || '' }} />
+        
+        <div className="flex items-center space-x-4 text-xs">
+          <button
+            onClick={() => onLike(comment.id)}
+            className={`flex items-center space-x-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded px-2 py-1 ${
+              comment.user_liked ? 'text-red-500' : 'text-gray-500'
+            }`}
+          >
+            <span>{comment.user_liked ? '❤️' : '🤍'}</span>
+            <span>{comment.like_count || 0}</span>
+          </button>
+          
+          {level === 0 && (
+            <button
+              onClick={handleShowReplyForm}
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              Reply
+            </button>
+          )}
+        </div>
+
+        {showReplyForm && (
+          <div ref={replyFormRef} className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+            <textarea
+              ref={replyInputRef}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Write a reply..."
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              rows={2}
+            />
+            <div className="flex items-center justify-end space-x-2 mt-2">
+              <button
+                onClick={() => setShowReplyForm(false)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReply}
+                className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              >
+                Reply
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Replies */}
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-3">
+          {comment.replies.map(reply => (
+            <Comment
+              key={reply.id}
+              comment={reply}
+              onReply={onReply}
+              onLike={onLike}
+              onDelete={onDelete}
+              isAdmin={isAdmin}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Simple Modal component for KanbanBoard
+const Modal = ({ isOpen, onClose, title, children, footer, size = "md" }) => {
+  if (!isOpen) return null
+
+  const sizeClasses = {
+    sm: "max-w-md",
+    md: "max-w-md", 
+    lg: "max-w-2xl",
+    xl: "max-w-4xl"
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 overflow-y-auto" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md"
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]} my-8 max-h-[calc(100vh-8rem)]`}
         onClick={(e) => e.stopPropagation()}
+        style={{ marginTop: 'max(2rem, 32px)' }} // Account for admin bar (32px) + margin
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600 sticky top-0 bg-white dark:bg-gray-800 z-10 rounded-t-lg">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           <button 
             onClick={onClose}
@@ -23,8 +171,8 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
             </svg>
           </button>
         </div>
-        <div className="p-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-600">{footer}</div>}
+        <div className="p-4 overflow-y-auto max-h-[calc(100vh-12rem)]">{children}</div>
+        {footer && <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-600 sticky bottom-0 bg-white dark:bg-gray-800 rounded-b-lg">{footer}</div>}
       </div>
     </div>
   )
@@ -59,6 +207,16 @@ const KanbanBoard = ({ adminData }) => {
   const [editingTask, setEditingTask] = useState(null)
   const [taskContent, setTaskContent] = useState('')
   const [taskComment, setTaskComment] = useState('')
+  
+  // Enhanced comment system state
+  const [taskComments, setTaskComments] = useState([])
+  const [newComment, setNewComment] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [replyText, setReplyText] = useState('')
+  const [loadingComments, setLoadingComments] = useState(false)
+  
+  // Rich text editor refs
+  const contentEditableRef = useRef(null)
 
   const { showSuccess, showError } = useToast()
 
@@ -316,6 +474,7 @@ const KanbanBoard = ({ adminData }) => {
     setEditingTask({ ...item, columnId })
     setTaskContent(item.title || '')
     setTaskComment(item.comment || '')
+    loadTaskComments(item.id)
     setShowTaskModal(true)
   }
 
@@ -324,13 +483,22 @@ const KanbanBoard = ({ adminData }) => {
     setEditingTask(null)
     setTaskContent('')
     setTaskComment('')
+    setTaskComments([])
+    setNewComment('')
+    setReplyingTo(null)
+    setReplyText('')
   }
 
   const saveTask = async () => {
-    if (!editingTask || !taskContent.trim()) {
+    // Get content from contentEditable div
+    const contentFromEditor = contentEditableRef.current?.innerHTML || taskContent
+    
+    if (!editingTask || !contentFromEditor.trim()) {
       showError('Task content is required')
       return
     }
+
+    const newTaskTitle = contentFromEditor.trim()
 
     // Update board optimistically
     const newBoard = board.map(column => {
@@ -341,7 +509,7 @@ const KanbanBoard = ({ adminData }) => {
             if (item.id === editingTask.id) {
               return {
                 ...item,
-                title: taskContent.trim(),
+                title: newTaskTitle,
                 comment: taskComment.trim()
               }
             }
@@ -352,11 +520,328 @@ const KanbanBoard = ({ adminData }) => {
       return column
     })
     setBoard(newBoard)
-    closeTaskModal()
+
+    try {
+      // Save task content to the database (same as ChecklistDrawer)
+      const updatedItems = []
+      newBoard.forEach(column => {
+        column.items.forEach(item => {
+          updatedItems.push({
+            id: item.id,
+            content: item.title,
+            parent_id: null,
+            priority: 'none',
+            locked: false,
+            in_progress: false,
+            deadline: null
+          })
+        })
+      })
+
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_update_checklist',
+          checklist_id: selectedChecklist,
+          title: 'Kanban Board', // You might want to get the actual checklist title
+          items: JSON.stringify(updatedItems),
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (!data.success) {
+        showError('Failed to save task content')
+        loadKanbanBoard() // Revert changes
+        return
+      }
+
+      // Save comment to the comments table (even if empty to update/clear existing comment)
+      if (taskComment.trim()) {
+        await saveTaskComment(editingTask.id, taskComment.trim())
+      } else {
+        // If comment is empty, we should clear it from the database
+        await saveTaskComment(editingTask.id, '')
+      }
+
+      closeTaskModal()
+      showSuccess('Task updated successfully')
+    } catch (error) {
+      console.error('Error saving task:', error)
+      showError('Failed to save task')
+      loadKanbanBoard() // Revert changes
+    }
+  }
+
+  // Helper function to save comments to the database
+  const saveTaskComment = async (itemId, commentContent) => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_save_task_comment',
+          checklist_id: selectedChecklist,
+          item_id: itemId,
+          comment_content: commentContent,
+          user_name: adminData.currentUser?.display_name || 'Anonymous',
+          user_email: adminData.currentUser?.user_email || '',
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (!data.success) {
+        console.warn('Failed to save comment:', data.data)
+      }
+    } catch (error) {
+      console.warn('Error saving comment:', error)
+    }
+  }
+
+  // Enhanced comment system functions
+  const loadTaskComments = async (itemId) => {
+    // Extract numeric part from item ID (e.g., "item_1751278307602_1" -> 1751278307602)
+    const numericId = itemId.toString().replace(/^item_(\d+).*/, '$1')
+    const itemIdInt = parseInt(numericId, 10)
+    const checklistIdInt = parseInt(selectedChecklist, 10)
     
-    // For now, just show success - we can implement proper backend saving later
-    // without interfering with ChecklistDrawer
-    showSuccess('Task updated successfully')
+    if (!selectedChecklist || !itemId || isNaN(checklistIdInt) || isNaN(itemIdInt) || checklistIdInt <= 0 || itemIdInt <= 0) {
+      setTaskComments([])
+      return
+    }
+
+    setLoadingComments(true)
+    try {
+      // Send parameters as integers
+      const params = new URLSearchParams({
+        action: 'mcl_get_threaded_comments',
+        checklist_id: checklistIdInt,
+        item_id: itemIdInt,
+        nonce: adminData.nonces?.mcl_admin || ''
+      })
+      
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setTaskComments(data.data.comments || [])
+      } else {
+        console.warn('Failed to load comments:', data.data)
+        setTaskComments([])
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error)
+      setTaskComments([])
+    } finally {
+      setLoadingComments(false)
+    }
+  }
+
+  const addComment = async (commentText = null) => {
+    const text = commentText || newComment
+    
+    if (!text.trim()) return
+
+    // Extract numeric ID from editingTask.id
+    const numericId = editingTask.id.toString().replace(/^item_(\d+).*/, '$1')
+    const itemIdInt = parseInt(numericId, 10)
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_add_threaded_comment',
+          checklist_id: selectedChecklist,
+          item_id: itemIdInt,
+          parent_id: '',
+          comment_content: text,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Reload comments to get the updated structure
+        await loadTaskComments(editingTask.id)
+        
+        // Reload kanban board to update comment counts
+        loadKanbanBoard()
+        
+        // Clear the input
+        setNewComment('')
+        
+        showSuccess('Comment added successfully')
+      } else {
+        showError(data.data || 'Failed to add comment')
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error)
+      showError('Failed to add comment')
+    }
+  }
+
+  const addReply = async (parentId, replyText) => {
+    if (!replyText.trim()) return
+
+    // Extract numeric ID from editingTask.id  
+    const numericId = editingTask.id.toString().replace(/^item_(\d+).*/, '$1')
+    const itemIdInt = parseInt(numericId, 10)
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_add_threaded_comment',
+          checklist_id: selectedChecklist,
+          item_id: itemIdInt,
+          parent_id: parentId,
+          comment_content: replyText,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Reload comments to get the updated structure
+        await loadTaskComments(editingTask.id)
+        
+        // Reload kanban board to update comment counts
+        loadKanbanBoard()
+        
+        showSuccess('Reply added successfully')
+      } else {
+        showError(data.data || 'Failed to add reply')
+      }
+    } catch (error) {
+      console.error('Error adding reply:', error)
+      showError('Failed to add reply')
+    }
+  }
+
+  const toggleCommentLike = async (commentId) => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_toggle_comment_like',
+          comment_id: commentId,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Update the comment in state
+        setTaskComments(prevComments => 
+          updateCommentLikes(prevComments, commentId, data.data.like_count, data.data.user_liked)
+        )
+      } else {
+        showError(data.data || 'Failed to toggle like')
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error)
+      showError('Failed to toggle like')
+    }
+  }
+
+  const updateCommentLikes = (comments, commentId, newLikeCount, userLiked) => {
+    return comments.map(comment => {
+      if (comment.id == commentId) {
+        return { ...comment, like_count: newLikeCount, user_liked: userLiked }
+      }
+      if (comment.replies && comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: updateCommentLikes(comment.replies, commentId, newLikeCount, userLiked)
+        }
+      }
+      return comment
+    })
+  }
+
+  const deleteComment = async (commentId) => {
+    if (!confirm('Are you sure you want to delete this comment and all its replies?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_delete_threaded_comment',
+          comment_id: commentId,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Reload comments to refresh the list
+        await loadTaskComments(editingTask.id)
+        
+        // Reload kanban board to update comment counts
+        loadKanbanBoard()
+        
+        showSuccess('Comment deleted successfully')
+      } else {
+        showError(data.data || 'Failed to delete comment')
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error)
+      showError('Failed to delete comment')
+    }
+  }
+
+  const formatTimeAgo = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const seconds = Math.floor((now - date) / 1000)
+    
+    if (seconds < 60) return 'just now'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+    if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`
+    return date.toLocaleDateString()
+  }
+
+  // Rich text editor utilities
+  const handlePaste = (e) => {
+    e.preventDefault()
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain')
+    
+    // Check if the pasted content is a URL
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    if (urlRegex.test(text)) {
+      // Create a link element
+      const linkHtml = `<a href="${text}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">${text}</a>`
+      document.execCommand('insertHTML', false, linkHtml)
+    } else {
+      // Insert as plain text
+      document.execCommand('insertText', false, text)
+    }
+  }
+
+  const addImageToEditor = () => {
+    // Simple image URL input for now
+    const imageUrl = prompt('Enter image URL:')
+    if (imageUrl) {
+      const imageHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto; margin: 8px 0;" />`
+      document.execCommand('insertHTML', false, imageHtml)
+    }
+  }
+
+  const formatText = (command, value = null) => {
+    document.execCommand(command, false, value)
   }
 
   // User assignment
@@ -650,6 +1135,18 @@ const KanbanBoard = ({ adminData }) => {
                           </div>
                         )}
 
+                        {/* Comment count indicator */}
+                        {item.comment_count > 0 && (
+                          <div className="mt-2 mb-2">
+                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                              <span>{item.comment_count} comment{item.comment_count !== 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Item Footer */}
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
                           <button
@@ -785,6 +1282,7 @@ const KanbanBoard = ({ adminData }) => {
         isOpen={showTaskModal}
         onClose={closeTaskModal}
         title="Edit Task"
+        size="lg"
         footer={
           <>
             <button
@@ -803,37 +1301,126 @@ const KanbanBoard = ({ adminData }) => {
         }
       >
         <div className="space-y-4">
+          {/* Rich Text Editor */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Task Content
             </label>
-            <textarea
-              value={taskContent}
-              onChange={(e) => setTaskContent(e.target.value)}
-              placeholder="Enter task content..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            
+            {/* Simple formatting toolbar */}
+            <div className="flex items-center gap-1 mb-2 p-2 bg-gray-50 rounded border">
+              <button
+                type="button"
+                onClick={() => formatText('bold')}
+                className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm font-bold"
+                title="Bold"
+              >
+                B
+              </button>
+              <button
+                type="button"
+                onClick={() => formatText('italic')}
+                className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm italic"
+                title="Italic"
+              >
+                I
+              </button>
+              <button
+                type="button"
+                onClick={() => formatText('underline')}
+                className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm underline"
+                title="Underline"
+              >
+                U
+              </button>
+              <div className="w-px h-4 bg-gray-300 mx-1"></div>
+              <button
+                type="button"
+                onClick={addImageToEditor}
+                className="p-1 rounded hover:bg-gray-200 text-gray-600 text-xs"
+                title="Add Image"
+              >
+                🖼️
+              </button>
+            </div>
+
+            {/* Rich text editor */}
+            <div
+              ref={contentEditableRef}
+              contentEditable
+              suppressContentEditableWarning={true}
+              className="w-full min-h-[100px] p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              style={{ fontSize: '14px', lineHeight: '1.5' }}
+              dangerouslySetInnerHTML={{ __html: taskContent }}
+              onPaste={handlePaste}
+              onBlur={(e) => setTaskContent(e.target.innerHTML)}
             />
           </div>
+
+          {/* Comments Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Comment (optional)
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Comments ({taskComments.length})
             </label>
-            <textarea
-              value={taskComment}
-              onChange={(e) => setTaskComment(e.target.value)}
-              placeholder="Add a comment about this task..."
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
-            />
-          </div>
-          {editingTask && (
-            <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                <strong>Tip:</strong> Double-click any task to edit it quickly
+            
+            {/* Add New Comment */}
+            <div className="mb-4">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    addComment()
+                  }
+                }}
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Ctrl+Enter to post
+                </span>
+                <button
+                  onClick={() => addComment()}
+                  disabled={!newComment.trim()}
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Comment
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Comments List */}
+            <div className="max-h-80 overflow-y-auto space-y-3">
+              {loadingComments ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-sm text-gray-500">Loading comments...</span>
+                </div>
+              ) : taskComments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <p className="text-sm">No comments yet. Be the first to comment!</p>
+                </div>
+              ) : (
+                taskComments.map(comment => (
+                  <Comment
+                    key={comment.id}
+                    comment={comment}
+                    onReply={addReply}
+                    onLike={toggleCommentLike}
+                    onDelete={deleteComment}
+                    isAdmin={true}
+                    level={0}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
         </div>
       </Modal>
 

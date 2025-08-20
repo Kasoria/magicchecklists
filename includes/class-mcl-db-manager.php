@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 
 class MCL_DB_Manager {
     private static $instance = null;
-    private $db_version = '1.7'; // Increment version for task comments table
+    private $db_version = '2.0'; // Comment notifications
     
     public static function get_instance() {
         if (self::$instance === null) {
@@ -70,6 +70,7 @@ class MCL_DB_Manager {
             notify_on_check_item tinyint(1) NOT NULL DEFAULT 0,
             notify_on_uncheck_item tinyint(1) NOT NULL DEFAULT 0,
             notify_on_deadline tinyint(1) NOT NULL DEFAULT 0,
+            notify_on_comments tinyint(1) NOT NULL DEFAULT 0,
             deadline_threshold_hours int UNSIGNED DEFAULT 24,
             batch_interval varchar(20) DEFAULT 'fifteen_minutes',
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -158,22 +159,69 @@ class MCL_DB_Manager {
         ) $charset_collate;";
         dbDelta($sql);
 
-        // Create task comments table
+        // Create task comments table with threading and likes support
         $task_comments_table = $wpdb->prefix . 'mcl_task_comments';
         $sql = "CREATE TABLE IF NOT EXISTS $task_comments_table (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             checklist_id bigint(20) UNSIGNED NOT NULL,
             item_id bigint(20) UNSIGNED NOT NULL,
+            parent_id bigint(20) UNSIGNED DEFAULT NULL,
             user_id bigint(20) UNSIGNED DEFAULT NULL,
             user_name varchar(255) NOT NULL,
             user_email varchar(255) NOT NULL,
+            user_avatar varchar(255) DEFAULT NULL,
             comment_content longtext NOT NULL,
+            like_count int UNSIGNED NOT NULL DEFAULT 0,
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY checklist_id (checklist_id),
             KEY item_id (item_id),
+            KEY parent_id (parent_id),
             KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create comment likes table
+        $comment_likes_table = $wpdb->prefix . 'mcl_comment_likes';
+        $sql = "CREATE TABLE IF NOT EXISTS $comment_likes_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            comment_id bigint(20) UNSIGNED NOT NULL,
+            user_id bigint(20) UNSIGNED DEFAULT NULL,
+            user_email varchar(255) NOT NULL,
+            user_name varchar(255) NOT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_like (comment_id, user_email),
+            KEY comment_id (comment_id),
+            KEY user_id (user_id)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create global notifications table
+        $global_notifications_table = $wpdb->prefix . 'mcl_global_notifications';
+        $sql = "CREATE TABLE IF NOT EXISTS $global_notifications_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            context varchar(50) NOT NULL DEFAULT 'checklist',
+            context_id bigint(20) UNSIGNED DEFAULT NULL,
+            type varchar(50) NOT NULL,
+            event varchar(50) NOT NULL,
+            data text NOT NULL,
+            user_id bigint(20) UNSIGNED DEFAULT NULL,
+            user_name varchar(255) DEFAULT NULL,
+            user_email varchar(255) DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            processed tinyint(1) NOT NULL DEFAULT 0,
+            process_after datetime NOT NULL,
+            processed_at datetime NULL,
+            error_message text,
+            retry_count int UNSIGNED NOT NULL DEFAULT 0,
+            PRIMARY KEY (id),
+            KEY context_id (context_id),
+            KEY context (context),
+            KEY type_event (type, event),
+            KEY process_after_processed (process_after, processed),
             KEY created_at (created_at)
         ) $charset_collate;";
         dbDelta($sql);
@@ -272,6 +320,59 @@ class MCL_DB_Manager {
             // Log successful upgrade
             error_log('MCL DB Manager: Upgraded to version 1.7 - Task comments table created');
         }
+        
+        if (version_compare($from_version, '1.8', '<')) {
+            // Update task comments table for threading and likes support
+            $task_comments_table = $wpdb->prefix . 'mcl_task_comments';
+            
+            // Add new columns if they don't exist
+            $columns_to_add = [
+                'parent_id' => "ALTER TABLE $task_comments_table ADD COLUMN parent_id bigint(20) UNSIGNED DEFAULT NULL AFTER item_id",
+                'user_avatar' => "ALTER TABLE $task_comments_table ADD COLUMN user_avatar varchar(255) DEFAULT NULL AFTER user_email",
+                'like_count' => "ALTER TABLE $task_comments_table ADD COLUMN like_count int UNSIGNED NOT NULL DEFAULT 0 AFTER comment_content"
+            ];
+            
+            foreach ($columns_to_add as $column => $query) {
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $task_comments_table LIKE '$column'");
+                if (empty($column_exists)) {
+                    $wpdb->query($query);
+                }
+            }
+            
+            // Add indexes if they don't exist
+            $index_exists = $wpdb->get_results("SHOW INDEX FROM $task_comments_table WHERE Key_name = 'parent_id'");
+            if (empty($index_exists)) {
+                $wpdb->query("ALTER TABLE $task_comments_table ADD KEY parent_id (parent_id)");
+            }
+            
+            // Create comment likes table
+            $this->create_tables();
+            
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 1.8 - Enhanced task comments with threading and likes');
+        }
+        
+        if (version_compare($from_version, '1.9', '<')) {
+            // Add global notifications table
+            $this->create_tables();
+            
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 1.9 - Global notification system');
+        }
+        
+        if (version_compare($from_version, '2.0', '<')) {
+            // Add notify_on_comments column to notification settings table
+            $notification_settings_table = $wpdb->prefix . 'mcl_notification_settings';
+            
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $notification_settings_table LIKE 'notify_on_comments'");
+            if (empty($column_exists)) {
+                $wpdb->query("ALTER TABLE $notification_settings_table ADD COLUMN notify_on_comments tinyint(1) NOT NULL DEFAULT 0 AFTER notify_on_deadline");
+            }
+            
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 2.0 - Comment notifications');
+        }
+
     }
 
     public function uninstall() {
@@ -285,7 +386,9 @@ class MCL_DB_Manager {
             'mcl_publisher_requirements',
             'mcl_kanban_state',
             'mcl_kanban_columns',
-            'mcl_task_comments'
+            'mcl_comment_likes',
+            'mcl_task_comments',
+            'mcl_global_notifications'
         );
 
         foreach ($tables as $table) {
@@ -306,7 +409,9 @@ class MCL_DB_Manager {
             'mcl_publisher_requirements' => 'Publisher requirements table',
             'mcl_kanban_state' => 'Kanban state table',
             'mcl_kanban_columns' => 'Kanban columns table',
-            'mcl_task_comments' => 'Task comments table'
+            'mcl_comment_likes' => 'Comment likes table',
+            'mcl_task_comments' => 'Task comments table',
+            'mcl_global_notifications' => 'Global notifications table'
         );
         
         $result = array(

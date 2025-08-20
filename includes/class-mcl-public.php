@@ -65,6 +65,10 @@ class MCL_Public {
         add_action('admin_footer', array($this, 'render_floating_buttons'));
         add_action('wp_ajax_nopriv_mcl_get_checklist', array($this, 'get_checklist'));
         add_action('wp_ajax_nopriv_mcl_save_checked_state', array($this, 'save_checked_state'));
+        add_action('wp_ajax_mcl_add_item', array($this, 'add_item'));
+        add_action('wp_ajax_nopriv_mcl_add_item', array($this, 'add_item'));
+        add_action('wp_ajax_mcl_delete_item', array($this, 'delete_item'));
+        add_action('wp_ajax_nopriv_mcl_delete_item', array($this, 'delete_item'));
         add_action('init', array($this, 'maybe_set_invite_token_cookie'));
         add_action('wp_ajax_mcl_release_lock', array($this, 'release_checklist_lock'));
         add_action('wp_ajax_nopriv_mcl_release_lock', array($this, 'release_checklist_lock'));
@@ -936,7 +940,11 @@ class MCL_Public {
             'settings' => array(
                 'enable_navigation' => MCL_Settings::get_setting('enable_checklist_navigation', false),
                 'enable_progress_counter' => MCL_Settings::get_setting('enable_progress_counter', false),
-                'dateFormat' => MCL_Admin::get_shared_date_format()
+                'dateFormat' => MCL_Admin::get_shared_date_format(),
+                'timezone_string' => get_option('timezone_string', ''),
+                'gmt_offset' => get_option('gmt_offset', 0),
+                'current_timestamp' => current_time('timestamp'),
+                'utc_timestamp' => time()
             ),
             'i18n' => array(
                 'uncheckAllConfirm' => __('Are you sure you want to uncheck all items? This cannot be undone.', 'magic-checklists')
@@ -1707,5 +1715,104 @@ class MCL_Public {
                 'code' => 500
             ));
         }
+    }
+    
+    /**
+     * Add an item to a checklist with notifications
+     */
+    public function add_item() {
+        $checklist_id = intval($_POST['checklist_id'] ?? 0);
+        $item_data = $_POST['item'] ?? null;
+        
+        if (!$checklist_id || !$item_data) {
+            wp_send_json_error('Missing required data');
+            return;
+        }
+        
+        // Decode JSON if it's a string
+        if (is_string($item_data)) {
+            $item_data = json_decode(stripslashes($item_data), true);
+        }
+        
+        if (!is_array($item_data)) {
+            wp_send_json_error('Invalid item data');
+            return;
+        }
+        
+        // Check permissions
+        if (!$this->has_permission($checklist_id, 'edit')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+        
+        // Get existing items
+        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        
+        // Sanitize new item
+        $new_item = array(
+            'id' => sanitize_text_field($item_data['id']),
+            'content' => wp_kses_post($item_data['content']),
+            'parent_id' => isset($item_data['parent_id']) ? sanitize_text_field($item_data['parent_id']) : '',
+            'priority' => isset($item_data['priority']) ? sanitize_text_field($item_data['priority']) : 'none',
+            'locked' => false
+        );
+        
+        // Add the new item
+        $existing_items[] = $new_item;
+        
+        // Save to database
+        update_post_meta($checklist_id, '_mcl_items', $existing_items);
+        
+        // Trigger notification
+        do_action('mcl_item_added', $checklist_id, $new_item);
+        
+        wp_send_json_success(array('item' => $new_item));
+    }
+    
+    /**
+     * Delete an item from a checklist with notifications
+     */
+    public function delete_item() {
+        $checklist_id = intval($_POST['checklist_id'] ?? 0);
+        $item_id = sanitize_text_field($_POST['item_id'] ?? '');
+        
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error('Missing required data');
+            return;
+        }
+        
+        // Check permissions
+        if (!$this->has_permission($checklist_id, 'edit')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+        
+        // Get existing items
+        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        
+        // Find and remove the item
+        $deleted_item = null;
+        $filtered_items = array();
+        
+        foreach ($existing_items as $item) {
+            if ($item['id'] === $item_id) {
+                $deleted_item = $item;
+            } else {
+                $filtered_items[] = $item;
+            }
+        }
+        
+        if (!$deleted_item) {
+            wp_send_json_error('Item not found');
+            return;
+        }
+        
+        // Save updated items
+        update_post_meta($checklist_id, '_mcl_items', $filtered_items);
+        
+        // Trigger notification
+        do_action('mcl_item_deleted', $checklist_id, $deleted_item);
+        
+        wp_send_json_success(array('deleted_item' => $deleted_item));
     }
 }

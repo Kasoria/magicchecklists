@@ -1328,11 +1328,18 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
   
   useEffect(() => {
     if (isOpen && currentDeadline) {
-      // Convert timestamp to datetime-local format
+      // Convert UTC timestamp to local browser time for datetime-local input
+      // Since backend now properly handles timezone conversion, we can use browser local time
       const date = new Date(currentDeadline * 1000)
-      const offset = date.getTimezoneOffset() * 60000
-      const localDate = new Date(date.getTime() - offset)
-      setDateTime(localDate.toISOString().slice(0, 16))
+      
+      // Format for datetime-local input (uses local timezone)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      setDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
     } else if (isOpen) {
       setDateTime('')
     }
@@ -1340,7 +1347,11 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
 
   const handleSave = () => {
     if (dateTime) {
-      const timestamp = Math.floor(new Date(dateTime).getTime() / 1000)
+      // Convert datetime-local input to timestamp
+      // The backend will handle proper timezone conversion
+      const date = new Date(dateTime)
+      const timestamp = Math.floor(date.getTime() / 1000)
+      
       onSave(timestamp)
     } else {
       onSave(null) // Remove deadline
@@ -2444,9 +2455,15 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     const updated = [...syncedItems, newItem]
     setItems(updated)
 
-    // Persist immediately (works for both editors and interact users when item locking is enabled)
+    // Call the dedicated add endpoint with notification
     if (currentChecklistId) {
-      saveChecklistData(currentChecklistId, title, updated).catch(() => {})
+      makeRequest('mcl_add_item', {
+        checklist_id: currentChecklistId,
+        item: JSON.stringify(newItem)
+      }).catch(() => {
+        // On error, remove the item from local state
+        setItems(prev => prev.filter(item => item.id !== newItem.id))
+      })
     }
 
     // Focus the new item after render
@@ -2456,7 +2473,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         newItemElement.focus()
       }
     }, 0)
-  }, [canEdit, locked, items, currentChecklistId, title, saveChecklistData, checklistData])
+  }, [canEdit, locked, items, currentChecklistId, checklistData, makeRequest])
 
   const removeItem = useCallback((itemId) => {
     const target = items.find(i => i.id === itemId)
@@ -2474,7 +2491,21 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       delete newDeadlines[itemId]
       return newDeadlines
     })
-  }, [canEdit, locked, checklistData, items])
+    
+    // Call the dedicated delete endpoint with notification
+    if (currentChecklistId) {
+      makeRequest('mcl_delete_item', {
+        checklist_id: currentChecklistId,
+        item_id: itemId
+      }).catch(() => {
+        // On error, restore the item
+        const target = items.find(i => i.id === itemId)
+        if (target) {
+          setItems(prev => [...prev, target])
+        }
+      })
+    }
+  }, [canEdit, locked, checklistData, items, currentChecklistId, makeRequest])
 
   // Update item content
   const updateItemContent = useCallback((itemId, content) => {

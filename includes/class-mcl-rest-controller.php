@@ -801,6 +801,23 @@ class MCL_REST_Controller extends WP_REST_Controller {
             }
         }
         
+        // Create map of new items for comparison
+        $new_items_map = array();
+        foreach ($new_items as $item) {
+            if (isset($item['id'])) {
+                $new_items_map[$item['id']] = true;
+            }
+        }
+        
+        // Check for deleted items BEFORE processing updates
+        foreach ($existing_map as $item_id => $existing_item) {
+            if (!isset($new_items_map[$item_id])) {
+                // Item was deleted
+                error_log("MCL: Item deleted - checklist_id=$id, item_id=$item_id");
+                do_action('mcl_item_deleted', $id, $existing_item);
+            }
+        }
+        
         // Process new/updated items
         $processed_items = array();
         foreach ($new_items as $item) {
@@ -832,14 +849,12 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 );
                 $processed_items[] = $new_item;
                 
+                error_log("MCL: Item added - checklist_id=$id, item_id=$item_id");
                 do_action('mcl_item_added', $id, $new_item);
             }
         }
         
-        // Keep any existing items not included in the update request
-        foreach ($existing_map as $remaining_item) {
-            $processed_items[] = $remaining_item;
-        }
+        // NOTE: We don't keep remaining items anymore since they were deleted
         
         update_post_meta($id, '_mcl_items', $processed_items);
         
@@ -1829,14 +1844,20 @@ class MCL_REST_Controller extends WP_REST_Controller {
         }
         
         // Compare states and trigger appropriate actions
+        error_log("MCL: REST Controller - comparing states for checklist_id=$id");
+        error_log("MCL: Previous state: " . print_r($previous_state, true));
+        error_log("MCL: New checked items: " . print_r($checked_items, true));
+        
         foreach ($checked_items as $item_id) {
             if (!in_array($item_id, $previous_state)) {
+                error_log("MCL: REST Controller firing mcl_item_checked for checklist_id=$id, item_id=$item_id");
                 do_action('mcl_item_checked', $id, $item_id, true);
             }
         }
         
         foreach ($previous_state as $item_id) {
             if (!in_array($item_id, $checked_items)) {
+                error_log("MCL: REST Controller firing mcl_item_unchecked for checklist_id=$id, item_id=$item_id");
                 do_action('mcl_item_unchecked', $id, $item_id, false);
             }
         }
