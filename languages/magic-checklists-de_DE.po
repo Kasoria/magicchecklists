@@ -488,6 +488,9 @@ msgstr "Diese Checkliste wurde automatisch zurückgesetzt."
 msgid "This checklist is locked by another user. You can still interact but cannot edit structure."
 msgstr "Diese Checkliste ist von einem anderen Benutzer gesperrt. Du kannst noch interagieren, aber die Struktur nicht bearbeiten."
 
+msgid "Due"
+msgstr "Fällig"
+
 msgid "Deadline passed"
 msgstr "Frist abgelaufen"
 
@@ -2001,6 +2004,31 @@ msgstr "Tags auswählen..."
 
 msgid "Clear Filters"
 msgstr "Filter löschen"
+
+# Deadline Display translations
+msgid "Time remaining"
+msgstr "Verbleibende Zeit"
+
+msgid "remaining"
+msgstr "verbleibend"
+
+msgid "d"
+msgstr "T"
+
+msgid "h"
+msgstr "Std"
+
+msgid "m"
+msgstr "Min"
+
+msgid "s"
+msgstr "Sek"
+
+msgid "Invalid deadline"
+msgstr "Ungültige Frist"
+
+msgid "No deadline"
+msgstr "Keine Frist"
 
 msgid "No checklists found"
 msgstr "Keine Checklisten gefunden"

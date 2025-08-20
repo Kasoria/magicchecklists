@@ -226,7 +226,13 @@ export const formatRelativeTime = (date, baseDate = new Date()) => {
  * @param {Date|number|string} currentTime - Current time (defaults to now)
  * @returns {object} Object with formatted countdown and status
  */
-export const formatDeadlineCountdown = (deadline, currentTime = null) => {
+export const formatDeadlineCountdown = (deadline, currentTime = null, i18n = null) => {
+  // Get i18n data dynamically if not provided
+  if (!i18n && typeof window !== 'undefined') {
+    i18n = (window.mclAdminData?.i18n || window.mclPublicData?.i18n) || {};
+  } else if (!i18n) {
+    i18n = {};
+  }
   try {
     // Convert deadline timestamp to Date object
     const deadlineDate = new Date(deadline * 1000)
@@ -243,7 +249,7 @@ export const formatDeadlineCountdown = (deadline, currentTime = null) => {
 
     if (timeLeft < 0) {
       return {
-        text: `Deadline passed (${formatDate(deadline, 'datetime')})`,
+        text: `${i18n.deadlineDisplay?.deadlinePassed || 'Deadline passed'} (${formatDate(deadline, 'datetime')})`,
         status: 'passed',
         urgent: true
       }
@@ -258,11 +264,11 @@ export const formatDeadlineCountdown = (deadline, currentTime = null) => {
     let urgent = false
 
     if (days > 0) {
-      text = `${days}d ${hours}h remaining`
+      text = `${days}${i18n.deadlineDisplay?.daysShort || 'd'} ${hours}${i18n.deadlineDisplay?.hoursShort || 'h'} ${i18n.deadlineDisplay?.remaining || 'remaining'}`
     } else if (hours > 0) {
-      text = `${hours}h ${minutes}m remaining`
+      text = `${hours}${i18n.deadlineDisplay?.hoursShort || 'h'} ${minutes}${i18n.deadlineDisplay?.minutesShort || 'm'} ${i18n.deadlineDisplay?.remaining || 'remaining'}`
     } else {
-      text = `${minutes}m remaining`
+      text = `${minutes}${i18n.deadlineDisplay?.minutesShort || 'm'} ${i18n.deadlineDisplay?.remaining || 'remaining'}`
     }
 
     // Determine urgency
@@ -278,7 +284,7 @@ export const formatDeadlineCountdown = (deadline, currentTime = null) => {
   } catch (error) {
     console.warn('Deadline countdown formatting error:', error)
     return {
-      text: 'Invalid deadline',
+      text: i18n.deadlineDisplay?.invalidDeadline || 'Invalid deadline',
       status: 'error',
       urgent: false
     }

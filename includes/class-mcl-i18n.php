@@ -44,6 +44,7 @@ class MCL_I18n {
             'tourCreator' => self::get_tour_creator_translations(),
             'tourEditor' => self::get_tour_editor_translations(),
             'tours' => self::get_tours_translations(),
+            'deadlineDisplay' => self::get_deadline_display_translations(),
         );
     }
     
@@ -2100,6 +2101,36 @@ class MCL_I18n {
             'deleting' => __('Deleting...', 'magic-checklists'),
             'deleteTour' => __('Delete Tour', 'magic-checklists'),
             'cancel' => __('Cancel', 'magic-checklists'),
+        );
+    }
+    
+    /**
+     * Get deadline display translations
+     * 
+     * @return array
+     */
+    public static function get_deadline_display_translations() {
+        return array(
+            'deadline' => __('Deadline', 'magic-checklists'),
+            'deadlinePassed' => __('Deadline passed', 'magic-checklists'),
+            'timeRemaining' => __('Time remaining', 'magic-checklists'),
+            'overdue' => __('Overdue', 'magic-checklists'),
+            'due' => __('Due', 'magic-checklists'),
+            'remaining' => __('remaining', 'magic-checklists'),
+            'daysShort' => __('d', 'magic-checklists'),
+            'hoursShort' => __('h', 'magic-checklists'),
+            'minutesShort' => __('m', 'magic-checklists'),
+            'secondsShort' => __('s', 'magic-checklists'),
+            'days' => __('days', 'magic-checklists'),
+            'hours' => __('hours', 'magic-checklists'),
+            'minutes' => __('minutes', 'magic-checklists'),
+            'seconds' => __('seconds', 'magic-checklists'),
+            'day' => __('day', 'magic-checklists'),
+            'hour' => __('hour', 'magic-checklists'),
+            'minute' => __('minute', 'magic-checklists'),
+            'second' => __('second', 'magic-checklists'),
+            'invalidDeadline' => __('Invalid deadline', 'magic-checklists'),
+            'noDeadline' => __('No deadline', 'magic-checklists'),
         );
     }
 }

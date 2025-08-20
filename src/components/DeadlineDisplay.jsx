@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { formatDate, formatDeadlineCountdown } from '../utils/dateUtils';
 
 const DeadlineDisplay = ({ deadline }) => {
+    // Get i18n data
+    const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
     const [countdown, setCountdown] = useState('');
     const [deadlineClass, setDeadlineClass] = useState('');
 
@@ -43,7 +45,7 @@ const DeadlineDisplay = ({ deadline }) => {
     return (
         <div className={`mcl-deadline ${deadlineClass}`} id="mcl-deadline-container">
             <div className="mcl-deadline-info">
-                <span className="mcl-deadline-label">Deadline:</span>
+                <span className="mcl-deadline-label">{i18n.deadlineDisplay?.deadline || 'Deadline'}:</span>
                 <span id="mcl-countdown" className="mcl-countdown" data-deadline={deadline}>
                     {countdown}
                 </span>

@@ -1536,7 +1536,7 @@ const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
         setStatus(countdownData.status)
       } catch (error) {
         console.error('ChecklistDeadlineDisplay countdown error:', error, 'for deadline:', deadline)
-        setTimeLeft('Invalid deadline')
+        setTimeLeft(i18n.deadlineDisplay?.invalidDeadline || 'Invalid deadline')
         setStatus('error')
       }
     }
@@ -1572,14 +1572,14 @@ const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
         </svg>
         <div className="flex flex-row gap-2 items-center">
           <div className="font-medium text-sm">
-            Due: {deadline ? (() => {
+{i18n.deadlineDisplay?.due || 'Due'}: {deadline ? (() => {
               try {
                 return formatDate(deadline, 'datetime')
               } catch (error) {
                 console.error('ChecklistDeadlineDisplay formatDate error:', error, 'for deadline:', deadline)
                 return i18n.checklistDrawer?.messages?.invalidDate || 'Invalid date'
               }
-            })() : 'No deadline'}
+            })() : (i18n.deadlineDisplay?.noDeadline || 'No deadline')}
           </div>
           <div className="text-xs opacity-75">{timeLeft}</div>
         </div>
