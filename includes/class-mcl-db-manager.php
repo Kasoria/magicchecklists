@@ -447,429 +447,429 @@ class MCL_DB_Manager {
     public static function get_default_publisher_requirements() {
         return [
             'word_count' => [
-                'label' => 'Minimum Word Count',
-                'description' => 'Content must have at least [X] words',
+                'label' => __('Minimum Word Count', 'magic-checklists'),
+                'description' => __('Content must have at least [X] words', 'magic-checklists'),
                 'config_fields' => [
                     'min_words' => [
                         'type' => 'number',
-                        'label' => 'Minimum words',
+                        'label' => __('Minimum words', 'magic-checklists'),
                         'default' => 300,
                         'min' => 1,
                         'max' => 10000
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'featured_image' => [
-                'label' => 'Featured Image',
-                'description' => 'Post must have a featured image',
+                'label' => __('Featured Image', 'magic-checklists'),
+                'description' => __('Post must have a featured image', 'magic-checklists'),
                 'config_fields' => [
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'excerpt' => [
-                'label' => 'Excerpt',
-                'description' => 'Excerpt must be between [X] and [Y] characters',
+                'label' => __('Excerpt', 'magic-checklists'),
+                'description' => __('Excerpt must be between [X] and [Y] characters', 'magic-checklists'),
                 'config_fields' => [
                     'min_excerpt_length' => [
                         'type' => 'number',
-                        'label' => 'Minimum excerpt length',
+                        'label' => __('Minimum excerpt length', 'magic-checklists'),
                         'default' => 50,
                         'min' => 1,
                         'max' => 1000
                     ],
                     'max_excerpt_length' => [
                         'type' => 'number',
-                        'label' => 'Maximum excerpt length',
+                        'label' => __('Maximum excerpt length', 'magic-checklists'),
                         'default' => 300,
                         'min' => 1,
                         'max' => 1000
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'categories' => [
-                'label' => 'Minimum Categories',
-                'description' => 'Post must have at least [X] categories',
+                'label' => __('Minimum Categories', 'magic-checklists'),
+                'description' => __('Post must have at least [X] categories', 'magic-checklists'),
                 'config_fields' => [
                     'min_categories' => [
                         'type' => 'number',
-                        'label' => 'Minimum categories',
+                        'label' => __('Minimum categories', 'magic-checklists'),
                         'default' => 1,
                         'min' => 1,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'tags' => [
-                'label' => 'Minimum Tags',
-                'description' => 'Post must have at least [X] tags',
+                'label' => __('Minimum Tags', 'magic-checklists'),
+                'description' => __('Post must have at least [X] tags', 'magic-checklists'),
                 'config_fields' => [
                     'min_tags' => [
                         'type' => 'number',
-                        'label' => 'Minimum tags',
+                        'label' => __('Minimum tags', 'magic-checklists'),
                         'default' => 3,
                         'min' => 1,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'external_links' => [
-                'label' => 'External Links',
-                'description' => 'Content must have at least [X] external links',
+                'label' => __('External Links', 'magic-checklists'),
+                'description' => __('Content must have at least [X] external links', 'magic-checklists'),
                 'config_fields' => [
                     'min_external_links' => [
                         'type' => 'number',
-                        'label' => 'Minimum external links',
+                        'label' => __('Minimum external links', 'magic-checklists'),
                         'default' => 1,
                         'min' => 0,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'internal_links' => [
-                'label' => 'Internal Links',
-                'description' => 'Content must have at least [X] internal links',
+                'label' => __('Internal Links', 'magic-checklists'),
+                'description' => __('Content must have at least [X] internal links', 'magic-checklists'),
                 'config_fields' => [
                     'min_internal_links' => [
                         'type' => 'number',
-                        'label' => 'Minimum internal links',
+                        'label' => __('Minimum internal links', 'magic-checklists'),
                         'default' => 2,
                         'min' => 0,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'title_length' => [
-                'label' => 'Title Length',
-                'description' => 'Title must be between [X] and [Y] characters',
+                'label' => __('Title Length', 'magic-checklists'),
+                'description' => __('Title must be between [X] and [Y] characters', 'magic-checklists'),
                 'config_fields' => [
                     'min_title_length' => [
                         'type' => 'number',
-                        'label' => 'Minimum title length',
+                        'label' => __('Minimum title length', 'magic-checklists'),
                         'default' => 10,
                         'min' => 1,
                         'max' => 200
                     ],
                     'max_title_length' => [
                         'type' => 'number',
-                        'label' => 'Maximum title length',
+                        'label' => __('Maximum title length', 'magic-checklists'),
                         'default' => 60,
                         'min' => 1,
                         'max' => 200
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'meta_description' => [
-                'label' => 'Meta Description',
-                'description' => 'Meta description must be between [X] and [Y] characters',
+                'label' => __('Meta Description', 'magic-checklists'),
+                'description' => __('Meta description must be between [X] and [Y] characters', 'magic-checklists'),
                 'config_fields' => [
                     'min_meta_length' => [
                         'type' => 'number',
-                        'label' => 'Minimum meta description length',
+                        'label' => __('Minimum meta description length', 'magic-checklists'),
                         'default' => 120,
                         'min' => 1,
                         'max' => 500
                     ],
                     'max_meta_length' => [
                         'type' => 'number',
-                        'label' => 'Maximum meta description length',
+                        'label' => __('Maximum meta description length', 'magic-checklists'),
                         'default' => 160,
                         'min' => 1,
                         'max' => 500
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'meta_title' => [
-                'label' => 'Meta Title',
-                'description' => 'Meta title must be between [X] and [Y] characters',
+                'label' => __('Meta Title', 'magic-checklists'),
+                'description' => __('Meta title must be between [X] and [Y] characters', 'magic-checklists'),
                 'config_fields' => [
                     'min_meta_title_length' => [
                         'type' => 'number',
-                        'label' => 'Minimum meta title length',
+                        'label' => __('Minimum meta title length', 'magic-checklists'),
                         'default' => 30,
                         'min' => 1,
                         'max' => 200
                     ],
                     'max_meta_title_length' => [
                         'type' => 'number',
-                        'label' => 'Maximum meta title length',
+                        'label' => __('Maximum meta title length', 'magic-checklists'),
                         'default' => 60,
                         'min' => 1,
                         'max' => 200
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'image_alt_text' => [
-                'label' => 'Image Alt Text',
-                'description' => 'All images must have alt text for accessibility',
+                'label' => __('Image Alt Text', 'magic-checklists'),
+                'description' => __('All images must have alt text for accessibility', 'magic-checklists'),
                 'config_fields' => [
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'heading_count' => [
-                'label' => 'Heading Count',
-                'description' => 'Content must have specific heading counts (H2, H3, H4)',
+                'label' => __('Heading Count', 'magic-checklists'),
+                'description' => __('Content must have specific heading counts (H2, H3, H4)', 'magic-checklists'),
                 'config_fields' => [
                     'min_h2_headings' => [
                         'type' => 'number',
-                        'label' => 'Minimum H2 headings',
+                        'label' => __('Minimum H2 headings', 'magic-checklists'),
                         'default' => 2,
                         'min' => 0,
                         'max' => 50
                     ],
                     'min_h3_headings' => [
                         'type' => 'number',
-                        'label' => 'Minimum H3 headings',
+                        'label' => __('Minimum H3 headings', 'magic-checklists'),
                         'default' => 1,
                         'min' => 0,
                         'max' => 50
                     ],
                     'min_h4_headings' => [
                         'type' => 'number',
-                        'label' => 'Minimum H4 headings',
+                        'label' => __('Minimum H4 headings', 'magic-checklists'),
                         'default' => 0,
                         'min' => 0,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'image_count' => [
-                'label' => 'Image Count',
-                'description' => 'Content must have at least [X] images',
+                'label' => __('Image Count', 'magic-checklists'),
+                'description' => __('Content must have at least [X] images', 'magic-checklists'),
                 'config_fields' => [
                     'min_images' => [
                         'type' => 'number',
-                        'label' => 'Minimum images',
+                        'label' => __('Minimum images', 'magic-checklists'),
                         'default' => 1,
                         'min' => 0,
                         'max' => 50
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => false
             ],
             'custom_field' => [
-                'label' => 'Custom Field',
-                'description' => 'Custom field must be filled',
+                'label' => __('Custom Field', 'magic-checklists'),
+                'description' => __('Custom field must be filled', 'magic-checklists'),
                 'config_fields' => [
                     'field_name' => [
                         'type' => 'select',
-                        'label' => 'Custom field',
+                        'label' => __('Custom field', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Select a custom field',
+                        'placeholder' => __('Select a custom field', 'magic-checklists'),
                         'options' => [] // Will be populated dynamically
                     ],
                     'field_label' => [
                         'type' => 'text',
-                        'label' => 'Display name',
+                        'label' => __('Display name', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'e.g., Author Bio'
+                        'placeholder' => __('e.g., Author Bio', 'magic-checklists')
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => true,
                 'repeatable' => true
             ],
             'custom_item' => [
-                'label' => 'Custom Item',
-                'description' => 'Manual verification required',
+                'label' => __('Custom Item', 'magic-checklists'),
+                'description' => __('Manual verification required', 'magic-checklists'),
                 'config_fields' => [
                     'item_title' => [
                         'type' => 'text',
-                        'label' => 'Item title',
+                        'label' => __('Item title', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'e.g., Fact-check all statistics'
+                        'placeholder' => __('e.g., Fact-check all statistics', 'magic-checklists')
                     ],
                     'item_description' => [
                         'type' => 'text',
-                        'label' => 'Description (optional)',
+                        'label' => __('Description (optional)', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Additional instructions...'
+                        'placeholder' => __('Additional instructions...', 'magic-checklists')
                     ],
                     'use_custom_tip' => [
                         'type' => 'checkbox',
-                        'label' => 'Use custom tip',
+                        'label' => __('Use custom tip', 'magic-checklists'),
                         'default' => false
                     ],
                     'custom_tip' => [
                         'type' => 'text',
-                        'label' => 'Custom helpful tip',
+                        'label' => __('Custom helpful tip', 'magic-checklists'),
                         'default' => '',
-                        'placeholder' => 'Enter your custom tip for this requirement...'
+                        'placeholder' => __('Enter your custom tip for this requirement...', 'magic-checklists')
                     ]
                 ],
                 'auto_check' => false,

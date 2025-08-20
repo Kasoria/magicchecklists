@@ -34,9 +34,12 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
   const [layoutMode, setLayoutMode] = useState('stacked')
   const [editFormRef, setEditFormRef] = useState(null)
   const [editingTour, setEditingTour] = useState(null)
+  // Get i18n data directly like AnalyticsDashboard does
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {}
 
   // Initialize dark mode from localStorage or system preference
   useEffect(() => {
+    // Initialize dark mode from localStorage or system preference
     const serverTheme = adminData.savedTheme
     const clientTheme = localStorage.getItem('mcl-theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -107,7 +110,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     // Primary quick action
     {
       id: 'add-new',
-      label: 'Add New',
+      label: i18n.adminApp?.addNew || 'Add New',
       icon: "M12 6v6m0 0v6m0-6h6m-6 0H6"
     },
     // Divider 1  
@@ -116,17 +119,17 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     // Core content sections
     {
       id: 'checklists',
-      label: 'Checklists',
+      label: i18n.adminApp?.checklists || 'Checklists',
       icon: "M8.75 2.75h6.5c3.31 0 6 2.69 6 6v6.5c0 3.31-2.69 6-6 6h-6.5c-3.31 0-6-2.69-6-6v-6.5c0-3.31 2.69-6 6-6z M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234"
     },
     {
       id: 'tours',
-      label: 'Tours',
+      label: i18n.adminApp?.tours || 'Tours',
       icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"
     },
     {
       id: 'kanban',
-      label: 'Kanban Board',
+      label: i18n.adminApp?.kanbanBoard || 'Kanban Board',
       icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
     },
 
@@ -136,17 +139,17 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     // Remaining sections
     {
       id: 'analytics',
-      label: 'Analytics',
+      label: i18n.adminApp?.analytics || 'Analytics',
       icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
     },
     {
       id: 'settings',
-      label: 'Settings',
+      label: i18n.adminApp?.settings || 'Settings',
       icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
     },
     {
       id: 'import',
-      label: 'Import / Export',
+      label: i18n.adminApp?.importExport || 'Import / Export',
       icon: "M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
     }
   ]
@@ -348,7 +351,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="absolute top-5 -right-3 hidden lg:flex items-center justify-center w-6 h-6 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-accent dark:focus:ring-blue-400 transition-colors duration-200"
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? (i18n.adminApp?.expandSidebar || 'Expand sidebar') : (i18n.adminApp?.collapseSidebar || 'Collapse sidebar')}
           >
             <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
@@ -364,7 +367,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                 </svg>
               </div>
               {!sidebarCollapsed && (
-                <span className="text-xl font-bold text-brand-dark dark:text-white">MagicChecklists</span>
+                <span className="text-xl font-bold text-brand-dark dark:text-white">{i18n.adminApp?.pluginName || 'MagicChecklists'}</span>
               )}
             </div>
             <div className="flex items-center space-x-2">
@@ -443,7 +446,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   <button
                     onClick={toggleDarkMode}
                     className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={sidebarCollapsed ? (darkMode ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
+                    title={sidebarCollapsed ? (darkMode ? (i18n.adminApp?.switchToLightMode || 'Switch to light mode') : (i18n.adminApp?.switchToDarkMode || 'Switch to dark mode')) : undefined}
                   >
                     {darkMode ? (
                       <svg
@@ -464,14 +467,14 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                       </svg>
                     )}
-                    {!sidebarCollapsed && (darkMode ? 'Light Mode' : 'Dark Mode')}
+                    {!sidebarCollapsed && (darkMode ? (i18n.adminApp?.lightMode || 'Light Mode') : (i18n.adminApp?.darkMode || 'Dark Mode'))}
                   </button>
                 </li>
                 <li>
                   <a
                     href="https://magicplugins.io/docs/" target="_blank"
                     className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-700`}
-                    title={sidebarCollapsed ? 'Help' : undefined}
+                    title={sidebarCollapsed ? (i18n.adminApp?.help || 'Help') : undefined}
                   >
                     <svg
                       className={`w-5 h-5 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
@@ -481,7 +484,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {!sidebarCollapsed && 'Help'}
+                    {!sidebarCollapsed && (i18n.adminApp?.help || 'Help')}
                   </a>
                 </li>
                 <li>
@@ -501,7 +504,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                         ? 'bg-brand-accent text-brand-dark dark:bg-brand-accent dark:text-brand-dark font-bold'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
-                    title={sidebarCollapsed ? 'License' : undefined}
+                    title={sidebarCollapsed ? (i18n.adminApp?.license || 'License') : undefined}
                   >
                     <svg
                       className={`w-6 h-6 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
@@ -511,7 +514,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 13v3h3v3h3v2l2 2h5v-4L12.74 8.74C12.91 8.19 13 7.6 13 7c0-3.31-2.69-6-6-6S1 3.69 1 7a6.005 6.005 0 0 0 8.47 5.47L10 13ZM6 7a1 1 0 1 1 0-2a1 1 0 0 1 0 2Z" />
                     </svg>
-                    {!sidebarCollapsed && 'License'}
+                    {!sidebarCollapsed && (i18n.adminApp?.license || 'License')}
                   </button>
                 </li>
               </ul>
@@ -529,32 +532,32 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
               <div className="flex items-center">
                 <div className="ml-0">
                   <h1 className="text-2xl font-extrabold text-brand-dark dark:text-white">
-                    {activeTab === 'checklists' && 'All Checklists'}
+                    {activeTab === 'checklists' && (i18n.adminApp?.allChecklists || 'All Checklists')}
                     {activeTab === 'add-new' && (
-                      editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
+                      editingChecklist?.id ? (i18n.adminApp?.editChecklist || 'Edit Checklist') : (i18n.adminApp?.addNewChecklist || 'Add New Checklist')
                     )}
                     {activeTab === 'tours' && (
-                      editingTour !== null ? 'Edit Tour' : 'Tours'
+                      editingTour !== null ? (i18n.adminApp?.editTour || 'Edit Tour') : (i18n.adminApp?.tours || 'Tours')
                     )}
-                    {activeTab === 'kanban' && 'Kanban Board'}
-                    {activeTab === 'import' && 'Import / Export'}
-                    {activeTab === 'analytics' && 'Analytics'}
-                    {activeTab === 'settings' && 'Settings'}
-                    {activeTab === 'license' && 'License'}
+                    {activeTab === 'kanban' && (i18n.adminApp?.kanbanBoard || 'Kanban Board')}
+                    {activeTab === 'import' && (i18n.adminApp?.importExport || 'Import / Export')}
+                    {activeTab === 'analytics' && (i18n.adminApp?.analytics || 'Analytics')}
+                    {activeTab === 'settings' && (i18n.adminApp?.settings || 'Settings')}
+                    {activeTab === 'license' && (i18n.adminApp?.license || 'License')}
                   </h1>
                   <p className="text-sm font-normal text-gray-600 dark:text-gray-300">
-                    {activeTab === 'checklists' && 'Create and manage interactive checklists that can be accessed from anywhere on your site.'}
+                    {activeTab === 'checklists' && (i18n.adminApp?.checklistsDescription || 'Create and manage interactive checklists that can be accessed from anywhere on your site.')}
                     {activeTab === 'add-new' && (
-                      editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist for your site.'
+                      editingChecklist?.id ? (i18n.adminApp?.editChecklistDescription || 'Modify and update your existing checklist.') : (i18n.adminApp?.addNewChecklistDescription || 'Create a new interactive checklist for your site.')
                     )}
                     {activeTab === 'tours' && (
-                      editingTour !== null ? 'Configure settings and steps for your interactive tour.' : 'Create and manage interactive tours to guide users through your WordPress site.'
+                      editingTour !== null ? (i18n.adminApp?.editTourDescription || 'Configure settings and steps for your interactive tour.') : (i18n.adminApp?.toursDescription || 'Create and manage interactive tours to guide users through your WordPress site.')
                     )}
-                    {activeTab === 'kanban' && 'Visualize and manage checklist tasks in a Kanban-style board with drag-and-drop functionality.'}
-                    {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
-                    {activeTab === 'analytics' && 'View performance metrics and usage statistics for your checklists.'}
-                    {activeTab === 'settings' && 'Configure your MagicChecklists plugin settings.'}
-                    {activeTab === 'license' && 'Manage your MagicChecklists license activation.'}
+                    {activeTab === 'kanban' && (i18n.adminApp?.kanbanDescription || 'Visualize and manage checklist tasks in a Kanban-style board with drag-and-drop functionality.')}
+                    {activeTab === 'import' && (i18n.adminApp?.importExportDescription || 'Import and export classic checklists in various formats.')}
+                    {activeTab === 'analytics' && (i18n.adminApp?.analyticsDescription || 'View performance metrics and usage statistics for your checklists.')}
+                    {activeTab === 'settings' && (i18n.adminApp?.settingsDescription || 'Configure your MagicChecklists plugin settings.')}
+                    {activeTab === 'license' && (i18n.adminApp?.licenseDescription || 'Manage your MagicChecklists license activation.')}
                   </p>
                 </div>
               </div>
@@ -574,7 +577,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                           )}
                         </svg>
-                        {layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}
+                        {layoutMode === 'stacked' ? (i18n.adminApp?.sideBySide || 'Side by Side') : (i18n.adminApp?.stacked || 'Stacked')}
                       </button>
                     )}
                     <button
@@ -584,7 +587,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
-                      Back to List
+                      {i18n.adminApp?.backToList || 'Back to List'}
                     </button>
                     {editingChecklist?.type && (
                       <button
@@ -594,7 +597,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                         <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                         </svg>
-                        {editingChecklist?.id ? 'Save Changes' : 'Save Checklist'}
+                        {editingChecklist?.id ? (i18n.adminApp?.saveChanges || 'Save Changes') : (i18n.adminApp?.saveChecklist || 'Save Checklist')}
                       </button>
                     )}
                   </>
@@ -607,7 +610,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Back to Tours
+                    {i18n.adminApp?.backToTours || 'Back to Tours'}
                   </button>
                 )}
               </div>
@@ -629,18 +632,18 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   
                   <div className="ml-3">
                     <h1 className="text-lg sm:text-xl font-extrabold text-brand-dark dark:text-white">
-                      {activeTab === 'checklists' && 'All Checklists'}
+                      {activeTab === 'checklists' && (i18n.adminApp?.allChecklists || 'All Checklists')}
                       {activeTab === 'add-new' && (
-                        editingChecklist?.id ? 'Edit Checklist' : 'Add New Checklist'
+                        editingChecklist?.id ? (i18n.adminApp?.editChecklist || 'Edit Checklist') : (i18n.adminApp?.addNewChecklist || 'Add New Checklist')
                       )}
                       {activeTab === 'tours' && (
-                        editingTour !== null ? 'Edit Tour' : 'Tours'
+                        editingTour !== null ? (i18n.adminApp?.editTour || 'Edit Tour') : (i18n.adminApp?.tours || 'Tours')
                       )}
-                      {activeTab === 'kanban' && 'Kanban Board'}
-                      {activeTab === 'import' && 'Import / Export'}
-                      {activeTab === 'analytics' && 'Analytics'}
-                      {activeTab === 'settings' && 'Settings'}
-                      {activeTab === 'license' && 'License'}
+                      {activeTab === 'kanban' && (i18n.adminApp?.kanbanBoard || 'Kanban Board')}
+                      {activeTab === 'import' && (i18n.adminApp?.importExport || 'Import / Export')}
+                      {activeTab === 'analytics' && (i18n.adminApp?.analytics || 'Analytics')}
+                      {activeTab === 'settings' && (i18n.adminApp?.settings || 'Settings')}
+                      {activeTab === 'license' && (i18n.adminApp?.license || 'License')}
                     </h1>
                   </div>
                 </div>
@@ -660,8 +663,8 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                           )}
                         </svg>
-                        <span className="hidden sm:inline">{layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}</span>
-                        <span className="sm:hidden">Layout</span>
+                        <span className="hidden sm:inline">{layoutMode === 'stacked' ? (i18n.adminApp?.sideBySide || 'Side by Side') : (i18n.adminApp?.stacked || 'Stacked')}</span>
+                        <span className="sm:hidden">{(i18n.adminApp?.layout || 'Layout')}</span>
                       </button>
                     )}
                     <button
@@ -671,8 +674,8 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
-                      <span className="hidden sm:inline">Back to List</span>
-                      <span className="sm:hidden">Back</span>
+                      <span className="hidden sm:inline">{(i18n.adminApp?.backToList || 'Back to List')}</span>
+                      <span className="sm:hidden">{(i18n.adminApp?.back || 'Back')}</span>
                     </button>
                     {editingChecklist?.type && (
                       <button
@@ -682,7 +685,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                         <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                         </svg>
-                        <span className="hidden sm:inline">Save</span>
+                        <span className="hidden sm:inline">{(i18n.adminApp?.save || 'Save')}</span>
                       </button>
                     )}
                   </>
@@ -692,18 +695,18 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
               {/* Second row - Description (hidden on very small screens) */}
               <div className="hidden sm:block px-4 pb-2">
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {activeTab === 'checklists' && 'Create and manage interactive checklists.'}
+                  {activeTab === 'checklists' && (i18n.adminApp?.checklistsDescriptionShort || 'Create and manage interactive checklists.')}
                   {activeTab === 'add-new' && (
-                    editingChecklist?.id ? 'Modify and update your existing checklist.' : 'Create a new interactive checklist.'
+                    editingChecklist?.id ? (i18n.adminApp?.editChecklistDescription || 'Modify and update your existing checklist.') : (i18n.adminApp?.addNewChecklistDescriptionShort || 'Create a new interactive checklist.')
                   )}
                   {activeTab === 'tours' && (
-                    editingTour !== null ? 'Configure settings and steps for your interactive tour.' : 'Create and manage interactive tours.'
+                    editingTour !== null ? (i18n.adminApp?.editTourDescription || 'Configure settings and steps for your interactive tour.') : (i18n.adminApp?.toursDescriptionShort || 'Create and manage interactive tours.')
                   )}
-                  {activeTab === 'kanban' && 'Visualize and manage tasks in a Kanban board.'}
-                  {activeTab === 'import' && 'Import and export classic checklists in various formats.'}
-                  {activeTab === 'analytics' && 'View performance metrics and usage statistics.'}
-                  {activeTab === 'settings' && 'Configure your plugin settings.'}
-                  {activeTab === 'license' && 'Manage your license activation.'}
+                  {activeTab === 'kanban' && (i18n.adminApp?.kanbanDescriptionShort || 'Visualize and manage tasks in a Kanban board.')}
+                  {activeTab === 'import' && (i18n.adminApp?.importExportDescriptionShort || 'Import and export classic checklists in various formats.')}
+                  {activeTab === 'analytics' && (i18n.adminApp?.analyticsDescriptionShort || 'View performance metrics and usage statistics.')}
+                  {activeTab === 'settings' && (i18n.adminApp?.settingsDescriptionShort || 'Configure your plugin settings.')}
+                  {activeTab === 'license' && (i18n.adminApp?.licenseDescriptionShort || 'Manage your license activation.')}
                 </p>
               </div>
 
@@ -722,8 +725,8 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                         )}
                       </svg>
-                      <span className="hidden sm:inline">{layoutMode === 'stacked' ? 'Side by Side' : 'Stacked'}</span>
-                      <span className="sm:hidden">Layout</span>
+                      <span className="hidden sm:inline">{layoutMode === 'stacked' ? (i18n.adminApp?.sideBySide || 'Side by Side') : (i18n.adminApp?.stacked || 'Stacked')}</span>
+                      <span className="sm:hidden">{(i18n.adminApp?.layout || 'Layout')}</span>
                     </button>
                   )}
                   
@@ -734,8 +737,8 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    <span className="hidden sm:inline">Back to List</span>
-                    <span className="sm:hidden">Back</span>
+                    <span className="hidden sm:inline">{(i18n.adminApp?.backToList || 'Back to List')}</span>
+                    <span className="sm:hidden">{(i18n.adminApp?.back || 'Back')}</span>
                   </button>
                 </div>
               )}

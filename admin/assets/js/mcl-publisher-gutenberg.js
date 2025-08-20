@@ -365,8 +365,8 @@ const PublisherChecklistSidebar = () => {
                                         ...req,
                                         status: checked ? 'passed' : 'failed',
                                         message: checked ? 
-                                            __('Manual verification complete', 'magic-checklists') : 
-                                            __('Custom item verification required', 'magic-checklists')
+                                            (window.mclPublisher?.i18n?.labels?.manualVerificationComplete || __('Manual verification complete', 'magic-checklists')) : 
+                                            (window.mclPublisher?.i18n?.labels?.customItemVerificationRequired || __('Custom item verification required', 'magic-checklists'))
                                     };
                                 }
                                 return req;
@@ -442,25 +442,30 @@ const PublisherChecklistSidebar = () => {
             return requirement.config.custom_tip;
         }
         
+        // Use localized tips from PHP first, then fallback to JavaScript translations
+        if (window.mclPublisher?.i18n?.tips?.[requirement.type]) {
+            return window.mclPublisher.i18n.tips[requirement.type];
+        }
+        
         // Fallback to default tips
         const tips = {
-            'excerpt': 'Excerpt helps users understand your content before reading. Check character limits in the excerpt section.',
-            'meta_description': 'Meta descriptions appear in search results. Keep within SEO-recommended character limits.',
-            'heading_count': 'Proper heading structure (H2, H3, H4) improves readability and SEO.',
-            'word_count': 'Adequate content length helps with SEO and provides value to readers.',
-            'title_length': 'Title length affects how it displays in search results and social media.',
-            'featured_image': 'Featured images improve engagement and social media sharing.',
-            'categories': 'Categories help organize your content and improve navigation.',
-            'tags': 'Tags help readers discover related content and improve SEO.',
-            'external_links': 'External links to authoritative sources add credibility to your content.',
-            'internal_links': 'Internal links help readers explore related content and improve SEO.',
-            'image_alt_text': 'Alt text makes images accessible to screen readers and improves SEO.',
-            'image_count': 'Images make content more engaging and help break up text.',
-            'custom_field': 'Custom fields store additional metadata for your content.',
-            'custom_item': 'Manual verification items require human review before publishing.'
+            'excerpt': __('Excerpt helps users understand your content before reading. Check character limits in the excerpt section.', 'magic-checklists'),
+            'meta_description': __('Meta descriptions appear in search results. Keep within SEO-recommended character limits.', 'magic-checklists'),
+            'heading_count': __('Proper heading structure (H2, H3, H4) improves readability and SEO.', 'magic-checklists'),
+            'word_count': __('Adequate content length helps with SEO and provides value to readers.', 'magic-checklists'),
+            'title_length': __('Title length affects how it displays in search results and social media.', 'magic-checklists'),
+            'featured_image': __('Featured images improve engagement and social media sharing.', 'magic-checklists'),
+            'categories': __('Categories help organize your content and improve navigation.', 'magic-checklists'),
+            'tags': __('Tags help readers discover related content and improve SEO.', 'magic-checklists'),
+            'external_links': __('External links to authoritative sources add credibility to your content.', 'magic-checklists'),
+            'internal_links': __('Internal links help readers explore related content and improve SEO.', 'magic-checklists'),
+            'image_alt_text': __('Alt text makes images accessible to screen readers and improves SEO.', 'magic-checklists'),
+            'image_count': __('Images make content more engaging and help break up text.', 'magic-checklists'),
+            'custom_field': __('Custom fields store additional metadata for your content.', 'magic-checklists'),
+            'custom_item': __('Manual verification items require human review before publishing.', 'magic-checklists')
         };
         
-        return tips[requirement.type] || 'Complete this requirement before publishing.';
+        return tips[requirement.type] || __('Complete this requirement before publishing.', 'magic-checklists');
     };
 
     // Function to add visual indicators to publish buttons
@@ -621,7 +626,7 @@ const PublisherChecklistSidebar = () => {
                                         zIndex: 1
                                     }
                                 },
-                                __('Required', 'magic-checklists')
+                                window.mclPublisher?.i18n?.labels?.required || __('Required', 'magic-checklists')
                             ),
                             
                             wp.element.createElement(
@@ -663,6 +668,9 @@ const PublisherChecklistSidebar = () => {
                                                     color: '#1a1a1a'
                                                 }
                                             },
+                                            // Try to translate the label if it's not already translated
+                                            window.mclPublisher?.i18n?.requirements?.[requirement.type] || 
+                                            __(requirement.label, 'magic-checklists') || 
                                             requirement.label
                                         )
                                     ),
@@ -703,7 +711,7 @@ const PublisherChecklistSidebar = () => {
                                                 !requirement.auto_check && wp.element.createElement(
                                                     CheckboxControl,
                                                     {
-                                                        label: __('Mark as complete', 'magic-checklists'),
+                                                        label: window.mclPublisher?.i18n?.labels?.markAsComplete || __('Mark as complete', 'magic-checklists'),
                                                         checked: requirement.status === 'passed',
                                                         onChange: (checked) => 
                                                             handleManualCheck(checklist.id, requirement.type, requirement.instance_id || '', checked),
@@ -731,23 +739,23 @@ const PublisherChecklistSidebar = () => {
                                 checklistStatus === 'passed' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#22c55e', fontWeight: '500' } },
-                                    '✅ ' + __('All requirements met!', 'magic-checklists')
+                                    '✅ ' + (window.mclPublisher?.i18n?.labels?.allRequirementsMet || __('All requirements met!', 'magic-checklists'))
                                 ),
                                 checklistStatus === 'failed' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#ef4444', fontWeight: '500' } },
-                                    '⚠️ ' + __('Some required items need attention before publishing.', 'magic-checklists')
+                                    '⚠️ ' + (window.mclPublisher?.i18n?.labels?.someRequiredItems || __('Some required items need attention before publishing.', 'magic-checklists'))
                                 ),
                                 checklistStatus === 'pending' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#f59e0b', fontWeight: '500' } },
-                                    '⏳ ' + __('Checking requirements...', 'magic-checklists')
+                                    '⏳ ' + (window.mclPublisher?.i18n?.labels?.checkingRequirements || __('Checking requirements...', 'magic-checklists'))
                                 ),
                                 
                                 lastCheck && wp.element.createElement(
                                     'div',
                                     { style: { marginTop: '8px' } },
-                                    __('Last checked:', 'magic-checklists') + ' ' + lastCheck.toLocaleTimeString()
+                                    (window.mclPublisher?.i18n?.labels?.lastChecked || __('Last checked:', 'magic-checklists')) + ' ' + lastCheck.toLocaleTimeString()
                                 )
                             ),
 
@@ -766,7 +774,7 @@ const PublisherChecklistSidebar = () => {
                                         wp.element.createElement(Spinner, { style: { width: '16px', height: '16px', marginRight: '8px' } }),
                                         __('Checking...', 'magic-checklists')
                                     ) :
-                                    __('Check Requirements', 'magic-checklists')
+                                    window.mclPublisher?.i18n?.labels?.checkRequirements || __('Check Requirements', 'magic-checklists')
                             )
                         );
                     })

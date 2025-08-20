@@ -50,9 +50,16 @@ class MCL_Publisher_Checklist {
         wp_enqueue_script(
             'mcl-publisher-gutenberg',
             MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-publisher-gutenberg.js',
-            array('wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'wp-editor'),
+            array('wp-plugins', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'wp-editor', 'wp-i18n'),
             MAGIC_CHECKLISTS_VERSION,
             true
+        );
+        
+        // Set up translations for the JavaScript file
+        wp_set_script_translations(
+            'mcl-publisher-gutenberg',
+            'magic-checklists',
+            MAGIC_CHECKLISTS_PLUGIN_PATH . 'languages'
         );
         
         wp_enqueue_style(
@@ -72,7 +79,51 @@ class MCL_Publisher_Checklist {
                 'requirementsNotMet' => __('Some requirements are not met', 'magic-checklists'),
                 'checking' => __('Checking...', 'magic-checklists'),
                 'error' => __('Error checking requirements', 'magic-checklists'),
-                'publishBlocked' => __('Publishing is blocked until all required items are completed.', 'magic-checklists')
+                'publishBlocked' => __('Publishing is blocked until all required items are completed.', 'magic-checklists'),
+                'requirements' => array(
+                    'word_count' => __('Minimum Word Count', 'magic-checklists'),
+                    'featured_image' => __('Featured Image', 'magic-checklists'),
+                    'excerpt' => __('Excerpt', 'magic-checklists'),
+                    'categories' => __('Minimum Categories', 'magic-checklists'),
+                    'tags' => __('Minimum Tags', 'magic-checklists'),
+                    'external_links' => __('External Links', 'magic-checklists'),
+                    'internal_links' => __('Internal Links', 'magic-checklists'),
+                    'title_length' => __('Title Length', 'magic-checklists'),
+                    'meta_description' => __('Meta Description', 'magic-checklists'),
+                    'meta_title' => __('Meta Title', 'magic-checklists'),
+                    'image_alt_text' => __('Image Alt Text', 'magic-checklists'),
+                    'heading_count' => __('Heading Count', 'magic-checklists'),
+                    'image_count' => __('Image Count', 'magic-checklists'),
+                    'custom_field' => __('Test Custom Field', 'magic-checklists'),
+                    'custom_item' => __('Test custom Item', 'magic-checklists')
+                ),
+                'labels' => array(
+                    'markAsComplete' => __('Mark as complete', 'magic-checklists'),
+                    'allRequirementsMet' => __('All requirements met!', 'magic-checklists'),
+                    'someRequiredItems' => __('Some required items need attention before publishing.', 'magic-checklists'),
+                    'checkingRequirements' => __('Checking requirements...', 'magic-checklists'),
+                    'lastChecked' => __('Last checked:', 'magic-checklists'),
+                    'checkRequirements' => __('Check Requirements', 'magic-checklists'),
+                    'required' => __('Required', 'magic-checklists'),
+                    'manualVerificationComplete' => __('Manual verification complete', 'magic-checklists'),
+                    'customItemVerificationRequired' => __('Custom item verification required', 'magic-checklists')
+                ),
+                'tips' => array(
+                    'excerpt' => __('Excerpt helps users understand your content before reading. Check character limits in the excerpt section.', 'magic-checklists'),
+                    'meta_description' => __('Meta descriptions appear in search results. Keep within SEO-recommended character limits.', 'magic-checklists'),
+                    'heading_count' => __('Proper heading structure (H2, H3, H4) improves readability and SEO.', 'magic-checklists'),
+                    'word_count' => __('Adequate content length helps with SEO and provides value to readers.', 'magic-checklists'),
+                    'title_length' => __('Title length affects how it displays in search results and social media.', 'magic-checklists'),
+                    'featured_image' => __('Featured images improve engagement and social media sharing.', 'magic-checklists'),
+                    'categories' => __('Categories help organize your content and improve navigation.', 'magic-checklists'),
+                    'tags' => __('Tags help readers discover related content and improve SEO.', 'magic-checklists'),
+                    'external_links' => __('External links to authoritative sources add credibility to your content.', 'magic-checklists'),
+                    'internal_links' => __('Internal links help readers explore related content and improve SEO.', 'magic-checklists'),
+                    'image_alt_text' => __('Alt text makes images accessible to screen readers and improves SEO.', 'magic-checklists'),
+                    'image_count' => __('Images make content more engaging and help break up text.', 'magic-checklists'),
+                    'custom_field' => __('Custom fields store additional metadata for your content.', 'magic-checklists'),
+                    'custom_item' => __('Manual verification items require human review before publishing.', 'magic-checklists')
+                )
             )
         ));
     }
