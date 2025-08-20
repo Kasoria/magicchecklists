@@ -26,6 +26,9 @@ class MCL_I18n {
             'accessControl' => self::get_access_control_translations(),
             'analyticsDashboard' => self::get_analytics_dashboard_overview_translations(),
             'checklistDrawer' => self::get_checklist_drawer_translations(),
+            'checklistEditor' => self::get_checklist_editor_translations(),
+            'notificationSettings' => self::get_notification_settings_translations(),
+            'checklistItems' => self::get_checklist_items_translations(),
         );
     }
     
@@ -597,6 +600,401 @@ class MCL_I18n {
             'selectImageTitle' => __('Select Image', 'magic-checklists'),
             'invalidFileType' => __('Invalid file type. Please upload a JPG, PNG, or GIF image.', 'magic-checklists'),
             'invalidDate' => __('Invalid date', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistEditor component translations
+     * 
+     * @return array
+     */
+    public static function get_checklist_editor_translations() {
+        return array(
+            'loadingChecklist' => __('Loading checklist...', 'magic-checklists'),
+            'failedToLoadType' => __('Failed to load checklist type:', 'magic-checklists'),
+            'errorLoadingType' => __('Error loading checklist type:', 'magic-checklists'),
+            'editChecklist' => self::get_edit_checklist_translations(),
+        );
+    }
+
+    /**
+     * Get EditChecklist component translations
+     * 
+     * @return array
+     */
+    private static function get_edit_checklist_translations() {
+        return array(
+            'stepTitles' => array(
+                'basicSettings' => __('Basic Settings', 'magic-checklists'),
+                'advancedSettings' => __('Advanced Settings', 'magic-checklists'),
+                'accessControl' => __('Access Control', 'magic-checklists'),
+                'notifications' => __('Notifications', 'magic-checklists'),
+            ),
+            'basicSettings' => array(
+                'title' => __('Title', 'magic-checklists'),
+                'titlePlaceholder' => __('Enter checklist title', 'magic-checklists'),
+                'description' => __('Description', 'magic-checklists'),
+                'descriptionPlaceholder' => __('Enter checklist description', 'magic-checklists'),
+                'showDescriptionInDrawer' => __('Show description in drawer', 'magic-checklists'),
+                'activeStatus' => __('Active Status', 'magic-checklists'),
+                'activeStatusDescription' => __('When active, this checklist can be accessed using its keyboard shortcut or floating button.', 'magic-checklists'),
+                'drawerTheme' => __('Drawer Theme', 'magic-checklists'),
+                'chooseTheme' => __('Choose theme...', 'magic-checklists'),
+                'themeDescription' => __('Choose the visual theme for your checklist drawer.', 'magic-checklists'),
+                'tags' => __('Tags', 'magic-checklists'),
+                'tagPlaceholder' => __('Type tag name and press Enter', 'magic-checklists'),
+                'tagsHint' => __('Add tags to organize your checklist. Press Enter to add a tag, then click the edit icon to change its color.', 'magic-checklists'),
+                'checklistPriority' => __('Checklist Priority', 'magic-checklists'),
+                'selectPriorityPlaceholder' => __('Select priority...', 'magic-checklists'),
+                'enableItemLocking' => __('Enable Item Locking', 'magic-checklists'),
+                'itemLockingDescription' => __('Enable locking of individual items to prevent editing.', 'magic-checklists'),
+                'enableShortcode' => __('Enable Shortcode', 'magic-checklists'),
+                'shortcodeDescription' => __('Enable this to use this checklist as a shortcode in your content.', 'magic-checklists'),
+                'autoResetSchedule' => __('Auto Reset Schedule', 'magic-checklists'),
+                'autoResetDescription' => __('Enable automatic reset of checked items on a schedule.', 'magic-checklists'),
+                'floatingButtonTitle' => __('Floating Button Title', 'magic-checklists'),
+                'buttonTitle' => __('Button title', 'magic-checklists'),
+                'selectIconImage' => __('Select Icon Image', 'magic-checklists'),
+                'changeColor' => __('Change color', 'magic-checklists'),
+            ),
+            'advancedSettings' => array(
+                'deadline' => __('Deadline', 'magic-checklists'),
+                'deadlineDescription' => __('Set an optional deadline for completing this checklist.', 'magic-checklists'),
+                'keyboardShortcut' => __('Keyboard Shortcut', 'magic-checklists'),
+                'shortcutPlaceholder' => __('Click and press your desired key combination', 'magic-checklists'),
+                'drawerTriggerMethod' => __('Drawer Trigger Method', 'magic-checklists'),
+                'keyboardShortcutTrigger' => __('Keyboard Shortcut', 'magic-checklists'),
+                'floatingButton' => __('Floating Button', 'magic-checklists'),
+                'buttonPosition' => __('Button Position', 'magic-checklists'),
+                'selectPosition' => __('Select position...', 'magic-checklists'),
+                'checklistIcon' => __('Checklist Icon', 'magic-checklists'),
+                'usePresetIcon' => __('Use Preset Icon', 'magic-checklists'),
+                'customIcon' => __('Custom Icon', 'magic-checklists'),
+                'chooseIconImage' => __('Choose Icon Image', 'magic-checklists'),
+                'useAsIcon' => __('Use as Icon', 'magic-checklists'),
+                'customIconAlt' => __('Custom icon', 'magic-checklists'),
+                'remove' => __('Remove', 'magic-checklists'),
+                'pasteImageUrl' => __('Or paste image URL', 'magic-checklists'),
+                'disableInBuilders' => __('Disable floating button when inside pagebuilders', 'magic-checklists'),
+                'checkedStateHandling' => __('Checked State Handling', 'magic-checklists'),
+                'selectHandlingMethod' => __('Select handling method...', 'magic-checklists'),
+                'checkedStateDescription' => __('"Per User" gives each user their own checked states. "Global" shares checked states among all users.', 'magic-checklists'),
+                'resetInterval' => __('Reset Interval', 'magic-checklists'),
+                'selectInterval' => __('Select interval...', 'magic-checklists'),
+                'dayOfWeek' => __('Day of Week', 'magic-checklists'),
+                'selectDay' => __('Select day...', 'magic-checklists'),
+                'dayOfMonth' => __('Day of Month', 'magic-checklists'),
+                'enterDayOfMonth' => __('Enter day of month', 'magic-checklists'),
+                'customInterval' => __('Custom Interval', 'magic-checklists'),
+                'months' => __('Months', 'magic-checklists'),
+                'weeks' => __('Weeks', 'magic-checklists'),
+                'days' => __('Days', 'magic-checklists'),
+                'customIntervalHint' => __('At least one field must have a value greater than 0.', 'magic-checklists'),
+                'resetTime' => __('Reset Time', 'magic-checklists'),
+            ),
+            'options' => array(
+                'light' => __('Light', 'magic-checklists'),
+                'dark' => __('Dark', 'magic-checklists'),
+                'customTheme' => __('Custom Theme', 'magic-checklists'),
+                'bottomRight' => __('Bottom Right', 'magic-checklists'),
+                'bottomLeft' => __('Bottom Left', 'magic-checklists'),
+                'topRight' => __('Top Right', 'magic-checklists'),
+                'topLeft' => __('Top Left', 'magic-checklists'),
+                'draggable' => __('Draggable', 'magic-checklists'),
+                'perUser' => __('Per User', 'magic-checklists'),
+                'global' => __('Global', 'magic-checklists'),
+                'daily' => __('Daily', 'magic-checklists'),
+                'weekly' => __('Weekly', 'magic-checklists'),
+                'monthly' => __('Monthly', 'magic-checklists'),
+                'custom' => __('Custom', 'magic-checklists'),
+                'monday' => __('Monday', 'magic-checklists'),
+                'tuesday' => __('Tuesday', 'magic-checklists'),
+                'wednesday' => __('Wednesday', 'magic-checklists'),
+                'thursday' => __('Thursday', 'magic-checklists'),
+                'friday' => __('Friday', 'magic-checklists'),
+                'saturday' => __('Saturday', 'magic-checklists'),
+                'sunday' => __('Sunday', 'magic-checklists'),
+            ),
+            'priorities' => array(
+                'none' => __('None', 'magic-checklists'),
+                'low' => __('Low', 'magic-checklists'),
+                'medium' => __('Medium', 'magic-checklists'),
+                'high' => __('High', 'magic-checklists'),
+                'critical' => __('Critical', 'magic-checklists'),
+            ),
+            'buttons' => array(
+                'previous' => __('Previous', 'magic-checklists'),
+                'next' => __('Next', 'magic-checklists'),
+                'save' => __('Save', 'magic-checklists'),
+            ),
+            'validation' => array(
+                'titleRequired' => __('Title is required', 'magic-checklists'),
+                'triggerMethodsRequired' => __('At least one trigger method must be selected', 'magic-checklists'),
+                'keyboardShortcutRequired' => __('Keyboard shortcut is required when shortcut trigger is enabled', 'magic-checklists'),
+                'shortcutInUse' => __('This shortcut is already in use.', 'magic-checklists'),
+                'invalidTimeFormat' => __('Invalid time format', 'magic-checklists'),
+                'invalidDayOfWeek' => __('Invalid day of week selected', 'magic-checklists'),
+                'dayOfMonthRange' => __('Day of month must be between 1 and 31', 'magic-checklists'),
+                'customIntervalRequired' => __('At least one time period must be specified for custom intervals', 'magic-checklists'),
+                'monthsRange' => __('Months must be between 0 and 12', 'magic-checklists'),
+                'weeksRange' => __('Weeks must be between 0 and 52', 'magic-checklists'),
+                'daysRange' => __('Days must be between 0 and 31', 'magic-checklists'),
+                'usageLimitNumber' => __('Usage limit must be a number', 'magic-checklists'),
+                'usageLimitNegative' => __('Usage limit cannot be negative', 'magic-checklists'),
+                'notificationMethodRequired' => __('At least one notification method must be enabled', 'magic-checklists'),
+                'emailRecipientsRequired' => __('Email recipients are required when email notifications are enabled', 'magic-checklists'),
+                'itemsRequired' => __('At least one non-empty checklist item is required', 'magic-checklists'),
+            ),
+            'actions' => array(
+                'save' => __('Save', 'magic-checklists'),
+                'loadingChecklist' => __('Loading checklist...', 'magic-checklists'),
+                'errorLoadingChecklist' => __('Failed to load checklist data', 'magic-checklists'),
+                'errorValidatingShortcut' => __('Error validating shortcut:', 'magic-checklists'),
+                'errorSavingChecklist' => __('Failed to save checklist. Please try again.', 'magic-checklists'),
+                'failedToSaveChecklist' => __('Failed to save checklist', 'magic-checklists'),
+            ),
+        );
+    }
+
+    /**
+     * Get NotificationSettings component translations
+     * 
+     * @return array
+     */
+    public static function get_notification_settings_translations() {
+        return array(
+            'notifications' => __('Notifications', 'magic-checklists'),
+            'enableNotifications' => __('Enable notifications for this checklist', 'magic-checklists'),
+            'notificationMethods' => __('Notification Methods', 'magic-checklists'),
+            'notificationMethodsDescription' => __('Please check at least one option for the notifications to work.', 'magic-checklists'),
+            'emailNotifications' => __('Email Notifications', 'magic-checklists'),
+            'integrationNotifications' => __('Integration Notifications', 'magic-checklists'),
+            'emailSettings' => __('Email Settings', 'magic-checklists'),
+            'emailRecipients' => __('Email Recipients', 'magic-checklists'),
+            'emailRecipientsPlaceholder' => __('email1@example.com, email2@example.com', 'magic-checklists'),
+            'emailRecipientsDescription' => __('Enter email addresses separated by commas', 'magic-checklists'),
+            'invalidEmailAddresses' => __('Please enter valid email addresses separated by commas', 'magic-checklists'),
+            'testEmail' => __('Test Email', 'magic-checklists'),
+            'testing' => __('Testing...', 'magic-checklists'),
+            'integrationSettings' => __('Integration Settings', 'magic-checklists'),
+            'slackWebhookUrl' => __('Slack Webhook URL', 'magic-checklists'),
+            'slackWebhookPlaceholder' => __('https://hooks.slack.com/services/...', 'magic-checklists'),
+            'validSlackWebhookUrl' => __('Please enter a valid Slack webhook URL', 'magic-checklists'),
+            'testSlack' => __('Test Slack', 'magic-checklists'),
+            'discordWebhookUrl' => __('Discord Webhook URL', 'magic-checklists'),
+            'discordWebhookPlaceholder' => __('https://discord.com/api/webhooks/...', 'magic-checklists'),
+            'validDiscordWebhookUrl' => __('Please enter a valid Discord webhook URL', 'magic-checklists'),
+            'testDiscord' => __('Test Discord', 'magic-checklists'),
+            'notificationTriggers' => __('Notification Triggers', 'magic-checklists'),
+            'notificationTriggersDescription' => __('Choose which events should trigger notifications', 'magic-checklists'),
+            'newItemAdded' => __('New item added', 'magic-checklists'),
+            'itemDeleted' => __('Item deleted', 'magic-checklists'),
+            'itemChecked' => __('Item checked', 'magic-checklists'),
+            'itemUnchecked' => __('Item unchecked', 'magic-checklists'),
+            'deadlineApproaching' => __('Deadline approaching', 'magic-checklists'),
+            'commentsAndReplies' => __('Comments and replies', 'magic-checklists'),
+            'sendDeadlineNotificationWhen' => __('Send deadline notification when', 'magic-checklists'),
+            'hoursRemaining' => __('hours remaining', 'magic-checklists'),
+            'notificationFrequency' => __('Notification Frequency', 'magic-checklists'),
+            'sendImmediately' => __('Send Immediately', 'magic-checklists'),
+            'every15Minutes' => __('Every 15 Minutes', 'magic-checklists'),
+            'hourly' => __('Hourly', 'magic-checklists'),
+            'dailyDigest' => __('Daily Digest', 'magic-checklists'),
+            'selectFrequency' => __('Select frequency...', 'magic-checklists'),
+            'chooseFrequencyDescription' => __('Choose how often notifications should be sent', 'magic-checklists'),
+            'alerts' => array(
+                'noNotificationMethods' => __('No notification methods enabled!', 'magic-checklists'),
+                'noNotificationMethodsDescription' => __('Please enable at least one notification method for notifications to work.', 'magic-checklists'),
+                'noEmailRecipients' => __('No email recipients!', 'magic-checklists'),
+                'noEmailRecipientsDescription' => __('Please add email recipients to receive email notifications.', 'magic-checklists'),
+                'noWebhookUrls' => __('No webhook URLs configured!', 'magic-checklists'),
+                'noWebhookUrlsDescription' => __('Please add at least one webhook URL for integration notifications.', 'magic-checklists'),
+                'enterWebhookUrlFirst' => __('Please enter a webhook URL first', 'magic-checklists'),
+                'enterEmailRecipientsFirst' => __('Please enter email recipients first', 'magic-checklists'),
+                'webhookTestSuccessful' => __('webhook test successful!', 'magic-checklists'),
+                'webhookTestFailed' => __('Webhook test failed:', 'magic-checklists'),
+                'webhookTestNetworkError' => __('Webhook test failed due to network error', 'magic-checklists'),
+                'testEmailsSentSuccessfully' => __('Test email(s) sent successfully!', 'magic-checklists'),
+                'emailTestFailed' => __('Email test failed:', 'magic-checklists'),
+                'emailTestNetworkError' => __('Email test failed due to network error', 'magic-checklists'),
+                'unknownError' => __('Unknown error', 'magic-checklists'),
+            ),
+        );
+    }
+
+    /**
+     * Get ChecklistItems component translations
+     * 
+     * @return array
+     */
+    public static function get_checklist_items_translations() {
+        return array(
+            'header' => self::get_checklist_items_header_translations(),
+            'actions' => self::get_checklist_items_actions_translations(),
+            'tooltips' => self::get_checklist_items_tooltips_translations(),
+            'modals' => self::get_checklist_items_modals_translations(),
+            'priorities' => self::get_checklist_items_priorities_translations(),
+            'alerts' => self::get_checklist_items_alerts_translations(),
+            'timeFormatting' => self::get_checklist_items_time_translations(),
+        );
+    }
+
+    /**
+     * Get ChecklistItems header translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_header_translations() {
+        return array(
+            'title' => __('Checklist Items', 'magic-checklists'),
+            'description' => __('Add and organize your checklist items', 'magic-checklists'),
+            'enablePriorities' => __('Enable Item Priorities', 'magic-checklists'),
+            'enable' => __('Enable', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems actions translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_actions_translations() {
+        return array(
+            'addItem' => __('Add Item', 'magic-checklists'),
+            'deleteAll' => __('Delete All', 'magic-checklists'),
+            'deleteAllConfirm' => __('Are you sure you want to delete all items?', 'magic-checklists'),
+            'noParent' => __('No Parent', 'magic-checklists'),
+            'selectParent' => __('Select parent...', 'magic-checklists'),
+            'selectPriority' => __('Priority...', 'magic-checklists'),
+            'untitledItem' => __('Untitled Item', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems tooltips translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_tooltips_translations() {
+        return array(
+            'markAsInProgress' => __('Mark as in progress', 'magic-checklists'),
+            'removeFromInProgress' => __('Remove from in progress', 'magic-checklists'),
+            'setDeadline' => __('Set deadline', 'magic-checklists'),
+            'addImage' => __('Add image', 'magic-checklists'),
+            'startTour' => __('Start tour from this step', 'magic-checklists'),
+            'lockItem' => __('Lock item', 'magic-checklists'),
+            'unlockItem' => __('Unlock item', 'magic-checklists'),
+            'removeItem' => __('Remove item', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems modals translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_modals_translations() {
+        return array(
+            'imageModal' => self::get_checklist_items_image_modal_translations(),
+            'linkModal' => self::get_checklist_items_link_modal_translations(),
+            'deadlinePrompt' => self::get_checklist_items_deadline_prompt_translations(),
+        );
+    }
+
+    /**
+     * Get ChecklistItems image modal translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_image_modal_translations() {
+        return array(
+            'insertImage' => __('Insert Image', 'magic-checklists'),
+            'uploadOrSelect' => __('Upload or Select Image', 'magic-checklists'),
+            'chooseMethod' => __('Choose how you would like to add an image:', 'magic-checklists'),
+            'mediaLibrary' => __('WordPress Media Library', 'magic-checklists'),
+            'quickUpload' => __('Quick Upload', 'magic-checklists'),
+            'uploadNew' => __('Upload New', 'magic-checklists'),
+            'selectExisting' => __('Select Existing', 'magic-checklists'),
+            'dragDrop' => __('Drag and drop image here or click to select', 'magic-checklists'),
+            'fileRestrictions' => __('Maximum file size: 10MB. Supported formats: JPG, PNG, GIF', 'magic-checklists'),
+            'loadingImages' => __('Loading images...', 'magic-checklists'),
+            'cancel' => __('Cancel', 'magic-checklists'),
+            'uploadImage' => __('Upload Image', 'magic-checklists'),
+            'uploading' => __('Uploading...', 'magic-checklists'),
+            'selectImage' => __('Select Image', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems link modal translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_link_modal_translations() {
+        return array(
+            'addLink' => __('Add Link', 'magic-checklists'),
+            'url' => __('URL', 'magic-checklists'),
+            'urlPlaceholder' => __('https://example.com', 'magic-checklists'),
+            'text' => __('Text (optional)', 'magic-checklists'),
+            'textPlaceholder' => __('Link text', 'magic-checklists'),
+            'cancel' => __('Cancel', 'magic-checklists'),
+            'addLinkButton' => __('Add Link', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems deadline prompt translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_deadline_prompt_translations() {
+        return array(
+            'enterDeadline' => __('Enter deadline (YYYY-MM-DD HH:MM):', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems priorities translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_priorities_translations() {
+        return array(
+            'none' => __('None', 'magic-checklists'),
+            'low' => __('Low', 'magic-checklists'),
+            'medium' => __('Medium', 'magic-checklists'),
+            'high' => __('High', 'magic-checklists'),
+            'critical' => __('Critical', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems alerts translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_alerts_translations() {
+        return array(
+            'invalidFileType' => __('Invalid file type. Please upload a JPG, PNG, or GIF image.', 'magic-checklists'),
+            'fileTooLarge' => __('File is too large. Maximum size is 10MB.', 'magic-checklists'),
+            'uploadFailed' => __('Upload failed. Please try again.', 'magic-checklists'),
+            'selectImageTitle' => __('Select Image', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get ChecklistItems time formatting translations
+     * 
+     * @return array
+     */
+    private static function get_checklist_items_time_translations() {
+        return array(
+            'deadlinePassed' => __('Deadline passed', 'magic-checklists'),
+            'remaining' => __('remaining', 'magic-checklists'),
+            'due' => __('Due:', 'magic-checklists'),
+            'daysShort' => __('d', 'magic-checklists'),
+            'hoursShort' => __('h', 'magic-checklists'),
+            'minutesShort' => __('m', 'magic-checklists'),
         );
     }
 

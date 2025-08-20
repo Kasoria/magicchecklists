@@ -52,13 +52,17 @@ const Toggle = ({ checked, onChange, label, disabled = false }) => (
 const NotificationSettings = ({ formData, onChange, adminData }) => {
   const [testingWebhook, setTestingWebhook] = useState({ slack: false, discord: false })
   const [testingEmail, setTestingEmail] = useState(false)
+  
+  // Initialize i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const t = i18n.notificationSettings || {};
 
   const testWebhook = async (platform) => {
     const webhookField = `${platform}_webhook_url`
     const webhookUrl = formData[webhookField]
 
     if (!webhookUrl) {
-      alert('Please enter a webhook URL first')
+      alert(t.alerts?.enterWebhookUrlFirst || 'Please enter a webhook URL first')
       return
     }
 
@@ -78,13 +82,13 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        alert(`${platform.charAt(0).toUpperCase() + platform.slice(1)} webhook test successful!`)
+        alert(t.alerts?.webhookTestSuccessful || 'Test successful')
       } else {
-        alert(`Webhook test failed: ${data.data?.message || 'Unknown error'}`)
+        alert(`${t.alerts?.webhookTestFailed || 'Test failed'}: ${data.data?.message || (t.alerts?.unknownError || 'Unknown error')}`)
       }
     } catch (error) {
       console.error('Webhook test error:', error)
-      alert('Webhook test failed due to network error')
+      alert(t.alerts?.webhookTestNetworkError || 'Test failed')
     } finally {
       setTestingWebhook(prev => ({ ...prev, [platform]: false }))
     }
@@ -92,7 +96,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
 
   const testEmailNotification = async () => {
     if (!formData.email_recipients) {
-      alert('Please enter email recipients first')
+      alert(t.alerts?.enterEmailRecipientsFirst || 'Please enter email recipients first')
       return
     }
 
@@ -111,13 +115,13 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        alert('Test email(s) sent successfully!')
+        alert(t.alerts?.testEmailsSentSuccessfully || 'Test successful')
       } else {
-        alert(`Email test failed: ${data.data?.message || 'Unknown error'}`)
+        alert(`${t.alerts?.emailTestFailed || 'Test failed'}: ${data.data?.message || (t.alerts?.unknownError || 'Unknown error')}`)
       }
     } catch (error) {
       console.error('Email test error:', error)
-      alert('Email test failed due to network error')
+      alert(t.alerts?.emailTestNetworkError || 'Test failed')
     } finally {
       setTestingEmail(false)
     }
@@ -151,9 +155,9 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-brand-dark dark:text-white font-semibold">Notifications</label>
+            <label className="text-brand-dark dark:text-white font-semibold">{t.notifications || 'Notification Settings'}</label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Enable notifications for this checklist
+              {t.enableNotifications || 'Configure notification settings for this checklist'}
             </p>
           </div>
           <Toggle
@@ -168,9 +172,9 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
           {/* Notification Methods */}
           <Card>
             <div className="space-y-4">
-              <label className="text-brand-dark dark:text-white font-semibold">Notification Methods</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{t.notificationMethods || 'Notification Methods'}</label>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Please check at least one option for the notifications to work.
+                {t.notificationMethodsDescription || 'Please check at least one option for the notifications to work.'}
               </p>
 
               <div className="space-y-3">
@@ -178,14 +182,14 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                   id="email_enabled"
                   checked={formData.email_enabled}
                   onChange={(checked) => onChange('email_enabled', checked)}
-                  label="Email Notifications"
+                  label={t.emailNotifications || 'Email Notifications'}
                 />
 
                 <Checkbox
                   id="integration_enabled"
                   checked={formData.integration_enabled}
                   onChange={(checked) => onChange('integration_enabled', checked)}
-                  label="Integration Notifications"
+                  label={t.integrationNotifications || 'Integration Notifications'}
                 />
               </div>
             </div>
@@ -195,17 +199,17 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
           {formData.email_enabled && (
             <Card>
               <div className="space-y-4">
-                <label className="text-brand-dark dark:text-white font-semibold">Email Settings</label>
+                <label className="text-brand-dark dark:text-white font-semibold">{t.emailNotifications || 'Email Notifications'}</label>
                 
                 <div>
-                  <label htmlFor="email_recipients" className="text-brand-dark dark:text-white">Email Recipients</label>
+                  <label htmlFor="email_recipients" className="text-brand-dark dark:text-white">{t.emailRecipients || 'Recipients'}</label>
                   <div className="flex items-start space-x-2">
                     <div className="flex-1">
                       <TextInput
                         id="email_recipients"
                         value={formData.email_recipients || ''}
                         onChange={(e) => onChange('email_recipients', e.target.value)}
-                        placeholder="email1@example.com, email2@example.com"
+                        placeholder={t.emailRecipientsPlaceholder || 'email1@example.com, email2@example.com'}
                         color={
                           formData.email_recipients && !validateEmails(formData.email_recipients) 
                             ? 'failure' 
@@ -214,7 +218,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       />
                       {formData.email_recipients && !validateEmails(formData.email_recipients) && (
                         <p className="text-red-500 text-sm mt-1">
-                          Please enter valid email addresses separated by commas
+                          {t.invalidEmailAddresses || 'Please enter valid email addresses separated by commas'}
                         </p>
                       )}
                     </div>
@@ -225,11 +229,11 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       onClick={testEmailNotification}
                       disabled={testingEmail || !formData.email_recipients}
                     >
-                      {testingEmail ? 'Testing...' : 'Test Email'}
+                      {testingEmail ? (t.testing || 'Testing...') : (t.testEmail || 'Test Email')}
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    Enter email addresses separated by commas
+                    {t.emailRecipientsDescription || 'Enter email addresses separated by commas'}
                   </p>
                 </div>
               </div>
@@ -240,18 +244,18 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
           {formData.integration_enabled && (
             <Card>
               <div className="space-y-6">
-                <label className="text-brand-dark dark:text-white font-semibold">Integration Settings</label>
+                <label className="text-brand-dark dark:text-white font-semibold">{t.integrationSettings || 'Integration Settings'}</label>
                 
                 {/* Slack Webhook */}
                 <div>
-                  <label htmlFor="slack_webhook_url" className="text-brand-dark dark:text-white">Slack Webhook URL</label>
+                  <label htmlFor="slack_webhook_url" className="text-brand-dark dark:text-white">{t.slackWebhookUrl || 'Slack Webhook URL'}</label>
                   <div className="flex items-start space-x-2">
                     <div className="flex-1">
                       <TextInput
                         id="slack_webhook_url"
                         value={formData.slack_webhook_url || ''}
                         onChange={(e) => onChange('slack_webhook_url', e.target.value)}
-                        placeholder="https://hooks.slack.com/services/..."
+                        placeholder={t.slackWebhookPlaceholder || 'https://hooks.slack.com/services/...'}
                         color={
                           formData.slack_webhook_url && !validateWebhookUrl(formData.slack_webhook_url, 'slack')
                             ? 'failure'
@@ -260,7 +264,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       />
                       {formData.slack_webhook_url && !validateWebhookUrl(formData.slack_webhook_url, 'slack') && (
                         <p className="text-red-500 text-sm mt-1">
-                          Please enter a valid Slack webhook URL
+                          {t.validSlackWebhookUrl || 'Please enter a valid Slack webhook URL'}
                         </p>
                       )}
                     </div>
@@ -271,21 +275,21 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       onClick={() => testWebhook('slack')}
                       disabled={testingWebhook.slack || !formData.slack_webhook_url}
                     >
-                      {testingWebhook.slack ? 'Testing...' : 'Test Slack'}
+                      {testingWebhook.slack ? (t.testing || 'Testing...') : (t.testSlack || 'Test Slack')}
                     </Button>
                   </div>
                 </div>
 
                 {/* Discord Webhook */}
                 <div>
-                  <label htmlFor="discord_webhook_url" className="text-brand-dark dark:text-white">Discord Webhook URL</label>
+                  <label htmlFor="discord_webhook_url" className="text-brand-dark dark:text-white">{t.discordWebhookUrl || 'Discord Webhook URL'}</label>
                   <div className="flex items-start space-x-2">
                     <div className="flex-1">
                       <TextInput
                         id="discord_webhook_url"
                         value={formData.discord_webhook_url || ''}
                         onChange={(e) => onChange('discord_webhook_url', e.target.value)}
-                        placeholder="https://discord.com/api/webhooks/..."
+                        placeholder={t.discordWebhookPlaceholder || 'https://discord.com/api/webhooks/...'}
                         color={
                           formData.discord_webhook_url && !validateWebhookUrl(formData.discord_webhook_url, 'discord')
                             ? 'failure'
@@ -294,7 +298,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       />
                       {formData.discord_webhook_url && !validateWebhookUrl(formData.discord_webhook_url, 'discord') && (
                         <p className="text-red-500 text-sm mt-1">
-                          Please enter a valid Discord webhook URL
+                          {t.validDiscordWebhookUrl || 'Please enter a valid Discord webhook URL'}
                         </p>
                       )}
                     </div>
@@ -305,7 +309,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                       onClick={() => testWebhook('discord')}
                       disabled={testingWebhook.discord || !formData.discord_webhook_url}
                     >
-                      {testingWebhook.discord ? 'Testing...' : 'Test Discord'}
+                      {testingWebhook.discord ? (t.testing || 'Testing...') : (t.testDiscord || 'Test Discord')}
                     </Button>
                   </div>
                 </div>
@@ -316,9 +320,9 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
           {/* Notification Triggers */}
           <Card>
             <div className="space-y-4">
-              <label className="text-brand-dark dark:text-white font-semibold">Notification Triggers</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{t.notificationTriggers || 'Notification Triggers'}</label>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Choose which events should trigger notifications
+                {t.notificationTriggersDescription || 'Choose which events should trigger notifications'}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -326,42 +330,42 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                   id="notify_on_new_item"
                   checked={formData.notify_on_new_item}
                   onChange={(checked) => onChange('notify_on_new_item', checked)}
-                  label="New item added"
+                  label={t.newItemAdded || 'New item added'}
                 />
 
                 <Checkbox
                   id="notify_on_delete_item"
                   checked={formData.notify_on_delete_item}
                   onChange={(checked) => onChange('notify_on_delete_item', checked)}
-                  label="Item deleted"
+                  label={t.itemDeleted || 'Item deleted'}
                 />
 
                 <Checkbox
                   id="notify_on_check_item"
                   checked={formData.notify_on_check_item}
                   onChange={(checked) => onChange('notify_on_check_item', checked)}
-                  label="Item checked"
+                  label={t.itemChecked || 'Item Checked'}
                 />
 
                 <Checkbox
                   id="notify_on_uncheck_item"
                   checked={formData.notify_on_uncheck_item}
                   onChange={(checked) => onChange('notify_on_uncheck_item', checked)}
-                  label="Item unchecked"
+                  label={t.itemUnchecked || 'Item Unchecked'}
                 />
 
                 <Checkbox
                   id="notify_on_deadline"
                   checked={formData.notify_on_deadline}
                   onChange={(checked) => onChange('notify_on_deadline', checked)}
-                  label="Deadline approaching"
+                  label={t.deadlineApproaching || 'Deadline Approaching'}
                 />
 
                 <Checkbox
                   id="notify_on_comments"
                   checked={formData.notify_on_comments}
                   onChange={(checked) => onChange('notify_on_comments', checked)}
-                  label="Comments and replies"
+                  label={t.commentsAndReplies || 'Comments and replies'}
                 />
               </div>
 
@@ -369,7 +373,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
               {formData.notify_on_deadline && (
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center space-x-4">
-                    <label htmlFor="deadline_threshold_hours" className="text-brand-dark dark:text-white">Send deadline notification when</label>
+                    <label htmlFor="deadline_threshold_hours" className="text-brand-dark dark:text-white">{t.sendDeadlineNotification || 'Send deadline notification when'}</label>
                     <div className="flex items-center space-x-2">
                       <TextInput
                         id="deadline_threshold_hours"
@@ -379,7 +383,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
                         onChange={(e) => onChange('deadline_threshold_hours', e.target.value)}
                         className="w-20"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">hours remaining</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{t.hoursRemaining || 'hours remaining'}</span>
                     </div>
                   </div>
                 </div>
@@ -390,30 +394,30 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
           {/* Notification Frequency */}
           <Card>
             <div className="space-y-4">
-              <label className="text-brand-dark dark:text-white font-semibold">Notification Frequency</label>
+              <label className="text-brand-dark dark:text-white font-semibold">{t.notificationFrequency || 'Notification Frequency'}</label>
               
               <div>
                 <ReactSelect
                   inputId="batch_interval"
                   value={{ value: formData.batch_interval || 'fifteen_minutes', label: 
-                    formData.batch_interval === 'immediate' ? 'Send Immediately' :
-                    formData.batch_interval === 'hourly' ? 'Hourly' :
-                    formData.batch_interval === 'daily' ? 'Daily Digest' :
-                    'Every 15 Minutes'
+                    formData.batch_interval === 'immediate' ? (t.sendImmediately || 'Send Immediately') :
+                    formData.batch_interval === 'hourly' ? (t.hourly || 'Hourly') :
+                    formData.batch_interval === 'daily' ? (t.dailyDigest || 'Daily Digest') :
+                    (t.every15Minutes || 'Every 15 Minutes')
                   }}
                   onChange={(selectedOption) => onChange('batch_interval', selectedOption.value)}
                   options={[
-                    { value: 'immediate', label: 'Send Immediately' },
-                    { value: 'fifteen_minutes', label: 'Every 15 Minutes' },
-                    { value: 'hourly', label: 'Hourly' },
-                    { value: 'daily', label: 'Daily Digest' }
+                    { value: 'immediate', label: t.sendImmediately || 'Send Immediately' },
+                    { value: 'fifteen_minutes', label: t.every15Minutes || 'Every 15 Minutes' },
+                    { value: 'hourly', label: t.hourly || 'Hourly' },
+                    { value: 'daily', label: t.dailyDigest || 'Daily Digest' }
                   ]}
                   className="react-select-container"
                   classNamePrefix="react-select"
-                  placeholder="Select frequency..."
+                  placeholder={t.selectFrequency || 'Select frequency...'}
                 />
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  Choose how often notifications should be sent
+                  {t.chooseFrequencyDescription || 'Choose how often notifications should be sent'}
                 </p>
               </div>
             </div>
@@ -426,19 +430,19 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
         <>
           {!formData.email_enabled && !formData.integration_enabled && (
             <Alert color="warning">
-              <span className="font-medium">No notification methods enabled!</span> Please enable at least one notification method for notifications to work.
+              <span className="font-medium">{t.alerts?.noNotificationMethods || 'No notification methods enabled!'}</span> {t.alerts?.noNotificationMethodsDescription || 'Please enable at least one notification method for notifications to work.'}
             </Alert>
           )}
 
           {formData.email_enabled && !formData.email_recipients && (
             <Alert color="warning">
-              <span className="font-medium">No email recipients!</span> Please add email recipients to receive email notifications.
+              <span className="font-medium">{t.alerts?.noEmailRecipients || 'No email recipients!'}</span> {t.alerts?.noEmailRecipientsDescription || 'Please add email recipients to receive email notifications.'}
             </Alert>
           )}
 
           {formData.integration_enabled && !formData.slack_webhook_url && !formData.discord_webhook_url && (
             <Alert color="warning">
-              <span className="font-medium">No webhook URLs configured!</span> Please add at least one webhook URL for integration notifications.
+              <span className="font-medium">{t.alerts?.noWebhookUrls || 'No webhook URLs configured!'}</span> {t.alerts?.noWebhookUrlsDescription || 'Please add at least one webhook URL for integration notifications.'}
             </Alert>
           )}
         </>

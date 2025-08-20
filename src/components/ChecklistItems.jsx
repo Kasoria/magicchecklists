@@ -1,10 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Card, Button, Label, Alert, Modal, ModalHeader, ModalBody, ModalFooter, TextInput } from 'flowbite-react'
+import { Card, Button, Label, Alert, TextInput } from 'flowbite-react'
 import ReactSelect from 'react-select'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { formatDate } from '../utils/dateUtils'
 
+// Custom Modal component (matching ChecklistDrawer implementation)
+const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) => {
+  if (!isOpen) return null
+
+  return (
+    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
+      <div className={`mcl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button 
+            type="button"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={onClose}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-4">
+          {children}
+        </div>
+        {actions && (
+          <div className="px-4 py-3 border-t border-gray-200">
+            {actions}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLocking = false, errors = {}, onPriorityToggle, checklistId = null, adminData = null }) => {
+  // Initialize translations
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const t = i18n.checklistItems || {};
+  
   const [draggedItem, setDraggedItem] = useState(null)
   const itemRefs = useRef({})
   const [resizing, setResizing] = useState({ active: false, startX: 0, startWidth: 0, element: null })
@@ -99,11 +135,11 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   `;
 
   const priorityLevels = {
-    'none': { label: 'None', color: '#6b7280' },
-    'low': { label: 'Low', color: '#10b981' },
-    'medium': { label: 'Medium', color: '#f59e0b' },
-    'high': { label: 'High', color: '#ef4444' },
-    'critical': { label: 'Critical', color: '#991b1b' }
+    'none': { label: t.priorities?.none || 'None', color: '#6b7280' },
+    'low': { label: t.priorities?.low || 'Low', color: '#10b981' },
+    'medium': { label: t.priorities?.medium || 'Medium', color: '#f59e0b' },
+    'high': { label: t.priorities?.high || 'High', color: '#ef4444' },
+    'critical': { label: t.priorities?.critical || 'Critical', color: '#991b1b' }
   }
 
   // Initialize with at least one empty item
@@ -217,19 +253,24 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
   const formatItemDeadlineCountdown = (timeLeft) => {
     if (timeLeft < 0) {
-      return 'Deadline passed'
+      return t.timeFormatting?.deadlinePassed || 'Deadline passed'
     }
 
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
     const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
 
+    const remaining = t.timeFormatting?.remaining || 'remaining'
+    const daysShort = t.timeFormatting?.daysShort || 'd'
+    const hoursShort = t.timeFormatting?.hoursShort || 'h'
+    const minutesShort = t.timeFormatting?.minutesShort || 'm'
+
     if (days > 0) {
-      return `${days}d ${hours}h remaining`
+      return `${days}${daysShort} ${hours}${hoursShort} ${remaining}`
     } else if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`
+      return `${hours}${hoursShort} ${minutes}${minutesShort} ${remaining}`
     } else {
-      return `${minutes}m remaining`
+      return `${minutes}${minutesShort} ${remaining}`
     }
   }
 
@@ -241,7 +282,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
     // Create simple prompt for now (can be enhanced with modal later)
     const newDeadline = prompt(
-      'Enter deadline (YYYY-MM-DD HH:MM):', 
+      t.modals?.deadlinePrompt?.enterDeadline || 'Enter deadline (YYYY-MM-DD HH:MM):', 
       existingDeadline ? new Date(existingDeadline * 1000).toISOString().slice(0, 16) : ''
     )
     
@@ -439,7 +480,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
           e.stopPropagation()
           startTourFromConnection(connections)
         }}
-        onMouseEnter={(e) => showTooltip(e.target, 'Start tour from this step')}
+        onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.startTour || 'Start tour from this step')}
         onMouseLeave={hideTooltip}
         title="Start tour from this step"
       >
@@ -739,7 +780,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   }
 
   const deleteAllItems = () => {
-    if (confirm('Are you sure you want to delete all items?')) {
+    if (confirm(t.actions?.deleteAllConfirm || 'Are you sure you want to delete all items?')) {
       onChange([createNewItem()])
     }
   }
@@ -875,7 +916,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       }
     } catch (error) {
       console.error('Error uploading image:', error)
-      setImageError('Upload failed. Please try again.')
+      setImageError(t.alerts?.uploadFailed || 'Upload failed. Please try again.')
     } finally {
       setUploadingImage(false)
     }
@@ -916,12 +957,12 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
 
     if (!allowedTypes.includes(selectedFile.type)) {
-      setImageError('Invalid file type. Please upload a JPG, PNG, or GIF image.')
+      setImageError(t.alerts?.invalidFileType || 'Invalid file type. Please upload a JPG, PNG, or GIF image.')
       return
     }
 
     if (selectedFile.size > maxSize) {
-      setImageError('File is too large. Maximum size is 10MB.')
+      setImageError(t.alerts?.fileTooLarge || 'File is too large. Maximum size is 10MB.')
       return
     }
 
@@ -1418,10 +1459,10 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               {/* Parent Selection */}
               <div className="flex-1">
                 <ReactSelect
-                  value={item.parent_id ? { value: item.parent_id, label: getParentOptions(item.id).find(p => p.id === item.parent_id)?.content?.length > 30 ? getParentOptions(item.id).find(p => p.id === item.parent_id)?.content.substring(0, 30) + '...' : getParentOptions(item.id).find(p => p.id === item.parent_id)?.content || 'Untitled Item' } : null}
+                  value={item.parent_id ? { value: item.parent_id, label: getParentOptions(item.id).find(p => p.id === item.parent_id)?.content?.length > 30 ? getParentOptions(item.id).find(p => p.id === item.parent_id)?.content.substring(0, 30) + '...' : getParentOptions(item.id).find(p => p.id === item.parent_id)?.content || (t.actions?.untitledItem || 'Untitled Item') } : null}
                   onChange={(selectedOption) => updateItem(index, 'parent_id', selectedOption?.value || null)}
                   options={[
-                    { value: null, label: 'No Parent' },
+                    { value: null, label: t.actions?.noParent || 'No Parent' },
                     ...getParentOptions(item.id).map(parentItem => ({
                       value: parentItem.id,
                       label: parentItem.content ? 
@@ -1429,14 +1470,14 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                           parentItem.content.substring(0, 30) + '...' : 
                           parentItem.content
                         ) : 
-                        'Untitled Item'
+                        (t.actions?.untitledItem || 'Untitled Item')
                     }))
                   ]}
                   isDisabled={item.locked}
                   isClearable
                   className="react-select-container"
                   classNamePrefix="react-select"
-                  placeholder="Select parent..."
+                  placeholder={t.actions?.selectParent || "Select parent..."}
                 />
               </div>
 
@@ -1453,7 +1494,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                     isDisabled={item.locked}
                     className="react-select-container w-32"
                     classNamePrefix="react-select"
-                    placeholder="Priority..."
+                    placeholder={t.actions?.selectPriority || "Priority..."}
                   />
                   <div 
                     className="w-4 h-4 rounded-full border border-gray-300"
@@ -1475,9 +1516,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                   ? 'text-emerald-600 bg-emerald-100 hover:bg-emerald-200' 
                   : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
               }`}
-              onMouseEnter={(e) => showTooltip(e.target, isInProgress ? 'Remove from in progress' : 'Mark as in progress')}
+              onMouseEnter={(e) => showTooltip(e.target, isInProgress ? (t.tooltips?.removeFromInProgress || 'Remove from in progress') : (t.tooltips?.markAsInProgress || 'Mark as in progress'))}
               onMouseLeave={hideTooltip}
-              title={isInProgress ? 'Remove from in progress' : 'Mark as in progress'}
+              title={isInProgress ? (t.tooltips?.removeFromInProgress || 'Remove from in progress') : (t.tooltips?.markAsInProgress || 'Mark as in progress')}
             >
               {isInProgress ? (
                 <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1025 1024">
@@ -1495,9 +1536,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               type="button"
               onClick={() => handleDeadlineClick(item.id)}
               className="p-2 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-              onMouseEnter={(e) => showTooltip(e.target, 'Set deadline')}
+              onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.setDeadline || 'Set deadline')}
               onMouseLeave={hideTooltip}
-              title="Set deadline"
+              title={t.tooltips?.setDeadline || 'Set deadline'}
             >
               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
                 <mask id="ipSTimer0">
@@ -1516,9 +1557,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               type="button"
               onClick={() => handleAddImage(index)}
               className="p-2 rounded text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
-              onMouseEnter={(e) => showTooltip(e.target, 'Add image')}
+              onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.addImage || 'Add image')}
               onMouseLeave={hideTooltip}
-              title="Add image"
+              title={t.tooltips?.addImage || 'Add image'}
             >
               <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <path fill="currentColor" d="M416 64H96a64.07 64.07 0 0 0-64 64v256a64.07 64.07 0 0 0 64 64h320a64.07 64.07 0 0 0 64-64V128a64.07 64.07 0 0 0-64-64Zm-80 64a48 48 0 1 1-48 48a48.05 48.05 0 0 1 48-48ZM96 416a32 32 0 0 1-32-32v-67.63l94.84-84.3a48.06 48.06 0 0 1 65.8 1.9l64.95 64.81L172.37 416Zm352-32a32 32 0 0 1-32 32H217.63l121.42-121.42a47.72 47.72 0 0 1 61.64-.16L448 333.84Z"/>
@@ -1538,9 +1579,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                     ? 'text-orange-600 bg-orange-100 hover:bg-orange-200' 
                     : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
                 }`}
-                onMouseEnter={(e) => showTooltip(e.target, item.locked ? 'Unlock item' : 'Lock item')}
+                onMouseEnter={(e) => showTooltip(e.target, item.locked ? (t.tooltips?.unlockItem || 'Unlock item') : (t.tooltips?.lockItem || 'Lock item'))}
                 onMouseLeave={hideTooltip}
-                title={item.locked ? 'Unlock item' : 'Lock item'}
+                title={item.locked ? (t.tooltips?.unlockItem || 'Unlock item') : (t.tooltips?.lockItem || 'Lock item')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {item.locked ? (
@@ -1558,9 +1599,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                 type="button"
                 onClick={() => removeItem(index)}
                 className="p-2 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                onMouseEnter={(e) => showTooltip(e.target, 'Remove item')}
+                onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.removeItem || 'Remove item')}
                 onMouseLeave={hideTooltip}
-                title="Remove item"
+                title={t.tooltips?.removeItem || 'Remove item'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1574,7 +1615,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             <div className="mt-3 flex-shrink-0 text-xs bg-gray-200 px-2 py-1 rounded">
               <div className="flex items-center gap-1">
                 <span>
-                  Due: {formatDate(deadline, 'date')}
+                  {t.timeFormatting?.due || 'Due:'} {formatDate(deadline, 'date')}
                 </span>
                 <button
                   className="text-gray-600 hover:text-red-600 ml-1"
@@ -1612,36 +1653,73 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
       {/* Image Choice Modal */}
       {showImageModal === 'choice' && (
-        <Modal show={true} onClose={closeImageModal}>
-          <ModalHeader>Insert Image</ModalHeader>
-          <ModalBody>
-            <p className="text-gray-600 mb-4">Choose how you would like to add an image:</p>
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={openMediaLibrary}
-                color="blue"
-              >
-                WordPress Media Library
-              </Button>
-              <Button 
-                onClick={() => setShowImageModal('upload')}
-                color="gray"
-              >
-                Quick Upload
-              </Button>
-            </div>
-          </ModalBody>
+        <Modal isOpen={true} onClose={closeImageModal} title={t.modals?.imageModal?.insertImage || 'Insert Image'}>
+          <p className="text-gray-600 mb-4">{t.modals?.imageModal?.chooseMethod || 'Choose how you would like to add an image:'}</p>
+          <div className="flex flex-col gap-3">
+            <button 
+              type="button" 
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              onClick={openMediaLibrary}
+            >
+              {t.modals?.imageModal?.mediaLibrary || 'WordPress Media Library'}
+            </button>
+            <button 
+              type="button" 
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+              onClick={() => setShowImageModal('upload')}
+            >
+              {t.modals?.imageModal?.quickUpload || 'Quick Upload'}
+            </button>
+            <button 
+              type="button" 
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+              onClick={closeImageModal}
+            >
+              {t.modals?.imageModal?.cancel || 'Cancel'}
+            </button>
+          </div>
         </Modal>
       )}
 
       {/* Image Upload Modal */}
       {showImageModal === 'upload' && (
-        <Modal show={true} onClose={closeImageModal} size="2xl">
-          <ModalHeader>Upload or Select Image</ModalHeader>
-          <ModalBody>
+        <Modal 
+          isOpen={true} 
+          onClose={closeImageModal} 
+          title={t.modals?.imageModal?.uploadOrSelect || 'Upload or Select Image'} 
+          className="max-w-2xl"
+          actions={
+            <div className="flex justify-between w-full">
+              <button 
+                type="button"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                onClick={closeImageModal}
+              >
+                {t.modals?.imageModal?.cancel || 'Cancel'}
+              </button>
+              <button 
+                type="button"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                onClick={() => {
+                  if (selectedImageFile) {
+                    uploadImage(selectedImageFile)
+                  } else if (selectedExistingImage) {
+                    insertImageIntoItem(selectedExistingImage)
+                    closeImageModal()
+                  }
+                }}
+                disabled={(!selectedImageFile && !selectedExistingImage) || uploadingImage}
+              >
+                {uploadingImage ? (t.modals?.imageModal?.uploading || 'Uploading...') : selectedImageFile ? (t.modals?.imageModal?.uploadImage || 'Upload Image') : (t.modals?.imageModal?.selectImage || 'Select Image')}
+              </button>
+            </div>
+          }
+        >
+          <div>
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-4">
               <button 
+                type="button"
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                   !existingImages.length || existingImages.length === 0
                     ? 'border-blue-500 text-blue-600'
@@ -1649,9 +1727,10 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                 }`}
                 onClick={() => setExistingImages([])}
               >
-                Upload New
+{t.modals?.imageModal?.uploadNew || 'Upload New'}
               </button>
               <button 
+                type="button"
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                   existingImages.length > 0
                     ? 'border-blue-500 text-blue-600'
@@ -1659,7 +1738,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                 }`}
                 onClick={loadExistingImages}
               >
-                Select Existing
+{t.modals?.imageModal?.selectExisting || 'Select Existing'}
               </button>
             </div>
 
@@ -1690,8 +1769,8 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                       <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <p className="text-gray-600">Drag and drop image here or click to select</p>
-                      <p className="text-sm text-gray-500">Maximum file size: 10MB. Supported formats: JPG, PNG, GIF</p>
+                      <p className="text-gray-600">{t.modals?.imageModal?.dragDrop || 'Drag and drop image here or click to select'}</p>
+                      <p className="text-sm text-gray-500">{t.modals?.imageModal?.fileRestrictions || 'Maximum file size: 10MB. Supported formats: JPG, PNG, GIF'}</p>
                     </div>
                   ) : (
                     <div className="relative">
@@ -1723,7 +1802,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             {existingImages.length > 0 && (
               <div>
                 {loadingImages ? (
-                  <div className="text-center py-8 text-gray-500">Loading images...</div>
+                  <div className="text-center py-8 text-gray-500">{t.modals?.imageModal?.loadingImages || 'Loading images...'}</div>
                 ) : (
                   <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
                     {existingImages.map((image) => (
@@ -1747,28 +1826,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                 )}
               </div>
             )}
-          </ModalBody>
-          <ModalFooter>
-            <div className="flex justify-between w-full">
-              <Button color="gray" onClick={closeImageModal}>
-                Cancel
-              </Button>
-              <Button 
-                color="blue" 
-                onClick={() => {
-                  if (selectedImageFile) {
-                    uploadImage(selectedImageFile)
-                  } else if (selectedExistingImage) {
-                    insertImageIntoItem(selectedExistingImage)
-                    closeImageModal()
-                  }
-                }}
-                disabled={(!selectedImageFile && !selectedExistingImage) || uploadingImage}
-              >
-                {uploadingImage ? 'Uploading...' : selectedImageFile ? 'Upload Image' : 'Select Image'}
-              </Button>
-            </div>
-          </ModalFooter>
+          </div>
         </Modal>
       )}
 
@@ -1781,10 +1839,10 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-brand-dark dark:text-white">
-              Checklist Items
+              {t.header?.title || 'Checklist Items'}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Add and organize your checklist items
+              {t.header?.description || 'Add and organize your checklist items'}
             </p>
           </div>
         </div>
@@ -1792,7 +1850,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         {/* Item Settings */}
         <div className="flex justify-end p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-right">
-            <label className="text-sm font-medium text-brand-dark dark:text-white">Enable Item Priorities</label>
+            <label className="text-sm font-medium text-brand-dark dark:text-white">{t.header?.enablePriorities || 'Enable Item Priorities'}</label>
             <div className="flex items-center justify-end mt-1">
               <div className="flex items-center">
                 <input 
@@ -1803,7 +1861,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                   className="w-4 h-4 bg-gray-100 border-gray-300 rounded-sm focus:ring-brand-accent dark:focus:ring-brand-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                   style={{ accentColor: '#f2da21' }}
                 />
-                <label htmlFor="enable_priority" className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Enable</label>
+                <label htmlFor="enable_priority" className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{t.header?.enable || 'Enable'}</label>
               </div>
             </div>
           </div>
@@ -1880,50 +1938,58 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         )}
 
         {/* Link Modal */}
-        <Modal show={showLinkModal} onClose={() => setShowLinkModal(false)}>
-          <ModalHeader>
-            Add Link
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="link-url" value="URL" />
-                <TextInput
-                  id="link-url"
-                  type="url"
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://example.com"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="link-text" value="Text (optional)" />
-                <TextInput
-                  id="link-text"
-                  type="text"
-                  value={linkText}
-                  onChange={(e) => setLinkText(e.target.value)}
-                  placeholder="Link text"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </ModalBody>
-          <ModalFooter>
+        <Modal 
+          isOpen={showLinkModal} 
+          onClose={() => setShowLinkModal(false)}
+          title={t.modals?.linkModal?.addLink || 'Add Link'}
+          actions={
             <div className="flex justify-between w-full">
-              <Button color="gray" onClick={() => setShowLinkModal(false)}>
-                Cancel
-              </Button>
-              <Button 
-                color="blue" 
+              <button 
+                type="button"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                onClick={() => setShowLinkModal(false)}
+              >
+                {t.modals?.linkModal?.cancel || 'Cancel'}
+              </button>
+              <button 
+                type="button"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
                 onClick={createLink}
                 disabled={!linkUrl}
               >
-                Add Link
-              </Button>
+                {t.modals?.linkModal?.addLinkButton || 'Add Link'}
+              </button>
             </div>
-          </ModalFooter>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="link-url" className="block text-sm font-medium text-gray-700 mb-1">
+                {t.modals?.linkModal?.url || "URL"}
+              </label>
+              <input
+                id="link-url"
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder={t.modals?.linkModal?.urlPlaceholder || "https://example.com"}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="link-text" className="block text-sm font-medium text-gray-700 mb-1">
+                {t.modals?.linkModal?.text || "Text (optional)"}
+              </label>
+              <input
+                id="link-text"
+                type="text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                placeholder={t.modals?.linkModal?.textPlaceholder || "Link text"}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
         </Modal>
 
         {/* Actions */}
@@ -1936,7 +2002,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Add Item
+{t.actions?.addItem || 'Add Item'}
           </Button>
 
           {items.length > 1 && (
@@ -1949,7 +2015,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-              Delete All
+{t.actions?.deleteAll || 'Delete All'}
             </Button>
           )}
         </div>

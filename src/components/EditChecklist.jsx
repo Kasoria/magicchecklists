@@ -55,6 +55,8 @@ const Toggle = ({ checked, onChange, label, disabled = false }) => (
 )
 
 const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic', onBackToChecklists, layoutMode = 'stacked', onSetFormRef }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -190,18 +192,18 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
   const totalSteps = 4
   const stepTitles = [
-    'Basic Settings',
-    'Advanced Settings', 
-    'Access Control',
-    'Notifications'
+    i18n.checklistEditor?.editChecklist?.stepTitles?.basicSettings || 'Basic Settings',
+    i18n.checklistEditor?.editChecklist?.stepTitles?.advancedSettings || 'Advanced Settings', 
+    i18n.checklistEditor?.editChecklist?.stepTitles?.accessControl || 'Access Control',
+    i18n.checklistEditor?.editChecklist?.stepTitles?.notifications || 'Notifications'
   ]
 
   const priorityLevels = {
-    'none': { label: 'None', color: '#6b7280' },
-    'low': { label: 'Low', color: '#10b981' },
-    'medium': { label: 'Medium', color: '#f59e0b' },
-    'high': { label: 'High', color: '#ef4444' },
-    'critical': { label: 'Critical', color: '#991b1b' }
+    'none': { label: i18n.checklistEditor?.editChecklist?.priorities?.none || 'None', color: '#6b7280' },
+    'low': { label: i18n.checklistEditor?.editChecklist?.priorities?.low || 'Low', color: '#10b981' },
+    'medium': { label: i18n.checklistEditor?.editChecklist?.priorities?.medium || 'Medium', color: '#f59e0b' },
+    'high': { label: i18n.checklistEditor?.editChecklist?.priorities?.high || 'High', color: '#ef4444' },
+    'critical': { label: i18n.checklistEditor?.editChecklist?.priorities?.critical || 'Critical', color: '#991b1b' }
   }
 
   // Load checklist data if editing
@@ -272,7 +274,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       }
     } catch (error) {
       console.error('Error loading checklist:', error)
-      setErrors({ general: 'Failed to load checklist data' })
+      setErrors({ general: i18n.checklistEditor?.editChecklist?.actions?.errorLoadingChecklist || 'Failed to load checklist data' })
     } finally {
       setLoading(false)
     }
@@ -344,12 +346,12 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         
         const data = await response.json()
         if (data.success && data.data.exists) {
-          setShortcutError('This shortcut is already in use.')
+          setShortcutError(i18n.checklistEditor?.editChecklist?.validation?.shortcutInUse || 'This shortcut is already in use.')
         } else {
           setShortcutError('')
         }
       } catch (error) {
-        console.error('Error validating shortcut:', error)
+        console.error(i18n.checklistEditor?.editChecklist?.actions?.errorValidatingShortcut || 'Error validating shortcut:', error)
       }
     }
   }
@@ -360,16 +362,16 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     switch (step) {
       case 1: // Basic Settings
         if (!formData.title.trim()) {
-          newErrors.title = 'Title is required'
+          newErrors.title = i18n.checklistEditor?.editChecklist?.validation?.titleRequired || 'Title is required'
         }
         break
         
       case 2: // Advanced Settings
         if (!formData.trigger_shortcut && !formData.trigger_button) {
-          newErrors.trigger_methods = 'At least one trigger method must be selected'
+          newErrors.trigger_methods = i18n.checklistEditor?.editChecklist?.validation?.triggerMethodsRequired || 'At least one trigger method must be selected'
         }
         if (formData.trigger_shortcut && !formData.keyboard_shortcut.trim()) {
-          newErrors.keyboard_shortcut = 'Keyboard shortcut is required when shortcut trigger is enabled'
+          newErrors.keyboard_shortcut = i18n.checklistEditor?.editChecklist?.validation?.keyboardShortcutRequired || 'Keyboard shortcut is required when shortcut trigger is enabled'
         }
         if (shortcutError) {
           newErrors.keyboard_shortcut = shortcutError
@@ -380,14 +382,14 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           // Validate reset time format
           const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
           if (!timePattern.test(formData.reset_time)) {
-            newErrors.reset_time = 'Invalid time format'
+            newErrors.reset_time = i18n.checklistEditor?.editChecklist?.validation?.invalidTimeFormat || 'Invalid time format'
           }
           
           // Validate weekly settings
           if (formData.reset_interval === 'weekly') {
             const weekDay = parseInt(formData.week_day)
             if (weekDay < 1 || weekDay > 7) {
-              newErrors.week_day = 'Invalid day of week selected'
+              newErrors.week_day = i18n.checklistEditor?.editChecklist?.validation?.invalidDayOfWeek || 'Invalid day of week selected'
             }
           }
           
@@ -395,7 +397,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           if (formData.reset_interval === 'monthly') {
             const monthDay = parseInt(formData.month_day)
             if (monthDay < 1 || monthDay > 31) {
-              newErrors.month_day = 'Day of month must be between 1 and 31'
+              newErrors.month_day = i18n.checklistEditor?.editChecklist?.validation?.dayOfMonthRange || 'Day of month must be between 1 and 31'
             }
           }
           
@@ -406,19 +408,19 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
             const days = parseInt(formData.custom_days) || 0
             
             if (months === 0 && weeks === 0 && days === 0) {
-              newErrors.custom_interval = 'At least one time period must be specified for custom intervals'
+              newErrors.custom_interval = i18n.checklistEditor?.editChecklist?.validation?.customIntervalRequired || 'At least one time period must be specified for custom intervals'
             }
             
             if (months < 0 || months > 12) {
-              newErrors.custom_months = 'Months must be between 0 and 12'
+              newErrors.custom_months = i18n.checklistEditor?.editChecklist?.validation?.monthsRange || 'Months must be between 0 and 12'
             }
             
             if (weeks < 0 || weeks > 52) {
-              newErrors.custom_weeks = 'Weeks must be between 0 and 52'
+              newErrors.custom_weeks = i18n.checklistEditor?.editChecklist?.validation?.weeksRange || 'Weeks must be between 0 and 52'
             }
             
             if (days < 0 || days > 31) {
-              newErrors.custom_days = 'Days must be between 0 and 31'
+              newErrors.custom_days = i18n.checklistEditor?.editChecklist?.validation?.daysRange || 'Days must be between 0 and 31'
             }
           }
         }
@@ -427,21 +429,21 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       case 3: // Access Control - generally no required fields
         // Validate invite link settings if any
         if (formData.invite_usage && isNaN(parseInt(formData.invite_usage))) {
-          newErrors.invite_usage = 'Usage limit must be a number'
+          newErrors.invite_usage = i18n.checklistEditor?.editChecklist?.validation?.usageLimitNumber || 'Usage limit must be a number'
         }
         
         if (formData.invite_usage && parseInt(formData.invite_usage) < 0) {
-          newErrors.invite_usage = 'Usage limit cannot be negative'
+          newErrors.invite_usage = i18n.checklistEditor?.editChecklist?.validation?.usageLimitNegative || 'Usage limit cannot be negative'
         }
         break
         
       case 4: // Notifications
         if (formData.notifications_enabled) {
           if (!formData.email_enabled && !formData.integration_enabled) {
-            newErrors.notification_methods = 'At least one notification method must be enabled'
+            newErrors.notification_methods = i18n.checklistEditor?.editChecklist?.validation?.notificationMethodRequired || 'At least one notification method must be enabled'
           }
           if (formData.email_enabled && !formData.email_recipients.trim()) {
-            newErrors.email_recipients = 'Email recipients are required when email notifications are enabled'
+            newErrors.email_recipients = i18n.checklistEditor?.editChecklist?.validation?.emailRecipientsRequired || 'Email recipients are required when email notifications are enabled'
           }
         }
         break
@@ -454,19 +456,23 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
   const validateItems = () => {
     const hasValidItem = formData.items.some(item => item.content && item.content.trim())
     if (!hasValidItem) {
-      setErrors(prev => ({ ...prev, items: 'At least one non-empty checklist item is required' }))
+      setErrors(prev => ({ ...prev, items: i18n.checklistEditor?.editChecklist?.validation?.itemsRequired || 'At least one non-empty checklist item is required' }))
       return false
     }
     return true
   }
 
-  const handleNext = () => {
+  const handleNext = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, totalSteps))
     }
   }
 
-  const handlePrev = () => {
+  const handlePrev = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
     setCurrentStep(prev => Math.max(prev - 1, 1))
   }
 
@@ -669,7 +675,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       }
     } catch (error) {
       console.error('Error saving checklist:', error)
-      setErrors({ general: 'Failed to save checklist. Please try again.' })
+      setErrors({ general: i18n.checklistEditor?.editChecklist?.actions?.errorSavingChecklist || 'Failed to save checklist. Please try again.' })
     } finally {
       setLoading(false)
     }
@@ -723,14 +729,14 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     <div className="space-y-6">
       {/* Title */}
       <div>
-        <Label htmlFor="title" className="text-brand-dark dark:text-white">Title</Label>
+        <Label htmlFor="title" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.basicSettings?.title || 'Title'}</Label>
         <span className="text-red-500 ml-1">*</span>
         <TextInput
           id="title"
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
           color={errors.title ? 'failure' : 'gray'}
-          placeholder="Enter checklist title"
+          placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.titlePlaceholder || 'Enter checklist title'}
           required
         />
         {errors.title && <HelperText color="failure">{errors.title}</HelperText>}
@@ -738,19 +744,19 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       {/* Description */}
       <div>
-        <Label htmlFor="description" className="text-brand-dark dark:text-white">Description</Label>
+        <Label htmlFor="description" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.basicSettings?.description || 'Description'}</Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => handleInputChange('description', e.target.value)}
           rows={4}
-          placeholder="Enter checklist description"
+          placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.descriptionPlaceholder || 'Enter checklist description'}
         />
         <div className="flex items-center mt-2">
           <Toggle
             checked={formData.show_description}
             onChange={(checked) => handleInputChange('show_description', checked)}
-            label="Show description in drawer"
+            label={i18n.checklistEditor?.editChecklist?.basicSettings?.showDescriptionInDrawer || 'Show description in drawer'}
           />
         </div>
       </div>
@@ -759,9 +765,9 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-brand-dark dark:text-white font-semibold">Active Status</Label>
+            <Label className="text-brand-dark dark:text-white font-semibold">{i18n.checklistEditor?.editChecklist?.basicSettings?.activeStatus || 'Active Status'}</Label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              When active, this checklist can be accessed using its keyboard shortcut or floating button.
+              {i18n.checklistEditor?.editChecklist?.basicSettings?.activeStatusDescription || 'When active, this checklist can be accessed using its keyboard shortcut or floating button.'}
             </p>
           </div>
           <Toggle
@@ -773,22 +779,22 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       {/* Theme */}
       <div>
-        <Label htmlFor="theme" className="text-brand-dark dark:text-white">Drawer Theme</Label>
+        <Label htmlFor="theme" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.basicSettings?.drawerTheme || 'Drawer Theme'}</Label>
         <ReactSelect
           inputId="theme"
-          value={{ value: formData.theme, label: formData.theme === 'light' ? 'Light' : formData.theme === 'dark' ? 'Dark' : 'Custom Theme' }}
+          value={{ value: formData.theme, label: formData.theme === 'light' ? (i18n.checklistEditor?.editChecklist?.options?.light || 'Light') : formData.theme === 'dark' ? (i18n.checklistEditor?.editChecklist?.options?.dark || 'Dark') : (i18n.checklistEditor?.editChecklist?.options?.customTheme || 'Custom Theme') }}
           onChange={(selectedOption) => handleInputChange('theme', selectedOption.value)}
           options={[
-            { value: 'light', label: 'Light' },
-            { value: 'dark', label: 'Dark' },
-            { value: 'custom', label: 'Custom Theme' }
+            { value: 'light', label: i18n.checklistEditor?.editChecklist?.options?.light || 'Light' },
+            { value: 'dark', label: i18n.checklistEditor?.editChecklist?.options?.dark || 'Dark' },
+            { value: 'custom', label: i18n.checklistEditor?.editChecklist?.options?.customTheme || 'Custom Theme' }
           ]}
           className="react-select-container"
           classNamePrefix="react-select"
-          placeholder="Choose theme..."
+          placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.chooseTheme || 'Choose theme...'}
         />
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Choose the visual theme for your checklist drawer.
+          {i18n.checklistEditor?.editChecklist?.basicSettings?.themeDescription || 'Choose the visual theme for your checklist drawer.'}
         </p>
       </div>
 
@@ -802,10 +808,10 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       {/* Tags */}
       <div>
-        <Label className="text-brand-dark dark:text-white">Tags</Label>
+        <Label className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.basicSettings?.tags || 'Tags'}</Label>
         <div className="space-y-2">
           <TextInput
-            placeholder="Type tag name and press Enter"
+            placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.tagPlaceholder || 'Type tag name and press Enter'}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
@@ -868,7 +874,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           </div>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Add tags to organize your checklist. Press Enter to add a tag, then click the edit icon to change its color.
+          {i18n.checklistEditor?.editChecklist?.basicSettings?.tagsHint || 'Add tags to organize your checklist. Press Enter to add a tag, then click the edit icon to change its color.'}
         </p>
       </div>
     </div>
@@ -878,7 +884,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     <div className="space-y-6">
       {/* Deadline */}
       <div>
-        <Label htmlFor="time_date" className="text-brand-dark dark:text-white">Deadline</Label>
+        <Label htmlFor="time_date" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.deadline || 'Deadline'}</Label>
         <TextInput
           id="time_date"
           type="datetime-local"
@@ -886,13 +892,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           onChange={(e) => handleInputChange('time_date', e.target.value)}
         />
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Set an optional deadline for completing this checklist.
+          {i18n.checklistEditor?.editChecklist?.advancedSettings?.deadlineDescription || 'Set an optional deadline for completing this checklist.'}
         </p>
       </div>
 
       {/* Keyboard Shortcut */}
       <div>
-        <Label htmlFor="keyboard_shortcut" className="text-brand-dark dark:text-white">Keyboard Shortcut</Label>
+        <Label htmlFor="keyboard_shortcut" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.keyboardShortcut || 'Keyboard Shortcut'}</Label>
         <TextInput
           id="keyboard_shortcut"
           value={formData.keyboard_shortcut}
@@ -901,7 +907,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           onFocus={handleShortcutInputFocus}
           onBlur={handleShortcutInputBlur}
           color={errors.keyboard_shortcut || shortcutError ? 'failure' : 'gray'}
-          placeholder="Click and press your desired key combination"
+          placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.shortcutPlaceholder || 'Click and press your desired key combination'}
           readOnly
         />
         {(errors.keyboard_shortcut || shortcutError) && (
@@ -911,7 +917,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       {/* Trigger Methods */}
       <div>
-        <Label className="text-brand-dark dark:text-white">Drawer Trigger Method</Label>
+        <Label className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.drawerTriggerMethod || 'Drawer Trigger Method'}</Label>
         {errors.trigger_methods && (
           <p className="text-red-500 text-sm mb-2">{errors.trigger_methods}</p>
         )}
@@ -920,13 +926,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
             id="trigger_shortcut"
             checked={formData.trigger_shortcut}
             onChange={(checked) => handleInputChange('trigger_shortcut', checked)}
-            label="Keyboard Shortcut"
+            label={i18n.checklistEditor?.editChecklist?.advancedSettings?.keyboardShortcutTrigger || 'Keyboard Shortcut'}
           />
           <Checkbox
             id="trigger_button"
             checked={formData.trigger_button}
             onChange={(checked) => handleInputChange('trigger_button', checked)}
-            label="Floating Button"
+            label={i18n.checklistEditor?.editChecklist?.advancedSettings?.floatingButton || 'Floating Button'}
           />
         </div>
 
@@ -934,37 +940,37 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         {formData.trigger_button && (
           <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-4">
             <div>
-              <Label htmlFor="short_title">Floating Button Title</Label>
+              <Label htmlFor="short_title">{i18n.checklistEditor?.editChecklist?.basicSettings?.floatingButtonTitle || 'Floating Button Title'}</Label>
               <TextInput
                 id="short_title"
                 value={formData.short_title}
                 onChange={(e) => handleInputChange('short_title', e.target.value)}
                 maxLength="50"
-                placeholder="Button title"
+                placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.buttonTitle || 'Button title'}
               />
             </div>
             <div>
-              <Label htmlFor="button_position">Button Position</Label>
+              <Label htmlFor="button_position">{i18n.checklistEditor?.editChecklist?.advancedSettings?.buttonPosition || 'Button Position'}</Label>
               <ReactSelect
                 inputId="button_position"
-                value={{ value: formData.button_position, label: formData.button_position === 'bottom-right' ? 'Bottom Right' : formData.button_position === 'bottom-left' ? 'Bottom Left' : formData.button_position === 'top-right' ? 'Top Right' : formData.button_position === 'top-left' ? 'Top Left' : 'Draggable' }}
+                value={{ value: formData.button_position, label: formData.button_position === 'bottom-right' ? (i18n.checklistEditor?.editChecklist?.options?.bottomRight || 'Bottom Right') : formData.button_position === 'bottom-left' ? (i18n.checklistEditor?.editChecklist?.options?.bottomLeft || 'Bottom Left') : formData.button_position === 'top-right' ? (i18n.checklistEditor?.editChecklist?.options?.topRight || 'Top Right') : formData.button_position === 'top-left' ? (i18n.checklistEditor?.editChecklist?.options?.topLeft || 'Top Left') : (i18n.checklistEditor?.editChecklist?.options?.draggable || 'Draggable') }}
                 onChange={(selectedOption) => handleInputChange('button_position', selectedOption.value)}
                 options={[
-                  { value: 'bottom-right', label: 'Bottom Right' },
-                  { value: 'bottom-left', label: 'Bottom Left' },
-                  { value: 'top-right', label: 'Top Right' },
-                  { value: 'top-left', label: 'Top Left' },
-                  { value: 'draggable', label: 'Draggable' }
+                  { value: 'bottom-right', label: i18n.checklistEditor?.editChecklist?.options?.bottomRight || 'Bottom Right' },
+                  { value: 'bottom-left', label: i18n.checklistEditor?.editChecklist?.options?.bottomLeft || 'Bottom Left' },
+                  { value: 'top-right', label: i18n.checklistEditor?.editChecklist?.options?.topRight || 'Top Right' },
+                  { value: 'top-left', label: i18n.checklistEditor?.editChecklist?.options?.topLeft || 'Top Left' },
+                  { value: 'draggable', label: i18n.checklistEditor?.editChecklist?.options?.draggable || 'Draggable' }
                 ]}
                 className="react-select-container"
                 classNamePrefix="react-select"
-                placeholder="Select position..."
+                placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.selectPosition || 'Select position...'}
               />
             </div>
             
             {/* Icon Selection */}
             <div>
-              <Label className="text-brand-dark dark:text-white">Checklist Icon</Label>
+              <Label className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.checklistIcon || 'Checklist Icon'}</Label>
               <div className="space-y-3">
                 <div className="flex items-center space-x-4">
                   <label className="flex items-center">
@@ -976,7 +982,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                       onChange={() => handleInputChange('checklist_icon_type', 'preset')}
                       className="mr-2"
                     />
-                    <span>Use Preset Icon</span>
+                    <span>{i18n.checklistEditor?.editChecklist?.advancedSettings?.usePresetIcon || 'Use Preset Icon'}</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -987,7 +993,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                       onChange={() => handleInputChange('checklist_icon_type', 'custom')}
                       className="mr-2"
                     />
-                    <span>Custom Icon</span>
+                    <span>{i18n.checklistEditor?.editChecklist?.advancedSettings?.customIcon || 'Custom Icon'}</span>
                   </label>
                 </div>
 
@@ -1041,7 +1047,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                               title: 'Select Icon Image',
                               library: { type: 'image' },
                               multiple: false,
-                              button: { text: 'Use as Icon' }
+                              button: { text: i18n.checklistEditor?.editChecklist?.advancedSettings?.useAsIcon || 'Use as Icon' }
                             })
 
                             mediaFrame.on('select', () => {
@@ -1053,13 +1059,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                           }
                         }}
                       >
-                        Choose Icon Image
+                        {i18n.checklistEditor?.editChecklist?.advancedSettings?.chooseIconImage || 'Choose Icon Image'}
                       </Button>
                       {formData.checklist_icon_custom && (
                         <div className="flex items-center gap-2">
                           <img 
                             src={formData.checklist_icon_custom} 
-                            alt="Custom icon" 
+                            alt={i18n.checklistEditor?.editChecklist?.advancedSettings?.customIconAlt || 'Custom icon'} 
                             className="w-8 h-8 object-contain"
                           />
                           <Button
@@ -1068,7 +1074,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                             color="gray"
                             onClick={() => handleInputChange('checklist_icon_custom', '')}
                           >
-                            Remove
+                            {i18n.checklistEditor?.editChecklist?.advancedSettings?.remove || 'Remove'}
                           </Button>
                         </div>
                       )}
@@ -1077,7 +1083,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                       <TextInput
                         value={formData.checklist_icon_custom}
                         onChange={(e) => handleInputChange('checklist_icon_custom', e.target.value)}
-                        placeholder="Or paste image URL"
+                        placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.pasteImageUrl || 'Or paste image URL'}
                       />
                     )}
                   </div>
@@ -1089,7 +1095,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
               id="disable_in_builders"
               checked={formData.disable_in_builders}
               onChange={(checked) => handleInputChange('disable_in_builders', checked)}
-              label="Disable floating button when inside pagebuilders"
+              label={i18n.checklistEditor?.editChecklist?.advancedSettings?.disableInBuilders || 'Disable floating button when inside pagebuilders'}
             />
           </div>
         )}
@@ -1097,27 +1103,27 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       {/* Checked State Handling */}
       <div>
-        <Label htmlFor="checked_state_handling" className="text-brand-dark dark:text-white">Checked State Handling</Label>
+        <Label htmlFor="checked_state_handling" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.checkedStateHandling || 'Checked State Handling'}</Label>
         <ReactSelect
           inputId="checked_state_handling"
-          value={{ value: formData.checked_state_handling, label: formData.checked_state_handling === 'per_user' ? 'Per User' : 'Global' }}
+          value={{ value: formData.checked_state_handling, label: formData.checked_state_handling === 'per_user' ? (i18n.checklistEditor?.editChecklist?.options?.perUser || 'Per User') : (i18n.checklistEditor?.editChecklist?.options?.global || 'Global') }}
           onChange={(selectedOption) => handleInputChange('checked_state_handling', selectedOption.value)}
           options={[
-            { value: 'per_user', label: 'Per User' },
-            { value: 'global', label: 'Global' }
+            { value: 'per_user', label: i18n.checklistEditor?.editChecklist?.options?.perUser || 'Per User' },
+            { value: 'global', label: i18n.checklistEditor?.editChecklist?.options?.global || 'Global' }
           ]}
           className="react-select-container"
           classNamePrefix="react-select"
-          placeholder="Select handling method..."
+          placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.selectHandlingMethod || 'Select handling method...'}
         />
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          "Per User" gives each user their own checked states. "Global" shares checked states among all users.
+          {i18n.checklistEditor?.editChecklist?.advancedSettings?.checkedStateDescription || '"Per User" gives each user their own checked states. "Global" shares checked states among all users.'}
         </p>
       </div>
 
       {/* Priority */}
       <div>
-        <Label htmlFor="priority" className="text-brand-dark dark:text-white">Checklist Priority</Label>
+        <Label htmlFor="priority" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.basicSettings?.checklistPriority || 'Checklist Priority'}</Label>
         <div className="flex items-center space-x-2">
           <ReactSelect
             inputId="priority"
@@ -1129,7 +1135,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
             }))}
             className="react-select-container flex-1"
             classNamePrefix="react-select"
-            placeholder="Select priority..."
+            placeholder={i18n.checklistEditor?.editChecklist?.basicSettings?.selectPriorityPlaceholder || 'Select priority...'}
           />
           <div 
             className="w-6 h-6 rounded-full border-2 border-gray-300"
@@ -1142,9 +1148,9 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-brand-dark dark:text-white font-semibold">Enable Item Locking</Label>
+            <Label className="text-brand-dark dark:text-white font-semibold">{i18n.checklistEditor?.editChecklist?.basicSettings?.enableItemLocking || 'Enable Item Locking'}</Label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Enable locking of individual items to prevent editing.
+              {i18n.checklistEditor?.editChecklist?.basicSettings?.itemLockingDescription || 'Enable locking of individual items to prevent editing.'}
             </p>
           </div>
           <Toggle
@@ -1158,9 +1164,9 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-brand-dark dark:text-white font-semibold">Enable Shortcode</Label>
+            <Label className="text-brand-dark dark:text-white font-semibold">{i18n.checklistEditor?.editChecklist?.basicSettings?.enableShortcode || 'Enable Shortcode'}</Label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Enable this to use this checklist as a shortcode in your content.
+              {i18n.checklistEditor?.editChecklist?.basicSettings?.shortcodeDescription || 'Enable this to use this checklist as a shortcode in your content.'}
             </p>
           </div>
           <Toggle
@@ -1180,9 +1186,9 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-brand-dark dark:text-white font-semibold">Auto Reset Schedule</Label>
+            <Label className="text-brand-dark dark:text-white font-semibold">{i18n.checklistEditor?.editChecklist?.basicSettings?.autoResetSchedule || 'Auto Reset Schedule'}</Label>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Enable automatic reset of checked items on a schedule.
+              {i18n.checklistEditor?.editChecklist?.basicSettings?.autoResetDescription || 'Enable automatic reset of checked items on a schedule.'}
             </p>
           </div>
           <Toggle
@@ -1196,52 +1202,60 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           <div className="mt-4 space-y-4">
             {/* Reset Interval */}
             <div>
-              <Label htmlFor="reset_interval" className="text-brand-dark dark:text-white">Reset Interval</Label>
+              <Label htmlFor="reset_interval" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.resetInterval || 'Reset Interval'}</Label>
               <ReactSelect
                 inputId="reset_interval"
                 value={{ 
                   value: formData.reset_interval, 
-                  label: formData.reset_interval === 'daily' ? 'Daily' : 
-                         formData.reset_interval === 'weekly' ? 'Weekly' : 
-                         formData.reset_interval === 'monthly' ? 'Monthly' : 
-                         'Custom' 
+                  label: formData.reset_interval === 'daily' ? (i18n.checklistEditor?.editChecklist?.options?.daily || 'Daily') : 
+                         formData.reset_interval === 'weekly' ? (i18n.checklistEditor?.editChecklist?.options?.weekly || 'Weekly') : 
+                         formData.reset_interval === 'monthly' ? (i18n.checklistEditor?.editChecklist?.options?.monthly || 'Monthly') : 
+                         (i18n.checklistEditor?.editChecklist?.options?.custom || 'Custom') 
                 }}
                 onChange={(selectedOption) => handleInputChange('reset_interval', selectedOption.value)}
                 options={[
-                  { value: 'daily', label: 'Daily' },
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'monthly', label: 'Monthly' },
-                  { value: 'custom', label: 'Custom' }
+                  { value: 'daily', label: i18n.checklistEditor?.editChecklist?.options?.daily || 'Daily' },
+                  { value: 'weekly', label: i18n.checklistEditor?.editChecklist?.options?.weekly || 'Weekly' },
+                  { value: 'monthly', label: i18n.checklistEditor?.editChecklist?.options?.monthly || 'Monthly' },
+                  { value: 'custom', label: i18n.checklistEditor?.editChecklist?.options?.custom || 'Custom' }
                 ]}
                 className="react-select-container"
                 classNamePrefix="react-select"
-                placeholder="Select interval..."
+                placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.selectInterval || 'Select interval...'}
               />
             </div>
 
             {/* Weekly Options */}
             {formData.reset_interval === 'weekly' && (
               <div>
-                <Label htmlFor="week_day" className="text-brand-dark dark:text-white">Day of Week</Label>
+                <Label htmlFor="week_day" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.dayOfWeek || 'Day of Week'}</Label>
                 <ReactSelect
                   inputId="week_day"
                   value={{ 
                     value: formData.week_day, 
-                    label: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][parseInt(formData.week_day) - 1] || 'Monday'
+                    label: [
+                      i18n.checklistEditor?.editChecklist?.options?.monday || 'Monday',
+                      i18n.checklistEditor?.editChecklist?.options?.tuesday || 'Tuesday',
+                      i18n.checklistEditor?.editChecklist?.options?.wednesday || 'Wednesday',
+                      i18n.checklistEditor?.editChecklist?.options?.thursday || 'Thursday',
+                      i18n.checklistEditor?.editChecklist?.options?.friday || 'Friday',
+                      i18n.checklistEditor?.editChecklist?.options?.saturday || 'Saturday',
+                      i18n.checklistEditor?.editChecklist?.options?.sunday || 'Sunday'
+                    ][parseInt(formData.week_day) - 1] || (i18n.checklistEditor?.editChecklist?.options?.monday || 'Monday')
                   }}
                   onChange={(selectedOption) => handleInputChange('week_day', selectedOption.value)}
                   options={[
-                    { value: '1', label: 'Monday' },
-                    { value: '2', label: 'Tuesday' },
-                    { value: '3', label: 'Wednesday' },
-                    { value: '4', label: 'Thursday' },
-                    { value: '5', label: 'Friday' },
-                    { value: '6', label: 'Saturday' },
-                    { value: '7', label: 'Sunday' }
+                    { value: '1', label: i18n.checklistEditor?.editChecklist?.options?.monday || 'Monday' },
+                    { value: '2', label: i18n.checklistEditor?.editChecklist?.options?.tuesday || 'Tuesday' },
+                    { value: '3', label: i18n.checklistEditor?.editChecklist?.options?.wednesday || 'Wednesday' },
+                    { value: '4', label: i18n.checklistEditor?.editChecklist?.options?.thursday || 'Thursday' },
+                    { value: '5', label: i18n.checklistEditor?.editChecklist?.options?.friday || 'Friday' },
+                    { value: '6', label: i18n.checklistEditor?.editChecklist?.options?.saturday || 'Saturday' },
+                    { value: '7', label: i18n.checklistEditor?.editChecklist?.options?.sunday || 'Sunday' }
                   ]}
                   className="react-select-container"
                   classNamePrefix="react-select"
-                  placeholder="Select day..."
+                  placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.selectDay || 'Select day...'}
                 />
                 {errors.week_day && (
                   <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.week_day}</p>
@@ -1252,13 +1266,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
             {/* Monthly Options */}
             {formData.reset_interval === 'monthly' && (
               <div>
-                <Label htmlFor="month_day" className="text-brand-dark dark:text-white">Day of Month</Label>
+                <Label htmlFor="month_day" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.dayOfMonth || 'Day of Month'}</Label>
                 <TextInput
                   id="month_day"
                   value={formData.month_day}
                   onChange={(e) => handleInputChange('month_day', e.target.value)}
                   color={errors.month_day ? 'failure' : 'gray'}
-                  placeholder="Enter day of month"
+                  placeholder={i18n.checklistEditor?.editChecklist?.advancedSettings?.enterDayOfMonth || 'Enter day of month'}
                 />
                 {errors.month_day && <HelperText color="failure">{errors.month_day}</HelperText>}
               </div>
@@ -1267,13 +1281,13 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
             {/* Custom Options */}
             {formData.reset_interval === 'custom' && (
               <div className="space-y-3">
-                <Label className="text-brand-dark dark:text-white">Custom Interval</Label>
+                <Label className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.customInterval || 'Custom Interval'}</Label>
                 {errors.custom_interval && (
                   <p className="text-sm text-red-600 dark:text-red-400">{errors.custom_interval}</p>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <Label htmlFor="custom_months" className="text-sm text-brand-dark dark:text-white">Months</Label>
+                    <Label htmlFor="custom_months" className="text-sm text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.months || 'Months'}</Label>
                     <TextInput
                       id="custom_months"
                       type="number"
@@ -1299,7 +1313,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                     {errors.custom_months && <HelperText color="failure">{errors.custom_months}</HelperText>}
                   </div>
                   <div>
-                    <Label htmlFor="custom_weeks" className="text-sm text-brand-dark dark:text-white">Weeks</Label>
+                    <Label htmlFor="custom_weeks" className="text-sm text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.weeks || 'Weeks'}</Label>
                     <TextInput
                       id="custom_weeks"
                       type="number"
@@ -1325,7 +1339,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                     {errors.custom_weeks && <HelperText color="failure">{errors.custom_weeks}</HelperText>}
                   </div>
                   <div>
-                    <Label htmlFor="custom_days" className="text-sm text-brand-dark dark:text-white">Days</Label>
+                    <Label htmlFor="custom_days" className="text-sm text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.days || 'Days'}</Label>
                     <TextInput
                       id="custom_days"
                       type="number"
@@ -1352,14 +1366,14 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                   </div>
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  At least one field must have a value greater than 0.
+                  {i18n.checklistEditor?.editChecklist?.advancedSettings?.customIntervalHint || 'At least one field must have a value greater than 0.'}
                 </p>
               </div>
             )}
 
             {/* Reset Time */}
             <div>
-              <Label htmlFor="reset_time" className="text-brand-dark dark:text-white">Reset Time</Label>
+              <Label htmlFor="reset_time" className="text-brand-dark dark:text-white">{i18n.checklistEditor?.editChecklist?.advancedSettings?.resetTime || 'Reset Time'}</Label>
               <TextInput
                 id="reset_time"
                 type="time"
@@ -1379,7 +1393,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     return (
       <div className="flex items-center justify-center p-8">
         <Spinner size="xl" />
-        <span className="ml-2">Loading checklist...</span>
+        <span className="ml-2">{i18n.checklistEditor?.editChecklist?.actions?.loadingChecklist || 'Loading checklist...'}</span>
       </div>
     )
   }
@@ -1426,26 +1440,27 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
               {/* Navigation */}
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
+                  type="button"
                   color="gray"
                   onClick={handlePrev}
                   disabled={currentStep === 1}
                 >
-                  Previous
+                  {i18n.checklistEditor?.editChecklist?.buttons?.previous || 'Previous'}
                 </Button>
                 {currentStep === totalSteps ? (
                   <Button
-                    onClick={handleSubmit}
                     className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
                     type="submit"
                   >
-                    Save
+                    {i18n.checklistEditor?.editChecklist?.actions?.save || i18n.common?.save || 'Save'}
                   </Button>
                 ) : (
                   <Button
+                    type="button"
                     onClick={handleNext}
                     className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
                   >
-                    Next
+                    {i18n.checklistEditor?.editChecklist?.buttons?.next || 'Next'}
                   </Button>
                 )}
               </div>

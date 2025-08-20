@@ -9,6 +9,10 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
   const [editingChecklistId, setEditingChecklistId] = useState(checklistId)
   const [loading, setLoading] = useState(false)
   const publisherChecklistRef = useRef(null)
+  
+  // Get i18n strings from localized data
+  const i18n = adminData.i18n?.checklistEditor || {}
+  const commonI18n = adminData.i18n?.common || {}
 
   useEffect(() => {
     // Determine initial view based on props
@@ -53,13 +57,13 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
         setSelectedType(type)
         setCurrentView('edit')
       } else {
-        console.error('Failed to load checklist type:', data.data?.message)
+        console.error(i18n.failedToLoadType || 'Failed to load checklist type:', data.data?.message)
         // Fallback to classic type
         setSelectedType('classic')
         setCurrentView('edit')
       }
     } catch (error) {
-      console.error('Error loading checklist type:', error)
+      console.error(i18n.errorLoadingType || 'Error loading checklist type:', error)
       // Fallback to classic type
       setSelectedType('classic')
       setCurrentView('edit')
@@ -113,7 +117,7 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Loading checklist...</p>
+          <p className="text-gray-600 dark:text-gray-300">{i18n.loadingChecklist || 'Loading checklist...'}</p>
         </div>
       </div>
     )

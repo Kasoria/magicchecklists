@@ -464,6 +464,9 @@ msgstr "Frist löschen"
 msgid "Save Deadline"
 msgstr "Frist speichern"
 
+msgid "Save"
+msgstr "Speichern"
+
 msgid "items"
 msgstr "Aufgaben"
 
@@ -523,3 +526,723 @@ msgstr "Link hinzufügen"
 
 msgid "Remove link"
 msgstr "Link entfernen"
+
+msgid "Failed to load checklist type:"
+msgstr "Fehler beim Laden des Checklistentyps:"
+
+msgid "Error loading checklist type:"
+msgstr "Fehler beim Laden des Checklistentyps:"
+
+msgid "Basic Settings"
+msgstr "Grundeinstellungen"
+
+msgid "Advanced Settings"
+msgstr "Erweiterte Einstellungen"
+
+msgid "Access Control"
+msgstr "Zugriffskontrolle"
+
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Enter checklist title"
+msgstr "Checklisten-Titel eingeben"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Enter checklist description"
+msgstr "Checklisten-Beschreibung eingeben"
+
+msgid "Show description in drawer"
+msgstr "Beschreibung im Drawer anzeigen"
+
+msgid "Tags"
+msgstr "Tags"
+
+msgid "Add tags to organize your checklist. Press Enter to add a tag, then click the edit icon to change its color."
+msgstr "Fügen Sie Tags hinzu, um Ihre Checkliste zu organisieren. Drücken Sie Enter, um ein Tag hinzuzufügen, und klicken Sie auf das Bearbeiten-Symbol, um die Farbe zu ändern."
+
+msgid "Checklist Priority"
+msgstr "Checklisten-Priorität"
+
+msgid "Select priority..."
+msgstr "Priorität auswählen..."
+
+msgid "Enable Item Locking"
+msgstr "Aufgaben-Sperrung aktivieren"
+
+msgid "Enable locking of individual items to prevent editing."
+msgstr "Sperrung einzelner Aufgaben aktivieren, um Bearbeitung zu verhindern."
+
+msgid "Enable Shortcode"
+msgstr "Shortcode aktivieren"
+
+msgid "Enable this to use this checklist as a shortcode in your content."
+msgstr "Aktivieren Sie dies, um diese Checkliste als Shortcode in Ihrem Inhalt zu verwenden."
+
+msgid "Auto Reset Schedule"
+msgstr "Automatischer Reset-Zeitplan"
+
+msgid "Enable automatic reset of checked items on a schedule."
+msgstr "Automatisches Zurücksetzen abgehakter Aufgaben nach einem Zeitplan aktivieren."
+
+msgid "Floating Button Title"
+msgstr "Schwebender Button-Titel"
+
+msgid "Button title"
+msgstr "Button-Titel"
+
+msgid "Select Icon Image"
+msgstr "Symbol-Bild auswählen"
+
+msgid "Title is required"
+msgstr "Titel ist erforderlich"
+
+msgid "At least one trigger method must be selected"
+msgstr "Mindestens eine Auslöser-Methode muss ausgewählt werden"
+
+msgid "Keyboard shortcut is required when shortcut trigger is enabled"
+msgstr "Tastenkombination ist erforderlich, wenn Shortcut-Auslöser aktiviert ist"
+
+msgid "This shortcut is already in use."
+msgstr "Diese Tastenkombination wird bereits verwendet."
+
+msgid "Invalid time format"
+msgstr "Ungültiges Zeitformat"
+
+msgid "Invalid day of week selected"
+msgstr "Ungültiger Wochentag ausgewählt"
+
+msgid "Day of month must be between 1 and 31"
+msgstr "Tag des Monats muss zwischen 1 und 31 liegen"
+
+msgid "At least one time period must be specified for custom intervals"
+msgstr "Mindestens ein Zeitraum muss für benutzerdefinierte Intervalle angegeben werden"
+
+msgid "Months must be between 0 and 12"
+msgstr "Monate müssen zwischen 0 und 12 liegen"
+
+msgid "Weeks must be between 0 and 52"
+msgstr "Wochen müssen zwischen 0 und 52 liegen"
+
+msgid "Days must be between 0 and 31"
+msgstr "Tage müssen zwischen 0 und 31 liegen"
+
+msgid "Usage limit must be a number"
+msgstr "Nutzungsgrenze muss eine Zahl sein"
+
+msgid "Usage limit cannot be negative"
+msgstr "Nutzungsgrenze kann nicht negativ sein"
+
+msgid "At least one notification method must be enabled"
+msgstr "Mindestens eine Benachrichtigungsmethode muss aktiviert werden"
+
+msgid "Email recipients are required when email notifications are enabled"
+msgstr "E-Mail-Empfänger sind erforderlich, wenn E-Mail-Benachrichtigungen aktiviert sind"
+
+msgid "At least one non-empty checklist item is required"
+msgstr "Mindestens eine nicht-leere Checklisten-Aufgabe ist erforderlich"
+
+msgid "Failed to load checklist data"
+msgstr "Fehler beim Laden der Checklisten-Daten"
+
+msgid "Error validating shortcut:"
+msgstr "Fehler beim Validieren der Tastenkombination:"
+
+msgid "Failed to save checklist. Please try again."
+msgstr "Fehler beim Speichern der Checkliste. Bitte versuchen Sie es erneut."
+
+msgid "Failed to save checklist"
+msgstr "Fehler beim Speichern der Checkliste"
+
+msgid "Active Status"
+msgstr "Aktiver Status"
+
+msgid "When active, this checklist can be accessed using its keyboard shortcut or floating button."
+msgstr "Wenn aktiv, kann auf diese Checkliste über die Tastenkombination oder den schwebenden Button zugegriffen werden."
+
+msgid "Drawer Theme"
+msgstr "Drawer-Theme"
+
+msgid "Choose theme..."
+msgstr "Theme auswählen..."
+
+msgid "Choose the visual theme for your checklist drawer."
+msgstr "Wählen Sie das visuelle Theme für Ihren Checklisten-Drawer."
+
+msgid "Type tag name and press Enter"
+msgstr "Tag-Name eingeben und Enter drücken"
+
+msgid "Change color"
+msgstr "Farbe ändern"
+
+msgid "Set an optional deadline for completing this checklist."
+msgstr "Setzen Sie eine optionale Frist für das Abschließen dieser Checkliste."
+
+msgid "Keyboard Shortcut"
+msgstr "Tastenkombination"
+
+msgid "Click and press your desired key combination"
+msgstr "Klicken und gewünschte Tastenkombination drücken"
+
+msgid "Drawer Trigger Method"
+msgstr "Drawer-Auslöser-Methode"
+
+msgid "Floating Button"
+msgstr "Schwebender Button"
+
+msgid "Button Position"
+msgstr "Button-Position"
+
+msgid "Select position..."
+msgstr "Position auswählen..."
+
+msgid "Checklist Icon"
+msgstr "Checklisten-Symbol"
+
+msgid "Use Preset Icon"
+msgstr "Vordefiniertes Symbol verwenden"
+
+msgid "Custom Icon"
+msgstr "Benutzerdefiniertes Symbol"
+
+msgid "Choose Icon Image"
+msgstr "Symbol-Bild auswählen"
+
+msgid "Use as Icon"
+msgstr "Als Symbol verwenden"
+
+msgid "Custom icon"
+msgstr "Benutzerdefiniertes Symbol"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "Or paste image URL"
+msgstr "Oder Bild-URL einfügen"
+
+msgid "Disable floating button when inside pagebuilders"
+msgstr "Schwebenden Button in Pagebuildern deaktivieren"
+
+msgid "Checked State Handling"
+msgstr "Behandlung des Abhak-Status"
+
+msgid "Select handling method..."
+msgstr "Behandlungsmethode auswählen..."
+
+msgid "\"Per User\" gives each user their own checked states. \"Global\" shares checked states among all users."
+msgstr "\"Pro Benutzer\" gibt jedem Benutzer seine eigenen Abhak-Zustände. \"Global\" teilt Abhak-Zustände zwischen allen Benutzern."
+
+msgid "Reset Interval"
+msgstr "Reset-Intervall"
+
+msgid "Select interval..."
+msgstr "Intervall auswählen..."
+
+msgid "Day of Week"
+msgstr "Wochentag"
+
+msgid "Select day..."
+msgstr "Tag auswählen..."
+
+msgid "Day of Month"
+msgstr "Tag des Monats"
+
+msgid "Enter day of month"
+msgstr "Tag des Monats eingeben"
+
+msgid "Custom Interval"
+msgstr "Benutzerdefiniertes Intervall"
+
+msgid "Months"
+msgstr "Monate"
+
+msgid "Weeks"
+msgstr "Wochen"
+
+msgid "Days"
+msgstr "Tage"
+
+msgid "At least one field must have a value greater than 0."
+msgstr "Mindestens ein Feld muss einen Wert größer als 0 haben."
+
+msgid "Reset Time"
+msgstr "Reset-Zeit"
+
+msgid "Light"
+msgstr "Hell"
+
+msgid "Dark"
+msgstr "Dunkel"
+
+msgid "Custom Theme"
+msgstr "Benutzerdefiniertes Theme"
+
+msgid "Bottom Right"
+msgstr "Unten Rechts"
+
+msgid "Bottom Left"
+msgstr "Unten Links"
+
+msgid "Top Right"
+msgstr "Oben Rechts"
+
+msgid "Top Left"
+msgstr "Oben Links"
+
+msgid "Draggable"
+msgstr "Verschiebbar"
+
+msgid "Per User"
+msgstr "Pro Benutzer"
+
+msgid "Global"
+msgstr "Global"
+
+msgid "Daily"
+msgstr "Täglich"
+
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+msgid "Monthly"
+msgstr "Monatlich"
+
+msgid "Custom"
+msgstr "Benutzerdefiniert"
+
+msgid "Monday"
+msgstr "Montag"
+
+msgid "Tuesday"
+msgstr "Dienstag"
+
+msgid "Wednesday"
+msgstr "Mittwoch"
+
+msgid "Thursday"
+msgstr "Donnerstag"
+
+msgid "Friday"
+msgstr "Freitag"
+
+msgid "Saturday"
+msgstr "Samstag"
+
+msgid "Sunday"
+msgstr "Sonntag"
+
+msgid "None"
+msgstr "Keine"
+
+msgid "Low"
+msgstr "Niedrig"
+
+msgid "Medium"
+msgstr "Mittel"
+
+msgid "High"
+msgstr "Hoch"
+
+msgid "Critical"
+msgstr "Kritisch"
+
+msgid "Previous"
+msgstr "Zurück"
+
+msgid "Next"
+msgstr "Weiter"
+
+msgid "Notification Settings"
+msgstr "Benachrichtigungseinstellungen"
+
+msgid "Configure notification settings for this checklist"
+msgstr "Benachrichtigungseinstellungen für diese Checkliste konfigurieren"
+
+msgid "Enable Notifications"
+msgstr "Benachrichtigungen aktivieren"
+
+msgid "Send notifications when checklist events occur"
+msgstr "Benachrichtigungen senden, wenn Checklisten-Ereignisse auftreten"
+
+msgid "Email Notifications"
+msgstr "E-Mail-Benachrichtigungen"
+
+msgid "Send notifications via email"
+msgstr "Benachrichtigungen per E-Mail senden"
+
+msgid "Recipients"
+msgstr "Empfänger"
+
+msgid "Enter email addresses (one per line)"
+msgstr "E-Mail-Adressen eingeben (eine pro Zeile)"
+
+msgid "Subject Template"
+msgstr "Betreff-Vorlage"
+
+msgid "Email subject template"
+msgstr "E-Mail-Betreff-Vorlage"
+
+msgid "Message Template"
+msgstr "Nachricht-Vorlage"
+
+msgid "Email message template"
+msgstr "E-Mail-Nachricht-Vorlage"
+
+msgid "Webhook Notifications"
+msgstr "Webhook-Benachrichtigungen"
+
+msgid "Send notifications to external webhooks"
+msgstr "Benachrichtigungen an externe Webhooks senden"
+
+msgid "Webhook URL"
+msgstr "Webhook-URL"
+
+msgid "Enter webhook URL"
+msgstr "Webhook-URL eingeben"
+
+msgid "HTTP Method"
+msgstr "HTTP-Methode"
+
+msgid "Select method"
+msgstr "Methode auswählen"
+
+msgid "Custom Headers"
+msgstr "Benutzerdefinierte Header"
+
+msgid "Add custom HTTP headers (one per line, format: Header: Value)"
+msgstr "Benutzerdefinierte HTTP-Header hinzufügen (eine pro Zeile, Format: Header: Wert)"
+
+msgid "Payload Template"
+msgstr "Payload-Vorlage"
+
+msgid "JSON payload template"
+msgstr "JSON-Payload-Vorlage"
+
+msgid "Test webhook connection"
+msgstr "Webhook-Verbindung testen"
+
+msgid "Test Webhook"
+msgstr "Webhook testen"
+
+msgid "Testing..."
+msgstr "Wird getestet..."
+
+msgid "Test successful"
+msgstr "Test erfolgreich"
+
+msgid "Test failed"
+msgstr "Test fehlgeschlagen"
+
+msgid "Notification Triggers"
+msgstr "Benachrichtigungs-Auslöser"
+
+msgid "Choose which events trigger notifications"
+msgstr "Wählen Sie, welche Ereignisse Benachrichtigungen auslösen"
+
+msgid "Checklist Viewed"
+msgstr "Checkliste angesehen"
+
+msgid "Notify when checklist is viewed"
+msgstr "Benachrichtigen, wenn Checkliste angesehen wird"
+
+msgid "Item Checked"
+msgstr "Aufgabe: abgehakt"
+
+msgid "Notify when an item is checked"
+msgstr "Benachrichtigen, wenn eine Aufgabe abgehakt wird"
+
+msgid "Item Unchecked"
+msgstr "Aufgabe: Haken entfernt"
+
+msgid "Notify when an item is unchecked"
+msgstr "Benachrichtigen, wenn eine Aufgabe nicht abgehakt wird"
+
+msgid "Checklist Completed"
+msgstr "Checkliste abgeschlossen"
+
+msgid "Notify when all items are checked"
+msgstr "Benachrichtigen, wenn alle Aufgaben abgehakt sind"
+
+msgid "Checklist Reset"
+msgstr "Checkliste zurückgesetzt"
+
+msgid "Notify when checklist is reset"
+msgstr "Benachrichtigen, wenn Checkliste zurückgesetzt wird"
+
+msgid "Deadline Approaching"
+msgstr "Frist naht"
+
+msgid "Notify when deadlines are approaching"
+msgstr "Benachrichtigen, wenn Fristen nahen"
+
+msgid "Deadline Passed"
+msgstr "Frist überschritten"
+
+msgid "Notify when deadlines have passed"
+msgstr "Benachrichtigen, wenn Fristen überschritten wurden"
+
+msgid "Notification Frequency"
+msgstr "Benachrichtigungshäufigkeit"
+
+msgid "Control how often notifications are sent"
+msgstr "Kontrollieren Sie, wie oft Benachrichtigungen gesendet werden"
+
+msgid "Immediate"
+msgstr "Sofort"
+
+msgid "Hourly"
+msgstr "Stündlich"
+
+msgid "Daily Digest"
+msgstr "Tägliche Zusammenfassung"
+
+msgid "Weekly Summary"
+msgstr "Wöchentliche Zusammenfassung"
+
+msgid "Rate Limiting"
+msgstr "Ratenbegrenzung"
+
+msgid "Prevent notification spam"
+msgstr "Benachrichtigungs-Spam verhindern"
+
+msgid "Max notifications per hour"
+msgstr "Max. Benachrichtigungen pro Stunde"
+
+msgid "Quiet Hours"
+msgstr "Ruhezeiten"
+
+msgid "Suppress notifications during certain hours"
+msgstr "Benachrichtigungen während bestimmter Stunden unterdrücken"
+
+msgid "Start Time"
+msgstr "Startzeit"
+
+msgid "End Time"
+msgstr "Endzeit"
+
+msgid "Additional notification configuration"
+msgstr "Zusätzliche Benachrichtigungskonfiguration"
+
+msgid "Retry Failed Notifications"
+msgstr "Fehlgeschlagene Benachrichtigungen wiederholen"
+
+msgid "Automatically retry failed webhook notifications"
+msgstr "Fehlgeschlagene Webhook-Benachrichtigungen automatisch wiederholen"
+
+msgid "Max Retry Attempts"
+msgstr "Max. Wiederholungsversuche"
+
+msgid "Log Notifications"
+msgstr "Benachrichtigungen protokollieren"
+
+msgid "Keep a log of all sent notifications"
+msgstr "Ein Protokoll aller gesendeten Benachrichtigungen führen"
+
+msgid "Available Variables"
+msgstr "Verfügbare Variablen"
+
+msgid "You can use these variables in templates:"
+msgstr "Sie können diese Variablen in Vorlagen verwenden:"
+
+msgid "{checklist_title}"
+msgstr "{checklist_title}"
+
+msgid "The title of the checklist"
+msgstr "Der Titel der Checkliste"
+
+msgid "{item_title}"
+msgstr "{item_title}"
+
+msgid "The title of the checklist item"
+msgstr "Der Titel der Checklisten-Aufgabe"
+
+msgid "{user_name}"
+msgstr "{user_name}"
+
+msgid "The name of the user who triggered the event"
+msgstr "Der Name des Benutzers, der das Ereignis ausgelöst hat"
+
+msgid "{site_name}"
+msgstr "{site_name}"
+
+msgid "The name of the website"
+msgstr "Der Name der Website"
+
+msgid "{date}"
+msgstr "{date}"
+
+msgid "Current date and time"
+msgstr "Aktuelles Datum und Zeit"
+
+msgid "POST"
+msgstr "POST"
+
+msgid "PUT"
+msgstr "PUT"
+
+msgid "PATCH"
+msgstr "PATCH"
+
+msgid "Notification Methods"
+msgstr "Benachrichtigungsmethoden"
+
+msgid "Please check at least one option for the notifications to work."
+msgstr "Bitte wählen Sie mindestens eine Option, damit die Benachrichtigungen funktionieren."
+
+msgid "New item added"
+msgstr "Neue Aufgabe hinzugefügt"
+
+msgid "Item deleted"
+msgstr "Aufgabe gelöscht"
+
+msgid "Comments and replies"
+msgstr "Kommentare und Antworten"
+
+msgid "Send deadline notification when"
+msgstr "Benachrichtigung über Frist senden, wenn"
+
+msgid "hours remaining"
+msgstr "Stunden verbleiben"
+
+msgid "Select frequency..."
+msgstr "Häufigkeit auswählen..."
+
+msgid "Every 15 Minutes"
+msgstr "Alle 15 Minuten"
+
+msgid "No email recipients!"
+msgstr "Keine E-Mail-Empfänger!"
+
+msgid "Please add email recipients to receive email notifications."
+msgstr "Bitte fügen Sie E-Mail-Empfänger hinzu, um E-Mail-Benachrichtigungen zu erhalten."
+
+msgid "No webhook URLs configured!"
+msgstr "Keine Webhook-URLs konfiguriert!"
+
+msgid "Please add at least one webhook URL for integration notifications."
+msgstr "Bitte fügen Sie mindestens eine Webhook-URL für Integrations-Benachrichtigungen hinzu."
+
+msgid "No notification methods enabled!"
+msgstr "Keine Benachrichtigungsmethoden aktiviert!"
+
+msgid "Please enable at least one notification method for notifications to work."
+msgstr "Bitte aktivieren Sie mindestens eine Benachrichtigungsmethode, damit Benachrichtigungen funktionieren."
+
+msgid "Integration Notifications"
+msgstr "Integrations-Benachrichtigungen"
+
+msgid "Email Recipients"
+msgstr "E-Mail-Empfänger"
+
+msgid "email1@example.com, email2@example.com"
+msgstr "email1@example.com, email2@example.com"
+
+msgid "Enter email addresses separated by commas"
+msgstr "E-Mail-Adressen durch Kommas getrennt eingeben"
+
+msgid "Please enter valid email addresses separated by commas"
+msgstr "Bitte geben Sie gültige E-Mail-Adressen durch Kommas getrennt ein"
+
+msgid "Test Email"
+msgstr "Test-E-Mail"
+
+msgid "Integration Settings"
+msgstr "Integrations-Einstellungen"
+
+msgid "Slack Webhook URL"
+msgstr "Slack Webhook-URL"
+
+msgid "https://hooks.slack.com/services/..."
+msgstr "https://hooks.slack.com/services/..."
+
+msgid "Please enter a valid Slack webhook URL"
+msgstr "Bitte geben Sie eine gültige Slack Webhook-URL ein"
+
+msgid "Test Slack"
+msgstr "Slack testen"
+
+msgid "Discord Webhook URL"
+msgstr "Discord Webhook-URL"
+
+msgid "https://discord.com/api/webhooks/..."
+msgstr "https://discord.com/api/webhooks/..."
+
+msgid "Please enter a valid Discord webhook URL"
+msgstr "Bitte geben Sie eine gültige Discord Webhook-URL ein"
+
+msgid "Test Discord"
+msgstr "Discord testen"
+
+msgid "Choose which events should trigger notifications"
+msgstr "Wählen Sie, welche Ereignisse Benachrichtigungen auslösen sollen"
+
+msgid "Send Immediately"
+msgstr "Sofort senden"
+
+msgid "Choose how often notifications should be sent"
+msgstr "Wählen Sie, wie oft Benachrichtigungen gesendet werden sollen"
+
+msgid "Please enter a webhook URL first"
+msgstr "Bitte geben Sie zuerst eine Webhook-URL ein"
+
+msgid "Please enter email recipients first"
+msgstr "Bitte geben Sie zuerst E-Mail-Empfänger ein"
+
+msgid "webhook test successful!"
+msgstr "Webhook-Test erfolgreich!"
+
+msgid "Webhook test failed:"
+msgstr "Webhook-Test fehlgeschlagen:"
+
+msgid "Webhook test failed due to network error"
+msgstr "Webhook-Test aufgrund eines Netzwerkfehlers fehlgeschlagen"
+
+msgid "Test email(s) sent successfully!"
+msgstr "Test-E-Mail(s) erfolgreich gesendet!"
+
+msgid "Email test failed:"
+msgstr "E-Mail-Test fehlgeschlagen:"
+
+msgid "Email test failed due to network error"
+msgstr "E-Mail-Test aufgrund eines Netzwerkfehlers fehlgeschlagen"
+
+msgid "Enable notifications for this checklist"
+msgstr "Benachrichtigungen für diese Checkliste aktivieren"
+
+msgid "Item checked"
+msgstr "Aufgabe abgehakt"
+
+msgid "Item unchecked"
+msgstr "Aufgabe Haken entfernt"
+
+msgid "Deadline approaching"
+msgstr "Frist naht"
+
+msgid "alerts.noEmailRecipients"
+msgstr "Keine E-Mail-Empfänger!"
+
+msgid "alerts.noEmailRecipientsDescription"
+msgstr "Bitte fügen Sie E-Mail-Empfänger hinzu, um E-Mail-Benachrichtigungen zu erhalten."
+
+msgid "alerts.noWebhookUrls"
+msgstr "Keine Webhook-URLs konfiguriert!"
+
+msgid "alerts.noWebhookUrlsDescription"
+msgstr "Bitte fügen Sie mindestens eine Webhook-URL für Integrations-Benachrichtigungen hinzu."
+
+msgid "Checklist Items"
+msgstr "Checklisten-Elemente"
+
+msgid "Add and organize your checklist items"
+msgstr "Checklisten-Elemente hinzufügen und organisieren"
+
+msgid "Enable Item Priorities"
+msgstr "Element-Prioritäten aktivieren"
+
+msgid "Enable"
+msgstr "Aktivieren"
