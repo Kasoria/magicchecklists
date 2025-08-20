@@ -4,7 +4,7 @@ import { formatDate as formatDateUtil } from '../utils/dateUtils'
 
 const AnalyticsDashboard = ({ analyticsData, adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || adminData?.i18n || {};
   
   if (!analyticsData) {
     return null

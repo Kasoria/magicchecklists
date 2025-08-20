@@ -1055,7 +1055,7 @@ const ImageChoiceModal = ({ isOpen, onClose, onMediaLibrary, onQuickUpload }) =>
   if (!isOpen) return null
 
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={i18n.checklistDrawer?.imageModal?.insertImageTitle || 'Insert Image'}>
@@ -1157,7 +1157,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
   }, [])
 
   const getButtonText = () => {
-    const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+    const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
     if (activeTab === 'upload') {
       return uploading ? (i18n.checklistDrawer?.imageModal?.uploading || 'Uploading...') : (i18n.checklistDrawer?.imageModal?.uploadImage || 'Upload Image')
     }
@@ -1171,7 +1171,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
     return !selectedExisting
   }
 
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
 
   const actions = (
     <>
@@ -1319,7 +1319,7 @@ const LinkToolbar = ({
   onClose,
   isValidUrl
 }) => {
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
   
   if (!isVisible) return null
 
@@ -1380,7 +1380,7 @@ const LinkToolbar = ({
 // Add deadline modal component
 const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
   const [dateTime, setDateTime] = useState('')
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
   
   useEffect(() => {
     if (isOpen && currentDeadline) {
@@ -1524,7 +1524,7 @@ const ResetInfoDisplay = ({ resetInfo, themeColors }) => {
 const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
   const [timeLeft, setTimeLeft] = useState('')
   const [status, setStatus] = useState('normal')
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
 
   useEffect(() => {
     if (!deadline) return
@@ -1620,7 +1620,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const [itemsWithTourConnections, setItemsWithTourConnections] = useState(new Set())
   
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
   
   // Permission states
   const [canEdit, setCanEdit] = useState(false)

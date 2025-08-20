@@ -124,7 +124,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
@@ -146,7 +146,7 @@ class MCL_Tour_Admin {
         }
 
         if (!$tour_id || is_wp_error($tour_id)) {
-            wp_send_json_error('Failed to save tour');
+            wp_send_json_error(__('Failed to save tour', 'magic-checklists'));
         }
 
         // Save tour meta
@@ -166,7 +166,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
@@ -288,7 +288,7 @@ class MCL_Tour_Admin {
         }
 
         if (!$tour_id || is_wp_error($tour_id)) {
-            wp_send_json_error('Failed to save tour');
+            wp_send_json_error(__('Failed to save tour', 'magic-checklists'));
         }
 
         // Save tour meta - always save explicit values
@@ -323,7 +323,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
@@ -331,7 +331,7 @@ class MCL_Tour_Admin {
         if (wp_delete_post($tour_id, true)) {
             wp_send_json_success();
         } else {
-            wp_send_json_error('Failed to delete tour');
+            wp_send_json_error(__('Failed to delete tour', 'magic-checklists'));
         }
     }
 
@@ -339,14 +339,14 @@ class MCL_Tour_Admin {
         // Accept both admin and public nonces for tour data retrieval (for continuation playback)
         $nonce = isset($_REQUEST['nonce']) ? $_REQUEST['nonce'] : '';
         if (! wp_verify_nonce($nonce, 'mcl_tour_admin') && ! wp_verify_nonce($nonce, 'mcl_tour_public')) {
-            wp_send_json_error('Invalid nonce');
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
         $tour = get_post($tour_id);
         
         if (!$tour || $tour->post_type !== 'mcl_tour') {
-            wp_send_json_error('Tour not found');
+            wp_send_json_error(__('Tour not found', 'magic-checklists'));
         }
 
         // Get settings first, then use them as the source of truth for active/autostart/show_once
@@ -380,7 +380,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
@@ -419,7 +419,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
@@ -433,14 +433,14 @@ class MCL_Tour_Admin {
         // Reset first login status for current user (if applicable)
         delete_user_meta($user_id, '_mcl_first_login_tours_shown');
         
-        wp_send_json_success(array('message' => 'Tour completion reset successfully'));
+        wp_send_json_success(array('message' => __('Tour completion reset successfully', 'magic-checklists')));
     }
 
     public function reorder_tour_steps() {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
@@ -451,14 +451,14 @@ class MCL_Tour_Admin {
             $reordered_steps = json_decode(stripslashes($_POST['steps']), true);
             
             if (!$tour_id || !is_array($reordered_steps)) {
-                wp_send_json_error('Invalid parameters');
+                wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
             }
         } else {
             // Old format: step_order as array of indices (for backward compatibility)
             $step_order = isset($_POST['step_order']) ? array_map('intval', $_POST['step_order']) : array();
             
             if (!$tour_id || empty($step_order)) {
-                wp_send_json_error('Invalid parameters');
+                wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
             }
 
             // Get current steps
@@ -466,7 +466,7 @@ class MCL_Tour_Admin {
             
             // Validate step order
             if (count($step_order) !== count($current_steps)) {
-                wp_send_json_error('Step count mismatch');
+                wp_send_json_error(__('Step count mismatch', 'magic-checklists'));
             }
 
             // Reorder steps based on new order
@@ -482,7 +482,7 @@ class MCL_Tour_Admin {
         update_post_meta($tour_id, '_mcl_tour_steps', $reordered_steps);
         
         wp_send_json_success(array(
-            'message' => 'Steps reordered successfully',
+            'message' => __('Steps reordered successfully', 'magic-checklists'),
             'steps' => $reordered_steps
         ));
     }
@@ -507,7 +507,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Invalid nonce');
             }
-            wp_send_json_error('Invalid nonce');
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
         }
 
         $checklist_id = intval($_POST['checklist_id']);
@@ -522,7 +522,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Invalid parameters');
             }
-            wp_send_json_error('Invalid parameters');
+            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
         }
 
         // Check if user can interact with this checklist
@@ -530,7 +530,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Permission denied for checklist ' . $checklist_id);
             }
-            wp_send_json_error('You do not have permission to interact with this checklist');
+            wp_send_json_error(__('You do not have permission to interact with this checklist', 'magic-checklists'));
         }
 
         // Get current checked state
@@ -566,7 +566,7 @@ class MCL_Tour_Admin {
         }
 
         wp_send_json_success(array(
-            'message' => $checked ? 'Item checked' : 'Item unchecked',
+            'message' => $checked ? __('Item checked', 'magic-checklists') : __('Item unchecked', 'magic-checklists'),
             'checked' => $checked,
             'checklist_id' => $checklist_id,
             'item_id' => $item_id,
@@ -666,14 +666,14 @@ class MCL_Tour_Admin {
         }
         
         if (!$nonce_verified) {
-            wp_send_json_error('Invalid nonce');
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
         }
 
         $checklist_id = intval($_POST['checklist_id']);
         $item_id = sanitize_text_field($_POST['item_id']);
 
         if (!$checklist_id || !$item_id) {
-            wp_send_json_error('Invalid parameters');
+            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
         }
 
         // Get all active tours
@@ -723,7 +723,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tours = get_posts(array(
@@ -765,14 +765,14 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
         $original_tour = get_post($tour_id);
         
         if (!$original_tour || $original_tour->post_type !== 'mcl_tour') {
-            wp_send_json_error('Tour not found');
+            wp_send_json_error(__('Tour not found', 'magic-checklists'));
         }
 
         // Create new tour
@@ -786,7 +786,7 @@ class MCL_Tour_Admin {
         $new_tour_id = wp_insert_post($new_tour_data);
         
         if (!$new_tour_id || is_wp_error($new_tour_id)) {
-            wp_send_json_error('Failed to duplicate tour');
+            wp_send_json_error(__('Failed to duplicate tour', 'magic-checklists'));
         }
 
         // Copy all meta data
@@ -815,7 +815,7 @@ class MCL_Tour_Admin {
 
         wp_send_json_success(array(
             'tour_id' => $new_tour_id,
-            'message' => 'Tour duplicated successfully'
+            'message' => __('Tour duplicated successfully', 'magic-checklists')
         ));
     }
 
@@ -826,7 +826,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $users = get_users(array('number' => 100));
@@ -850,7 +850,7 @@ class MCL_Tour_Admin {
         check_ajax_referer('mcl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'magic-checklists'));
         }
 
         $roles = wp_roles()->get_names();

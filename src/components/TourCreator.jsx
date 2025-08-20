@@ -4,6 +4,9 @@ import { useToast } from './Toast.jsx'
 import ConfirmationModal from './ConfirmationModal.jsx'
 
 const TourCreator = ({ adminData, tourId = 0, onExit }) => {
+  // Get i18n data
+  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || adminData?.i18n || {};
+  
   const [currentMode, setCurrentMode] = useState('select')
   const [tourSteps, setTourSteps] = useState([])
   const [tourSettings, setTourSettings] = useState({})
@@ -106,12 +109,12 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         }
         return data.data
       } else {
-        showError('Failed to load tour data')
-        throw new Error('Failed to load tour data')
+        showError(i18n.tourCreator?.failedLoadTourData || 'Failed to load tour data')
+        throw new Error(i18n.tourCreator?.failedLoadTourData || 'Failed to load tour data')
       }
     } catch (error) {
-      console.error('Error loading tour data:', error)
-      showError('Error loading tour data')
+      console.error(i18n.tourCreator?.errorLoadingTourData || 'Error loading tour data:', error)
+      showError(i18n.tourCreator?.errorLoadingTourData || 'Error loading tour data')
       throw error
     }
   }
@@ -173,7 +176,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
     if (!window.mclTourPlayback) {
       console.error('MCL Tour Creator: mclTourPlayback not available')
-      showError('Tour preview is not available. Please refresh the page and try again.')
+      showError(i18n.tourCreator?.previewNotAvailable || 'Tour preview is not available. Please refresh the page and try again.')
       return
     }
 
@@ -181,7 +184,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       steps: tourSteps,
       settings: tourSettings,
       id: tourId || 0,
-      title: tourTitle ? `Preview: ${tourTitle}` : 'Preview Tour',
+      title: tourTitle ? `${i18n.tourCreator?.preview || 'Preview'}: ${tourTitle}` : i18n.tourCreator?.previewTour || 'Preview Tour',
       continue_from_step: stepIndex,
       active: true, // Ensure preview tours are considered active
       autostart: true // Auto-start preview tours
@@ -466,14 +469,14 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     if (stepToDelete !== null && stepToDelete >= 0 && stepToDelete < tourSteps.length) {
       const newSteps = tourSteps.filter((_, index) => index !== stepToDelete)
       setTourSteps(newSteps)
-      showSuccess('Step deleted successfully')
+      showSuccess(i18n.tourCreator?.stepDeletedSuccessfully || 'Step deleted successfully')
       setStepToDelete(null)
     }
   }
 
   const saveTour = async () => {
     if (!tourTitle.trim() && tourSteps.length > 0) {
-      showError('Tour title is required to save.')
+      showError(i18n.tourCreator?.tourTitleRequired || 'Tour title is required to save.')
       return
     }
 
@@ -495,7 +498,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess('Tour saved successfully!')
+        showSuccess(i18n.tourCreator?.tourSavedSuccessfully || 'Tour saved successfully!')
         // Update URL if it was a new tour
         if (!window.location.search.includes('tour_id=') && data.data.tour_id) {
           const newUrl = new URL(window.location.href)
@@ -504,12 +507,12 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         }
         return data.data
       } else {
-        showError('Error saving tour')
+        showError(i18n.tourCreator?.errorSavingTour || 'Error saving tour')
         throw new Error('Failed to save tour: ' + (data.data || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error saving tour:', error)
-      showError('Error saving tour')
+      showError(i18n.tourCreator?.errorSavingTour || 'Error saving tour')
     } finally {
       setProcessingActions(prev => {
         const newSet = new Set(prev)
@@ -521,7 +524,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
   const previewTour = () => {
     if (tourSteps.length === 0) {
-      showWarning('Please add some steps before previewing the tour.')
+      showWarning(i18n.tourCreator?.addStepsBeforePreview || 'Please add some steps before previewing the tour.')
       return
     }
     
@@ -547,7 +550,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         window.location.href = previewUrl.toString()
       }).catch(() => {
         // If save fails, try to continue anyway but warn user
-        showWarning('Failed to save tour data. Preview may not work correctly.')
+        showWarning(i18n.tourCreator?.failedSavePreviewWarning || 'Failed to save tour data. Preview may not work correctly.')
         const previewUrl = new URL(firstStepPageUrl, window.location.origin)
         previewUrl.searchParams.set('mcl_tour_mode', '1')
         previewUrl.searchParams.set('tour_id', tourId || 0)
@@ -566,7 +569,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         steps: tourSteps,
         settings: tourSettings,
         id: tourId || 0,
-        title: tourTitle ? `Preview: ${tourTitle}` : 'Preview Tour',
+        title: tourTitle ? `${i18n.tourCreator?.preview || 'Preview'}: ${tourTitle}` : i18n.tourCreator?.previewTour || 'Preview Tour',
         active: true, // Ensure preview tours are considered active
         autostart: true // Auto-start preview tours
       }
@@ -574,7 +577,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       console.log('MCL Tour Creator: Starting preview on current page with data:', previewTourData)
       window.mclTourPlayback.startTour(previewTourData)
     } else {
-      showError('Tour preview is not available. Please refresh the page and try again.')
+      showError(i18n.tourCreator?.previewNotAvailable || 'Tour preview is not available. Please refresh the page and try again.')
     }
   }
 
@@ -897,7 +900,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     
     const overlay = document.createElement('div')
     overlay.className = 'mcl-reselect-overlay'
-    overlay.textContent = 'Click on an element to select it...'
+    overlay.textContent = i18n.tourCreator?.clickElementToSelect || 'Click on an element to select it...'
     overlay.style.cssText = `
       position: fixed;
       top: 50%;
@@ -1195,7 +1198,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
             <span className="dashicons dashicons-move" style={{ color: '#8c8f94', fontSize: '16px' }}></span>
-            <span style={{ fontWeight: '600', fontSize: '14px', color: '#1d2327' }}>Tour Creator</span>
+            <span style={{ fontWeight: '600', fontSize: '14px', color: '#1d2327' }}>{i18n.tourCreator?.tourCreator || 'Tour Creator'}</span>
           </div>
           <button 
             type="button" 
@@ -1228,7 +1231,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '500', color: currentMode === 'select' ? '#1d4ed8' : '#166534' }}>
                   <span className={`dashicons ${currentMode === 'select' ? 'dashicons-welcome-view-site' : 'dashicons-navigation'}`} style={{ fontSize: '16px' }}></span>
-                  <span>{currentMode === 'select' ? 'Select Mode' : 'Navigate Mode'}</span>
+                  <span>{currentMode === 'select' ? (i18n.tourCreator?.selectMode || 'Select Mode') : (i18n.tourCreator?.navigateMode || 'Navigate Mode')}</span>
                 </div>
                 <Button
                   size="sm"
@@ -1237,13 +1240,13 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                   className="flex items-center gap-1"
                 >
                   <span className={`dashicons ${currentMode === 'select' ? 'dashicons-navigation' : 'dashicons-welcome-view-site'}`} style={{ fontSize: '14px' }}></span>
-                  <span>{currentMode === 'select' ? 'Navigate' : 'Select'}</span>
+                  <span>{currentMode === 'select' ? (i18n.tourCreator?.navigate || 'Navigate') : (i18n.tourCreator?.select || 'Select')}</span>
                 </Button>
               </div>
               <div style={{ fontSize: '11px', color: '#646970', fontStyle: 'italic' }}>
                 {currentMode === 'select' 
-                  ? 'Click on elements to create tour steps'
-                  : 'Navigate the site normally - links and forms will work'
+                  ? (i18n.tourCreator?.clickElementsToCreateSteps || 'Click on elements to create tour steps')
+                  : (i18n.tourCreator?.navigateNormally || 'Navigate the site normally - links and forms will work')
                 }
               </div>
             </div>
@@ -1258,7 +1261,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                 className="flex-1"
               >
                 <span className="dashicons dashicons-yes" style={{ fontSize: '14px' }}></span>
-                {processingActions.has('save') ? 'Saving...' : 'Save'}
+                {processingActions.has('save') ? (i18n.tourCreator?.saving || 'Saving...') : (i18n.tourCreator?.save || 'Save')}
               </Button>
               
               <Button
@@ -1269,7 +1272,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                 disabled={tourSteps.length === 0}
               >
                 <span className="dashicons dashicons-visibility" style={{ fontSize: '14px' }}></span>
-                Preview
+                {i18n.tourCreator?.preview || 'Preview'}
               </Button>
               
               <Button
@@ -1279,7 +1282,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                 className="flex-1"
               >
                 <span className="dashicons dashicons-no" style={{ fontSize: '14px' }}></span>
-                Exit
+                {i18n.tourCreator?.exit || 'Exit'}
               </Button>
             </div>
 
@@ -1301,7 +1304,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                 onClick={toggleStepsList}
               >
                 <span style={{ flex: 1, textAlign: 'center', fontWeight: '500' }}>
-                  {tourSteps.length} {tourSteps.length === 1 ? 'step' : 'steps'}
+                  {tourSteps.length} {tourSteps.length === 1 ? (i18n.tourCreator?.step || 'step') : (i18n.tourCreator?.steps || 'steps')}
                 </span>
                 <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#646970' }}>
                   <span className={`dashicons ${showStepsList ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2'}`} style={{ fontSize: '14px' }}></span>
@@ -1312,7 +1315,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                 <div style={{ marginTop: '8px', borderTop: '1px solid #e0e0e0', paddingTop: '8px', maxHeight: '200px', overflowY: 'auto' }}>
                   {tourSteps.length === 0 ? (
                     <div style={{ textAlign: 'center', color: '#8c8f94', fontStyle: 'italic', padding: '8px' }}>
-                      No steps added yet. Click on elements to create steps.
+                      {i18n.tourCreator?.noStepsAdded || 'No steps added yet. Click on elements to create steps.'}
                     </div>
                   ) : (
                     tourSteps.map((step, index) => (
@@ -1344,10 +1347,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: '500', color: '#1d2327', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {step.title || 'Untitled Step'}
+                            {step.title || (i18n.tourCreator?.untitledStep || 'Untitled Step')}
                           </div>
                           <div style={{ color: '#646970', fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {step.element || 'No element'}
+                            {step.element || (i18n.tourCreator?.noElement || 'No element')}
                           </div>
                           {step.page_url && (
                             <div style={{ color: '#2271b1', fontSize: '10px', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px' }}>
@@ -1436,7 +1439,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <h2 style={{ margin: 0, fontSize: '18px', color: '#1d2327' }}>Edit Tour Step</h2>
+            <h2 style={{ margin: 0, fontSize: '18px', color: '#1d2327' }}>{i18n.tourCreator?.editTourStep || 'Edit Tour Step'}</h2>
             <button 
               onClick={() => setShowStepEditor(false)}
               style={{
@@ -1455,36 +1458,36 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
           <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="step-title" value="Step Title" />
+                <Label htmlFor="step-title" value={i18n.tourCreator?.stepTitle || 'Step Title'} />
                 <TextInput
                   id="step-title"
                   value={stepForm.title}
                   onChange={(e) => setStepForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter step title..."
+                  placeholder={i18n.tourCreator?.enterStepTitle || 'Enter step title...'}
                 />
               </div>
 
               <div>
-                <Label htmlFor="step-content" value="Step Content" />
+                <Label htmlFor="step-content" value={i18n.tourCreator?.stepContent || 'Step Content'} />
                 <Textarea
                   id="step-content"
                   rows={5}
                   value={stepForm.content}
                   onChange={(e) => setStepForm(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Enter the content for this step..."
+                  placeholder={i18n.tourCreator?.enterStepContent || 'Enter the content for this step...'}
                 />
-                <p className="text-sm text-gray-600 mt-1">You can use HTML for formatting.</p>
+                <p className="text-sm text-gray-600 mt-1">{i18n.tourCreator?.canUseHTML || 'You can use HTML for formatting.'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="step-checklist" value="Link to Checklist" />
+                  <Label htmlFor="step-checklist" value={i18n.tourCreator?.linkToChecklist || 'Link to Checklist'} />
                   <Select
                     id="step-checklist"
                     value={stepForm.checklist_id}
                     onChange={(e) => setStepForm(prev => ({ ...prev, checklist_id: e.target.value, checklist_item_id: '' }))}
                   >
-                    <option value="">Select a checklist (optional)</option>
+                    <option value="">{i18n.tourCreator?.selectChecklistOptional || 'Select a checklist (optional)'}</option>
                     {checklists.map(checklist => (
                       <option key={checklist.id} value={checklist.id}>
                         {checklist.title}
@@ -1493,14 +1496,14 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="step-checklist-item" value="Link to Item" />
+                  <Label htmlFor="step-checklist-item" value={i18n.tourCreator?.linkToItem || 'Link to Item'} />
                   <Select
                     id="step-checklist-item"
                     value={stepForm.checklist_item_id}
                     onChange={(e) => setStepForm(prev => ({ ...prev, checklist_item_id: e.target.value }))}
                     disabled={!stepForm.checklist_id}
                   >
-                    <option value="">Select an item (optional)</option>
+                    <option value="">{i18n.tourCreator?.selectItemOptional || 'Select an item (optional)'}</option>
                     {stepForm.checklist_id && checklists
                       .find(c => c.id == stepForm.checklist_id)
                       ?.items?.map(item => (
@@ -1514,33 +1517,33 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="step-position" value="Popover Position" />
+                  <Label htmlFor="step-position" value={i18n.tourCreator?.popoverPosition || 'Popover Position'} />
                   <Select
                     id="step-position"
                     value={stepForm.position}
                     onChange={(e) => setStepForm(prev => ({ ...prev, position: e.target.value }))}
                   >
-                    <option value="bottom">Bottom (Default)</option>
-                    <option value="top">Top</option>
-                    <option value="left">Left</option>
-                    <option value="right">Right</option>
+                    <option value="bottom">{i18n.tourCreator?.bottomDefault || 'Bottom (Default)'}</option>
+                    <option value="top">{i18n.tourCreator?.top || 'Top'}</option>
+                    <option value="left">{i18n.tourCreator?.left || 'Left'}</option>
+                    <option value="right">{i18n.tourCreator?.right || 'Right'}</option>
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="step-element" value="Target Element" />
+                  <Label htmlFor="step-element" value={i18n.tourCreator?.targetElement || 'Target Element'} />
                   <div className="flex gap-2">
                     <TextInput
                       id="step-element"
                       value={stepForm.element}
                       onChange={(e) => setStepForm(prev => ({ ...prev, element: e.target.value }))}
-                      placeholder="CSS selector (e.g., #my-button)"
+                      placeholder={i18n.tourCreator?.cssSelectorPlaceholder || 'CSS selector (e.g., #my-button)'}
                       className="flex-1"
                     />
                     <Button
                       size="sm"
                       color="gray"
                       onClick={startElementReselection}
-                      title="Click to select element visually"
+                      title={i18n.tourCreator?.clickToSelectElement || 'Click to select element visually'}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 24" className="w-4 h-4">
                         <path fill="currentColor" d="M5.523 4.75a.75.75 0 0 0-.75.75v1.625a.75.75 0 0 1-1.5 0V5.5a2.25 2.25 0 0 1 2.25-2.25h1.625a.75.75 0 0 1 0 1.5z"/>
@@ -1548,21 +1551,21 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                     </Button>
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Enter a CSS selector or click the crosshairs to select an element visually.
+                    {i18n.tourCreator?.enterCssSelectorOrClick || 'Enter a CSS selector or click the crosshairs to select an element visually.'}
                   </p>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="step-page-url" value="Page URL" />
+                <Label htmlFor="step-page-url" value={i18n.tourCreator?.pageUrl || 'Page URL'} />
                 <TextInput
                   id="step-page-url"
                   value={stepForm.page_url}
                   onChange={(e) => setStepForm(prev => ({ ...prev, page_url: e.target.value }))}
-                  placeholder="Leave empty for current page"
+                  placeholder={i18n.tourCreator?.leaveEmptyForCurrentPage || 'Leave empty for current page'}
                 />
                 <p className="text-sm text-gray-600 mt-1">
-                  The page where this step should appear. Leave empty to use the current page.
+                  {i18n.tourCreator?.pageUrlDescription || 'The page where this step should appear. Leave empty to use the current page.'}
                 </p>
               </div>
 
@@ -1572,7 +1575,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
                   checked={stepForm.show_buttons}
                   onChange={(e) => setStepForm(prev => ({ ...prev, show_buttons: e.target.checked }))}
                 />
-                <Label htmlFor="step-show-buttons">Show navigation buttons</Label>
+                <Label htmlFor="step-show-buttons">{i18n.tourCreator?.showNavigationButtons || 'Show navigation buttons'}</Label>
               </div>
             </div>
           </div>
@@ -1585,10 +1588,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
             gap: '10px'
           }}>
             <Button color="gray" onClick={() => setShowStepEditor(false)}>
-              Cancel
+              {i18n.tourCreator?.cancel || 'Cancel'}
             </Button>
             <Button color="blue" onClick={saveStep}>
-              Save Step
+              {i18n.tourCreator?.saveStep || 'Save Step'}
             </Button>
           </div>
         </div>
@@ -1607,10 +1610,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         isOpen={showExitConfirmation}
         onClose={() => setShowExitConfirmation(false)}
         onConfirm={handleExitConfirm}
-        title="Exit Tour Creator?"
-        message="Are you sure you want to exit? Any unsaved changes will be lost."
-        confirmText="Yes, exit"
-        cancelText="No, continue editing"
+        title={i18n.tourCreator?.exitTourCreatorTitle || 'Exit Tour Creator?'}
+        message={i18n.tourCreator?.exitConfirmMessage || 'Are you sure you want to exit? Any unsaved changes will be lost.'}
+        confirmText={i18n.tourCreator?.yesExit || 'Yes, exit'}
+        cancelText={i18n.tourCreator?.noContinueEditing || 'No, continue editing'}
         confirmButtonClass="bg-orange-600 hover:bg-orange-700 focus:ring-orange-300 dark:bg-orange-500 dark:hover:bg-orange-600 dark:focus:ring-orange-900"
         icon="warning"
       />
@@ -1623,10 +1626,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
           setStepToDelete(null)
         }}
         onConfirm={handleDeleteConfirm}
-        title="Delete Tour Step?"
-        message={stepToDelete !== null ? `Are you sure you want to delete "${tourSteps[stepToDelete]?.title || 'Untitled Step'}"?` : "Are you sure you want to delete this step?"}
-        confirmText="Yes, delete"
-        cancelText="No, keep it"
+        title={i18n.tourCreator?.deleteTourStepTitle || 'Delete Tour Step?'}
+        message={stepToDelete !== null ? `${i18n.tourCreator?.deleteStepConfirm || 'Are you sure you want to delete'} "${tourSteps[stepToDelete]?.title || (i18n.tourCreator?.untitledStep || 'Untitled Step')}"?` : (i18n.tourCreator?.deleteThisStep || "Are you sure you want to delete this step?")}
+        confirmText={i18n.tourCreator?.yesDelete || 'Yes, delete'}
+        cancelText={i18n.tourCreator?.noKeepIt || 'No, keep it'}
         confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900"
         icon="delete"
       />

@@ -91,14 +91,14 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
             // Use defaults only if the setting doesn't exist (undefined), not if it's false
             animate: loadedData.settings?.hasOwnProperty('animate') ? loadedData.settings.animate : true,
             show_progress: loadedData.settings?.hasOwnProperty('show_progress') ? loadedData.settings.show_progress : true,
-            progress_text: loadedData.settings?.hasOwnProperty('progress_text') ? loadedData.settings.progress_text : '{{current}} of {{total}}',
+            progress_text: loadedData.settings?.hasOwnProperty('progress_text') ? loadedData.settings.progress_text : (adminData?.i18n?.tourEditor?.progressPlaceholder || '{{current}} of {{total}}'),
             allow_close: loadedData.settings?.hasOwnProperty('allow_close') ? loadedData.settings.allow_close : true,
             confirm_exit: loadedData.settings?.hasOwnProperty('confirm_exit') ? loadedData.settings.confirm_exit : false,
-            exit_message: loadedData.settings?.hasOwnProperty('exit_message') ? loadedData.settings.exit_message : 'Are you sure you want to exit the tour?',
-            next_btn_text: loadedData.settings?.hasOwnProperty('next_btn_text') ? loadedData.settings.next_btn_text : 'Next',
-            prev_btn_text: loadedData.settings?.hasOwnProperty('prev_btn_text') ? loadedData.settings.prev_btn_text : 'Previous',
-            done_btn_text: loadedData.settings?.hasOwnProperty('done_btn_text') ? loadedData.settings.done_btn_text : 'Done',
-            close_btn_text: loadedData.settings?.hasOwnProperty('close_btn_text') ? loadedData.settings.close_btn_text : 'Close',
+            exit_message: loadedData.settings?.hasOwnProperty('exit_message') ? loadedData.settings.exit_message : (adminData?.i18n?.tourEditor?.exitConfirmationPlaceholder || 'Are you sure you want to exit the tour?'),
+            next_btn_text: loadedData.settings?.hasOwnProperty('next_btn_text') ? loadedData.settings.next_btn_text : (adminData?.i18n?.tourEditor?.nextPlaceholder || 'Next'),
+            prev_btn_text: loadedData.settings?.hasOwnProperty('prev_btn_text') ? loadedData.settings.prev_btn_text : (adminData?.i18n?.tourEditor?.previousPlaceholder || 'Previous'),
+            done_btn_text: loadedData.settings?.hasOwnProperty('done_btn_text') ? loadedData.settings.done_btn_text : (adminData?.i18n?.tourEditor?.donePlaceholder || 'Done'),
+            close_btn_text: loadedData.settings?.hasOwnProperty('close_btn_text') ? loadedData.settings.close_btn_text : (adminData?.i18n?.tourEditor?.closePlaceholder || 'Close'),
             default_buttons: loadedData.settings?.hasOwnProperty('default_buttons') ? loadedData.settings.default_buttons : ['next', 'previous', 'close'],
             overlay_color: loadedData.settings?.hasOwnProperty('overlay_color') ? loadedData.settings.overlay_color : '#000000',
             overlay_opacity: loadedData.settings?.hasOwnProperty('overlay_opacity') ? loadedData.settings.overlay_opacity : 0.75,
@@ -240,12 +240,12 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           window.location.href = dashboardUrl.href
         } else {
           // Show success message and optionally go back to list
-          showSuccess('Tour settings saved successfully!')
+          showSuccess(adminData?.i18n?.tourEditor?.tourSettingsSavedSuccessfully || 'Tour settings saved successfully!')
           // Don't automatically go back - let user decide
         }
       } else {
         console.error('Failed to save tour:', data.data)
-        showError('Error saving tour settings')
+        showError(adminData?.i18n?.tourEditor?.errorSavingTourSettings || 'Error saving tour settings')
       }
     } catch (error) {
       console.error('Error saving tour:', error)
@@ -271,9 +271,9 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess('Tour completion reset successfully!')
+        showSuccess(adminData?.i18n?.tours?.tourCompletionResetSuccessfully || 'Tour completion reset successfully!')
       } else {
-        showError('Error resetting tour completion')
+        showError(adminData?.i18n?.tours?.errorResettingTourCompletion || 'Error resetting tour completion')
       }
     } catch (error) {
       console.error('Error resetting completion:', error)
@@ -355,7 +355,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
       const data = await response.json()
       if (!data.success) {
         console.error('Failed to save step order:', data.data)
-        showError('Error saving step order')
+        showError(adminData?.i18n?.tourEditor?.errorSavingStepOrder || 'Error saving step order')
       }
     } catch (error) {
       console.error('Error saving step order:', error)
@@ -391,33 +391,33 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           {/* Basic Information */}
           <Card>
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Basic Information</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.basicInformation || 'Basic Information'}</h2>
               
               <div>
-                <Label htmlFor="title" value="Tour Title" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                <Label htmlFor="title" value={adminData?.i18n?.tourEditor?.tourTitle || 'Tour Title'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                 <TextInput
                   id="title"
                   value={tourData.title}
                   onChange={(e) => updateTourData('title', e.target.value)}
-                  placeholder="Enter tour title..."
+                  placeholder={adminData?.i18n?.tourEditor?.enterTourTitle || 'Enter tour title...'}
                   required
                 />
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Give your tour a descriptive name.
+                  {adminData?.i18n?.tourEditor?.tourTitleDescription || 'Give your tour a descriptive name.'}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="description" value="Description" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                <Label htmlFor="description" value={adminData?.i18n?.tourEditor?.description || 'Description'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                 <Textarea
                   id="description"
                   value={tourData.description}
                   onChange={(e) => updateTourData('description', e.target.value)}
-                  placeholder="Optional description for this tour..."
+                  placeholder={adminData?.i18n?.tourEditor?.optionalDescription || 'Optional description for this tour...'}
                   rows={3}
                 />
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Optional description to help you remember what this tour is for.
+                  {adminData?.i18n?.tourEditor?.descriptionHelp || 'Optional description to help you remember what this tour is for.'}
                 </p>
               </div>
 
@@ -431,10 +431,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                   />
                   <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                 </label>
-                <Label htmlFor="active" value="Active (show this tour to users)" className="text-sm font-medium text-gray-900 dark:text-white" />
+                <Label htmlFor="active" value={adminData?.i18n?.tourEditor?.activeLabel || 'Active (show this tour to users)'} className="text-sm font-medium text-gray-900 dark:text-white" />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Only active tours will be displayed to users.
+                {adminData?.i18n?.tourEditor?.activeDescription || 'Only active tours will be displayed to users.'}
               </p>
             </div>
           </Card>
@@ -442,10 +442,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           {/* Trigger Settings */}
           <Card>
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Trigger Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.triggerSettings || 'Trigger Settings'}</h2>
               
               <div>
-                <Label value="Trigger Location" className="text-sm font-medium text-gray-900 dark:text-white mb-3 block" />
+                <Label value={adminData?.i18n?.tourEditor?.triggerLocation || 'Trigger Location'} className="text-sm font-medium text-gray-900 dark:text-white mb-3 block" />
                 <div className="space-y-4">
                   <div>
                     <label className="flex items-center space-x-3 cursor-pointer">
@@ -457,7 +457,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleTriggerTypeChange('page')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">Specific Page URL</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.specificPageUrl || 'Specific Page URL'}</span>
                     </label>
                     {tourData.trigger_type === 'page' && (
                       <div className="mt-3 ml-7 space-y-2">
@@ -465,7 +465,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                           value=""
                           onChange={(e) => e.target.value && updateTourData('trigger_value', e.target.value)}
                         >
-                          <option value="">Select a template or enter custom URL</option>
+                          <option value="">{adminData?.i18n?.tourEditor?.selectTemplateOrCustomUrl || 'Select a template or enter custom URL'}</option>
                           {triggerTemplates.map(template => (
                             <option key={template.value} value={template.value}>{template.label}</option>
                           ))}
@@ -473,10 +473,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         <TextInput
                           value={tourData.trigger_value}
                           onChange={(e) => updateTourData('trigger_value', e.target.value)}
-                          placeholder="e.g., /wp-admin/edit.php"
+                          placeholder={adminData?.i18n?.tourEditor?.urlPlaceholder || 'e.g., /wp-admin/edit.php'}
                         />
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          Enter the URL where this tour should trigger. Use * for wildcards.
+                          {adminData?.i18n?.tourEditor?.urlHelp || 'Enter the URL where this tour should trigger. Use * for wildcards.'}
                         </p>
                       </div>
                     )}
@@ -492,17 +492,17 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleTriggerTypeChange('selector')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">When CSS Selector Exists</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.whenCssSelectorExists || 'When CSS Selector Exists'}</span>
                     </label>
                     {tourData.trigger_type === 'selector' && (
                       <div className="mt-3 ml-7">
                         <TextInput
                           value={tourData.trigger_value}
                           onChange={(e) => updateTourData('trigger_value', e.target.value)}
-                          placeholder="e.g., .my-button, #specific-element"
+                          placeholder={adminData?.i18n?.tourEditor?.cssSelectorPlaceholder || 'e.g., .my-button, #specific-element'}
                         />
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Tour will trigger when this CSS selector is found on any page.
+                          {adminData?.i18n?.tourEditor?.cssSelectorHelp || 'Tour will trigger when this CSS selector is found on any page.'}
                         </p>
                       </div>
                     )}
@@ -518,12 +518,12 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleTriggerTypeChange('first_login')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">User's First Login (any page)</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.usersFirstLogin || "User's First Login (any page)"}</span>
                     </label>
                     {tourData.trigger_type === 'first_login' && (
                       <div className="mt-3 ml-7">
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          This tour will trigger on any page for users who have never seen a first-login tour.
+                          {adminData?.i18n?.tourEditor?.firstLoginHelp || 'This tour will trigger on any page for users who have never seen a first-login tour.'}
                         </p>
                       </div>
                     )}
@@ -539,12 +539,12 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleTriggerTypeChange('any_page')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">Any Page</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.anyPage || 'Any Page'}</span>
                     </label>
                     {tourData.trigger_type === 'any_page' && (
                       <div className="mt-3 ml-7">
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          This tour can trigger on any page (use with caution and combine with user conditions).
+                          {adminData?.i18n?.tourEditor?.anyPageHelp || 'This tour can trigger on any page (use with caution and combine with user conditions).'}
                         </p>
                       </div>
                     )}
@@ -557,10 +557,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           {/* User Conditions */}
           <Card>
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">User Conditions</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.userConditions || 'User Conditions'}</h2>
               
               <div>
-                <Label value="Who should see this tour?" className="text-sm font-medium text-gray-900 dark:text-white mb-3 block" />
+                <Label value={adminData?.i18n?.tourEditor?.whoShouldSeeTour || 'Who should see this tour?'} className="text-sm font-medium text-gray-900 dark:text-white mb-3 block" />
                 <div className="space-y-4">
                   <div>
                     <label className="flex items-center space-x-3 cursor-pointer">
@@ -572,7 +572,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleUserConditionChange('all_users')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">All Users (logged in and logged out)</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.allUsers || 'All Users (logged in and logged out)'}</span>
                     </label>
                   </div>
 
@@ -586,7 +586,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleUserConditionChange('all_logged_in')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">All Logged In Users</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.allLoggedInUsers || 'All Logged In Users'}</span>
                     </label>
                   </div>
 
@@ -600,7 +600,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleUserConditionChange('all_logged_out')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">All Logged Out Users</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.allLoggedOutUsers || 'All Logged Out Users'}</span>
                     </label>
                   </div>
 
@@ -614,7 +614,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleUserConditionChange('specific_users')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">Specific Users Only</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.specificUsersOnly || 'Specific Users Only'}</span>
                     </label>
                     {tourData.user_condition === 'specific_users' && (
                       <div className="mt-3 ml-7">
@@ -633,7 +633,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                           ))}
                         </Select>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Select specific users who should see this tour.
+                          {adminData?.i18n?.tourEditor?.selectSpecificUsersHelp || 'Select specific users who should see this tour.'}
                         </p>
                       </div>
                     )}
@@ -649,7 +649,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         onChange={(e) => handleUserConditionChange('specific_roles')}
                         className="w-4 h-4 text-brand-accent"
                       />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">Specific User Roles Only</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.specificUserRolesOnly || 'Specific User Roles Only'}</span>
                     </label>
                     {tourData.user_condition === 'specific_roles' && (
                       <div className="mt-3 ml-7">
@@ -668,7 +668,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                           ))}
                         </Select>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Select user roles that should see this tour.
+                          {adminData?.i18n?.tourEditor?.selectUserRolesHelp || 'Select user roles that should see this tour.'}
                         </p>
                       </div>
                     )}
@@ -681,7 +681,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           {/* Display Options */}
           <Card>
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Display Options</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.displayOptions || 'Display Options'}</h2>
               
               <div className="flex items-center space-x-3">
                 <label className="inline-flex items-center cursor-pointer">
@@ -693,10 +693,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                   />
                   <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                 </label>
-                <Label value="Auto-start tour when triggered" className="text-sm font-medium text-gray-900 dark:text-white" />
+                <Label value={adminData?.i18n?.tourEditor?.autostartTourWhenTriggered || 'Auto-start tour when triggered'} className="text-sm font-medium text-gray-900 dark:text-white" />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                If enabled, the tour will start automatically when the trigger conditions are met.
+                {adminData?.i18n?.tourEditor?.autostartHelp || 'If enabled, the tour will start automatically when the trigger conditions are met.'}
               </p>
 
               <div className="flex items-center space-x-3">
@@ -709,10 +709,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                   />
                   <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                 </label>
-                <Label value="Show only once per user" className="text-sm font-medium text-gray-900 dark:text-white" />
+                <Label value={adminData?.i18n?.tourEditor?.showOnlyOncePerUser || 'Show only once per user'} className="text-sm font-medium text-gray-900 dark:text-white" />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                If checked, each user will only see this tour once. Tracked by user account or browser cookie.
+                {adminData?.i18n?.tourEditor?.showOnceHelp || 'If checked, each user will only see this tour once. Tracked by user account or browser cookie.'}
               </p>
             </div>
           </Card>
@@ -720,11 +720,11 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           {/* Appearance & Behavior Settings */}
           <Card>
             <div className="space-y-8">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Appearance & Behavior</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.appearanceBehavior || 'Appearance & Behavior'}</h2>
               
               {/* Animation Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Animation</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.animation || 'Animation'}</h3>
                 <div className="flex items-center space-x-3">
                   <label className="inline-flex items-center cursor-pointer">
                     <input
@@ -735,16 +735,16 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                     />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                   </label>
-                  <Label value="Enable animated transitions" className="text-sm font-medium text-gray-900 dark:text-white" />
+                  <Label value={adminData?.i18n?.tourEditor?.enableAnimatedTransitions || 'Enable animated transitions'} className="text-sm font-medium text-gray-900 dark:text-white" />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  When enabled, the tour will smoothly animate between steps. Disable for a static, instant appearance.
+                  {adminData?.i18n?.tourEditor?.animationHelp || 'When enabled, the tour will smoothly animate between steps. Disable for a static, instant appearance.'}
                 </p>
               </div>
 
               {/* Progress Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Progress Display</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.progressDisplay || 'Progress Display'}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <label className="inline-flex items-center cursor-pointer">
@@ -756,19 +756,19 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       />
                       <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                     </label>
-                    <Label value="Show progress indicator" className="text-sm font-medium text-gray-900 dark:text-white" />
+                    <Label value={adminData?.i18n?.tourEditor?.showProgressIndicator || 'Show progress indicator'} className="text-sm font-medium text-gray-900 dark:text-white" />
                   </div>
                   
                   <div>
-                    <Label htmlFor="progress-text" value="Progress Text Template" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="progress-text" value={adminData?.i18n?.tourEditor?.progressTextTemplate || 'Progress Text Template'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="progress-text"
                       value={tourData.settings.progress_text}
                       onChange={(e) => updateSettings('progress_text', e.target.value)}
-                      placeholder="{{current}} of {{total}}"
+                      placeholder={adminData?.i18n?.tourEditor?.progressPlaceholder || '{{current}} of {{total}}'}
                     />
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Customize the progress text. Use {'{{{current}}'} for current step and {'{{{total}}'} for total steps.
+                      {adminData?.i18n?.tourEditor?.progressHelp || 'Customize the progress text. Use {{current}} for current step and {{total}} for total steps.'}
                     </p>
                   </div>
                 </div>
@@ -776,7 +776,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
 
               {/* Exit Control Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Exit Control</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.exitControl || 'Exit Control'}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <label className="inline-flex items-center cursor-pointer">
@@ -788,10 +788,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       />
                       <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                     </label>
-                    <Label value="Allow users to close tour" className="text-sm font-medium text-gray-900 dark:text-white" />
+                    <Label value={adminData?.i18n?.tourEditor?.allowUsersToCloseTour || 'Allow users to close tour'} className="text-sm font-medium text-gray-900 dark:text-white" />
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    When disabled, users must complete the entire tour before they can exit.
+                    {adminData?.i18n?.tourEditor?.allowCloseHelp || 'When disabled, users must complete the entire tour before they can exit.'}
                   </p>
 
                   <div className="flex items-center space-x-3">
@@ -804,19 +804,19 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       />
                       <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                     </label>
-                    <Label value="Show confirmation dialog before exit" className="text-sm font-medium text-gray-900 dark:text-white" />
+                    <Label value={adminData?.i18n?.tourEditor?.showConfirmationDialogBeforeExit || 'Show confirmation dialog before exit'} className="text-sm font-medium text-gray-900 dark:text-white" />
                   </div>
 
                   <div>
-                    <Label htmlFor="exit-message" value="Exit Confirmation Message" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="exit-message" value={adminData?.i18n?.tourEditor?.exitConfirmationMessage || 'Exit Confirmation Message'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="exit-message"
                       value={tourData.settings.exit_message}
                       onChange={(e) => updateSettings('exit_message', e.target.value)}
-                      placeholder="Are you sure you want to exit the tour?"
+                      placeholder={adminData?.i18n?.tourEditor?.exitConfirmationPlaceholder || 'Are you sure you want to exit the tour?'}
                     />
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Message shown when users try to exit the tour (only when confirmation is enabled).
+                      {adminData?.i18n?.tourEditor?.exitMessageHelp || 'Message shown when users try to exit the tour (only when confirmation is enabled).'}
                     </p>
                   </div>
                 </div>
@@ -824,53 +824,53 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
 
               {/* Button Customization */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Button Text</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.buttonText || 'Button Text'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="next-btn" value="Next Button Text" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="next-btn" value={adminData?.i18n?.tourEditor?.nextButtonText || 'Next Button Text'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="next-btn"
                       value={tourData.settings.next_btn_text}
                       onChange={(e) => updateSettings('next_btn_text', e.target.value)}
-                      placeholder="Next"
+                      placeholder={adminData?.i18n?.tourEditor?.nextPlaceholder || 'Next'}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="prev-btn" value="Previous Button Text" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="prev-btn" value={adminData?.i18n?.tourEditor?.previousButtonText || 'Previous Button Text'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="prev-btn"
                       value={tourData.settings.prev_btn_text}
                       onChange={(e) => updateSettings('prev_btn_text', e.target.value)}
-                      placeholder="Previous"
+                      placeholder={adminData?.i18n?.tourEditor?.previousPlaceholder || 'Previous'}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="done-btn" value="Done Button Text" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="done-btn" value={adminData?.i18n?.tourEditor?.doneButtonText || 'Done Button Text'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="done-btn"
                       value={tourData.settings.done_btn_text}
                       onChange={(e) => updateSettings('done_btn_text', e.target.value)}
-                      placeholder="Done"
+                      placeholder={adminData?.i18n?.tourEditor?.donePlaceholder || 'Done'}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="close-btn" value="Close Button Text" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="close-btn" value={adminData?.i18n?.tourEditor?.closeButtonText || 'Close Button Text'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       id="close-btn"
                       value={tourData.settings.close_btn_text}
                       onChange={(e) => updateSettings('close_btn_text', e.target.value)}
-                      placeholder="Close"
+                      placeholder={adminData?.i18n?.tourEditor?.closePlaceholder || 'Close'}
                     />
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Customize the text displayed on tour navigation buttons.
+                  {adminData?.i18n?.tourEditor?.buttonTextHelp || 'Customize the text displayed on tour navigation buttons.'}
                 </p>
               </div>
 
               {/* Default Button Configuration */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Default Buttons to Show</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.defaultButtonsToShow || 'Default Buttons to Show'}</h3>
                 <div className="space-y-3">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -884,7 +884,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       }}
                       className="w-4 h-4 text-brand-accent"
                     />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">Next button</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.nextButton || 'Next button'}</span>
                   </label>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -898,7 +898,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       }}
                       className="w-4 h-4 text-brand-accent"
                     />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">Previous button</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.previousButton || 'Previous button'}</span>
                   </label>
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -912,20 +912,20 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       }}
                       className="w-4 h-4 text-brand-accent"
                     />
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">Close button</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{adminData?.i18n?.tourEditor?.closeButton || 'Close button'}</span>
                   </label>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Select which buttons should be shown by default on each tour step. Individual steps can override these settings.
+                  {adminData?.i18n?.tourEditor?.defaultButtonsHelp || 'Select which buttons should be shown by default on each tour step. Individual steps can override these settings.'}
                 </p>
               </div>
 
               {/* Overlay Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Overlay Style</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.overlayStyle || 'Overlay Style'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="overlay-color" value="Overlay Color" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="overlay-color" value={adminData?.i18n?.tourEditor?.overlayColor || 'Overlay Color'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <div className="flex space-x-2">
                       <input
                         type="color"
@@ -943,7 +943,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="overlay-opacity" value="Overlay Opacity" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="overlay-opacity" value={adminData?.i18n?.tourEditor?.overlayOpacity || 'Overlay Opacity'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <div className="flex items-center space-x-3">
                       <input
                         type="range"
@@ -962,34 +962,33 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Customize the background overlay that appears behind the tour popover.
+                  {adminData?.i18n?.tourEditor?.overlayStyleHelp || 'Customize the background overlay that appears behind the tour popover.'}
                 </p>
               </div>
 
               {/* Popover Styling */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Popover Style</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.popoverStyle || 'Popover Style'}</h3>
                 <div>
-                  <Label htmlFor="popover-class" value="Custom CSS Class" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                  <Label htmlFor="popover-class" value={adminData?.i18n?.tourEditor?.customCssClass || 'Custom CSS Class'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                   <TextInput
                     id="popover-class"
                     value={tourData.settings.popover_class}
                     onChange={(e) => updateSettings('popover_class', e.target.value)}
-                    placeholder="my-custom-tour-theme"
+                    placeholder={adminData?.i18n?.tourEditor?.customCssPlaceholder || 'my-custom-tour-theme'}
                   />
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Add a custom CSS class to style the popover. Leave empty for default styling.
-                    Try: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large.
+                    {adminData?.i18n?.tourEditor?.customCssHelp || 'Add a custom CSS class to style the popover. Leave empty for default styling.\nTry: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large.'}
                   </p>
                 </div>
               </div>
 
               {/* Advanced Settings */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Advanced Options</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{adminData?.i18n?.tourEditor?.advancedOptions || 'Advanced Options'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="padding" value="Highlight Padding" className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
+                    <Label htmlFor="padding" value={adminData?.i18n?.tourEditor?.highlightPadding || 'Highlight Padding'} className="text-sm font-medium text-gray-900 dark:text-white mb-2 block" />
                     <TextInput
                       type="number"
                       id="padding"
@@ -999,7 +998,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       onChange={(e) => updateSettings('padding', parseInt(e.target.value) || 0)}
                     />
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Padding around highlighted elements in pixels.
+                      {adminData?.i18n?.tourEditor?.paddingHelp || 'Padding around highlighted elements in pixels.'}
                     </p>
                   </div>
                   <div className="flex flex-col justify-center">
@@ -1013,10 +1012,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                         />
                         <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                       </label>
-                      <Label value="Smooth Scroll" className="text-sm font-medium text-gray-900 dark:text-white" />
+                      <Label value={adminData?.i18n?.tourEditor?.smoothScroll || 'Smooth Scroll'} className="text-sm font-medium text-gray-900 dark:text-white" />
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Enable smooth scrolling to highlighted elements.
+                      {adminData?.i18n?.tourEditor?.smoothScrollHelp || 'Enable smooth scrolling to highlighted elements.'}
                     </p>
                   </div>
                 </div>
@@ -1029,8 +1028,8 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
             <Card>
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {steps.length} Tour Step{steps.length !== 1 ? 's' : ''}
-                  <span className="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">(drag to reorder)</span>
+                  {steps.length} {steps.length === 1 ? (adminData?.i18n?.tourEditor?.tourStep || 'Tour Step') : (adminData?.i18n?.tourEditor?.tourStepsTitle || 'Tour Steps')}
+                  <span className="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">{adminData?.i18n?.tourEditor?.dragToReorder || '(drag to reorder)'}</span>
                 </h2>
                 <DragDropContext onDragEnd={handleStepsDragEnd}>
                   <Droppable droppableId="tour-steps">
@@ -1106,14 +1105,14 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    {saving ? 'Saving...' : 'Save & Open Visual Creator'}
+                    {saving ? (adminData?.i18n?.tourEditor?.saving || 'Saving...') : (adminData?.i18n?.tourEditor?.saveAndOpenVisualCreator || 'Save & Open Visual Creator')}
                   </Button>
                   <Button
                     color="gray"
                     onClick={() => handleSave(false)}
                     disabled={saving || !tourData.title.trim()}
                   >
-                    Save Settings Only
+                    {adminData?.i18n?.tourEditor?.saveSettingsOnly || 'Save Settings Only'}
                   </Button>
                   {steps.length > 0 && (
                     <Button
@@ -1124,7 +1123,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      Reset My Completion
+                      {adminData?.i18n?.tourEditor?.resetMyCompletion || 'Reset My Completion'}
                     </Button>
                   )}
                 </>
@@ -1139,7 +1138,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  {saving ? 'Saving...' : 'Save & Open Visual Creator'}
+                  {saving ? (adminData?.i18n?.tourEditor?.saving || 'Saving...') : (adminData?.i18n?.tourEditor?.saveAndOpenVisualCreator || 'Save & Open Visual Creator')}
                 </Button>
               )}
             </div>
@@ -1151,51 +1150,51 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
           <Card>
             <div className="space-y-6">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                {isEditing ? 'Getting Started' : 'Create Your Tour'}
+                {isEditing ? (adminData?.i18n?.tourEditor?.gettingStarted || 'Getting Started') : (adminData?.i18n?.tourEditor?.createYourTour || 'Create Your Tour')}
               </h3>
               
               <div className="space-y-4">
                 {(isEditing ? [
                   {
                     step: 1,
-                    title: 'Configure Settings',
-                    description: 'Set up the basic information, trigger conditions, and customize the appearance.'
+                    title: adminData?.i18n?.tourEditor?.configureSettings || 'Configure Settings',
+                    description: adminData?.i18n?.tourEditor?.configureSettingsDescription || 'Set up the basic information, trigger conditions, and customize the appearance.'
                   },
                   {
                     step: 2,
-                    title: 'Add Tour Steps',
-                    description: 'Use the visual tour creator to add interactive steps by clicking on elements.'
+                    title: adminData?.i18n?.tourEditor?.addTourSteps || 'Add Tour Steps',
+                    description: adminData?.i18n?.tourEditor?.addTourStepsDescription || 'Use the visual tour creator to add interactive steps by clicking on elements.'
                   },
                   {
                     step: 3,
-                    title: 'Preview & Test',
-                    description: 'Use the preview feature to test your tour and make adjustments.'
+                    title: adminData?.i18n?.tourEditor?.previewAndTest || 'Preview & Test',
+                    description: adminData?.i18n?.tourEditor?.previewAndTestDescription || 'Use the preview feature to test your tour and make adjustments.'
                   },
                   {
                     step: 4,
-                    title: 'Test & Activate',
-                    description: 'Preview your tour, make adjustments, then activate it for your users.'
+                    title: adminData?.i18n?.tourEditor?.testAndActivate || 'Test & Activate',
+                    description: adminData?.i18n?.tourEditor?.testAndActivateDescription || 'Preview your tour, make adjustments, then activate it for your users.'
                   }
                 ] : [
                   {
                     step: 1,
-                    title: 'Set Tour Title',
-                    description: 'Give your tour a descriptive name that explains its purpose.'
+                    title: adminData?.i18n?.tourEditor?.setTourTitle || 'Set Tour Title',
+                    description: adminData?.i18n?.tourEditor?.setTourTitleDescription || 'Give your tour a descriptive name that explains its purpose.'
                   },
                   {
                     step: 2,
-                    title: 'Configure Trigger',
-                    description: 'Choose when and where your tour should appear to users.'
+                    title: adminData?.i18n?.tourEditor?.configureTrigger || 'Configure Trigger',
+                    description: adminData?.i18n?.tourEditor?.configureTriggerDescription || 'Choose when and where your tour should appear to users.'
                   },
                   {
                     step: 3,
-                    title: 'Save & Create',
-                    description: 'Click "Save & Open Visual Creator" to start adding interactive steps.'
+                    title: adminData?.i18n?.tourEditor?.saveAndCreate || 'Save & Create',
+                    description: adminData?.i18n?.tourEditor?.saveAndCreateDescription || 'Click "Save & Open Visual Creator" to start adding interactive steps.'
                   },
                   {
                     step: 4,
-                    title: 'Add Steps',
-                    description: 'Use the visual creator to click on elements and create guided tour steps.'
+                    title: adminData?.i18n?.tourEditor?.addSteps || 'Add Steps',
+                    description: adminData?.i18n?.tourEditor?.addStepsDescription || 'Use the visual creator to click on elements and create guided tour steps.'
                   }
                 ]).map((item) => (
                   <div key={item.step} className="flex items-start space-x-3">

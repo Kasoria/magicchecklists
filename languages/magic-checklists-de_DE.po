@@ -2626,3 +2626,664 @@ msgstr "Beschreibung (optional)"
 msgid "Additional instructions..."
 msgstr "Zusätzliche Anweisungen..."
 
+# New Tour-related translations
+
+# TourPlayback strings
+msgid "MCL Tour Playback: No tour data provided"
+msgstr "MCL Tour Playback: Keine Tour-Daten bereitgestellt"
+
+msgid "MCL Tour Playback: Tour has no steps"
+msgstr "MCL Tour Playback: Tour hat keine Schritte"
+
+msgid "MCL Tour Playback: Driver function not available, retrying..."
+msgstr "MCL Tour Playback: Driver-Funktion nicht verfügbar, wiederhole..."
+
+msgid "MCL Tour Playback: Driver function still not available after retry"
+msgstr "MCL Tour Playback: Driver-Funktion nach Wiederholung immer noch nicht verfügbar"
+
+msgid "Click \"Continue\" to go to the next page..."
+msgstr "Klicke auf \"Weiter\", um zur nächsten Seite zu gehen..."
+
+msgid "Tour Step"
+msgstr "Tour-Schritt"
+
+msgid "Continue"
+msgstr "Weiter"
+
+
+msgid "MCL Tour: Error moving to next step"
+msgstr "MCL Tour: Fehler beim Wechseln zum nächsten Schritt"
+
+msgid "MCL Tour: Error moving to previous step within page"
+msgstr "MCL Tour: Fehler beim Wechseln zum vorherigen Schritt auf derselben Seite"
+
+msgid "MCL Tour: Error moving to previous step"
+msgstr "MCL Tour: Fehler beim Wechseln zum vorherigen Schritt"
+
+msgid "Are you sure you want to exit the tour?"
+msgstr "Bist du sicher, dass du die Tour verlassen möchtest?"
+
+msgid "MCL Tour: Error in close confirmation:"
+msgstr "MCL Tour: Fehler bei Bestätigung zum Schließen:"
+
+msgid "MCL Tour Playback: Error starting tour:"
+msgstr "MCL Tour Playback: Fehler beim Starten der Tour:"
+
+msgid "MCL Tour Playback: Error continuing tour:"
+msgstr "MCL Tour Playback: Fehler beim Fortsetzen der Tour:"
+
+msgid "Loading next page..."
+msgstr "Lade nächste Seite..."
+
+msgid "Close tour"
+msgstr "Tour schließen"
+
+msgid "MCL Tour: checkChecklistItem - Missing parameters"
+msgstr "MCL Tour: checkChecklistItem - Fehlende Parameter"
+
+msgid "MCL Tour: Failed to check checklist item"
+msgstr "MCL Tour: Fehler beim Abhaken des Checklisten-Elements"
+
+msgid "MCL Tour Playback: Error checking checklist item:"
+msgstr "MCL Tour Playback: Fehler beim Prüfen des Checklisten-Elements:"
+
+msgid "MCL Tour: uncheckChecklistItem - Missing parameters"
+msgstr "MCL Tour: uncheckChecklistItem - Fehlende Parameter"
+
+msgid "MCL Tour: Failed to uncheck checklist item"
+msgstr "MCL Tour: Fehler beim Abhaken des Checklisten-Elements rückgängig machen"
+
+msgid "MCL Tour Playback: Error unchecking checklist item:"
+msgstr "MCL Tour Playback: Fehler beim Rückgängigmachen des Checklisten-Elements:"
+
+msgid "Close modal"
+msgstr "Modal schließen"
+
+msgid "Exit Tour?"
+msgstr "Tour verlassen?"
+
+msgid "No, continue tour"
+msgstr "Nein, Tour fortsetzen"
+
+msgid "Yes, exit tour"
+msgstr "Ja, Tour verlassen"
+
+# TourCreator strings
+msgid "Failed to load tour data"
+msgstr "Fehler beim Laden der Tour-Daten"
+
+msgid "Error loading tour data:"
+msgstr "Fehler beim Laden der Tour-Daten:"
+
+msgid "Preview failed: Tour steps could not be loaded in time."
+msgstr "Vorschau fehlgeschlagen: Tour-Schritte konnten nicht rechtzeitig geladen werden."
+
+msgid "No tour steps available for preview. Please ensure the tour is loaded."
+msgstr "Keine Tour-Schritte für Vorschau verfügbar. Bitte stelle sicher, dass die Tour geladen ist."
+
+msgid "Invalid step index for preview:"
+msgstr "Ungültiger Schritt-Index für Vorschau:"
+
+msgid "Tour has"
+msgstr "Tour hat"
+
+msgid "steps"
+msgstr "Schritte"
+
+msgid "Tour preview is not available. Please refresh the page and try again."
+msgstr "Tour-Vorschau ist nicht verfügbar. Bitte aktualisiere die Seite und versuche es erneut."
+
+msgid "Preview"
+msgstr "Vorschau"
+
+msgid "Preview Tour"
+msgstr "Tour-Vorschau"
+
+msgid "Error loading checklists:"
+msgstr "Fehler beim Laden der Checklisten:"
+
+msgid "Step deleted successfully"
+msgstr "Schritt erfolgreich gelöscht"
+
+msgid "Tour title is required to save."
+msgstr "Tour-Titel ist zum Speichern erforderlich."
+
+msgid "Tour saved successfully!"
+msgstr "Tour erfolgreich gespeichert!"
+
+msgid "Error saving tour"
+msgstr "Fehler beim Speichern der Tour"
+
+msgid "Please add some steps before previewing the tour."
+msgstr "Bitte füge einige Schritte hinzu, bevor du die Tour in der Vorschau ansiehst."
+
+msgid "Failed to save tour data. Preview may not work correctly."
+msgstr "Fehler beim Speichern der Tour-Daten. Vorschau funktioniert möglicherweise nicht korrekt."
+
+msgid "Click on an element to select it..."
+msgstr "Klicke auf ein Element, um es auszuwählen..."
+
+msgid "Tour Creator"
+msgstr "Tour-Ersteller"
+
+msgid "Select Mode"
+msgstr "Auswahl-Modus"
+
+msgid "Navigate Mode"
+msgstr "Navigations-Modus"
+
+msgid "Navigate"
+msgstr "Navigieren"
+
+msgid "Select"
+msgstr "Auswählen"
+
+msgid "Click on elements to create tour steps"
+msgstr "Klicke auf Elemente, um Tour-Schritte zu erstellen"
+
+msgid "Navigate the site normally - links and forms will work"
+msgstr "Navigiere die Website normal - Links und Formulare funktionieren"
+
+
+msgid "Exit"
+msgstr "Verlassen"
+
+msgid "step"
+msgstr "Schritt"
+
+msgid "No steps added yet. Click on elements to create steps."
+msgstr "Noch keine Schritte hinzugefügt. Klicke auf Elemente, um Schritte zu erstellen."
+
+msgid "Untitled Step"
+msgstr "Unbenannter Schritt"
+
+msgid "No element"
+msgstr "Kein Element"
+
+msgid "Edit Tour Step"
+msgstr "Tour-Schritt bearbeiten"
+
+msgid "Step Title"
+msgstr "Schritt-Titel"
+
+msgid "Enter step title..."
+msgstr "Schritt-Titel eingeben..."
+
+msgid "Step Content"
+msgstr "Schritt-Inhalt"
+
+msgid "Enter the content for this step..."
+msgstr "Gib den Inhalt für diesen Schritt ein..."
+
+msgid "You can use HTML for formatting."
+msgstr "Du kannst HTML für die Formatierung verwenden."
+
+msgid "Link to Checklist"
+msgstr "Mit Checkliste verknüpfen"
+
+msgid "Select a checklist (optional)"
+msgstr "Checkliste auswählen (optional)"
+
+msgid "Link to Item"
+msgstr "Mit Element verknüpfen"
+
+msgid "Select an item (optional)"
+msgstr "Element auswählen (optional)"
+
+msgid "Popover Position"
+msgstr "Popover-Position"
+
+msgid "Bottom (Default)"
+msgstr "Unten (Standard)"
+
+msgid "Top"
+msgstr "Oben"
+
+msgid "Left"
+msgstr "Links"
+
+msgid "Right"
+msgstr "Rechts"
+
+msgid "Target Element"
+msgstr "Ziel-Element"
+
+msgid "CSS selector (e.g., #my-button)"
+msgstr "CSS-Selektor (z.B. #my-button)"
+
+msgid "Click to select element visually"
+msgstr "Klicken, um Element visuell auszuwählen"
+
+msgid "Enter a CSS selector or click the crosshairs to select an element visually."
+msgstr "Gib einen CSS-Selektor ein oder klicke auf das Fadenkreuz, um ein Element visuell auszuwählen."
+
+msgid "Page URL"
+msgstr "Seiten-URL"
+
+msgid "Leave empty for current page"
+msgstr "Leer lassen für aktuelle Seite"
+
+msgid "The page where this step should appear. Leave empty to use the current page."
+msgstr "Die Seite, auf der dieser Schritt erscheinen soll. Leer lassen, um die aktuelle Seite zu verwenden."
+
+msgid "Show navigation buttons"
+msgstr "Navigations-Schaltflächen anzeigen"
+
+msgid "Save Step"
+msgstr "Schritt speichern"
+
+msgid "Exit Tour Creator?"
+msgstr "Tour-Ersteller verlassen?"
+
+msgid "Are you sure you want to exit? Any unsaved changes will be lost."
+msgstr "Bist du sicher, dass du verlassen möchtest? Alle nicht gespeicherten Änderungen gehen verloren."
+
+msgid "Yes, exit"
+msgstr "Ja, verlassen"
+
+msgid "No, continue editing"
+msgstr "Nein, weiter bearbeiten"
+
+msgid "Delete Tour Step?"
+msgstr "Tour-Schritt löschen?"
+
+msgid "Are you sure you want to delete"
+msgstr "Bist du sicher, dass du löschen möchtest"
+
+msgid "Are you sure you want to delete this step?"
+msgstr "Bist du sicher, dass du diesen Schritt löschen möchtest?"
+
+msgid "No, keep it"
+msgstr "Nein, behalten"
+
+# Tours list strings
+msgid "Error updating tour status"
+msgstr "Fehler beim Aktualisieren des Tour-Status"
+
+msgid "Tour duplicated successfully"
+msgstr "Tour erfolgreich dupliziert"
+
+msgid "Error duplicating tour"
+msgstr "Fehler beim Duplizieren der Tour"
+
+msgid "Tour deleted successfully"
+msgstr "Tour erfolgreich gelöscht"
+
+msgid "Error deleting tour"
+msgstr "Fehler beim Löschen der Tour"
+
+msgid "CSS Selector"
+msgstr "CSS-Selektor"
+
+msgid "First Login"
+msgstr "Erste Anmeldung"
+
+msgid "Any Page"
+msgstr "Jede Seite"
+
+msgid "All Users"
+msgstr "Alle Benutzer"
+
+msgid "Logged In"
+msgstr "Angemeldet"
+
+msgid "Logged Out"
+msgstr "Abgemeldet"
+
+msgid "Specific Users"
+msgstr "Bestimmte Benutzer"
+
+msgid "Specific Roles"
+msgstr "Bestimmte Rollen"
+
+msgid "No tours yet"
+msgstr "Noch keine Touren"
+
+msgid "Create your first tour to guide users through your WordPress site."
+msgstr "Erstelle deine erste Tour, um Benutzer durch deine WordPress-Website zu führen."
+
+msgid "Create Your First Tour"
+msgstr "Erstelle deine erste Tour"
+
+
+msgid "(no title)"
+msgstr "(kein Titel)"
+
+msgid "Auto-start"
+msgstr "Auto-Start"
+
+msgid "Tour Settings"
+msgstr "Tour-Einstellungen"
+
+msgid "Open Creator"
+msgstr "Ersteller öffnen"
+
+msgid "Duplicate"
+msgstr "Duplizieren"
+
+msgid "Reset Completion"
+msgstr "Vervollständigung zurücksetzen"
+
+msgid "Delete Tour"
+msgstr "Tour löschen"
+
+msgid "Are you sure you want to delete the tour"
+msgstr "Bist du sicher, dass du die Tour löschen möchtest"
+
+msgid "This action cannot be undone."
+msgstr "Diese Aktion kann nicht rückgängig gemacht werden."
+
+msgid "Deleting..."
+msgstr "Lösche..."
+
+# PHP error messages from tour admin/public
+msgid "Permission denied"
+msgstr "Berechtigung verweigert"
+
+msgid "Failed to save tour"
+msgstr "Fehler beim Speichern der Tour"
+
+msgid "Failed to delete tour"
+msgstr "Fehler beim Löschen der Tour"
+
+msgid "Invalid nonce"
+msgstr "Ungültiger Nonce"
+
+msgid "Tour not found"
+msgstr "Tour nicht gefunden"
+
+msgid "Invalid parameters"
+msgstr "Ungültige Parameter"
+
+msgid "Step count mismatch"
+msgstr "Schritt-Anzahl stimmt nicht überein"
+
+msgid "You do not have permission to interact with this checklist"
+msgstr "Du hast keine Berechtigung, mit dieser Checkliste zu interagieren"
+
+msgid "Failed to duplicate tour"
+msgstr "Fehler beim Duplizieren der Tour"
+
+# TourEditor translations
+msgid "Basic Information"
+msgstr "Grundlegende Informationen"
+
+msgid "Give your tour a descriptive name."
+msgstr "Gib deiner Tour einen beschreibenden Namen."
+
+msgid "Enter tour title..."
+msgstr "Tour-Titel eingeben..."
+
+msgid "Optional description for this tour..."
+msgstr "Optionale Beschreibung für diese Tour..."
+
+msgid "Optional description to help you remember what this tour is for."
+msgstr "Optionale Beschreibung, um dir zu helfen, zu erinnern, wofür diese Tour ist."
+
+msgid "Active (show this tour to users)"
+msgstr "Aktiv (diese Tour Benutzern zeigen)"
+
+msgid "Only active tours will be displayed to users."
+msgstr "Nur aktive Touren werden Benutzern angezeigt."
+
+msgid "Trigger Location"
+msgstr "Auslöser-Ort"
+
+msgid "Specific Page URL"
+msgstr "Spezifische Seiten-URL"
+
+msgid "Select a template or enter custom URL"
+msgstr "Vorlage auswählen oder benutzerdefinierte URL eingeben"
+
+msgid "e.g., /wp-admin/edit.php"
+msgstr "z.B. /wp-admin/edit.php"
+
+msgid "Enter the URL where this tour should trigger. Use * for wildcards."
+msgstr "Gib die URL ein, wo diese Tour ausgelöst werden soll. Verwende * für Platzhalter."
+
+msgid "When CSS Selector Exists"
+msgstr "Wenn CSS-Selektor existiert"
+
+msgid "e.g., .my-button, #specific-element"
+msgstr "z.B. .my-button, #specific-element"
+
+msgid "The tour will trigger when this CSS selector is found on the page."
+msgstr "Die Tour wird ausgelöst, wenn dieser CSS-Selektor auf der Seite gefunden wird."
+
+msgid "User's First Login (any page)"
+msgstr "Erste Anmeldung des Benutzers (jede Seite)"
+
+msgid "Tour will show only on the user's first login to WordPress."
+msgstr "Tour wird nur bei der ersten Anmeldung des Benutzers in WordPress angezeigt."
+
+msgid "Tour can trigger on any page (use with caution)."
+msgstr "Tour kann auf jeder Seite ausgelöst werden (mit Vorsicht verwenden)."
+
+msgid "User Conditions"
+msgstr "Benutzer-Bedingungen"
+
+msgid "Who should see this tour?"
+msgstr "Wer soll diese Tour sehen?"
+
+msgid "All Users (logged in and logged out)"
+msgstr "Alle Benutzer (angemeldet und abgemeldet)"
+
+msgid "All Logged In Users"
+msgstr "Alle angemeldeten Benutzer"
+
+msgid "All Logged Out Users"
+msgstr "Alle abgemeldeten Benutzer"
+
+msgid "Specific Users Only"
+msgstr "Nur bestimmte Benutzer"
+
+msgid "Type usernames..."
+msgstr "Benutzernamen eingeben..."
+
+msgid "Specific User Roles Only"
+msgstr "Nur bestimmte Benutzerrollen"
+
+msgid "Select user roles..."
+msgstr "Benutzerrollen auswählen..."
+
+msgid "Display Options"
+msgstr "Anzeige-Optionen"
+
+msgid "Auto-start tour when triggered"
+msgstr "Tour automatisch starten, wenn ausgelöst"
+
+msgid "If enabled, the tour will start automatically when the trigger conditions are met."
+msgstr "Wenn aktiviert, startet die Tour automatisch, wenn die Auslösebedingungen erfüllt sind."
+
+msgid "Show only once per user"
+msgstr "Nur einmal pro Benutzer anzeigen"
+
+msgid "If checked, each user will only see this tour once. Tracked by user account or browser cookie."
+msgstr "Wenn aktiviert, sieht jeder Benutzer diese Tour nur einmal. Verfolgt durch Benutzerkonto oder Browser-Cookie."
+
+msgid "Appearance & Behavior"
+msgstr "Aussehen & Verhalten"
+
+msgid "Animation"
+msgstr "Animation"
+
+msgid "Enable animated transitions"
+msgstr "Animierte Übergänge aktivieren"
+
+msgid "When enabled, the tour will smoothly animate between steps. Disable for a static, instant appearance."
+msgstr "Wenn aktiviert, animiert die Tour sanft zwischen den Schritten. Deaktivieren für ein statisches, sofortiges Erscheinungsbild."
+
+msgid "Progress Display"
+msgstr "Fortschritts-Anzeige"
+
+msgid "Show progress indicator"
+msgstr "Fortschrittsanzeige zeigen"
+
+msgid "Progress Text Template"
+msgstr "Fortschrittstext-Vorlage"
+
+msgid "{{current}} of {{total}}"
+msgstr "{{current}} von {{total}}"
+
+msgid "Customize the progress text. Use {{current}} for current step and {{total}} for total steps."
+msgstr "Passe den Fortschrittstext an. Verwende {{current}} für den aktuellen Schritt und {{total}} für die Gesamtanzahl der Schritte."
+
+msgid "Exit Control"
+msgstr "Beenden-Kontrolle"
+
+msgid "Allow users to close tour"
+msgstr "Benutzern erlauben, Tour zu schließen"
+
+msgid "When disabled, users must complete the entire tour before they can exit."
+msgstr "Wenn deaktiviert, müssen Benutzer die gesamte Tour abschließen, bevor sie verlassen können."
+
+msgid "Show confirmation dialog before exit"
+msgstr "Bestätigungsdialog vor dem Verlassen anzeigen"
+
+msgid "Exit Confirmation Message"
+msgstr "Bestätigungsnachricht zum Verlassen"
+
+msgid "Message shown when users try to exit the tour (only when confirmation is enabled)."
+msgstr "Nachricht, die angezeigt wird, wenn Benutzer versuchen, die Tour zu verlassen (nur wenn Bestätigung aktiviert ist)."
+
+msgid "Button Text"
+msgstr "Schaltflächen-Text"
+
+msgid "Next Button Text"
+msgstr "Weiter-Schaltfläche Text"
+
+msgid "Previous Button Text"
+msgstr "Zurück-Schaltfläche Text"
+
+msgid "Done Button Text"
+msgstr "Fertig-Schaltfläche Text"
+
+msgid "Close Button Text"
+msgstr "Schließen-Schaltfläche Text"
+
+msgid "Customize the text displayed on tour navigation buttons."
+msgstr "Passe den Text der Tour-Navigationsschaltflächen an."
+
+msgid "Default Buttons to Show"
+msgstr "Standard-Schaltflächen zum Anzeigen"
+
+msgid "Next button"
+msgstr "Weiter-Schaltfläche"
+
+msgid "Previous button"
+msgstr "Zurück-Schaltfläche"
+
+msgid "Close button"
+msgstr "Schließen-Schaltfläche"
+
+msgid "Select which buttons should be shown by default on each tour step. Individual steps can override these settings."
+msgstr "Wähle aus, welche Schaltflächen standardmäßig bei jedem Tour-Schritt angezeigt werden sollen. Einzelne Schritte können diese Einstellungen überschreiben."
+
+msgid "Overlay Style"
+msgstr "Überlagerung-Stil"
+
+msgid "Overlay Color"
+msgstr "Überlagerung-Farbe"
+
+msgid "Overlay Opacity"
+msgstr "Überlagerung-Transparenz"
+
+msgid "Customize the background overlay that appears behind the tour popover."
+msgstr "Passe die Hintergrundüberlagerung an, die hinter dem Tour-Popover erscheint."
+
+msgid "Popover Style"
+msgstr "Popover-Stil"
+
+msgid "Custom CSS Class"
+msgstr "Benutzerdefinierte CSS-Klasse"
+
+msgid "my-custom-tour-theme"
+msgstr "mein-benutzerdefiniertes-tour-theme"
+
+msgid "Add a custom CSS class to style the popover. Leave empty for default styling. Try: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large."
+msgstr "Füge eine benutzerdefinierte CSS-Klasse hinzu, um das Popover zu gestalten. Leer lassen für Standard-Styling. Versuche: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded oder mcl-theme-large."
+
+msgid "Advanced Options"
+msgstr "Erweiterte Optionen"
+
+msgid "Highlight Padding"
+msgstr "Hervorhebung-Abstand"
+
+msgid "Padding around highlighted elements in pixels."
+msgstr "Abstand um hervorgehobene Elemente in Pixeln."
+
+msgid "Smooth Scroll"
+msgstr "Sanftes Scrollen"
+
+msgid "Enable smooth scrolling to highlighted elements."
+msgstr "Sanftes Scrollen zu hervorgehobenen Elementen aktivieren."
+
+msgid "Tour Steps"
+msgstr "Tour-Schritte"
+
+msgid "(drag to reorder)"
+msgstr "(ziehen zum Neuordnen)"
+
+msgid "No steps added yet. Use the visual creator to add steps."
+msgstr "Noch keine Schritte hinzugefügt. Verwende den visuellen Editor, um Schritte hinzuzufügen."
+
+msgid "View All Steps"
+msgstr "Alle Schritte anzeigen"
+
+msgid "Save & Open Visual Creator"
+msgstr "Speichern & Visueller Editor öffnen"
+
+msgid "Save Settings Only"
+msgstr "Nur Einstellungen speichern"
+
+msgid "Reset My Completion"
+msgstr "Meine Vervollständigung zurücksetzen"
+
+msgid "Getting Started"
+msgstr "Erste Schritte"
+
+msgid "Create Your Tour"
+msgstr "Erstelle deine Tour"
+
+msgid "Configure Settings"
+msgstr "Einstellungen konfigurieren"
+
+msgid "Set up the basic information, trigger conditions, and customize the appearance."
+msgstr "Richte die grundlegenden Informationen, Auslösebedingungen ein und passe das Erscheinungsbild an."
+
+msgid "Add Tour Steps"
+msgstr "Tour-Schritte hinzufügen"
+
+msgid "Use the visual tour creator to add interactive steps by clicking on elements."
+msgstr "Verwende den visuellen Tour-Ersteller, um interaktive Schritte durch Klicken auf Elemente hinzuzufügen."
+
+msgid "Preview & Test"
+msgstr "Vorschau & Test"
+
+msgid "Use the preview feature to test your tour and make adjustments."
+msgstr "Verwende die Vorschaufunktion, um deine Tour zu testen und Anpassungen vorzunehmen."
+
+msgid "Test & Activate"
+msgstr "Testen & Aktivieren"
+
+msgid "Preview your tour, make adjustments, then activate it for your users."
+msgstr "Sieh dir deine Tour in der Vorschau an, nimm Anpassungen vor und aktiviere sie dann für deine Benutzer."
+
+msgid "Configure Trigger"
+msgstr "Auslöser konfigurieren"
+
+msgid "Choose when and where your tour should appear to users."
+msgstr "Wähle aus, wann und wo deine Tour den Benutzern erscheinen soll."
+
+msgid "Save & Create"
+msgstr "Speichern & Erstellen"
+
+msgid "Click \"Save & Open Visual Creator\" to start adding interactive steps."
+msgstr "Klicke auf \"Speichern & Visueller Editor öffnen\", um mit dem Hinzufügen interaktiver Schritte zu beginnen."
+
+msgid "Add Steps"
+msgstr "Schritte hinzufügen"
+
+msgid "Use the visual creator to add step-by-step guidance to your tour."
+msgstr "Verwende den visuellen Editor, um Schritt-für-Schritt-Anleitung zu deiner Tour hinzuzufügen."
+

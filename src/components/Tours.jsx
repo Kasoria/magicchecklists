@@ -96,11 +96,11 @@ const Tours = ({ adminData, onEditTour }) => {
         ))
       } else {
         console.error('Failed to toggle tour status:', data.data)
-        showError('Error updating tour status')
+        showError(adminData?.i18n?.tours?.errorUpdatingTourStatus || 'Error updating tour status')
       }
     } catch (error) {
       console.error('Error toggling tour status:', error)
-      showError('Error updating tour status')
+      showError(adminData?.i18n?.tours?.errorUpdatingTourStatus || 'Error updating tour status')
     } finally {
       setProcessingActions(prev => {
         const newSet = new Set(prev)
@@ -129,14 +129,14 @@ const Tours = ({ adminData, onEditTour }) => {
       const data = await response.json()
       if (data.success) {
         setTours(tours.filter(tour => tour.id !== tourToDelete.id))
-        showSuccess('Tour deleted successfully')
+        showSuccess(adminData?.i18n?.tours?.tourDeletedSuccessfully || 'Tour deleted successfully')
       } else {
         console.error('Failed to delete tour:', data.data)
-        showError('Error deleting tour')
+        showError(adminData?.i18n?.tours?.errorDeletingTour || 'Error deleting tour')
       }
     } catch (error) {
       console.error('Error deleting tour:', error)
-      showError('Error deleting tour')
+      showError(adminData?.i18n?.tours?.errorDeletingTour || 'Error deleting tour')
     } finally {
       setProcessingActions(prev => {
         const newSet = new Set(prev)
@@ -167,14 +167,14 @@ const Tours = ({ adminData, onEditTour }) => {
       const data = await response.json()
       if (data.success) {
         await loadTours() // Reload the list
-        showSuccess('Tour duplicated successfully')
+        showSuccess(adminData?.i18n?.tours?.tourDuplicatedSuccessfully || 'Tour duplicated successfully')
       } else {
         console.error('Failed to duplicate tour:', data.data)
-        showError('Error duplicating tour')
+        showError(adminData?.i18n?.tours?.errorDuplicatingTour || 'Error duplicating tour')
       }
     } catch (error) {
       console.error('Error duplicating tour:', error)
-      showError('Error duplicating tour')
+      showError(adminData?.i18n?.tours?.errorDuplicatingTour || 'Error duplicating tour')
     } finally {
       setProcessingActions(prev => {
         const newSet = new Set(prev)
@@ -202,14 +202,14 @@ const Tours = ({ adminData, onEditTour }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess('Tour completion reset successfully')
+        showSuccess(adminData?.i18n?.tours?.tourCompletionResetSuccessfully || 'Tour completion reset successfully')
       } else {
         console.error('Failed to reset tour completion:', data.data)
-        showError('Error resetting tour completion')
+        showError(adminData?.i18n?.tours?.errorResettingTourCompletion || 'Error resetting tour completion')
       }
     } catch (error) {
       console.error('Error resetting tour completion:', error)
-      showError('Error resetting tour completion')
+      showError(adminData?.i18n?.tours?.errorResettingTourCompletion || 'Error resetting tour completion')
     } finally {
       setProcessingActions(prev => {
         const newSet = new Set(prev)
@@ -221,18 +221,18 @@ const Tours = ({ adminData, onEditTour }) => {
 
   const formatTriggerInfo = (tour) => {
     const triggerLabels = {
-      page: 'Page URL',
-      selector: 'CSS Selector',
-      first_login: 'First Login',
-      any_page: 'Any Page'
+      page: adminData?.i18n?.tours?.pageUrl || 'Page URL',
+      selector: adminData?.i18n?.tours?.cssSelector || 'CSS Selector',
+      first_login: adminData?.i18n?.tours?.firstLogin || 'First Login',
+      any_page: adminData?.i18n?.tours?.anyPage || 'Any Page'
     }
 
     const userLabels = {
-      all_users: 'All Users',
-      all_logged_in: 'Logged In',
-      all_logged_out: 'Logged Out',
-      specific_users: 'Specific Users',
-      specific_roles: 'Specific Roles'
+      all_users: adminData?.i18n?.tours?.allUsers || 'All Users',
+      all_logged_in: adminData?.i18n?.tours?.loggedIn || 'Logged In',
+      all_logged_out: adminData?.i18n?.tours?.loggedOut || 'Logged Out',
+      specific_users: adminData?.i18n?.tours?.specificUsers || 'Specific Users',
+      specific_roles: adminData?.i18n?.tours?.specificRoles || 'Specific Roles'
     }
 
     return {
@@ -261,9 +261,9 @@ const Tours = ({ adminData, onEditTour }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No tours yet</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{adminData?.i18n?.tours?.noToursYet || 'No tours yet'}</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Create your first tour to guide users through your WordPress site.
+          {adminData?.i18n?.tours?.createFirstTourDescription || 'Create your first tour to guide users through your WordPress site.'}
         </p>
         <Button
           color="brand"
@@ -273,7 +273,7 @@ const Tours = ({ adminData, onEditTour }) => {
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Create Your First Tour
+          {adminData?.i18n?.tours?.createYourFirstTour || 'Create Your First Tour'}
         </Button>
       </div>
     )
@@ -287,12 +287,12 @@ const Tours = ({ adminData, onEditTour }) => {
           <Table>
           <TableHead>
             <TableRow>
-              <TableHeadCell>Title</TableHeadCell>
-              <TableHeadCell>Steps</TableHeadCell>
-              <TableHeadCell>Trigger</TableHeadCell>
-              <TableHeadCell>Status</TableHeadCell>
-              <TableHeadCell>Date</TableHeadCell>
-              <TableHeadCell>Actions</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.title || 'Title'}</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.steps || 'Steps'}</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.trigger || 'Trigger'}</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.status || 'Status'}</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.date || 'Date'}</TableHeadCell>
+              <TableHeadCell>{adminData?.i18n?.tours?.actions || 'Actions'}</TableHeadCell>
             </TableRow>
           </TableHead>
           <TableBody className="divide-y">
@@ -306,13 +306,13 @@ const Tours = ({ adminData, onEditTour }) => {
                         onClick={() => handleEditTourSettings(tour.id)}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
                       >
-                        {tour.title || '(no title)'}
+                        {tour.title || (adminData?.i18n?.tours?.noTitle || '(no title)')}
                       </button>
                     </div>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tour.step_count} {tour.step_count === 1 ? 'step' : 'steps'}
+                      {tour.step_count} {tour.step_count === 1 ? (adminData?.i18n?.tours?.step || 'step') : (adminData?.i18n?.tours?.steps || 'steps')}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -329,7 +329,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         {triggerInfo.user}
                       </div>
                       {triggerInfo.autostart && (
-                        <Badge color="success" size="sm">Auto-start</Badge>
+                        <Badge color="success" size="sm">{adminData?.i18n?.tours?.autoStart || 'Auto-start'}</Badge>
                       )}
                     </div>
                   </TableCell>
@@ -346,7 +346,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-accent dark:peer-checked:bg-brand-accent"></div>
                       </label>
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        {tour.active ? 'Active' : 'Inactive'}
+                        {tour.active ? (adminData?.i18n?.tours?.active || 'Active') : (adminData?.i18n?.tours?.inactive || 'Inactive')}
                       </span>
                     </div>
                   </TableCell>
@@ -374,7 +374,7 @@ const Tours = ({ adminData, onEditTour }) => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        Tour Settings
+                        {adminData?.i18n?.tours?.tourSettings || 'Tour Settings'}
                       </DropdownItem>
                       <DropdownItem
                         onClick={() => handleOpenTourCreator(tour.id)}
@@ -382,7 +382,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Open Creator
+                        {adminData?.i18n?.tours?.openCreator || 'Open Creator'}
                       </DropdownItem>
                       <DropdownItem
                         onClick={() => handleDuplicateTour(tour.id)}
@@ -391,7 +391,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
-                        Duplicate
+                        {adminData?.i18n?.tours?.duplicate || 'Duplicate'}
                       </DropdownItem>
                       <DropdownItem
                         onClick={() => handleResetCompletion(tour.id)}
@@ -400,7 +400,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Reset Completion
+                        {adminData?.i18n?.tours?.resetCompletion || 'Reset Completion'}
                       </DropdownItem>
                       <DropdownDivider />
                       <DropdownItem
@@ -413,7 +413,7 @@ const Tours = ({ adminData, onEditTour }) => {
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Delete
+                        {adminData?.i18n?.tours?.delete || 'Delete'}
                       </DropdownItem>
                     </Dropdown>
                   </TableCell>
@@ -430,10 +430,10 @@ const Tours = ({ adminData, onEditTour }) => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteTour}
-        title="Delete Tour"
-        message={`Are you sure you want to delete the tour "${tourToDelete?.title}"? This action cannot be undone.`}
-        confirmText={processingActions.has(`delete-${tourToDelete?.id}`) ? 'Deleting...' : 'Delete Tour'}
-        cancelText="Cancel"
+        title={adminData?.i18n?.tours?.deleteTourTitle || 'Delete Tour'}
+        message={`${adminData?.i18n?.tours?.deleteTourConfirm || 'Are you sure you want to delete the tour'} "${tourToDelete?.title}"? ${adminData?.i18n?.tours?.actionCannotBeUndone || 'This action cannot be undone.'}`}
+        confirmText={processingActions.has(`delete-${tourToDelete?.id}`) ? (adminData?.i18n?.tours?.deleting || 'Deleting...') : (adminData?.i18n?.tours?.deleteTour || 'Delete Tour')}
+        cancelText={adminData?.i18n?.tours?.cancel || 'Cancel'}
         confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-900"
         icon="delete"
       />

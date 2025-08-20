@@ -40,6 +40,10 @@ class MCL_I18n {
             'checklistsTable' => self::get_checklists_table_translations(),
             'checklistTypeSelector' => self::get_checklist_type_selector_translations(),
             'editPublisherChecklist' => self::get_edit_publisher_checklist_translations(),
+            'tourPlayback' => self::get_tour_playback_translations(),
+            'tourCreator' => self::get_tour_creator_translations(),
+            'tourEditor' => self::get_tour_editor_translations(),
+            'tours' => self::get_tours_translations(),
         );
     }
     
@@ -1778,6 +1782,324 @@ class MCL_I18n {
                 'saving' => __('Saving...', 'magic-checklists'),
                 'loadingChecklist' => __('Loading checklist...', 'magic-checklists'),
             ),
+        );
+    }
+
+    /**
+     * Get tour playback translations
+     * 
+     * @return array
+     */
+    public static function get_tour_playback_translations() {
+        return array(
+            'noTourData' => __('MCL Tour Playback: No tour data provided', 'magic-checklists'),
+            'noTourSteps' => __('MCL Tour Playback: Tour has no steps', 'magic-checklists'),
+            'driverNotAvailable' => __('MCL Tour Playback: Driver function not available, retrying...', 'magic-checklists'),
+            'driverStillNotAvailable' => __('MCL Tour Playback: Driver function still not available after retry', 'magic-checklists'),
+            'clickContinueNextPage' => __('Click "Continue" to go to the next page...', 'magic-checklists'),
+            'tourStep' => __('Tour Step', 'magic-checklists'),
+            'continue' => __('Continue', 'magic-checklists'),
+            'done' => __('Done', 'magic-checklists'),
+            'next' => __('Next', 'magic-checklists'),
+            'previous' => __('Previous', 'magic-checklists'),
+            'errorNextStep' => __('MCL Tour: Error moving to next step', 'magic-checklists'),
+            'errorPrevStepSamePage' => __('MCL Tour: Error moving to previous step within page', 'magic-checklists'),
+            'errorPrevStep' => __('MCL Tour: Error moving to previous step', 'magic-checklists'),
+            'exitConfirmation' => __('Are you sure you want to exit the tour?', 'magic-checklists'),
+            'errorCloseConfirmation' => __('MCL Tour: Error in close confirmation:', 'magic-checklists'),
+            'errorStartingTour' => __('MCL Tour Playback: Error starting tour:', 'magic-checklists'),
+            'errorContinuingTour' => __('MCL Tour Playback: Error continuing tour:', 'magic-checklists'),
+            'loadingNextPage' => __('Loading next page...', 'magic-checklists'),
+            'closeTour' => __('Close tour', 'magic-checklists'),
+            'checkItemMissingParams' => __('MCL Tour: checkChecklistItem - Missing parameters', 'magic-checklists'),
+            'failedCheckItem' => __('MCL Tour: Failed to check checklist item', 'magic-checklists'),
+            'errorCheckingItem' => __('MCL Tour Playback: Error checking checklist item:', 'magic-checklists'),
+            'uncheckItemMissingParams' => __('MCL Tour: uncheckChecklistItem - Missing parameters', 'magic-checklists'),
+            'failedUncheckItem' => __('MCL Tour: Failed to uncheck checklist item', 'magic-checklists'),
+            'errorUncheckingItem' => __('MCL Tour Playback: Error unchecking checklist item:', 'magic-checklists'),
+            'closeModal' => __('Close modal', 'magic-checklists'),
+            'exitTourTitle' => __('Exit Tour?', 'magic-checklists'),
+            'noContinueTour' => __('No, continue tour', 'magic-checklists'),
+            'yesExitTour' => __('Yes, exit tour', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get tour creator translations
+     * 
+     * @return array
+     */
+    public static function get_tour_creator_translations() {
+        return array(
+            'failedLoadTourData' => __('Failed to load tour data', 'magic-checklists'),
+            'errorLoadingTourData' => __('Error loading tour data:', 'magic-checklists'),
+            'previewFailedTimeout' => __('Preview failed: Tour steps could not be loaded in time.', 'magic-checklists'),
+            'noStepsForPreview' => __('No tour steps available for preview. Please ensure the tour is loaded.', 'magic-checklists'),
+            'invalidStepIndex' => __('Invalid step index for preview:', 'magic-checklists'),
+            'tourHasSteps' => __('Tour has', 'magic-checklists'),
+            'steps' => __('steps', 'magic-checklists'),
+            'previewNotAvailable' => __('Tour preview is not available. Please refresh the page and try again.', 'magic-checklists'),
+            'preview' => __('Preview', 'magic-checklists'),
+            'previewTour' => __('Preview Tour', 'magic-checklists'),
+            'errorLoadingChecklists' => __('Error loading checklists:', 'magic-checklists'),
+            'stepDeletedSuccessfully' => __('Step deleted successfully', 'magic-checklists'),
+            'tourTitleRequired' => __('Tour title is required to save.', 'magic-checklists'),
+            'tourSavedSuccessfully' => __('Tour saved successfully!', 'magic-checklists'),
+            'errorSavingTour' => __('Error saving tour', 'magic-checklists'),
+            'addStepsBeforePreview' => __('Please add some steps before previewing the tour.', 'magic-checklists'),
+            'failedSavePreviewWarning' => __('Failed to save tour data. Preview may not work correctly.', 'magic-checklists'),
+            'clickElementToSelect' => __('Click on an element to select it...', 'magic-checklists'),
+            'tourCreator' => __('Tour Creator', 'magic-checklists'),
+            'selectMode' => __('Select Mode', 'magic-checklists'),
+            'navigateMode' => __('Navigate Mode', 'magic-checklists'),
+            'navigate' => __('Navigate', 'magic-checklists'),
+            'select' => __('Select', 'magic-checklists'),
+            'clickElementsToCreateSteps' => __('Click on elements to create tour steps', 'magic-checklists'),
+            'navigateNormally' => __('Navigate the site normally - links and forms will work', 'magic-checklists'),
+            'saving' => __('Saving...', 'magic-checklists'),
+            'save' => __('Save', 'magic-checklists'),
+            'exit' => __('Exit', 'magic-checklists'),
+            'step' => __('step', 'magic-checklists'),
+            'noStepsAdded' => __('No steps added yet. Click on elements to create steps.', 'magic-checklists'),
+            'untitledStep' => __('Untitled Step', 'magic-checklists'),
+            'noElement' => __('No element', 'magic-checklists'),
+            'editTourStep' => __('Edit Tour Step', 'magic-checklists'),
+            'stepTitle' => __('Step Title', 'magic-checklists'),
+            'enterStepTitle' => __('Enter step title...', 'magic-checklists'),
+            'stepContent' => __('Step Content', 'magic-checklists'),
+            'enterStepContent' => __('Enter the content for this step...', 'magic-checklists'),
+            'canUseHTML' => __('You can use HTML for formatting.', 'magic-checklists'),
+            'linkToChecklist' => __('Link to Checklist', 'magic-checklists'),
+            'selectChecklistOptional' => __('Select a checklist (optional)', 'magic-checklists'),
+            'linkToItem' => __('Link to Item', 'magic-checklists'),
+            'selectItemOptional' => __('Select an item (optional)', 'magic-checklists'),
+            'popoverPosition' => __('Popover Position', 'magic-checklists'),
+            'bottomDefault' => __('Bottom (Default)', 'magic-checklists'),
+            'top' => __('Top', 'magic-checklists'),
+            'left' => __('Left', 'magic-checklists'),
+            'right' => __('Right', 'magic-checklists'),
+            'targetElement' => __('Target Element', 'magic-checklists'),
+            'cssSelectorPlaceholder' => __('CSS selector (e.g., #my-button)', 'magic-checklists'),
+            'clickToSelectElement' => __('Click to select element visually', 'magic-checklists'),
+            'enterCssSelectorOrClick' => __('Enter a CSS selector or click the crosshairs to select an element visually.', 'magic-checklists'),
+            'pageUrl' => __('Page URL', 'magic-checklists'),
+            'leaveEmptyForCurrentPage' => __('Leave empty for current page', 'magic-checklists'),
+            'pageUrlDescription' => __('The page where this step should appear. Leave empty to use the current page.', 'magic-checklists'),
+            'showNavigationButtons' => __('Show navigation buttons', 'magic-checklists'),
+            'cancel' => __('Cancel', 'magic-checklists'),
+            'saveStep' => __('Save Step', 'magic-checklists'),
+            'exitTourCreatorTitle' => __('Exit Tour Creator?', 'magic-checklists'),
+            'exitConfirmMessage' => __('Are you sure you want to exit? Any unsaved changes will be lost.', 'magic-checklists'),
+            'yesExit' => __('Yes, exit', 'magic-checklists'),
+            'noContinueEditing' => __('No, continue editing', 'magic-checklists'),
+            'deleteTourStepTitle' => __('Delete Tour Step?', 'magic-checklists'),
+            'deleteStepConfirm' => __('Are you sure you want to delete', 'magic-checklists'),
+            'deleteThisStep' => __('Are you sure you want to delete this step?', 'magic-checklists'),
+            'yesDelete' => __('Yes, delete', 'magic-checklists'),
+            'noKeepIt' => __('No, keep it', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get tour editor translations
+     * 
+     * @return array
+     */
+    public static function get_tour_editor_translations() {
+        return array(
+            // Basic Information
+            'basicInformation' => __('Basic Information', 'magic-checklists'),
+            'tourTitle' => __('Tour Title', 'magic-checklists'),
+            'enterTourTitle' => __('Enter tour title...', 'magic-checklists'),
+            'tourTitleDescription' => __('Give your tour a descriptive name.', 'magic-checklists'),
+            'description' => __('Description', 'magic-checklists'),
+            'optionalDescription' => __('Optional description for this tour...', 'magic-checklists'),
+            'descriptionHelp' => __('Optional description to help you remember what this tour is for.', 'magic-checklists'),
+            'activeLabel' => __('Active (show this tour to users)', 'magic-checklists'),
+            'activeDescription' => __('Only active tours will be displayed to users.', 'magic-checklists'),
+            
+            // Trigger Settings
+            'triggerSettings' => __('Trigger Settings', 'magic-checklists'),
+            'triggerLocation' => __('Trigger Location', 'magic-checklists'),
+            'specificPageUrl' => __('Specific Page URL', 'magic-checklists'),
+            'selectTemplateOrCustomUrl' => __('Select a template or enter custom URL', 'magic-checklists'),
+            'urlPlaceholder' => __('e.g., /wp-admin/edit.php', 'magic-checklists'),
+            'urlHelp' => __('Enter the URL where this tour should trigger. Use * for wildcards.', 'magic-checklists'),
+            'whenCssSelectorExists' => __('When CSS Selector Exists', 'magic-checklists'),
+            'cssSelectorPlaceholder' => __('e.g., .my-button, #specific-element', 'magic-checklists'),
+            'cssSelectorHelp' => __('Tour will trigger when this CSS selector is found on any page.', 'magic-checklists'),
+            'usersFirstLogin' => __('User\'s First Login (any page)', 'magic-checklists'),
+            'firstLoginHelp' => __('Tour will show only on the user\'s first login to WordPress.', 'magic-checklists'),
+            'anyPage' => __('Any Page', 'magic-checklists'),
+            'anyPageHelp' => __('Tour can trigger on any page (use with caution).', 'magic-checklists'),
+            
+            // User Conditions
+            'userConditions' => __('User Conditions', 'magic-checklists'),
+            'whoShouldSeeTour' => __('Who should see this tour?', 'magic-checklists'),
+            'allUsers' => __('All Users (logged in and logged out)', 'magic-checklists'),
+            'allLoggedInUsers' => __('All Logged In Users', 'magic-checklists'),
+            'allLoggedOutUsers' => __('All Logged Out Users', 'magic-checklists'),
+            'specificUsersOnly' => __('Specific Users Only', 'magic-checklists'),
+            'selectSpecificUsersHelp' => __('Select specific users who should see this tour.', 'magic-checklists'),
+            'typeUsernames' => __('Type usernames...', 'magic-checklists'),
+            'specificUserRolesOnly' => __('Specific User Roles Only', 'magic-checklists'),
+            'selectUserRolesHelp' => __('Select user roles that should see this tour.', 'magic-checklists'),
+            'selectUserRoles' => __('Select user roles...', 'magic-checklists'),
+            
+            // Display Options
+            'displayOptions' => __('Display Options', 'magic-checklists'),
+            'autostartTourWhenTriggered' => __('Auto-start tour when triggered', 'magic-checklists'),
+            'autostartHelp' => __('If enabled, the tour will start automatically when the trigger conditions are met.', 'magic-checklists'),
+            'showOnlyOncePerUser' => __('Show only once per user', 'magic-checklists'),
+            'showOnceHelp' => __('If checked, each user will only see this tour once. Tracked by user account or browser cookie.', 'magic-checklists'),
+            
+            // Appearance & Behavior
+            'appearanceBehavior' => __('Appearance & Behavior', 'magic-checklists'),
+            'animation' => __('Animation', 'magic-checklists'),
+            'enableAnimatedTransitions' => __('Enable animated transitions', 'magic-checklists'),
+            'animationHelp' => __('When enabled, the tour will smoothly animate between steps. Disable for a static, instant appearance.', 'magic-checklists'),
+            'progressDisplay' => __('Progress Display', 'magic-checklists'),
+            'showProgressIndicator' => __('Show progress indicator', 'magic-checklists'),
+            'progressTextTemplate' => __('Progress Text Template', 'magic-checklists'),
+            'progressPlaceholder' => __('{{current}} of {{total}}', 'magic-checklists'),
+            'progressHelp' => __('Customize the progress text. Use {{current}} for current step and {{total}} for total steps.', 'magic-checklists'),
+            
+            // Exit Control
+            'exitControl' => __('Exit Control', 'magic-checklists'),
+            'allowUsersToCloseTour' => __('Allow users to close tour', 'magic-checklists'),
+            'allowCloseHelp' => __('When disabled, users must complete the entire tour before they can exit.', 'magic-checklists'),
+            'showConfirmationDialogBeforeExit' => __('Show confirmation dialog before exit', 'magic-checklists'),
+            'exitConfirmationMessage' => __('Exit Confirmation Message', 'magic-checklists'),
+            'exitConfirmationPlaceholder' => __('Are you sure you want to exit the tour?', 'magic-checklists'),
+            'exitConfirmationHelp' => __('Message shown when users try to exit the tour (only when confirmation is enabled).', 'magic-checklists'),
+            
+            // Button Text
+            'buttonText' => __('Button Text', 'magic-checklists'),
+            'nextButtonText' => __('Next Button Text', 'magic-checklists'),
+            'nextPlaceholder' => __('Next', 'magic-checklists'),
+            'previousButtonText' => __('Previous Button Text', 'magic-checklists'),
+            'previousPlaceholder' => __('Previous', 'magic-checklists'),
+            'doneButtonText' => __('Done Button Text', 'magic-checklists'),
+            'donePlaceholder' => __('Done', 'magic-checklists'),
+            'closeButtonText' => __('Close Button Text', 'magic-checklists'),
+            'closePlaceholder' => __('Close', 'magic-checklists'),
+            'buttonTextHelp' => __('Customize the text displayed on tour navigation buttons.', 'magic-checklists'),
+            
+            // Default Buttons
+            'defaultButtonsToShow' => __('Default Buttons to Show', 'magic-checklists'),
+            'nextButton' => __('Next button', 'magic-checklists'),
+            'previousButton' => __('Previous button', 'magic-checklists'),
+            'closeButton' => __('Close button', 'magic-checklists'),
+            'defaultButtonsHelp' => __('Select which buttons should be shown by default on each tour step. Individual steps can override these settings.', 'magic-checklists'),
+            
+            // Overlay Style
+            'overlayStyle' => __('Overlay Style', 'magic-checklists'),
+            'overlayColor' => __('Overlay Color', 'magic-checklists'),
+            'overlayOpacity' => __('Overlay Opacity', 'magic-checklists'),
+            'overlayHelp' => __('Customize the background overlay that appears behind the tour popover.', 'magic-checklists'),
+            
+            // Popover Style
+            'popoverStyle' => __('Popover Style', 'magic-checklists'),
+            'customCssClass' => __('Custom CSS Class', 'magic-checklists'),
+            'customCssPlaceholder' => __('my-custom-tour-theme', 'magic-checklists'),
+            'customCssHelp' => __('Add a custom CSS class to style the popover. Leave empty for default styling. Try: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large.', 'magic-checklists'),
+            
+            // Advanced Options
+            'advancedOptions' => __('Advanced Options', 'magic-checklists'),
+            'highlightPadding' => __('Highlight Padding', 'magic-checklists'),
+            'paddingHelp' => __('Padding around highlighted elements in pixels.', 'magic-checklists'),
+            'smoothScroll' => __('Smooth Scroll', 'magic-checklists'),
+            'smoothScrollHelp' => __('Enable smooth scrolling to highlighted elements.', 'magic-checklists'),
+            
+            // Tour Steps
+            'tourStep' => __('Tour Step', 'magic-checklists'),
+            'tourStepsTitle' => __('Tour Steps', 'magic-checklists'),
+            'dragToReorder' => __('(drag to reorder)', 'magic-checklists'),
+            'noStepsYet' => __('No steps added yet. Use the visual creator to add steps.', 'magic-checklists'),
+            'viewAllSteps' => __('View All Steps', 'magic-checklists'),
+            
+            // Actions
+            'saveAndOpenVisualCreator' => __('Save & Open Visual Creator', 'magic-checklists'),
+            'saveSettingsOnly' => __('Save Settings Only', 'magic-checklists'),
+            'resetMyCompletion' => __('Reset My Completion', 'magic-checklists'),
+            'saving' => __('Saving...', 'magic-checklists'),
+            'backToTours' => __('Back to Tours', 'magic-checklists'),
+            
+            // Getting Started / Create Guide
+            'gettingStarted' => __('Getting Started', 'magic-checklists'),
+            'createYourTour' => __('Create Your Tour', 'magic-checklists'),
+            'configureSettings' => __('Configure Settings', 'magic-checklists'),
+            'configureSettingsDescription' => __('Set up the basic information, trigger conditions, and customize the appearance.', 'magic-checklists'),
+            'addTourSteps' => __('Add Tour Steps', 'magic-checklists'),
+            'addTourStepsDescription' => __('Use the visual tour creator to add interactive steps by clicking on elements.', 'magic-checklists'),
+            'previewAndTest' => __('Preview & Test', 'magic-checklists'),
+            'previewAndTestDescription' => __('Use the preview feature to test your tour and make adjustments.', 'magic-checklists'),
+            'testAndActivate' => __('Test & Activate', 'magic-checklists'),
+            'testAndActivateDescription' => __('Preview your tour, make adjustments, then activate it for your users.', 'magic-checklists'),
+            'configureTrigger' => __('Configure Trigger', 'magic-checklists'),
+            'configureTriggerDescription' => __('Choose when and where your tour should appear to users.', 'magic-checklists'),
+            'saveAndCreate' => __('Save & Create', 'magic-checklists'),
+            'saveAndCreateDescription' => __('Click "Save & Open Visual Creator" to start adding interactive steps.', 'magic-checklists'),
+            'addSteps' => __('Add Steps', 'magic-checklists'),
+            'addStepsDescription' => __('Use the visual creator to click on elements and create guided tour steps.', 'magic-checklists'),
+            'setTourTitle' => __('Set Tour Title', 'magic-checklists'),
+            'setTourTitleDescription' => __('Give your tour a descriptive name that explains its purpose.', 'magic-checklists'),
+            
+            // Additional messages
+            'tourSettingsSavedSuccessfully' => __('Tour settings saved successfully!', 'magic-checklists'),
+            'errorSavingTourSettings' => __('Error saving tour settings', 'magic-checklists'),
+            'errorSavingStepOrder' => __('Error saving step order', 'magic-checklists'),
+        );
+    }
+
+    /**
+     * Get tours list translations
+     * 
+     * @return array
+     */
+    public static function get_tours_translations() {
+        return array(
+            'errorUpdatingTourStatus' => __('Error updating tour status', 'magic-checklists'),
+            'tourDuplicatedSuccessfully' => __('Tour duplicated successfully', 'magic-checklists'),
+            'errorDuplicatingTour' => __('Error duplicating tour', 'magic-checklists'),
+            'tourDeletedSuccessfully' => __('Tour deleted successfully', 'magic-checklists'),
+            'errorDeletingTour' => __('Error deleting tour', 'magic-checklists'),
+            'tourCompletionResetSuccessfully' => __('Tour completion reset successfully', 'magic-checklists'),
+            'errorResettingTourCompletion' => __('Error resetting tour completion', 'magic-checklists'),
+            'pageUrl' => __('Page URL', 'magic-checklists'),
+            'cssSelector' => __('CSS Selector', 'magic-checklists'),
+            'firstLogin' => __('First Login', 'magic-checklists'),
+            'anyPage' => __('Any Page', 'magic-checklists'),
+            'allUsers' => __('All Users', 'magic-checklists'),
+            'loggedIn' => __('Logged In', 'magic-checklists'),
+            'loggedOut' => __('Logged Out', 'magic-checklists'),
+            'specificUsers' => __('Specific Users', 'magic-checklists'),
+            'specificRoles' => __('Specific Roles', 'magic-checklists'),
+            'noToursYet' => __('No tours yet', 'magic-checklists'),
+            'createFirstTourDescription' => __('Create your first tour to guide users through your WordPress site.', 'magic-checklists'),
+            'createYourFirstTour' => __('Create Your First Tour', 'magic-checklists'),
+            'title' => __('Title', 'magic-checklists'),
+            'steps' => __('Steps', 'magic-checklists'),
+            'trigger' => __('Trigger', 'magic-checklists'),
+            'status' => __('Status', 'magic-checklists'),
+            'date' => __('Date', 'magic-checklists'),
+            'actions' => __('Actions', 'magic-checklists'),
+            'noTitle' => __('(no title)', 'magic-checklists'),
+            'step' => __('step', 'magic-checklists'),
+            'autoStart' => __('Auto-start', 'magic-checklists'),
+            'active' => __('Active', 'magic-checklists'),
+            'inactive' => __('Inactive', 'magic-checklists'),
+            'tourSettings' => __('Tour Settings', 'magic-checklists'),
+            'openCreator' => __('Open Creator', 'magic-checklists'),
+            'duplicate' => __('Duplicate', 'magic-checklists'),
+            'resetCompletion' => __('Reset Completion', 'magic-checklists'),
+            'delete' => __('Delete', 'magic-checklists'),
+            'deleteTourTitle' => __('Delete Tour', 'magic-checklists'),
+            'deleteTourConfirm' => __('Are you sure you want to delete the tour', 'magic-checklists'),
+            'actionCannotBeUndone' => __('This action cannot be undone.', 'magic-checklists'),
+            'deleting' => __('Deleting...', 'magic-checklists'),
+            'deleteTour' => __('Delete Tour', 'magic-checklists'),
+            'cancel' => __('Cancel', 'magic-checklists'),
         );
     }
 }

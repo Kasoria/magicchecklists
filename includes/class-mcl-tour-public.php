@@ -529,7 +529,7 @@ class MCL_Tour_Public {
         }
         
         if (!$nonce_valid) {
-            wp_send_json_error('Invalid nonce');
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
         }
         
         $tour_id = intval($_POST['tour_id']);
@@ -694,6 +694,6 @@ class MCL_Tour_Public {
     public function get_tour_creator_ui() {
         // This method is deprecated as tour creator is now fully handled by React components
         // The React components are loaded automatically by MCL_React_Dev class
-        wp_die('Tour creator is now handled by React components');
+        wp_die(__('Tour creator is now handled by React components', 'magic-checklists'));
     }
 }

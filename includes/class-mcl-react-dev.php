@@ -753,14 +753,7 @@ class MCL_React_Dev {
             'pluginUrl' => MAGIC_CHECKLISTS_PLUGIN_URL,
             'priorityColors' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_colors() : array(),
             'priorityNumbers' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_numbers() : array(),
-            'i18n' => array(
-                'loading' => __( 'Loading...', 'magic-checklists' ),
-                'error' => __( 'An error occurred', 'magic-checklists' ),
-                'save' => __( 'Save', 'magic-checklists' ),
-                'cancel' => __( 'Cancel', 'magic-checklists' ),
-                'delete' => __( 'Delete', 'magic-checklists' ),
-                'edit' => __( 'Edit', 'magic-checklists' ),
-            )
+            'i18n' => $this->get_localization_data()
         );
         
         // Add tour-specific data when in tour mode

@@ -306,12 +306,12 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
   const startTour = async (tourData) => {
     if (!tourData) {
-      console.error('MCL Tour Playback: No tour data provided')
+      console.error(adminData?.i18n?.tourPlayback?.noTourData || 'MCL Tour Playback: No tour data provided')
       return
     }
 
     if (!tourData.steps || tourData.steps.length === 0) {
-      console.error('MCL Tour Playback: Tour has no steps')
+      console.error(adminData?.i18n?.tourPlayback?.noTourSteps || 'MCL Tour Playback: Tour has no steps')
       return
     }
 
@@ -321,12 +321,12 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
     const driverFunction = getDriverFunction()
     
     if (!driverFunction) {
-      console.warn('MCL Tour Playback: Driver function not available, retrying...')
+      console.warn(adminData?.i18n?.tourPlayback?.driverNotAvailable || 'MCL Tour Playback: Driver function not available, retrying...')
       // Retry after a short delay to allow scripts to load
       setTimeout(() => {
         const retryDriverFunction = getDriverFunction()
         if (!retryDriverFunction) {
-          console.error('MCL Tour Playback: Driver function still not available after retry')
+          console.error(adminData?.i18n?.tourPlayback?.driverStillNotAvailable || 'MCL Tour Playback: Driver function still not available after retry')
           // Remove from started tours so it can be retried
           startedTours.delete(tourData.id)
           return
@@ -428,14 +428,14 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         const stepButtons = step.show_buttons !== false ? (tourSettings.default_buttons || ['next', 'previous', 'close']) : ['close']
         
         if (isLastStepOnPage && nextPageStep) {
-          description += '<br><br><em>Click "Continue" to go to the next page...</em>'
+          description += `<br><br><em>${adminData?.i18n?.tourPlayback?.clickContinueNextPage || 'Click "Continue" to go to the next page...'}</em>`
           if (!stepButtons.includes('next')) stepButtons.push('next')
         }
         
         return {
           element: step.element || 'body',
           popover: {
-            title: step.title || 'Tour Step',
+            title: step.title || adminData?.i18n?.tourPlayback?.tourStep || 'Tour Step',
             description: description,
             side: step.position || 'bottom',
             showButtons: stepButtons
@@ -451,9 +451,9 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         showProgress: tourSettings.show_progress !== false,
         progressText: (tourSettings.progress_text || '{{current}} of {{total}}').replace('{{current}}', initialGlobalPosition).replace('{{total}}', tourSteps.length),
         allowClose: tourSettings.allow_close !== false,
-        doneBtnText: nextPageStep ? 'Continue' : (tourSettings.done_btn_text || 'Done'),
-        nextBtnText: tourSettings.next_btn_text || 'Next',
-        prevBtnText: tourSettings.prev_btn_text || 'Previous',
+        doneBtnText: nextPageStep ? (adminData?.i18n?.tourPlayback?.continue || 'Continue') : (tourSettings.done_btn_text || adminData?.i18n?.tourPlayback?.done || 'Done'),
+        nextBtnText: tourSettings.next_btn_text || adminData?.i18n?.tourPlayback?.next || 'Next',
+        prevBtnText: tourSettings.prev_btn_text || adminData?.i18n?.tourPlayback?.previous || 'Previous',
         overlayColor: tourSettings.overlay_color || 'rgba(0, 0, 0, 0.75)',
         popoverClass: tourSettings.popover_class || '',
         stagePadding: tourSettings.padding || 4,
@@ -475,7 +475,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
           try {
             driverInstance.moveNext()
           } catch (e) {
-            console.error('MCL Tour: Error moving to next step', e)
+            console.error(adminData?.i18n?.tourPlayback?.errorNextStep || 'MCL Tour: Error moving to next step', e)
           }
           return false // Prevent default driver navigation
         },
@@ -513,7 +513,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
               try {
                 driverInstance.movePrevious()
               } catch (e) {
-                console.error('MCL Tour: Error moving to previous step within page', e)
+                console.error(adminData?.i18n?.tourPlayback?.errorPrevStepSamePage || 'MCL Tour: Error moving to previous step within page', e)
               }
             }
             return false // Prevent default driver navigation
@@ -523,7 +523,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
           try {
             driverInstance.movePrevious()
           } catch (e) {
-            console.error('MCL Tour: Error moving to previous step', e)
+            console.error(adminData?.i18n?.tourPlayback?.errorPrevStep || 'MCL Tour: Error moving to previous step', e)
           }
           return false // Prevent default navigation
         },
@@ -554,7 +554,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
             // Show confirmation modal for the close button
             try {
               const shouldExit = await handleTourExitConfirmation(
-                tourSettings.exit_message || 'Are you sure you want to exit the tour?'
+                tourSettings.exit_message || adminData?.i18n?.tourPlayback?.exitConfirmation || 'Are you sure you want to exit the tour?'
               )
               
               if (shouldExit) {
@@ -566,7 +566,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                 return false // Prevent closing
               }
             } catch (error) {
-              console.error('MCL Tour: Error in close confirmation:', error)
+              console.error(adminData?.i18n?.tourPlayback?.errorCloseConfirmation || 'MCL Tour: Error in close confirmation:', error)
               driverInstance._mclCloseInProgress = false
               return false
             }
@@ -604,7 +604,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
             
             // Show confirmation modal - don't wait for response, just show it
             handleTourExitConfirmation(
-              tourSettings.exit_message || 'Are you sure you want to exit the tour?'
+              tourSettings.exit_message || adminData?.i18n?.tourPlayback?.exitConfirmation || 'Are you sure you want to exit the tour?'
             ).then((shouldExit) => {
               if (shouldExit) {
                 driverInstance.destroy()
@@ -679,7 +679,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       }, 100)
 
     } catch (error) {
-      console.error('MCL Tour Playback: Error starting tour:', error)
+      console.error(adminData?.i18n?.tourPlayback?.errorStartingTour || 'MCL Tour Playback: Error starting tour:', error)
     }
   }
 
@@ -705,7 +705,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         })
       }
     } catch (error) {
-      console.error('MCL Tour Playback: Error continuing tour:', error)
+      console.error(adminData?.i18n?.tourPlayback?.errorContinuingTour || 'MCL Tour Playback: Error continuing tour:', error)
     }
   }
 
@@ -746,7 +746,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       <div class="mcl-tour-navigation-loading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000200; display: flex; align-items: center; justify-content: center;">
         <div class="mcl-tour-loading-content" style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
           <div class="mcl-tour-spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #2271b1; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-          <div class="mcl-tour-loading-text">Loading next page...</div>
+          <div class="mcl-tour-loading-text">${adminData?.i18n?.tourPlayback?.loadingNextPage || 'Loading next page...'}</div>
         </div>
       </div>
       <style>
@@ -834,7 +834,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       prevButton.disabled = isEffectivelyFirstStep
       prevButton.style.opacity = isEffectivelyFirstStep ? '0.5' : '1'
       prevButton.style.pointerEvents = isEffectivelyFirstStep ? 'none' : 'auto'
-      prevButton.textContent = settings.prev_btn_text || 'Previous'
+      prevButton.textContent = settings.prev_btn_text || adminData?.i18n?.tourPlayback?.previous || 'Previous'
     }
 
     // Next/Done Button Logic
@@ -844,11 +844,11 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       const isLastStepOnCurrentDriverInstance = driverInstance ? driverInstance.getActiveIndex() === driverInstance.getConfig().steps.length - 1 : false
 
       if (isLastGlobalStep) {
-        nextButton.textContent = settings.done_btn_text || 'Done'
+        nextButton.textContent = settings.done_btn_text || adminData?.i18n?.tourPlayback?.done || 'Done'
       } else if (isLastStepOnCurrentDriverInstance && hasNextPage) {
-        nextButton.textContent = 'Continue'
+        nextButton.textContent = adminData?.i18n?.tourPlayback?.continue || 'Continue'
       } else {
-        nextButton.textContent = settings.next_btn_text || 'Next'
+        nextButton.textContent = settings.next_btn_text || adminData?.i18n?.tourPlayback?.next || 'Next'
       }
       
       nextButton.disabled = false
@@ -875,7 +875,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
   const checkChecklistItem = async (checklistId, itemId) => {
     if (!checklistId || !itemId) {
-      console.warn('MCL Tour: checkChecklistItem - Missing parameters', { checklistId, itemId })
+      console.warn(adminData?.i18n?.tourPlayback?.checkItemMissingParams || 'MCL Tour: checkChecklistItem - Missing parameters', { checklistId, itemId })
       return
     }
 
@@ -900,16 +900,16 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
           detail: { checklistId, itemId, checked: true, source: 'tour' }
         }))
       } else {
-        console.error('MCL Tour: Failed to check checklist item', result.data)
+        console.error(adminData?.i18n?.tourPlayback?.failedCheckItem || 'MCL Tour: Failed to check checklist item', result.data)
       }
     } catch (error) {
-      console.error('MCL Tour Playback: Error checking checklist item:', error)
+      console.error(adminData?.i18n?.tourPlayback?.errorCheckingItem || 'MCL Tour Playback: Error checking checklist item:', error)
     }
   }
 
   const uncheckChecklistItem = async (checklistId, itemId) => {
     if (!checklistId || !itemId) {
-      console.warn('MCL Tour: uncheckChecklistItem - Missing parameters', { checklistId, itemId })
+      console.warn(adminData?.i18n?.tourPlayback?.uncheckItemMissingParams || 'MCL Tour: uncheckChecklistItem - Missing parameters', { checklistId, itemId })
       return
     }
 
@@ -934,10 +934,10 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
           detail: { checklistId, itemId, checked: false, source: 'tour' }
         }))
       } else {
-        console.error('MCL Tour: Failed to uncheck checklist item', result.data)
+        console.error(adminData?.i18n?.tourPlayback?.failedUncheckItem || 'MCL Tour: Failed to uncheck checklist item', result.data)
       }
     } catch (error) {
-      console.error('MCL Tour Playback: Error unchecking checklist item:', error)
+      console.error(adminData?.i18n?.tourPlayback?.errorUncheckingItem || 'MCL Tour Playback: Error unchecking checklist item:', error)
     }
   }
 
@@ -972,7 +972,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
   const customizeDriverCloseButton = (settings) => {
     const closeButton = document.querySelector('.driver-popover-close-btn')
     if (closeButton) {
-      const accessibilityText = settings.close_btn_text || 'Close tour'
+      const accessibilityText = settings.close_btn_text || adminData?.i18n?.tourPlayback?.closeTour || 'Close tour'
       closeButton.setAttribute('title', accessibilityText)
       closeButton.setAttribute('aria-label', accessibilityText)
     }
@@ -1031,12 +1031,12 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path>
                 </svg>
-                <span className="sr-only">Close modal</span>
+                <span className="sr-only">{adminData?.i18n?.tourPlayback?.closeModal || 'Close modal'}</span>
               </button>
 
               {/* Modal header */}
               <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                Exit Tour?
+                {adminData?.i18n?.tourPlayback?.exitTourTitle || 'Exit Tour?'}
               </h3>
 
               {/* Modal message */}
@@ -1056,7 +1056,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                       handleExitCancel()
                     }}
                   >
-                    No, continue tour
+                    {adminData?.i18n?.tourPlayback?.noContinueTour || 'No, continue tour'}
                   </button>
                   <button 
                     type="button" 
@@ -1072,7 +1072,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                   <svg className="flex-shrink-0 w-4 h-4 mr-1.5 -ml-1 text-orange-200" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path>
                   </svg>
-                  Yes, exit tour
+                  {adminData?.i18n?.tourPlayback?.yesExitTour || 'Yes, exit tour'}
                 </button>
               </div>
             </div>
