@@ -20,6 +20,9 @@ import AnalyticsDashboard from './AnalyticsDashboard.jsx'
 import { useToast } from './Toast.jsx'
 
 const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarOpen }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const [checklists, setChecklists] = useState([])
   const [filteredChecklists, setFilteredChecklists] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +41,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
     title: '',
     message: '',
     confirmText: '',
-    cancelText: 'No, cancel',
+    cancelText: i18n.checklistsTable?.buttons?.noCancel || 'No, cancel',
     items: [],
     onConfirm: null
   })
@@ -66,14 +69,14 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
       })
       
       if (!response.ok) {
-        throw new Error('Failed to fetch checklists')
+        throw new Error(i18n.checklistsTable?.errors?.fetchFailed || 'Failed to fetch checklists')
       }
       
       const data = await response.json()
       if (data.success) {
         setChecklists(data.data.data || [])
       } else {
-        throw new Error(data.data?.message || 'Failed to fetch checklists')
+        throw new Error(data.data?.message || i18n.checklistsTable?.errors?.fetchFailed || 'Failed to fetch checklists')
       }
     } catch (err) {
       setError(err.message)
@@ -139,7 +142,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
   const handleToggleStatus = async (checklistId, currentStatus) => {
     try {
       const checklist = checklists.find(c => c.id === checklistId)
-      const checklistTitle = checklist ? checklist.title : 'checklist'
+      const checklistTitle = checklist ? checklist.title : (i18n.checklistsTable?.labels?.checklist || 'checklist')
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
       
       const response = await fetch(adminData.ajaxurl, {
@@ -157,23 +160,23 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
       
       if (response.ok) {
         showSuccess(
-          `Checklist "${checklistTitle}" has been ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully.`,
+          `${i18n.checklistsTable?.messages?.checklistPrefix || 'Checklist'} "${checklistTitle}" ${i18n.checklistsTable?.messages?.hasBeenPrefix || 'has been'} ${newStatus === 'active' ? (i18n.checklistsTable?.messages?.activated || 'activated') : (i18n.checklistsTable?.messages?.deactivated || 'deactivated')} ${i18n.checklistsTable?.messages?.successfully || 'successfully'}.`,
           {
-            title: `Checklist ${newStatus === 'active' ? 'Activated' : 'Deactivated'}`,
+            title: `${i18n.checklistsTable?.titles?.checklistPrefix || 'Checklist'} ${newStatus === 'active' ? (i18n.checklistsTable?.titles?.activated || 'Activated') : (i18n.checklistsTable?.titles?.deactivated || 'Deactivated')}`,
             duration: 4000
           }
         )
         // Refresh the list instead of full page reload
         fetchChecklists()
       } else {
-        throw new Error('Failed to toggle status')
+        throw new Error(i18n.checklistsTable?.errors?.toggleStatusFailed || 'Failed to toggle status')
       }
     } catch (err) {
       console.error('Error toggling status:', err)
       showError(
-        'Failed to update checklist status. Please try again.',
+        i18n.checklistsTable?.errors?.updateStatusFailed || 'Failed to update checklist status. Please try again.',
         {
-          title: 'Status Update Failed',
+          title: i18n.checklistsTable?.titles?.statusUpdateFailed || 'Status Update Failed',
           duration: 5000
         }
       )
@@ -186,10 +189,10 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
     setConfirmationModal({
       isOpen: true,
       type: 'delete',
-      title: 'Delete Checklist',
-      message: 'Are you sure you want to delete this checklist? This action cannot be undone.',
-      confirmText: 'Yes, delete',
-      cancelText: 'No, cancel',
+      title: i18n.checklistsTable?.titles?.deleteChecklist || 'Delete Checklist',
+      message: i18n.checklistsTable?.messages?.deleteConfirmation || 'Are you sure you want to delete this checklist? This action cannot be undone.',
+      confirmText: i18n.checklistsTable?.buttons?.yesDelete || 'Yes, delete',
+      cancelText: i18n.checklistsTable?.buttons?.noCancel || 'No, cancel',
       items: checklist ? [checklist.title] : [],
       onConfirm: () => performDelete(checklistId)
     })
@@ -198,7 +201,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
   const performDelete = async (checklistId) => {
     try {
       const checklist = checklists.find(c => c.id === checklistId)
-      const checklistTitle = checklist ? checklist.title : 'checklist'
+      const checklistTitle = checklist ? checklist.title : (i18n.checklistsTable?.labels?.checklist || 'checklist')
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -215,22 +218,22 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
       const data = await response.json()
       if (data.success) {
         showSuccess(
-          `Checklist "${checklistTitle}" has been deleted successfully.`,
+          `${i18n.checklistsTable?.messages?.checklistPrefix || 'Checklist'} "${checklistTitle}" ${i18n.checklistsTable?.messages?.hasBeenDeleted || 'has been deleted'} ${i18n.checklistsTable?.messages?.successfully || 'successfully'}.`,
           {
-            title: 'Checklist Deleted',
+            title: i18n.checklistsTable?.titles?.checklistDeleted || 'Checklist Deleted',
             duration: 4000
           }
         )
         fetchChecklists() // Refresh the list
       } else {
-        throw new Error(data.data?.message || 'Failed to delete checklist')
+        throw new Error(data.data?.message || i18n.checklistsTable?.errors?.deleteFailed || 'Failed to delete checklist')
       }
     } catch (err) {
       console.error('Error deleting checklist:', err)
       showError(
-        err.message || 'Failed to delete checklist. Please try again.',
+        err.message || i18n.checklistsTable?.errors?.deleteError || 'Failed to delete checklist. Please try again.',
         {
-          title: 'Delete Failed',
+          title: i18n.checklistsTable?.titles?.deleteFailed || 'Delete Failed',
           duration: 5000
         }
       )
@@ -243,10 +246,10 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
     setConfirmationModal({
       isOpen: true,
       type: 'clone',
-      title: 'Clone Checklist',
-      message: 'Are you sure you want to clone this checklist?',
-      confirmText: 'Yes, clone',
-      cancelText: 'No, cancel',
+      title: i18n.checklistsTable?.titles?.cloneChecklist || 'Clone Checklist',
+      message: i18n.checklistsTable?.messages?.cloneConfirmation || 'Are you sure you want to clone this checklist?',
+      confirmText: i18n.checklistsTable?.buttons?.yesClone || 'Yes, clone',
+      cancelText: i18n.checklistsTable?.buttons?.noCancel || 'No, cancel',
       confirmButtonClass: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-900',
       items: checklist ? [checklist.title] : [],
       onConfirm: () => performClone(checklistId)
@@ -256,7 +259,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
   const performClone = async (checklistId) => {
     try {
       const checklist = checklists.find(c => c.id === checklistId)
-      const checklistTitle = checklist ? checklist.title : 'checklist'
+      const checklistTitle = checklist ? checklist.title : (i18n.checklistsTable?.labels?.checklist || 'checklist')
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -273,22 +276,22 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
       const data = await response.json()
       if (response.ok && data.success) {
         showSuccess(
-          `Checklist "${checklistTitle}" has been cloned successfully.`,
+          `${i18n.checklistsTable?.messages?.checklistPrefix || 'Checklist'} "${checklistTitle}" ${i18n.checklistsTable?.messages?.hasBeenCloned || 'has been cloned'} ${i18n.checklistsTable?.messages?.successfully || 'successfully'}.`,
           {
-            title: 'Checklist Cloned',
+            title: i18n.checklistsTable?.titles?.checklistCloned || 'Checklist Cloned',
             duration: 4000
           }
         )
         fetchChecklists() // Refresh the list
       } else {
-        throw new Error(data.data?.message || 'Failed to clone checklist')
+        throw new Error(data.data?.message || i18n.checklistsTable?.errors?.cloneFailed || 'Failed to clone checklist')
       }
     } catch (err) {
       console.error('Error cloning checklist:', err)
       showError(
-        err.message || 'Failed to clone checklist. Please try again.',
+        err.message || i18n.checklistsTable?.errors?.cloneError || 'Failed to clone checklist. Please try again.',
         {
-          title: 'Clone Failed',
+          title: i18n.checklistsTable?.titles?.cloneFailed || 'Clone Failed',
           duration: 5000
         }
       )
@@ -308,17 +311,17 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
 
   const getPriorityLabel = (priority) => {
     const labels = {
-      'urgent': 'Urgent',
-      'high': 'High',
-      'normal': 'Normal',
-      'low': 'Low',
-      'none': 'None'
+      'urgent': i18n.checklistsTable?.priorities?.urgent || 'Urgent',
+      'high': i18n.checklistsTable?.priorities?.high || 'High',
+      'normal': i18n.checklistsTable?.priorities?.normal || 'Normal',
+      'low': i18n.checklistsTable?.priorities?.low || 'Low',
+      'none': i18n.checklistsTable?.priorities?.none || 'None'
     }
     return labels[priority] || labels.none
   }
 
   const getTypeLabel = (type) => {
-    return type === 'publisher' ? 'Publisher' : 'Classic'
+    return type === 'publisher' ? (i18n.checklistsTable?.types?.publisher || 'Publisher') : (i18n.checklistsTable?.types?.classic || 'Classic')
   }
 
   // Get unique tags for filter
@@ -509,7 +512,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
               </div>
             ))}
           </div>
-          <span className="sr-only">Loading checklists...</span>
+          <span className="sr-only">{i18n.checklistsTable?.loading?.checklists || 'Loading checklists...'}</span>
         </Card>
       </div>
     )
@@ -522,13 +525,13 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-2">Error loading checklists</h3>
+          <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-2">{i18n.checklistsTable?.errors?.loadingTitle || 'Error loading checklists'}</h3>
           <p className="text-gray-600 dark:text-gray-300">{error}</p>
           <Button 
             onClick={fetchChecklists} 
             className="mt-4 bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent"
           >
-            Try Again
+            {i18n.checklistsTable?.buttons?.tryAgain || 'Try Again'}
           </Button>
         </div>
       </Card>
@@ -542,7 +545,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-brand-dark dark:text-white mb-2">
-              Search Checklists
+              {i18n.checklistsTable?.labels?.searchChecklists || 'Search Checklists'}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 right-3 flex items-center pl-3 pointer-events-none">
@@ -553,7 +556,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
               <input
                 type="search"
                 id="search"
-                placeholder="Search by title, description, type..."
+                placeholder={i18n.checklistsTable?.placeholders?.searchByTitleDesc || 'Search by title, description, type...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full !h-[2.5rem] pl-10 pr-3 text-sm text-gray-900 bg-white border !border-gray-300 !rounded-[.5rem] focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-900 !dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-300 dark:focus:border-blue-300 transition-colors duration-200"
@@ -573,7 +576,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           </div>
           <div>
             <label htmlFor="tag-filter" className="block text-sm font-medium text-brand-dark dark:text-white mb-2">
-              Filter by Tags
+              {i18n.checklistsTable?.labels?.filterByTags || 'Filter by Tags'}
             </label>
             <Select
               id="tag-filter"
@@ -585,7 +588,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
               }}
               options={tagOptions}
               styles={selectStyles}
-              placeholder="Select tags..."
+              placeholder={i18n.checklistsTable?.placeholders?.selectTags || 'Select tags...'}
               className="react-select-container"
               classNamePrefix="react-select"
               isClearable
@@ -602,7 +605,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
               }}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              Clear Filters
+              {i18n.checklistsTable?.buttons?.clearFilters || 'Clear Filters'}
             </Button>
           </div>
         </div>
@@ -616,12 +619,12 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.75 2.75h6.5c3.31 0 6 2.69 6 6v6.5c0 3.31-2.69 6-6 6h-6.5c-3.31 0-6-2.69-6-6v-6.5c0-3.31 2.69-6 6-6z M11.692 7.889h4.52M11.692 12h4.52m-4.52 4.111h4.52M8.066 8.506a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234m0 4.111a.617.617 0 1 0 0-1.234a.617.617 0 0 0 0 1.234" />
             </svg>
             <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-2">
-              {checklists.length === 0 ? 'No checklists found' : 'No checklists match your filters'}
+              {checklists.length === 0 ? (i18n.checklistsTable?.messages?.noChecklistsFound || 'No checklists found') : (i18n.checklistsTable?.messages?.noChecklistsMatch || 'No checklists match your filters')}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               {checklists.length === 0 
-                ? 'Create your first checklist to get started.'
-                : 'Try adjusting your search or filter criteria.'
+                ? (i18n.checklistsTable?.messages?.createFirstChecklist || 'Create your first checklist to get started.')
+                : (i18n.checklistsTable?.messages?.adjustFilters || 'Try adjusting your search or filter criteria.')
               }
             </p>
             {checklists.length === 0 && (
@@ -640,7 +643,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                 }}
                 className="bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent text-brand-dark"
               >
-                Add New Checklist
+                {i18n.checklistsTable?.buttons?.addNewChecklist || 'Add New Checklist'}
               </Button>
             )}
           </div>
@@ -654,7 +657,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-brand-dark dark:text-white"
                   >
                     <div className="flex items-center">
-                      Title
+                      {i18n.checklistsTable?.table?.headers?.title || 'Title'}
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                       </svg>
@@ -665,7 +668,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-brand-dark dark:text-white"
                   >
                     <div className="flex items-center">
-                      Type
+                      {i18n.checklistsTable?.table?.headers?.type || 'Type'}
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                       </svg>
@@ -676,17 +679,17 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 text-brand-dark dark:text-white"
                   >
                     <div className="flex items-center">
-                      Priority
+                      {i18n.checklistsTable?.table?.headers?.priority || 'Priority'}
                       <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                       </svg>
                     </div>
                   </TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Tags</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Description</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Status</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Shortcut</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Actions</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.tags || 'Tags'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.description || 'Description'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.status || 'Status'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.shortcut || 'Shortcut'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.actions || 'Actions'}</TableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody className="divide-y divide-gray-200 dark:divide-gray-600">
@@ -763,7 +766,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                           }}
                           className="text-brand-dark bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent border-brand-accent dark:bg-brand-accent/90 dark:hover:bg-brand-accent/80 dark:focus:ring-brand-accent/80"
                         >
-                          Edit
+                          {i18n.checklistsTable?.buttons?.edit || 'Edit'}
                         </Button>
                         <Dropdown
                           arrowIcon={false}
@@ -783,7 +786,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            Clone
+                            {i18n.checklistsTable?.buttons?.clone || 'Clone'}
                           </DropdownItem>
                           <DropdownDivider />
                           <DropdownItem
@@ -793,7 +796,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
-                            Delete
+                            {i18n.checklistsTable?.buttons?.delete || 'Delete'}
                           </DropdownItem>
                         </Dropdown>
                       </div>

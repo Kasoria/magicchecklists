@@ -19,6 +19,12 @@ const App = () => {
     speed_dial_bg_color: '#374151',
     speed_dial_icon_color: '#ffffff'
   })
+  const [i18n, setI18n] = useState({})
+
+  // Helper function to get translated text
+  const __ = (key, fallback) => {
+    return i18n?.app?.[key] || fallback
+  }
 
   // Utility function to wait for DOM elements (moved from mcl-boot.js)
   const waitForElement = useCallback((selector, timeout = 5000) => {
@@ -73,7 +79,7 @@ const App = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
         if (attempts % 10 === 0) {
-          console.log('MCL: Waiting for React bridge...');
+          console.log(__('waitingForReactBridge', 'MCL: Waiting for React bridge...'));
         }
       }
       
@@ -88,11 +94,11 @@ const App = () => {
         
         return window.mclDrawer;
       } else {
-        throw new Error('React component bridge not found after waiting');
+        throw new Error(__('reactBridgeNotFound', 'React component bridge not found after waiting'));
       }
 
     } catch (error) {
-      console.error('MCL: Failed to initialize Magic Checklist:', error);
+      console.error(__('initializationFailed', 'MCL: Failed to initialize Magic Checklist:'), error);
       return null;
     }
   }, [waitForElement])
@@ -111,6 +117,11 @@ const App = () => {
   }
 
   useEffect(() => {
+    // Set up i18n data
+    if (window.mclPublicData?.i18n || window.mclAdminData?.i18n) {
+      setI18n(window.mclPublicData?.i18n || window.mclAdminData?.i18n)
+    }
+
     // Check tour mode first
     const tourModeDetected = checkTourMode()
     setIsTourMode(tourModeDetected)
@@ -139,10 +150,10 @@ const App = () => {
             setActiveChecklists(data.data.checklists || [])
             setDrawerTheme(data.data.theme || 'light')
           } else {
-            console.warn('MCL: Failed to load checklist data:', data)
+            console.warn(__('failedToLoadChecklistData', 'MCL: Failed to load checklist data:'), data)
           }
         } else {
-          console.error('MCL: Failed to fetch checklist data')
+          console.error(__('failedToFetchChecklistData', 'MCL: Failed to fetch checklist data'))
         }
 
         // Get general settings for floating button styling
@@ -167,7 +178,7 @@ const App = () => {
             }
           }
         } catch (settingsError) {
-          console.warn('MCL: Failed to load general settings:', settingsError)
+          console.warn(__('failedToLoadGeneralSettings', 'MCL: Failed to load general settings:'), settingsError)
         }
         
         if (window.mclTourPlaybackData) {
@@ -176,7 +187,7 @@ const App = () => {
           setTourData(window.mclTourData)
         }
       } catch (error) {
-        console.error('Error loading checklist data:', error)
+        console.error(__('errorLoadingChecklistData', 'Error loading checklist data:'), error)
         // If we can't load data, try to use any existing data from the global object
         if (window.mcl_checklists?.active_checklists) {
           setActiveChecklists(window.mcl_checklists.active_checklists)
@@ -184,7 +195,7 @@ const App = () => {
         
         // Make mcl_checklists data available globally for backward compatibility
         if (window.mcl_checklists) {
-          console.log('MCL: Legacy mcl_checklists data available:', Object.keys(window.mcl_checklists))
+          console.log(__('legacyDataAvailable', 'MCL: Legacy mcl_checklists data available:'), Object.keys(window.mcl_checklists))
         }
       } finally {
         setLoading(false)
@@ -223,7 +234,7 @@ const App = () => {
           const props = JSON.parse(container.dataset.shortcodeProps)
           window.mclRenderShortcode(container, props)
         } catch (error) {
-          console.error('MCL: Error initializing shortcode:', error)
+          console.error(__('errorInitializingShortcode', 'MCL: Error initializing shortcode:'), error)
         }
       })
     }
@@ -242,7 +253,7 @@ const App = () => {
                 const props = JSON.parse(node.dataset.shortcodeProps)
                 window.mclRenderShortcode(node, props)
               } catch (error) {
-                console.error('MCL: Error initializing dynamic shortcode:', error)
+                console.error(__('errorInitializingDynamicShortcode', 'MCL: Error initializing dynamic shortcode:'), error)
               }
             }
             // Check for shortcode containers within the added node
@@ -253,7 +264,7 @@ const App = () => {
                   const props = JSON.parse(container.dataset.shortcodeProps)
                   window.mclRenderShortcode(container, props)
                 } catch (error) {
-                  console.error('MCL: Error initializing nested shortcode:', error)
+                  console.error(__('errorInitializingNestedShortcode', 'MCL: Error initializing nested shortcode:'), error)
                 }
               })
             }
@@ -272,7 +283,7 @@ const App = () => {
       try {
         await initializeMagicChecklist()
       } catch (error) {
-        console.warn('MCL: Auto-initialization failed:', error)
+        console.warn(__('autoInitializationFailed', 'MCL: Auto-initialization failed:'), error)
       }
     }
 
@@ -312,10 +323,10 @@ const App = () => {
               window.mclDrawer.draggable.init()
             }
           } catch (error) {
-            console.warn('MCL: Failed to reinitialize buttons:', error)
+            console.warn(__('failedToReinitializeButtons', 'MCL: Failed to reinitialize buttons:'), error)
           }
         } else {
-          console.warn('MCL: mclDrawer not available for button reinitialization')
+          console.warn(__('mclDrawerNotAvailable', 'MCL: mclDrawer not available for button reinitialization'))
         }
       }, 100)
     }

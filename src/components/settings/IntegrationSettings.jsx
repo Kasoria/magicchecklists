@@ -3,6 +3,9 @@ import { Button, Label, Table, TableHead, TableHeadCell, TableBody, TableRow, Ta
 import { useToast } from '../Toast.jsx'
 
 const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const [formData, setFormData] = useState({
     enable_api: true,
     webhook_secret: '',
@@ -80,7 +83,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
   }
 
   const handleRemoveEndpoint = (index) => {
-    if (confirm('Are you sure you want to delete this webhook endpoint?')) {
+    if (confirm(i18n.integrationSettings?.confirmations?.deleteEndpoint || 'Are you sure you want to delete this webhook endpoint?')) {
       setFormData(prev => ({
         ...prev,
         webhook_endpoints: prev.webhook_endpoints.filter((_, i) => i !== index)
@@ -106,19 +109,19 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
       
       const data = await response.json()
       if (data.success) {
-        showSuccess('Connection successful!', {
-          title: 'Webhook Test',
+        showSuccess(i18n.integrationSettings?.messages?.connectionSuccess || 'Connection successful!', {
+          title: i18n.integrationSettings?.titles?.webhookTest || 'Webhook Test',
           duration: 3000
         })
       } else {
-        showError(`Connection failed: ${data.data?.message || 'Unknown error'}`, {
-          title: 'Webhook Test Failed',
+        showError(`${i18n.integrationSettings?.messages?.connectionFailed || 'Connection failed'}: ${data.data?.message || i18n.integrationSettings?.messages?.unknownError || 'Unknown error'}`, {
+          title: i18n.integrationSettings?.titles?.webhookTestFailed || 'Webhook Test Failed',
           duration: 5000
         })
       }
     } catch (err) {
-      showError('Connection failed: Network error', {
-        title: 'Webhook Test Failed',
+      showError(`${i18n.integrationSettings?.messages?.connectionFailed || 'Connection failed'}: ${i18n.integrationSettings?.messages?.networkError || 'Network error'}`, {
+        title: i18n.integrationSettings?.titles?.webhookTestFailed || 'Webhook Test Failed',
         duration: 5000
       })
     }
@@ -141,7 +144,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
       key += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     
-    if (formData.mcl_api_key && !confirm('Are you sure you want to regenerate the API key? This will invalidate the existing key.')) {
+    if (formData.mcl_api_key && !confirm(i18n.integrationSettings?.confirmations?.regenerateApiKey || 'Are you sure you want to regenerate the API key? This will invalidate the existing key.')) {
       return
     }
     
@@ -150,15 +153,15 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
 
   const copyApiKey = () => {
     navigator.clipboard.writeText(formData.mcl_api_key).then(() => {
-      showSuccess('API key copied to clipboard!', {
-        title: 'Copied',
+      showSuccess(i18n.integrationSettings?.messages?.apiKeyCopied || 'API key copied to clipboard!', {
+        title: i18n.integrationSettings?.titles?.copied || 'Copied',
         duration: 2000
       })
     })
   }
 
   const clearWebhookLogs = async () => {
-    if (!confirm('Are you sure you want to clear all webhook logs?')) {
+    if (!confirm(i18n.integrationSettings?.confirmations?.clearLogs || 'Are you sure you want to clear all webhook logs?')) {
       return
     }
 
@@ -177,16 +180,16 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
       const data = await response.json()
       if (data.success) {
         setWebhookLogs([])
-        showSuccess('Webhook logs cleared successfully!', {
-          title: 'Logs Cleared',
+        showSuccess(i18n.integrationSettings?.messages?.logsCleared || 'Webhook logs cleared successfully!', {
+          title: i18n.integrationSettings?.titles?.logsCleared || 'Logs Cleared',
           duration: 3000
         })
       } else {
-        throw new Error(data.data?.message || 'Failed to clear logs')
+        throw new Error(data.data?.message || i18n.integrationSettings?.errors?.clearLogsFailed || 'Failed to clear logs')
       }
     } catch (err) {
-      showError(err.message || 'Failed to clear webhook logs', {
-        title: 'Clear Failed',
+      showError(err.message || i18n.integrationSettings?.errors?.clearLogsError || 'Failed to clear webhook logs', {
+        title: i18n.integrationSettings?.titles?.clearFailed || 'Clear Failed',
         duration: 5000
       })
     }
@@ -200,9 +203,9 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">API & Webhook Settings</h3>
+        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">{i18n.integrationSettings?.title || 'API & Webhook Settings'}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-          Enable / disable the API endpoints of MagicChecklists, test webhook URLs and more.
+          {i18n.integrationSettings?.description || 'Enable / disable the API endpoints of MagicChecklists, test webhook URLs and more.'}
         </p>
       </div>
 
@@ -210,7 +213,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
         {/* REST API Access */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            REST API Access
+            {i18n.integrationSettings?.labels?.restApiAccess || 'REST API Access'}
           </Label>
           <div className="flex items-center">
             <label className="relative inline-flex items-center cursor-pointer">
@@ -224,21 +227,21 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
             </label>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Enable REST API access for MagicChecklists. When disabled, all plugin-specific API endpoints will be inaccessible.
+            {i18n.integrationSettings?.descriptions?.restApiAccess || 'Enable REST API access for MagicChecklists. When disabled, all plugin-specific API endpoints will be inaccessible.'}
           </p>
         </div>
 
         {/* Webhook Secret */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Webhook Secret
+            {i18n.integrationSettings?.labels?.webhookSecret || 'Webhook Secret'}
           </Label>
           <div className="flex items-center space-x-2">
             <input
               type="text"
               value={formData.webhook_secret}
               onChange={(e) => handleInputChange('webhook_secret', e.target.value)}
-              placeholder="Enter a secret key for webhook security"
+              placeholder={i18n.integrationSettings?.placeholders?.webhookSecret || 'Enter a secret key for webhook security'}
               className="flex-1 px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
             />
             <Button
@@ -247,18 +250,18 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={generateWebhookSecret}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              Generate Secret
+              {i18n.integrationSettings?.buttons?.generateSecret || 'Generate Secret'}
             </Button>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            This secret key will be used to sign webhook payloads for security verification.
+            {i18n.integrationSettings?.descriptions?.webhookSecret || 'This secret key will be used to sign webhook payloads for security verification.'}
           </p>
         </div>
 
         {/* Webhook Endpoints */}
         <div className="space-y-4">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Webhook Endpoints
+            {i18n.integrationSettings?.labels?.webhookEndpoints || 'Webhook Endpoints'}
           </Label>
           <div className="space-y-3">
             {formData.webhook_endpoints.map((endpoint, index) => (
@@ -277,7 +280,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
                   onClick={() => handleTestEndpoint(endpoint)}
                   className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
                 >
-                  Test
+                  {i18n.integrationSettings?.buttons?.test || 'Test'}
                 </Button>
                 <Button
                   type="button"
@@ -286,7 +289,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
                   onClick={() => handleRemoveEndpoint(index)}
                   className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
                 >
-                  Remove
+                  {i18n.integrationSettings?.buttons?.remove || 'Remove'}
                 </Button>
               </div>
             ))}
@@ -296,25 +299,25 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={handleAddEndpoint}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              Add Endpoint
+              {i18n.integrationSettings?.buttons?.addEndpoint || 'Add Endpoint'}
             </Button>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Add URLs where webhook notifications should be sent when checklist events occur.
+            {i18n.integrationSettings?.descriptions?.webhookEndpoints || 'Add URLs where webhook notifications should be sent when checklist events occur.'}
           </p>
         </div>
 
         {/* MainWP API Key */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            MainWP API Key
+            {i18n.integrationSettings?.labels?.mainwpApiKey || 'MainWP API Key'}
           </Label>
           <div className="flex items-center space-x-2">
             <input
               type={showMainWPKey ? "text" : "password"}
               value={formData.mainwp_api_key}
               onChange={(e) => handleInputChange('mainwp_api_key', e.target.value)}
-              placeholder="Enter your MainWP API key"
+              placeholder={i18n.integrationSettings?.placeholders?.mainwpApiKey || 'Enter your MainWP API key'}
               className="flex-1 px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
             />
             <Button
@@ -323,25 +326,25 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={() => setShowMainWPKey(!showMainWPKey)}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              {showMainWPKey ? 'Hide' : 'Show'}
+              {showMainWPKey ? (i18n.integrationSettings?.buttons?.hide || 'Hide') : (i18n.integrationSettings?.buttons?.show || 'Show')}
             </Button>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Enter the API key generated from your MainWP dashboard to enable communication between MainWP and MagicChecklists.
+            {i18n.integrationSettings?.descriptions?.mainwpApiKey || 'Enter the API key generated from your MainWP dashboard to enable communication between MainWP and MagicChecklists.'}
           </p>
         </div>
 
         {/* MagicChecklists API Key */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            MagicChecklists API Key
+            {i18n.integrationSettings?.labels?.mclApiKey || 'MagicChecklists API Key'}
           </Label>
           <div className="flex items-center space-x-2">
             <input
               type={showApiKey ? "text" : "password"}
               value={formData.mcl_api_key}
               readOnly
-              placeholder="No API key generated"
+              placeholder={i18n.integrationSettings?.placeholders?.noApiKey || 'No API key generated'}
               className="flex-1 px-3 py-2 border border-gray-300 bg-gray-50 dark:bg-gray-600 dark:border-gray-600 rounded-md shadow-sm text-brand-dark dark:text-white"
             />
             <Button
@@ -350,7 +353,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={generateApiKey}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              {formData.mcl_api_key ? 'Regenerate' : 'Generate'}
+              {formData.mcl_api_key ? (i18n.integrationSettings?.buttons?.regenerate || 'Regenerate') : (i18n.integrationSettings?.buttons?.generate || 'Generate')}
             </Button>
             <Button
               type="button"
@@ -358,7 +361,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={() => setShowApiKey(!showApiKey)}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              {showApiKey ? 'Hide' : 'Show'}
+              {showApiKey ? (i18n.integrationSettings?.buttons?.hide || 'Hide') : (i18n.integrationSettings?.buttons?.show || 'Show')}
             </Button>
             {formData.mcl_api_key && (
               <Button
@@ -367,16 +370,16 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
                 onClick={copyApiKey}
                 className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
               >
-                Copy
+                {i18n.integrationSettings?.buttons?.copy || 'Copy'}
               </Button>
             )}
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Generate an API key to allow third-party applications to access your MagicChecklists data through the v2 API endpoints.
+            {i18n.integrationSettings?.descriptions?.mclApiKey || 'Generate an API key to allow third-party applications to access your MagicChecklists data through the v2 API endpoints.'}
           </p>
           {formData.mcl_api_key && (
             <p className="text-sm text-red-600 dark:text-red-400">
-              Warning: Regenerating the API key will invalidate any existing integrations using the current key.
+              {i18n.integrationSettings?.warnings?.regenerateApiKey || 'Warning: Regenerating the API key will invalidate any existing integrations using the current key.'}
             </p>
           )}
         </div>
@@ -385,7 +388,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-brand-dark dark:text-white font-medium">
-              Webhook Logs
+              {i18n.integrationSettings?.labels?.webhookLogs || 'Webhook Logs'}
             </Label>
             {webhookLogs.length > 0 && (
               <Button
@@ -394,7 +397,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
                 onClick={clearWebhookLogs}
                 className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
               >
-                Clear Logs
+                {i18n.integrationSettings?.buttons?.clearLogs || 'Clear Logs'}
               </Button>
             )}
           </div>
@@ -402,17 +405,17 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Time</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Event</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Endpoint</TableHeadCell>
-                  <TableHeadCell className="text-brand-dark dark:text-white">Status</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.integrationSettings?.table?.headers?.time || 'Time'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.integrationSettings?.table?.headers?.event || 'Event'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.integrationSettings?.table?.headers?.endpoint || 'Endpoint'}</TableHeadCell>
+                  <TableHeadCell className="text-brand-dark dark:text-white">{i18n.integrationSettings?.table?.headers?.status || 'Status'}</TableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody className="divide-y divide-gray-200 dark:divide-gray-600">
                 {webhookLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      No webhook logs found.
+                      {i18n.integrationSettings?.messages?.noLogsFound || 'No webhook logs found.'}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -443,10 +446,10 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Saving...
+                {i18n.integrationSettings?.buttons?.saving || 'Saving...'}
               </>
             ) : (
-              'Save Integration Settings'
+              i18n.integrationSettings?.buttons?.save || 'Save Integration Settings'
             )}
           </Button>
         </div>

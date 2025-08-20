@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Button, Label } from 'flowbite-react'
 
 const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const [formData, setFormData] = useState({
     enable_checklist_navigation: false,
     enable_progress_counter: false,
@@ -34,9 +37,9 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">General Settings</h3>
+        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">{i18n.generalSettings?.title || 'General Settings'}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-          Configure general plugin settings and behavior.
+          {i18n.generalSettings?.description || 'Configure general plugin settings and behavior.'}
         </p>
       </div>
 
@@ -44,7 +47,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
         {/* Checklist Navigation */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Checklist Arrow Buttons Navigation
+            {i18n.generalSettings?.labels?.checklistNavigation || 'Checklist Arrow Buttons Navigation'}
           </Label>
           <div className="flex items-center">
             <label className="relative inline-flex items-center cursor-pointer">
@@ -58,14 +61,14 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
             </label>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Enable navigation arrows to switch between active checklists when the drawer is open.
+            {i18n.generalSettings?.descriptions?.checklistNavigation || 'Enable navigation arrows to switch between active checklists when the drawer is open.'}
           </p>
         </div>
 
         {/* Progress Counter */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Progress Counter
+            {i18n.generalSettings?.labels?.progressCounter || 'Progress Counter'}
           </Label>
           <div className="flex items-center">
             <label className="relative inline-flex items-center cursor-pointer">
@@ -79,14 +82,14 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
             </label>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Show a progress counter in checklists displaying total items, completed items, and completion percentage.
+            {i18n.generalSettings?.descriptions?.progressCounter || 'Show a progress counter in checklists displaying total items, completed items, and completion percentage.'}
           </p>
         </div>
 
         {/* Data Cleanup */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Data Cleanup
+            {i18n.generalSettings?.labels?.dataCleanup || 'Data Cleanup'}
           </Label>
           <div className="flex items-center">
             <label className="relative inline-flex items-center cursor-pointer">
@@ -100,7 +103,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
             </label>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Delete all plugin data when uninstalling MagicChecklists (including checklists, settings, and database tables).
+            {i18n.generalSettings?.descriptions?.dataCleanup || 'Delete all plugin data when uninstalling MagicChecklists (including checklists, settings, and database tables).'}
           </p>
         </div>
 
@@ -109,13 +112,13 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
         {/* Speed Dial Colors */}
         <div className="space-y-4">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Speed Dial Appearance
+            {i18n.generalSettings?.labels?.speedDialAppearance || 'Speed Dial Appearance'}
           </Label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="speed_dial_bg_color" className="text-brand-dark dark:text-white text-sm">
-                Background Color
+                {i18n.generalSettings?.labels?.backgroundColor || 'Background Color'}
               </Label>
               <div className="flex items-center space-x-2">
                 <input
@@ -138,7 +141,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
             
             <div className="space-y-2">
               <Label htmlFor="speed_dial_icon_color" className="text-brand-dark dark:text-white text-sm">
-                Icon Color
+                {i18n.generalSettings?.labels?.iconColor || 'Icon Color'}
               </Label>
               <div className="flex items-center space-x-2">
                 <input
@@ -161,7 +164,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </div>
           
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Customize the appearance of the speed dial trigger button that appears when multiple checklists have floating buttons enabled.
+            {i18n.generalSettings?.descriptions?.speedDialAppearance || 'Customize the appearance of the speed dial trigger button that appears when multiple checklists have floating buttons enabled.'}
           </p>
         </div>
 
@@ -178,10 +181,10 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Saving...
+                {i18n.generalSettings?.buttons?.saving || 'Saving...'}
               </>
             ) : (
-              'Save General Settings'
+              i18n.generalSettings?.buttons?.save || 'Save General Settings'
             )}
           </Button>
         </div>

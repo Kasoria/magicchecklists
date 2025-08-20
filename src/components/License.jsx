@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useToast } from './Toast.jsx'
 
 const License = ({ adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const [licenseData, setLicenseData] = useState({
     isActive: false,
     licenseKey: '',
@@ -52,7 +55,7 @@ const License = ({ adminData }) => {
         setLicenseData(prev => ({ ...prev, loading: false }))
       }
     } catch (error) {
-      console.error('Error loading license status:', error)
+      console.error(i18n.license?.console?.errorLoadingStatus || 'Error loading license status:', error)
       setLicenseData(prev => ({ ...prev, loading: false }))
     }
   }
@@ -81,14 +84,14 @@ const License = ({ adminData }) => {
       const data = await response.json()
       
       if (data.success) {
-        showSuccess(data.data?.message || (licenseData.isActive ? 'License deactivated successfully' : 'License activated successfully'))
+        showSuccess(data.data?.message || (licenseData.isActive ? (i18n.license?.messages?.deactivateSuccess || 'License deactivated successfully') : (i18n.license?.messages?.activateSuccess || 'License activated successfully')))
         loadLicenseStatus() // Reload the license status
       } else {
-        showError(data.data?.message || 'License operation failed')
+        showError(data.data?.message || i18n.license?.errors?.operationFailed || 'License operation failed')
       }
     } catch (error) {
-      console.error('Error processing license:', error)
-      showError('An error occurred while processing the license')
+      console.error(i18n.license?.console?.errorProcessing || 'Error processing license:', error)
+      showError(i18n.license?.errors?.processingError || 'An error occurred while processing the license')
     } finally {
       setLicenseData(prev => ({ ...prev, submitting: false }))
     }
@@ -116,14 +119,14 @@ const License = ({ adminData }) => {
       <div className="mcl-header mb-8">
         <div className="mcl-title-wrapper mb-4">
           <h1 className="text-3xl font-bold text-brand-dark dark:text-white">
-            Manage License
+            {i18n.license?.title || 'Manage License'}
           </h1>
         </div>
         <div className="mcl-intro">
           <p className="text-gray-600 dark:text-gray-300">
             {action === 'activate' 
-              ? 'Enter your license key to activate MagicChecklists.'
-              : 'Your license is successfully activated for this site.'
+              ? (i18n.license?.descriptions?.enterKey || 'Enter your license key to activate MagicChecklists.')
+              : (i18n.license?.descriptions?.activated || 'Your license is successfully activated for this site.')
             }
           </p>
         </div>
@@ -140,7 +143,7 @@ const License = ({ adminData }) => {
               {action === 'activate' ? (
                 <>
                   <label htmlFor="license_key_input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    License Key
+                    {i18n.license?.labels?.licenseKey || 'License Key'}
                   </label>
                   <input 
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-accent focus:border-transparent dark:bg-gray-700 dark:text-white" 
@@ -149,7 +152,7 @@ const License = ({ adminData }) => {
                     id="license_key_input" 
                     value={licenseData.licenseKey}
                     onChange={handleLicenseKeyChange}
-                    placeholder="Enter your license key"
+                    placeholder={i18n.license?.placeholders?.enterKey || 'Enter your license key'}
                     autoComplete="off"
                     required
                   />
@@ -157,7 +160,7 @@ const License = ({ adminData }) => {
               ) : (
                 <>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    License Key
+                    {i18n.license?.labels?.licenseKey || 'License Key'}
                   </label>
                   <div className="mcl-license-display bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 font-mono text-lg tracking-widest text-gray-800 dark:text-gray-200">
                     {licenseData.maskedKey}
@@ -171,7 +174,7 @@ const License = ({ adminData }) => {
                     <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Activated on: {window.location.hostname}
+                    {i18n.license?.messages?.activatedOn || 'Activated on'}: {window.location.hostname}
                   </p>
                 </div>
               )}
@@ -191,14 +194,14 @@ const License = ({ adminData }) => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Activating...
+                    {i18n.license?.buttons?.activating || 'Activating...'}
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    Activate License
+                    {i18n.license?.buttons?.activateLicense || 'Activate License'}
                   </>
                 )}
               </button>
@@ -214,14 +217,14 @@ const License = ({ adminData }) => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Deactivating...
+                    {i18n.license?.buttons?.deactivating || 'Deactivating...'}
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Deactivate License
+                    {i18n.license?.buttons?.deactivateLicense || 'Deactivate License'}
                   </>
                 )}
               </button>

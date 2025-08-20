@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Button, Label } from 'flowbite-react'
 
 const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const [formData, setFormData] = useState({
     enabled: false,
     show_checklists: true,
@@ -118,7 +121,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
     
     // If "Show Checklists" is enabled, at least one checklist must be selected
     if (formData.show_checklists && formData.selected_checklists.length === 0) {
-      errors.selected_checklists = 'At least one checklist must be selected when "Show Checklists" is enabled.'
+      errors.selected_checklists = i18n.dashboardSettings?.validation?.checklistRequired || 'At least one checklist must be selected when "Show Checklists" is enabled.'
     }
     
     setValidationErrors(errors)
@@ -147,10 +150,9 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">Dashboard Widget</h3>
+        <h3 className="text-lg font-medium text-brand-dark dark:text-white mb-4">{i18n.dashboardSettings?.title || 'Dashboard Widget'}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-          Configure the MagicChecklists dashboard widget that appears on the WordPress admin dashboard. 
-          At least one display option must be enabled for the widget to appear.
+          {i18n.dashboardSettings?.description || 'Configure the MagicChecklists dashboard widget that appears on the WordPress admin dashboard. At least one display option must be enabled for the widget to appear.'}
         </p>
       </div>
 
@@ -158,7 +160,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
         {/* Enable Dashboard Widget */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            Enable Dashboard Widget
+            {i18n.dashboardSettings?.labels?.enableWidget || 'Enable Dashboard Widget'}
           </Label>
           <div className="flex items-center">
             <label className="relative inline-flex items-center cursor-pointer">
@@ -172,7 +174,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
             </label>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Enable the MagicChecklists widget on the WordPress admin dashboard.
+            {i18n.dashboardSettings?.descriptions?.enableWidget || 'Enable the MagicChecklists widget on the WordPress admin dashboard.'}
           </p>
         </div>
 
@@ -181,7 +183,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
             {/* Show Checklists */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Checklists
+                {i18n.dashboardSettings?.labels?.showChecklists || 'Show Checklists'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -195,14 +197,14 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display a list of checklists with their current status. Choose which checklists to display below.
+                {i18n.dashboardSettings?.descriptions?.showChecklists || 'Display a list of checklists with their current status. Choose which checklists to display below.'}
               </p>
               
               {formData.show_checklists && (
                 <div className="mt-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-sm font-medium text-brand-dark dark:text-white">
-                      Select Checklists to Display
+                      {i18n.dashboardSettings?.labels?.selectChecklists || 'Select Checklists to Display'}
                     </label>
                     <div className="flex gap-2">
                       <button
@@ -210,14 +212,14 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                         onClick={handleSelectAllChecklists}
                         className="text-xs px-2 py-1 bg-brand-accent text-brand-dark rounded hover:bg-brand-accent/90 transition-colors"
                       >
-                        Select All
+                        {i18n.dashboardSettings?.buttons?.selectAll || 'Select All'}
                       </button>
                       <button
                         type="button"
                         onClick={handleDeselectAllChecklists}
                         className="text-xs px-2 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
                       >
-                        Deselect All
+                        {i18n.dashboardSettings?.buttons?.deselectAll || 'Deselect All'}
                       </button>
                     </div>
                   </div>
@@ -230,7 +232,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                   
                   {checklists.length === 0 ? (
                     <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                      No checklists found. Create some checklists first to display them in the widget.
+                      {i18n.dashboardSettings?.messages?.noChecklists || 'No checklists found. Create some checklists first to display them in the widget.'}
                     </p>
                   ) : (
                     <div className="max-h-48 overflow-y-auto">
@@ -255,7 +257,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
                                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
                               }`}>
-                                {checklist.active ? 'Active' : 'Inactive'}
+                                {checklist.active ? (i18n.dashboardSettings?.status?.active || 'Active') : (i18n.dashboardSettings?.status?.inactive || 'Inactive')}
                               </span>
                             </label>
                           )
@@ -266,9 +268,9 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                   
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                     {Array.isArray(formData.selected_checklists) && formData.selected_checklists.length === 0 ? (
-                      'No checklists selected. All checklists will be displayed if none are specifically selected.'
+                      i18n.dashboardSettings?.messages?.noChecklistsSelected || 'No checklists selected. All checklists will be displayed if none are specifically selected.'
                     ) : (
-                      `${formData.selected_checklists?.length || 0} checklist(s) selected for display.`
+                      `${formData.selected_checklists?.length || 0} ${i18n.dashboardSettings?.messages?.checklistsSelected || 'checklist(s) selected for display.'}`
                     )}
                   </p>
                 </div>
@@ -278,7 +280,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
             {/* Show Checklist Items */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Checklist Items
+                {i18n.dashboardSettings?.labels?.showChecklistItems || 'Show Checklist Items'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -292,7 +294,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display items from a specific checklist. Select which checklist below.
+                {i18n.dashboardSettings?.descriptions?.showChecklistItems || 'Display items from a specific checklist. Select which checklist below.'}
               </p>
               
               {formData.show_checklist_items && (
@@ -302,7 +304,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                     onChange={(e) => setFormData(prev => ({ ...prev, selected_checklist: e.target.value }))}
                     className="block w-full max-w-sm px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
                   >
-                    <option value="">Select a checklist</option>
+                    <option value="">{i18n.dashboardSettings?.labels?.selectChecklist || 'Select a checklist'}</option>
                     {checklists.map((checklist) => (
                       <option key={checklist.id} value={checklist.id}>
                         {checklist.title}
@@ -316,7 +318,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
             {/* Show Deadlines */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Deadlines
+                {i18n.dashboardSettings?.labels?.showDeadlines || 'Show Deadlines'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -330,14 +332,14 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display upcoming deadlines for checklist items with color-coded urgency.
+                {i18n.dashboardSettings?.descriptions?.showDeadlines || 'Display upcoming deadlines for checklist items with color-coded urgency.'}
               </p>
             </div>
 
             {/* Show Tags */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Tags
+                {i18n.dashboardSettings?.labels?.showTags || 'Show Tags'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -351,14 +353,14 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display tags associated with each checklist.
+                {i18n.dashboardSettings?.descriptions?.showTags || 'Display tags associated with each checklist.'}
               </p>
             </div>
 
             {/* Show Descriptions */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Descriptions
+                {i18n.dashboardSettings?.labels?.showDescriptions || 'Show Descriptions'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -372,14 +374,14 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display a truncated description for each checklist.
+                {i18n.dashboardSettings?.descriptions?.showDescriptions || 'Display a truncated description for each checklist.'}
               </p>
             </div>
 
             {/* Show Quick Actions */}
             <div className="space-y-2">
               <Label className="text-brand-dark dark:text-white font-medium">
-                Show Quick Actions
+                {i18n.dashboardSettings?.labels?.showQuickActions || 'Show Quick Actions'}
               </Label>
               <div className="flex items-center">
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -393,7 +395,7 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                 </label>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Display quick action buttons to activate/deactivate checklists directly from the dashboard.
+                {i18n.dashboardSettings?.descriptions?.showQuickActions || 'Display quick action buttons to activate/deactivate checklists directly from the dashboard.'}
               </p>
             </div>
           </>
@@ -412,10 +414,10 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Saving...
+                {i18n.dashboardSettings?.buttons?.saving || 'Saving...'}
               </>
             ) : (
-              'Save Dashboard Widget Settings'
+              i18n.dashboardSettings?.buttons?.save || 'Save Dashboard Widget Settings'
             )}
           </Button>
         </div>

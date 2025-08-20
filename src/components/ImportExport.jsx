@@ -3,6 +3,9 @@ import { Table, Button, Card, Spinner, Label, TextInput } from 'flowbite-react'
 import { useToast } from './Toast.jsx'
 
 const ImportExport = ({ adminData }) => {
+  // Get i18n data
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  
   const { showSuccess, showError } = useToast()
   const [importedChecklistId, setImportedChecklistId] = useState(null)
   const [checklists, setChecklists] = useState([])
@@ -27,17 +30,17 @@ const ImportExport = ({ adminData }) => {
         setImportedChecklistId(checklistId)
         showSuccess(
           <div>
-            <p>Checklist imported successfully!</p>
+            <p>{i18n.importExport?.messages?.importSuccess || 'Checklist imported successfully!'}</p>
             <a 
               href={`${adminData.admin_url}admin.php?page=mcl_checklists&checklist_id=${checklistId}&type=classic`}
               className="underline hover:no-underline font-medium"
               onClick={() => window.location.href = `${adminData.admin_url}admin.php?page=mcl_add_new&checklist_id=${checklistId}&type=classic`}
             >
-              Edit the imported checklist →
+              {i18n.importExport?.buttons?.editImported || 'Edit the imported checklist →'}
             </a>
           </div>,
           {
-            title: 'Import Complete',
+            title: i18n.importExport?.titles?.importComplete || 'Import Complete',
             duration: 8000
           }
         )
@@ -45,7 +48,7 @@ const ImportExport = ({ adminData }) => {
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname + '?page=mcl_import')
     } else if (urlParams.get('error') === '1') {
-      showError('Failed to import checklist. Please try again.')
+      showError(i18n.importExport?.errors?.importFailed || 'Failed to import checklist. Please try again.')
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname + '?page=mcl_import')
     }
@@ -74,12 +77,12 @@ const ImportExport = ({ adminData }) => {
           const classics = result.data.data.filter(item => !item.type || item.type === 'classic')
           setChecklists(classics)
         } else {
-          const errorMsg = typeof result.data === 'string' ? result.data : 'Failed to load checklists'
+          const errorMsg = typeof result.data === 'string' ? result.data : (i18n.importExport?.errors?.loadChecklistsFailed || 'Failed to load checklists')
           throw new Error(errorMsg)
         }
       } catch (err) {
         console.error('Error fetching checklists:', err)
-        showError(err.message || 'An error occurred while loading checklists')
+        showError(err.message || i18n.importExport?.errors?.loadError || 'An error occurred while loading checklists')
       } finally {
         setLoading(false)
       }
@@ -102,20 +105,20 @@ const ImportExport = ({ adminData }) => {
     
     // Check if file input exists
     if (!fileInput) {
-      showError('File input not found. Please try again.')
+      showError(i18n.importExport?.errors?.fileInputNotFound || 'File input not found. Please try again.')
       return
     }
     
     // Validate that a file is actually selected
     if (!fileInput.files || fileInput.files.length === 0) {
-      showError('Please select a JSON file to import.')
+      showError(i18n.importExport?.errors?.selectFile || 'Please select a JSON file to import.')
       return
     }
     
     // Validate file type
     const file = fileInput.files[0]
     if (!file.name.toLowerCase().endsWith('.json')) {
-      showError('Please select a valid JSON file.')
+      showError(i18n.importExport?.errors?.validJsonFile || 'Please select a valid JSON file.')
       return
     }
     
@@ -206,10 +209,10 @@ const ImportExport = ({ adminData }) => {
       document.body.removeChild(exportForm)
       
       setShowPdfModal(false)
-      showSuccess('PDF export started! Check your browser downloads.')
+      showSuccess(i18n.importExport?.messages?.pdfExportSuccess || 'PDF export started! Check your browser downloads.')
     } catch (err) {
       console.error('PDF export error:', err)
-      showError(err.message || 'Failed to export PDF')
+      showError(err.message || i18n.importExport?.errors?.pdfExportFailed || 'Failed to export PDF')
     }
   }
 
@@ -218,16 +221,16 @@ const ImportExport = ({ adminData }) => {
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <Spinner size="xl" />
-          <span className="ml-3 text-lg">Loading checklists...</span>
+          <span className="ml-3 text-lg">{i18n.importExport?.loading?.checklists || 'Loading checklists...'}</span>
         </div>
       ) : (
         <Card className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">Export Classic Checklists</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">{i18n.importExport?.titles?.exportChecklists || 'Export Classic Checklists'}</h2>
           {checklists.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">No classic checklists found.</p>
+              <p className="text-gray-500 dark:text-gray-400">{i18n.importExport?.messages?.noChecklists || 'No classic checklists found.'}</p>
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-                Create some classic checklists first to enable export functionality.
+                {i18n.importExport?.messages?.createChecklistsFirst || 'Create some classic checklists first to enable export functionality.'}
               </p>
             </div>
           ) : (
@@ -235,16 +238,16 @@ const ImportExport = ({ adminData }) => {
               <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                   <tr>
-                    <th scope="col" className="px-6 py-3">Title</th>
-                    <th scope="col" className="px-6 py-3">Items</th>
-                    <th scope="col" className="px-6 py-3">Actions</th>
+                    <th scope="col" className="px-6 py-3">{i18n.importExport?.table?.headers?.title || 'Title'}</th>
+                    <th scope="col" className="px-6 py-3">{i18n.importExport?.table?.headers?.items || 'Items'}</th>
+                    <th scope="col" className="px-6 py-3">{i18n.importExport?.table?.headers?.actions || 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {checklists.map(item => (
                     <tr key={item.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                       <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{item.title}</td>
-                      <td className="px-6 py-4">{item.items_count || 0} items</td>
+                      <td className="px-6 py-4">{item.items_count || 0} {i18n.importExport?.table?.itemsLabel || 'items'}</td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <Button 
@@ -280,15 +283,15 @@ const ImportExport = ({ adminData }) => {
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">Import from Text</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">{i18n.importExport?.titles?.importFromText || 'Import from Text'}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Import checklist items from plain text. Enter one item per line.
+            {i18n.importExport?.descriptions?.importText || 'Import checklist items from plain text. Enter one item per line.'}
           </p>
           <form id="import-text-form" action={`${adminData.admin_url}admin-post.php`} method="post">
             <input type="hidden" name="action" value="import_checklist" />
             <input type="hidden" name="type" value="classic" />
             <input type="hidden" name="mcl_nonce" value={adminData.nonces.mcl_import_checklist} />
-            <Label htmlFor="importText">Paste items (one per line)</Label>
+            <Label htmlFor="importText">{i18n.importExport?.labels?.pasteItems || 'Paste items (one per line)'}</Label>
             <textarea
               id="importText"
               name="checklist_items"
@@ -296,17 +299,17 @@ const ImportExport = ({ adminData }) => {
               rows={6}
               value={importText}
               onChange={e => setImportText(e.target.value)}
-              placeholder="Enter each checklist item on a new line..."
+              placeholder={i18n.importExport?.placeholders?.enterItems || 'Enter each checklist item on a new line...'}
             />
             <Button size="sm" className="mt-4" onClick={handleTextImport} disabled={!importText.trim()}>
-              Import Text
+              {i18n.importExport?.buttons?.importText || 'Import Text'}
             </Button>
           </form>
         </Card>
         <Card>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">Import from JSON</h2>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">{i18n.importExport?.titles?.importFromJson || 'Import from JSON'}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Import a complete checklist from a JSON file exported from MagicChecklists.
+            {i18n.importExport?.descriptions?.importJson || 'Import a complete checklist from a JSON file exported from MagicChecklists.'}
           </p>
           <form
             id="import-json-form"
@@ -318,7 +321,7 @@ const ImportExport = ({ adminData }) => {
             <input type="hidden" name="type" value="classic" />
             <input type="hidden" name="mcl_json_nonce" value={adminData.nonces.mcl_import_json_checklist} />
             
-                        <Label htmlFor="importFile">Upload JSON File</Label>
+                        <Label htmlFor="importFile">{i18n.importExport?.labels?.uploadFile || 'Upload JSON File'}</Label>
             
             {/* Always render the file input but keep it hidden */}
             <input
@@ -355,8 +358,8 @@ const ImportExport = ({ adminData }) => {
                   <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <p className="text-gray-600 dark:text-gray-300">Drag and drop JSON file here or click to select</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Only .json files are supported</p>
+                  <p className="text-gray-600 dark:text-gray-300">{i18n.importExport?.messages?.dragDropFile || 'Drag and drop JSON file here or click to select'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{i18n.importExport?.messages?.jsonOnly || 'Only .json files are supported'}</p>
                 </div>
               </div>
             ) : (
@@ -392,7 +395,7 @@ const ImportExport = ({ adminData }) => {
             )}
             
             <Button size="sm" className="mt-4" onClick={handleFileImport} disabled={!importFile}>
-              Import JSON
+              {i18n.importExport?.buttons?.importJson || 'Import JSON'}
             </Button>
           </form>
         </Card>
@@ -403,7 +406,7 @@ const ImportExport = ({ adminData }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">PDF Export Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{i18n.importExport?.titles?.pdfExportSettings || 'PDF Export Settings'}</h3>
               <button
                 onClick={() => setShowPdfModal(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -416,59 +419,59 @@ const ImportExport = ({ adminData }) => {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="logoUrl">Header Logo URL</Label>
+                <Label htmlFor="logoUrl">{i18n.importExport?.labels?.logoUrl || 'Header Logo URL'}</Label>
                 <TextInput
                   id="logoUrl"
                   type="url"
                   value={pdfSettings.logoUrl}
                   onChange={e => setPdfSettings(prev => ({ ...prev, logoUrl: e.target.value }))}
-                  placeholder="https://example.com/logo.png"
+                  placeholder={i18n.importExport?.placeholders?.logoUrl || 'https://example.com/logo.png'}
                 />
               </div>
               
               <div>
-                <Label htmlFor="headerText">Header Text</Label>
+                <Label htmlFor="headerText">{i18n.importExport?.labels?.headerText || 'Header Text'}</Label>
                 <textarea
                   id="headerText"
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={3}
                   value={pdfSettings.headerText}
                   onChange={e => setPdfSettings(prev => ({ ...prev, headerText: e.target.value }))}
-                  placeholder="Header text for your PDF..."
+                  placeholder={i18n.importExport?.placeholders?.headerText || 'Header text for your PDF...'}
                 />
               </div>
               
               <div>
-                <Label htmlFor="contactInfo">Contact Information</Label>
+                <Label htmlFor="contactInfo">{i18n.importExport?.labels?.contactInfo || 'Contact Information'}</Label>
                 <textarea
                   id="contactInfo"
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={3}
                   value={pdfSettings.contactInfo}
                   onChange={e => setPdfSettings(prev => ({ ...prev, contactInfo: e.target.value }))}
-                  placeholder="Contact information..."
+                  placeholder={i18n.importExport?.placeholders?.contactInfo || 'Contact information...'}
                 />
               </div>
               
               <div>
-                <Label htmlFor="footerText">Footer Text</Label>
+                <Label htmlFor="footerText">{i18n.importExport?.labels?.footerText || 'Footer Text'}</Label>
                 <textarea
                   id="footerText"
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={3}
                   value={pdfSettings.footerText}
                   onChange={e => setPdfSettings(prev => ({ ...prev, footerText: e.target.value }))}
-                  placeholder="Footer text..."
+                  placeholder={i18n.importExport?.placeholders?.footerText || 'Footer text...'}
                 />
               </div>
             </div>
             
             <div className="flex justify-end gap-2 mt-6">
               <Button color="gray" onClick={() => setShowPdfModal(false)}>
-                Cancel
+                {i18n.importExport?.buttons?.cancel || 'Cancel'}
               </Button>
               <Button color="yellow" onClick={handlePdfExport}>
-                Export PDF
+                {i18n.importExport?.buttons?.exportPdf || 'Export PDF'}
               </Button>
             </div>
           </div>
