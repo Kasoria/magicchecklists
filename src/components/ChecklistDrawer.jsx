@@ -3,10 +3,11 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { formatDate, formatDeadlineCountdown } from '../utils/dateUtils'
 
 // Custom hooks for different concerns
-const useRateLimit = () => {
+const useRateLimit = (checklistData) => {
   const isRateLimitEnabled = useCallback(() => {
-    return window.mcl_checklists?.settings?.rateLimitEnabled === '1'
-  }, [])
+    // Check if rate limiting is enabled for the current checklist
+    return checklistData?.enable_rate_limit === true
+  }, [checklistData])
 
   const checkRateLimit = useCallback((storageKey, maxOperations = 5) => {
     if (!isRateLimitEnabled()) return { allowed: true }
@@ -1659,7 +1660,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const bindingRef = useRef(false) // Prevent duplicate bindings
 
   // Custom hooks
-  const { checkRateLimit } = useRateLimit()
+  const { checkRateLimit } = useRateLimit(checklistData)
   const { fetchChecklistData, saveChecklistData } = useChecklistData()
   const { getCheckedState, saveCheckedState } = useCheckedState()
   const { makeRequest } = useAPI()
@@ -2382,6 +2383,13 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   // Item operations
   const handleCheckboxChange = useCallback(async (itemId, isChecked) => {
+    // Rate limit check for checkbox changes
+    const checkRateCheck = checkRateLimit(`mcl_checkbox_${currentChecklistId}_${itemId}`, 10) // Allow 10 operations per minute
+    if (!checkRateCheck.allowed) {
+      setError(`Rate limit reached. Try again in ${checkRateCheck.remaining} seconds.`)
+      return
+    }
+    
     const newCheckedItems = isChecked 
       ? [...checkedItems, itemId]
       : checkedItems.filter(id => id !== itemId)
@@ -2484,13 +2492,20 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         }, 300) // Wait for fade-out animation
       }, 2000)
     }
-  }, [checkedItems, currentChecklistId, items, saveCheckedState, showCongrats, canEdit, title, saveChecklistData])
+  }, [checkedItems, currentChecklistId, items, saveCheckedState, showCongrats, canEdit, title, saveChecklistData, checkRateLimit, setError])
 
   const addNewItem = useCallback(() => {
     // Allow adding if the checklist supports per-item locking
     // Users without full edit permission (canEdit === false) should still be able
     // to add their own items as long as global locking is not engaged.
     if (!canEdit || locked) return
+
+    // Rate limit check for adding items
+    const addItemCheck = checkRateLimit(`mcl_add_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
+    if (!addItemCheck.allowed) {
+      setError(`Rate limit reached. Try again in ${addItemCheck.remaining} seconds.`)
+      return
+    }
 
     // First capture any in-flight edits (contentEditable changes that haven't blurred yet)
     const syncedItems = items.map(it => {
@@ -2530,13 +2545,20 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         newItemElement.focus()
       }
     }, 0)
-  }, [canEdit, locked, items, currentChecklistId, checklistData, makeRequest])
+  }, [canEdit, locked, items, currentChecklistId, checklistData, makeRequest, checkRateLimit, setError])
 
   const removeItem = useCallback((itemId) => {
     const target = items.find(i => i.id === itemId)
     const itemIsLocked = target?.locked
     if (locked) return
     if (!canEdit && !(checklistData?.enable_item_locking && !itemIsLocked)) return
+
+    // Rate limit check for removing items
+    const removeItemCheck = checkRateLimit(`mcl_remove_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
+    if (!removeItemCheck.allowed) {
+      setError(`Rate limit reached. Try again in ${removeItemCheck.remaining} seconds.`)
+      return
+    }
 
     setItems(prev => prev.filter(item => item.id !== itemId))
     setCheckedItems(prev => prev.filter(id => id !== itemId))
@@ -2562,13 +2584,20 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         }
       })
     }
-  }, [canEdit, locked, checklistData, items, currentChecklistId, makeRequest])
+  }, [canEdit, locked, checklistData, items, currentChecklistId, makeRequest, checkRateLimit, setError])
 
   // Update item content
   const updateItemContent = useCallback((itemId, content) => {
     const targetItem = items.find(i => i.id === itemId)
     const allowEdit = canEdit || (checklistData?.enable_item_locking && !targetItem?.locked)
     if (!allowEdit || locked) return
+
+    // Rate limit check for content updates (more lenient limit since users edit content frequently)
+    const updateContentCheck = checkRateLimit(`mcl_update_content_${currentChecklistId}`, 20) // Allow 20 operations per minute
+    if (!updateContentCheck.allowed) {
+      setError(`Rate limit reached. Try again in ${updateContentCheck.remaining} seconds.`)
+      return
+    }
  
     const newItems = items.map(item => 
       item.id === itemId ? { ...item, content } : item
@@ -2579,7 +2608,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (currentChecklistId) {
       saveChecklistData(currentChecklistId, title, newItems).catch(() => {})
     }
-  }, [canEdit, locked, items, checklistData, currentChecklistId, title, saveChecklistData])
+  }, [canEdit, locked, items, checklistData, currentChecklistId, title, saveChecklistData, checkRateLimit, setError])
 
   // Priority helper functions
   const getPriorityColor = useCallback((priority) => {
@@ -3511,7 +3540,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           {showCongrats && (
             <div className={`congrats-overlay absolute inset-0 flex items-center justify-center pointer-events-none z-20 transition-opacity duration-300 ${congratsExiting ? 'opacity-0' : 'opacity-100 animate-fade-in'}`}>
               <div className="bg-brand-dark text-yellow-400 px-4 py-3 rounded-xl text-xl font-bold shadow-2xl transform animate-bounce">
-                Great job! 🎉
+                {i18n.checklistDrawer?.checklistStates?.congratsMessage || 'Great job! 🎉'}
               </div>
             </div>
           )}
