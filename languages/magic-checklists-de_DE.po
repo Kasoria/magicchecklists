@@ -504,7 +504,7 @@ msgid "Add Item"
 msgstr "Aufgabe hinzufügen"
 
 msgid "Uncheck All"
-msgstr "Alle abhaken rückgängig machen"
+msgstr "Alle abhaken"
 
 msgid "Drag to reorder"
 msgstr "Ziehen zum Sortieren"
@@ -1999,6 +1999,12 @@ msgstr "Fehler beim Laden der Checklisten"
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
+msgid "Great job! 🎉"
+msgstr "Gut gemacht! 🎉"
+
+msgid "This checklist is currently locked for editing by another user."
+msgstr "Diese Checkliste ist momentan von einem anderen Benutzer zum Bearbeiten gesperrt."
+
 msgid "Search Checklists"
 msgstr "Checklisten suchen"
 
@@ -2033,8 +2039,6 @@ msgstr "Textfarbe"
 msgid "Primary text color"
 msgstr "Primäre Textfarbe"
 
-msgid "Description Text Color"
-msgstr "Beschreibungstext-Farbe"
 
 msgid "Color for description text"
 msgstr "Farbe für Beschreibungstext"
@@ -2220,6 +2224,167 @@ msgstr "Checkliste auswählen..."
 msgid "Add Column"
 msgstr "Spalte hinzufügen"
 
+# Shortcode Settings translations
+msgid "Shortcode Settings"
+msgstr "Shortcode-Einstellungen"
+
+msgid "Shortcode"
+msgstr "Shortcode"
+
+msgid "Display Options"
+msgstr "Anzeigeoptionen"
+
+msgid "Show Title"
+msgstr "Titel anzeigen"
+
+msgid "Show Description"
+msgstr "Beschreibung anzeigen"
+
+msgid "Show Deadline"
+msgstr "Deadline anzeigen"
+
+msgid "Show Priority Indicators"
+msgstr "Prioritätsindikatoren anzeigen"
+
+msgid "Show Item Numbers"
+msgstr "Elementnummern anzeigen"
+
+msgid "Style Options - Colors"
+msgstr "Stiloptionen - Farben"
+
+msgid "Title Text Color"
+msgstr "Titel-Textfarbe"
+
+msgid "Description Text Color"
+msgstr "Beschreibungs-Textfarbe"
+
+msgid "Deadline Text Color"
+msgstr "Deadline-Textfarbe"
+
+msgid "List Item Text Color"
+msgstr "Listenelement-Textfarbe"
+
+msgid "Checkbox Border Color"
+msgstr "Checkbox-Rahmenfarbe"
+
+msgid "Checkbox Color Filled"
+msgstr "Checkbox-Farbe ausgefüllt"
+
+msgid "Checkbox Color Unfilled"
+msgstr "Checkbox-Farbe nicht ausgefüllt"
+
+msgid "Style Options - Spacing & Dimensions"
+msgstr "Stiloptionen - Abstände & Abmessungen"
+
+msgid "Container Vertical Padding"
+msgstr "Container vertikaler Abstand"
+
+msgid "Container Horizontal Padding"
+msgstr "Container horizontaler Abstand"
+
+msgid "Container Gap"
+msgstr "Container-Abstand"
+
+msgid "Checkbox Dimensions"
+msgstr "Checkbox-Abmessungen"
+
+msgid "Checkbox Border Thickness"
+msgstr "Checkbox-Rahmendicke"
+
+msgid "Border Type"
+msgstr "Rahmentyp"
+
+msgid "Solid"
+msgstr "Durchgezogen"
+
+msgid "Dashed"
+msgstr "Gestrichelt"
+
+msgid "Dotted"
+msgstr "Gepunktet"
+
+msgid "Select border type..."
+msgstr "Rahmentyp auswählen..."
+
+msgid "Border Thickness"
+msgstr "Rahmendicke"
+
+msgid "Item Spacing"
+msgstr "Element-Abstand"
+
+msgid "Compact"
+msgstr "Kompakt"
+
+msgid "Comfortable"
+msgstr "Bequem"
+
+msgid "Spacious"
+msgstr "Geräumig"
+
+msgid "Select spacing..."
+msgstr "Abstand auswählen..."
+
+msgid "Style Options - Typography"
+msgstr "Stiloptionen - Typografie"
+
+msgid "Title Font Size"
+msgstr "Titel-Schriftgröße"
+
+msgid "Description Font Size"
+msgstr "Beschreibungs-Schriftgröße"
+
+msgid "List Item Font Size"
+msgstr "Listenelement-Schriftgröße"
+
+msgid "Deadline Font Size"
+msgstr "Deadline-Schriftgröße"
+
+msgid "Behavior Options"
+msgstr "Verhaltensoptionen"
+
+msgid "Container Width"
+msgstr "Container-Breite"
+
+msgid "Full Width"
+msgstr "Volle Breite"
+
+msgid "Narrow (600px)"
+msgstr "Schmal (600px)"
+
+msgid "Select width..."
+msgstr "Breite auswählen..."
+
+msgid "Custom Width"
+msgstr "Benutzerdefinierte Breite"
+
+msgid "Checked State Storage"
+msgstr "Speicherung des Aktivierungsstatus"
+
+msgid "Session Storage"
+msgstr "Sitzungsspeicher"
+
+msgid "Local Storage"
+msgstr "Lokaler Speicher"
+
+msgid "Global (Database)"
+msgstr "Global (Datenbank)"
+
+msgid "Select storage type..."
+msgstr "Speichertyp auswählen..."
+
+msgid "Disable Drawer for this Checklist"
+msgstr "Schublade für diese Checkliste deaktivieren"
+
+msgid "Allow Item Reordering"
+msgstr "Neuordnung von Elementen erlauben"
+
+# Shortcode Renderer translations
+msgid "Enter deadline (YYYY-MM-DD HH:MM):"
+msgstr "Deadline eingeben (JJJJ-MM-TT HH:MM):"
+
+msgid "Enter image URL:"
+msgstr "Bild-URL eingeben:"
+
 msgid "Edit Column"
 msgstr "Spalte bearbeiten"
 
@@ -2318,9 +2483,6 @@ msgstr "vor {hours}h"
 
 msgid "{days}d ago"
 msgstr "vor {days}d"
-
-msgid "Enter image URL:"
-msgstr "Bild-URL eingeben:"
 
 msgid "Are you sure you want to delete this comment and all its replies?"
 msgstr "Bist du sicher, dass du diesen Kommentar und alle Antworten löschen möchtest?"
@@ -3503,8 +3665,6 @@ msgstr "Nur bestimmte Benutzerrollen"
 msgid "Select user roles..."
 msgstr "Benutzerrollen auswählen..."
 
-msgid "Display Options"
-msgstr "Anzeige-Optionen"
 
 msgid "Auto-start tour when triggered"
 msgstr "Tour automatisch starten, wenn ausgelöst"

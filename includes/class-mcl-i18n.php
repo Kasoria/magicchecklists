@@ -26,6 +26,8 @@ class MCL_I18n {
             'accessControl' => self::get_access_control_translations(),
             'customThemeSettings' => self::get_custom_theme_settings_translations(),
             'kanbanBoard' => self::get_kanban_board_translations(),
+            'shortcodeSettings' => self::get_shortcode_settings_translations(),
+            'shortcodeRenderer' => self::get_shortcode_renderer_translations(),
             'analyticsDashboard' => self::get_analytics_dashboard_overview_translations(),
             'checklistDrawer' => self::get_checklist_drawer_translations(),
             'checklistEditor' => self::get_checklist_editor_translations(),
@@ -47,6 +49,9 @@ class MCL_I18n {
             'tourEditor' => self::get_tour_editor_translations(),
             'tours' => self::get_tours_translations(),
             'deadlineDisplay' => self::get_deadline_display_translations(),
+            'resetNotification' => self::get_reset_notification_translations(),
+            'congratsAnimation' => self::get_congrats_animation_translations(),
+            'lockedOverlay' => self::get_locked_overlay_translations(),
         );
     }
     
@@ -439,6 +444,119 @@ class MCL_I18n {
     }
 
     /**
+     * Get all shortcode settings translations
+     * 
+     * @return array
+     */
+    public static function get_shortcode_settings_translations() {
+        return array(
+            'header' => array(
+                'title' => __('Shortcode Settings', 'magic-checklists'),
+            ),
+            'shortcode' => array(
+                'label' => __('Shortcode', 'magic-checklists'),
+                'copyButton' => __('Copy', 'magic-checklists'),
+            ),
+            'displayOptions' => array(
+                'title' => __('Display Options', 'magic-checklists'),
+                'showTitle' => __('Show Title', 'magic-checklists'),
+                'showDescription' => __('Show Description', 'magic-checklists'),
+                'showDeadline' => __('Show Deadline', 'magic-checklists'),
+                'showPriority' => __('Show Priority Indicators', 'magic-checklists'),
+                'showNumbers' => __('Show Item Numbers', 'magic-checklists'),
+            ),
+            'styleColors' => array(
+                'title' => __('Style Options - Colors', 'magic-checklists'),
+                'titleTextColor' => __('Title Text Color', 'magic-checklists'),
+                'descriptionTextColor' => __('Description Text Color', 'magic-checklists'),
+                'deadlineTextColor' => __('Deadline Text Color', 'magic-checklists'),
+                'listItemTextColor' => __('List Item Text Color', 'magic-checklists'),
+                'backgroundColor' => __('Background Color', 'magic-checklists'),
+                'borderColor' => __('Border Color', 'magic-checklists'),
+                'checkboxBorderColor' => __('Checkbox Border Color', 'magic-checklists'),
+                'checkboxColorFilled' => __('Checkbox Color Filled', 'magic-checklists'),
+                'checkboxColorUnfilled' => __('Checkbox Color Unfilled', 'magic-checklists'),
+                'checkmarkColor' => __('Checkmark Color', 'magic-checklists'),
+            ),
+            'styleSpacing' => array(
+                'title' => __('Style Options - Spacing & Dimensions', 'magic-checklists'),
+                'verticalPadding' => __('Container Vertical Padding', 'magic-checklists'),
+                'horizontalPadding' => __('Container Horizontal Padding', 'magic-checklists'),
+                'containerGap' => __('Container Gap', 'magic-checklists'),
+                'checkboxDimensions' => __('Checkbox Dimensions', 'magic-checklists'),
+                'checkboxBorderRadius' => __('Checkbox Border Radius', 'magic-checklists'),
+                'checkboxBorderThickness' => __('Checkbox Border Thickness', 'magic-checklists'),
+                'borderType' => __('Border Type', 'magic-checklists'),
+                'borderTypeNone' => __('None', 'magic-checklists'),
+                'borderTypeSolid' => __('Solid', 'magic-checklists'),
+                'borderTypeDashed' => __('Dashed', 'magic-checklists'),
+                'borderTypeDotted' => __('Dotted', 'magic-checklists'),
+                'selectBorderType' => __('Select border type...', 'magic-checklists'),
+                'borderRadius' => __('Border Radius', 'magic-checklists'),
+                'borderThickness' => __('Border Thickness', 'magic-checklists'),
+                'itemSpacing' => __('Item Spacing', 'magic-checklists'),
+                'spacingCompact' => __('Compact', 'magic-checklists'),
+                'spacingComfortable' => __('Comfortable', 'magic-checklists'),
+                'spacingSpaciuous' => __('Spacious', 'magic-checklists'),
+                'selectSpacing' => __('Select spacing...', 'magic-checklists'),
+            ),
+            'styleTypography' => array(
+                'title' => __('Style Options - Typography', 'magic-checklists'),
+                'titleFontSize' => __('Title Font Size', 'magic-checklists'),
+                'descriptionFontSize' => __('Description Font Size', 'magic-checklists'),
+                'listItemFontSize' => __('List Item Font Size', 'magic-checklists'),
+                'deadlineFontSize' => __('Deadline Font Size', 'magic-checklists'),
+            ),
+            'behaviorOptions' => array(
+                'title' => __('Behavior Options', 'magic-checklists'),
+                'containerWidth' => __('Container Width', 'magic-checklists'),
+                'widthFull' => __('Full Width', 'magic-checklists'),
+                'widthNarrow' => __('Narrow (600px)', 'magic-checklists'),
+                'widthCustom' => __('Custom', 'magic-checklists'),
+                'selectWidth' => __('Select width...', 'magic-checklists'),
+                'customWidth' => __('Custom Width', 'magic-checklists'),
+                'checkedStateStorage' => __('Checked State Storage', 'magic-checklists'),
+                'storageSession' => __('Session Storage', 'magic-checklists'),
+                'storageLocal' => __('Local Storage', 'magic-checklists'),
+                'storageGlobal' => __('Global (Database)', 'magic-checklists'),
+                'selectStorageType' => __('Select storage type...', 'magic-checklists'),
+                'disableDrawer' => __('Disable Drawer for this Checklist', 'magic-checklists'),
+                'allowReordering' => __('Allow Item Reordering', 'magic-checklists'),
+            ),
+        );
+    }
+
+    /**
+     * Get all shortcode renderer translations
+     * 
+     * @return array
+     */
+    public static function get_shortcode_renderer_translations() {
+        return array(
+            'countdown' => array(
+                'expired' => __('Expired', 'magic-checklists'),
+            ),
+            'deadline' => array(
+                'enterPrompt' => __('Enter deadline (YYYY-MM-DD HH:MM):', 'magic-checklists'),
+                'dueLabel' => __('Due', 'magic-checklists'),
+            ),
+            'image' => array(
+                'enterUrlPrompt' => __('Enter image URL:', 'magic-checklists'),
+            ),
+            'tooltips' => array(
+                'removeFromProgress' => __('Remove from in progress', 'magic-checklists'),
+                'markAsProgress' => __('Mark as in progress', 'magic-checklists'),
+                'setDeadline' => __('Set deadline', 'magic-checklists'),
+                'addImage' => __('Add image', 'magic-checklists'),
+                'removeItem' => __('Remove item', 'magic-checklists'),
+            ),
+            'buttons' => array(
+                'addItem' => __('Add Item', 'magic-checklists'),
+            ),
+        );
+    }
+
+    /**
      * Get public access translations
      * 
      * @return array
@@ -774,6 +892,7 @@ class MCL_I18n {
             'checklistReset' => __('This checklist has been automatically reset.', 'magic-checklists'),
             'checklistLocked' => __('This checklist is locked by another user. You can still interact but cannot edit structure.', 'magic-checklists'),
             'deadlinePassed' => __('Deadline passed', 'magic-checklists'),
+            'congratsMessage' => __('Great job! 🎉', 'magic-checklists'),
         );
     }
 
@@ -2334,6 +2453,39 @@ class MCL_I18n {
             'second' => __('second', 'magic-checklists'),
             'invalidDeadline' => __('Invalid deadline', 'magic-checklists'),
             'noDeadline' => __('No deadline', 'magic-checklists'),
+        );
+    }
+    
+    /**
+     * Get reset notification translations
+     * 
+     * @return array
+     */
+    public static function get_reset_notification_translations() {
+        return array(
+            'message' => __('This checklist has been automatically reset.', 'magic-checklists'),
+        );
+    }
+    
+    /**
+     * Get congratulations animation translations
+     * 
+     * @return array
+     */
+    public static function get_congrats_animation_translations() {
+        return array(
+            'message' => __('Great job! 🎉', 'magic-checklists'),
+        );
+    }
+    
+    /**
+     * Get locked overlay translations
+     * 
+     * @return array
+     */
+    public static function get_locked_overlay_translations() {
+        return array(
+            'message' => __('This checklist is currently locked for editing by another user.', 'magic-checklists'),
         );
     }
 }

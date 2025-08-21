@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-const CongratsAnimation = ({ show }) => {
+const CongratsAnimation = ({ show, adminData }) => {
+    const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || (typeof window !== 'undefined' && window.mcl_checklists?.i18n) || {};
     const [confetti, setConfetti] = useState([]);
     const colors = ['#6c63ff', '#ff6b6b', '#ffd93d', '#6bff95', '#ff6bcd'];
 
@@ -29,7 +30,7 @@ const CongratsAnimation = ({ show }) => {
         <div className="mcl-congratulations active">
             <div className="mcl-congrats-content">
                 <div className="mcl-congrats-message">
-                    Great job! 🎉
+                    {i18n.congratsAnimation?.message || 'Great job! 🎉'}
                 </div>
             </div>
             {confetti.map(piece => (

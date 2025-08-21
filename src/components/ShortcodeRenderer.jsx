@@ -12,6 +12,7 @@ const ShortcodeRenderer = ({
   priorityDisplayType = 'color',
   checklist = {}
 }) => {
+  const [i18n, setI18n] = useState({})
   const [checkedItems, setCheckedItems] = useState(new Set())
   const [shortcodeItems, setShortcodeItems] = useState([])
   const [countdownInterval, setCountdownInterval] = useState(null)
@@ -20,6 +21,13 @@ const ShortcodeRenderer = ({
   const [tooltip, setTooltip] = useState(null)
   const [tooltipTimer, setTooltipTimer] = useState(null)
   const containerRef = useRef(null)
+
+  // Initialize i18n
+  useEffect(() => {
+    if (window.mclShortcode && window.mclShortcode.i18n && window.mclShortcode.i18n.shortcodeRenderer) {
+      setI18n(window.mclShortcode.i18n.shortcodeRenderer)
+    }
+  }, [])
 
   // Initialize state
   useEffect(() => {
@@ -249,7 +257,7 @@ const ShortcodeRenderer = ({
     const existingDeadline = currentItem?.deadline
 
     const newDeadline = prompt(
-      'Enter deadline (YYYY-MM-DD HH:MM):', 
+      i18n.deadline?.enterPrompt || 'Enter deadline (YYYY-MM-DD HH:MM):', 
       existingDeadline ? new Date(existingDeadline * 1000).toISOString().slice(0, 16) : ''
     )
     
@@ -305,7 +313,7 @@ const ShortcodeRenderer = ({
     if (!permissions.can_edit) return
     
     // Simple image URL prompt for now
-    const imageUrl = prompt('Enter image URL:')
+    const imageUrl = prompt(i18n.image?.enterUrlPrompt || 'Enter image URL:')
     if (imageUrl) {
       const currentItem = shortcodeItems.find(item => item.id === itemId)
       const imageHtml = `<br><img src="${imageUrl}" alt="Image" style="max-width: 200px; height: auto;" />`
@@ -449,7 +457,7 @@ const ShortcodeRenderer = ({
       const remaining = deadlineTime - now
 
       if (remaining <= 0) {
-        countdownElement.textContent = 'Expired'
+        countdownElement.textContent = i18n.countdown?.expired || 'Expired'
         countdownElement.classList.add('mcl-expired')
         if (countdownInterval) {
           clearInterval(countdownInterval)
@@ -818,7 +826,7 @@ const ShortcodeRenderer = ({
                                   }}
                                   onClick={permissions.can_edit ? () => handleDeadlineClick(item.id) : undefined}
                                 >
-                                  Due: {formatDeadline(deadline)}
+                                  {i18n.deadline?.dueLabel || 'Due'}: {formatDeadline(deadline)}
                                 </div>
                               )}
                             </div>
@@ -865,7 +873,7 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   toggleInProgress(item.id)
                                 }}
-                                onMouseEnter={(e) => showTooltip(e.target, isInProgress ? 'Remove from in progress' : 'Mark as in progress')}
+                                onMouseEnter={(e) => showTooltip(e.target, isInProgress ? (i18n.tooltips?.removeFromProgress || 'Remove from in progress') : (i18n.tooltips?.markAsProgress || 'Mark as in progress'))}
                                 onMouseLeave={hideTooltip}
                               >
                                 {isInProgress ? '⏸' : '▶️'}
@@ -892,7 +900,7 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   handleDeadlineClick(item.id)
                                 }}
-                                onMouseEnter={(e) => showTooltip(e.target, 'Set deadline')}
+                                onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.setDeadline || 'Set deadline')}
                                 onMouseLeave={hideTooltip}
                               >
                                 ⏰
@@ -919,7 +927,7 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   handleImageClick(item.id)
                                 }}
-                                onMouseEnter={(e) => showTooltip(e.target, 'Add image')}
+                                onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.addImage || 'Add image')}
                                 onMouseLeave={hideTooltip}
                               >
                                 🖼️
@@ -947,7 +955,7 @@ const ShortcodeRenderer = ({
                                     e.stopPropagation()
                                     removeItem(item.id)
                                   }}
-                                  onMouseEnter={(e) => showTooltip(e.target, 'Remove item')}
+                                  onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.removeItem || 'Remove item')}
                                   onMouseLeave={hideTooltip}
                                 >
                                   ×
@@ -997,7 +1005,7 @@ const ShortcodeRenderer = ({
             }}
           >
             <span style={{ fontSize: '16px' }}>+</span>
-            Add Item
+            {i18n.buttons?.addItem || 'Add Item'}
           </button>
         </div>
       )}

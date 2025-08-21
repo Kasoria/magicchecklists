@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const ResetNotification = ({ show, onClose }) => {
+const ResetNotification = ({ show, onClose, adminData }) => {
+    const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || (typeof window !== 'undefined' && window.mcl_checklists?.i18n) || {};
     useEffect(() => {
         if (show) {
             // Auto-hide after 5 seconds
@@ -18,7 +19,7 @@ const ResetNotification = ({ show, onClose }) => {
         <div className="mcl-notification mcl-reset-notification mcl-notification-visible">
             <div className="mcl-notification-content">
                 <span className="mcl-notification-message">
-                    This checklist has been automatically reset.
+                    {i18n.resetNotification?.message || 'This checklist has been automatically reset.'}
                 </span>
                 <button 
                     type="button" 

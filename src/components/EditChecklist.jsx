@@ -1180,6 +1180,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           formData={formData} 
           onChange={handleInputChange}
           checklistId={checklistId}
+          adminData={adminData}
         />
       </div>
 

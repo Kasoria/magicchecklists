@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Label, TextInput, Button } from 'flowbite-react'
 import ReactSelect from 'react-select'
 
@@ -32,7 +32,29 @@ const Checkbox = ({ id, checked, onChange, label, className = "" }) => (
   </div>
 )
 
-const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
+const ShortcodeSettings = ({ formData, onChange, checklistId, adminData }) => {
+  const [i18n, setI18n] = useState({})
+
+  useEffect(() => {
+    let i18nData;
+    
+    // First try adminData prop
+    if (adminData?.i18n) {
+      i18nData = adminData.i18n;
+    }
+    // Then try window.mclAdminData
+    else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
+      i18nData = window.mclAdminData.i18n;
+    }
+    // Finally try window.mcl_checklists
+    else if (typeof window !== 'undefined' && window.mcl_checklists?.i18n) {
+      i18nData = window.mcl_checklists.i18n;
+    }
+    
+    if (i18nData?.shortcodeSettings) {
+      setI18n(i18nData.shortcodeSettings);
+    }
+  }, [adminData])
   if (!formData.enable_shortcode) {
     return null
   }
@@ -46,12 +68,12 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
 
   return (
     <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-600 rounded-lg space-y-6">
-      <h4 className="text-lg font-semibold text-brand-dark dark:text-white">Shortcode Settings</h4>
+      <h4 className="text-lg font-semibold text-brand-dark dark:text-white">{i18n.header?.title || 'Shortcode Settings'}</h4>
       
       {/* Shortcode Display */}
       {checklistId && (
         <div>
-          <label className="text-brand-dark dark:text-white text-sm">Shortcode</label>
+          <label className="text-brand-dark dark:text-white text-sm">{i18n.shortcode?.label || 'Shortcode'}</label>
           <div className="flex items-center space-x-2 mt-1">
             <code className="bg-brand-dark text-white px-2 py-1 rounded text-sm flex-1">
               [magic_checklist id="{checklistId}"]
@@ -60,7 +82,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
               size="xs"
               onClick={handleCopyShortcode}
             >
-              Copy
+              {i18n.shortcode?.copyButton || 'Copy'}
             </Button>
           </div>
         </div>
@@ -68,51 +90,51 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
 
       {/* Display Options */}
       <div>
-        <h5 className="font-medium text-brand-dark dark:text-white mb-3">Display Options</h5>
+        <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.displayOptions?.title || 'Display Options'}</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Checkbox
             id="shortcode_show_title"
             checked={formData.shortcode_show_title}
             onChange={(checked) => onChange('shortcode_show_title', checked)}
-            label="Show Title"
+            label={i18n.displayOptions?.showTitle || 'Show Title'}
           />
 
           <Checkbox
             id="shortcode_show_description"
             checked={formData.shortcode_show_description}
             onChange={(checked) => onChange('shortcode_show_description', checked)}
-            label="Show Description"
+            label={i18n.displayOptions?.showDescription || 'Show Description'}
           />
 
           <Checkbox
             id="shortcode_show_deadline"
             checked={formData.shortcode_show_deadline}
             onChange={(checked) => onChange('shortcode_show_deadline', checked)}
-            label="Show Deadline"
+            label={i18n.displayOptions?.showDeadline || 'Show Deadline'}
           />
 
           <Checkbox
             id="shortcode_show_priority"
             checked={formData.shortcode_show_priority}
             onChange={(checked) => onChange('shortcode_show_priority', checked)}
-            label="Show Priority Indicators"
+            label={i18n.displayOptions?.showPriority || 'Show Priority Indicators'}
           />
 
           <Checkbox
             id="shortcode_show_numbers"
             checked={formData.shortcode_show_numbers}
             onChange={(checked) => onChange('shortcode_show_numbers', checked)}
-            label="Show Item Numbers"
+            label={i18n.displayOptions?.showNumbers || 'Show Item Numbers'}
           />
         </div>
       </div>
 
       {/* Style Options - Colors */}
       <div>
-        <h5 className="font-medium text-brand-dark dark:text-white mb-3">Style Options - Colors</h5>
+        <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.styleColors?.title || 'Style Options - Colors'}</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="shortcode_title_text_color" className="text-brand-dark dark:text-white">Title Text Color</label>
+            <label htmlFor="shortcode_title_text_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.titleTextColor || 'Title Text Color'}</label>
             <TextInput
               id="shortcode_title_text_color"
               type="color"
@@ -122,7 +144,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_description_text_color" className="text-brand-dark dark:text-white">Description Text Color</label>
+            <label htmlFor="shortcode_description_text_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.descriptionTextColor || 'Description Text Color'}</label>
             <TextInput
               id="shortcode_description_text_color"
               type="color"
@@ -132,7 +154,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_deadline_text_color" className="text-brand-dark dark:text-white">Deadline Text Color</label>
+            <label htmlFor="shortcode_deadline_text_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.deadlineTextColor || 'Deadline Text Color'}</label>
             <TextInput
               id="shortcode_deadline_text_color"
               type="color"
@@ -142,7 +164,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_list_item_text_color" className="text-brand-dark dark:text-white">List Item Text Color</label>
+            <label htmlFor="shortcode_list_item_text_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.listItemTextColor || 'List Item Text Color'}</label>
             <TextInput
               id="shortcode_list_item_text_color"
               type="color"
@@ -152,7 +174,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_bg_color" className="text-brand-dark dark:text-white">Background Color</label>
+            <label htmlFor="shortcode_bg_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.backgroundColor || 'Background Color'}</label>
             <TextInput
               id="shortcode_bg_color"
               type="color"
@@ -162,7 +184,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_border_color" className="text-brand-dark dark:text-white">Border Color</label>
+            <label htmlFor="shortcode_border_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.borderColor || 'Border Color'}</label>
             <TextInput
               id="shortcode_border_color"
               type="color"
@@ -172,7 +194,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_border_color" className="text-brand-dark dark:text-white">Checkbox Border Color</label>
+            <label htmlFor="shortcode_checkbox_border_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.checkboxBorderColor || 'Checkbox Border Color'}</label>
             <TextInput
               id="shortcode_checkbox_border_color"
               type="color"
@@ -182,7 +204,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_color_filled" className="text-brand-dark dark:text-white">Checkbox Color Filled</label>
+            <label htmlFor="shortcode_checkbox_color_filled" className="text-brand-dark dark:text-white">{i18n.styleColors?.checkboxColorFilled || 'Checkbox Color Filled'}</label>
             <TextInput
               id="shortcode_checkbox_color_filled"
               type="color"
@@ -192,7 +214,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_color_unfilled" className="text-brand-dark dark:text-white">Checkbox Color Unfilled</label>
+            <label htmlFor="shortcode_checkbox_color_unfilled" className="text-brand-dark dark:text-white">{i18n.styleColors?.checkboxColorUnfilled || 'Checkbox Color Unfilled'}</label>
             <TextInput
               id="shortcode_checkbox_color_unfilled"
               type="color"
@@ -202,7 +224,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkmark_color" className="text-brand-dark dark:text-white">Checkmark Color</label>
+            <label htmlFor="shortcode_checkmark_color" className="text-brand-dark dark:text-white">{i18n.styleColors?.checkmarkColor || 'Checkmark Color'}</label>
             <TextInput
               id="shortcode_checkmark_color"
               type="color"
@@ -215,10 +237,10 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
 
       {/* Style Options - Spacing & Dimensions */}
       <div>
-        <h5 className="font-medium text-brand-dark dark:text-white mb-3">Style Options - Spacing & Dimensions</h5>
+        <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.styleSpacing?.title || 'Style Options - Spacing & Dimensions'}</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="shortcode_padding_block" className="text-brand-dark dark:text-white">Container Vertical Padding</label>
+            <label htmlFor="shortcode_padding_block" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.verticalPadding || 'Container Vertical Padding'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_padding_block"
@@ -234,7 +256,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_padding_inline" className="text-brand-dark dark:text-white">Container Horizontal Padding</label>
+            <label htmlFor="shortcode_padding_inline" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.horizontalPadding || 'Container Horizontal Padding'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_padding_inline"
@@ -250,7 +272,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_container_gap" className="text-brand-dark dark:text-white">Container Gap</label>
+            <label htmlFor="shortcode_container_gap" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.containerGap || 'Container Gap'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_container_gap"
@@ -266,7 +288,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_dimensions" className="text-brand-dark dark:text-white">Checkbox Dimensions</label>
+            <label htmlFor="shortcode_checkbox_dimensions" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.checkboxDimensions || 'Checkbox Dimensions'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_checkbox_dimensions"
@@ -282,7 +304,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_border_radius" className="text-brand-dark dark:text-white">Checkbox Border Radius</label>
+            <label htmlFor="shortcode_checkbox_border_radius" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.checkboxBorderRadius || 'Checkbox Border Radius'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_checkbox_border_radius"
@@ -298,7 +320,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_checkbox_border_thickness" className="text-brand-dark dark:text-white">Checkbox Border Thickness</label>
+            <label htmlFor="shortcode_checkbox_border_thickness" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.checkboxBorderThickness || 'Checkbox Border Thickness'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_checkbox_border_thickness"
@@ -314,7 +336,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_border_type" className="text-brand-dark dark:text-white">Border Type</label>
+            <label htmlFor="shortcode_border_type" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.borderType || 'Border Type'}</label>
             <ReactSelect
               inputId="shortcode_border_type"
               value={{ value: formData.shortcode_border_type || 'none', label: 
@@ -325,19 +347,19 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
               }}
               onChange={(selectedOption) => onChange('shortcode_border_type', selectedOption.value)}
               options={[
-                { value: 'none', label: 'None' },
-                { value: 'solid', label: 'Solid' },
-                { value: 'dashed', label: 'Dashed' },
-                { value: 'dotted', label: 'Dotted' }
+                { value: 'none', label: i18n.styleSpacing?.borderTypeNone || 'None' },
+                { value: 'solid', label: i18n.styleSpacing?.borderTypeSolid || 'Solid' },
+                { value: 'dashed', label: i18n.styleSpacing?.borderTypeDashed || 'Dashed' },
+                { value: 'dotted', label: i18n.styleSpacing?.borderTypeDotted || 'Dotted' }
               ]}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select border type..."
+              placeholder={i18n.styleSpacing?.selectBorderType || 'Select border type...'}
             />
           </div>
 
           <div>
-            <label htmlFor="shortcode_border_radius" className="text-brand-dark dark:text-white">Border Radius</label>
+            <label htmlFor="shortcode_border_radius" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.borderRadius || 'Border Radius'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_border_radius"
@@ -353,7 +375,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_border_thickness" className="text-brand-dark dark:text-white">Border Thickness</label>
+            <label htmlFor="shortcode_border_thickness" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.borderThickness || 'Border Thickness'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_border_thickness"
@@ -369,7 +391,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_item_spacing" className="text-brand-dark dark:text-white">Item Spacing</label>
+            <label htmlFor="shortcode_item_spacing" className="text-brand-dark dark:text-white">{i18n.styleSpacing?.itemSpacing || 'Item Spacing'}</label>
             <ReactSelect
               inputId="shortcode_item_spacing"
               value={{ value: formData.shortcode_item_spacing || 'comfortable', label: 
@@ -379,13 +401,13 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
               }}
               onChange={(selectedOption) => onChange('shortcode_item_spacing', selectedOption.value)}
               options={[
-                { value: 'compact', label: 'Compact' },
-                { value: 'comfortable', label: 'Comfortable' },
-                { value: 'spacious', label: 'Spacious' }
+                { value: 'compact', label: i18n.styleSpacing?.spacingCompact || 'Compact' },
+                { value: 'comfortable', label: i18n.styleSpacing?.spacingComfortable || 'Comfortable' },
+                { value: 'spacious', label: i18n.styleSpacing?.spacingSpaciuous || 'Spacious' }
               ]}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select spacing..."
+              placeholder={i18n.styleSpacing?.selectSpacing || 'Select spacing...'}
             />
           </div>
         </div>
@@ -393,10 +415,10 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
 
       {/* Style Options - Typography */}
       <div>
-        <h5 className="font-medium text-brand-dark dark:text-white mb-3">Style Options - Typography</h5>
+        <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.styleTypography?.title || 'Style Options - Typography'}</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label htmlFor="shortcode_title_font_size" className="text-brand-dark dark:text-white">Title Font Size</label>
+            <label htmlFor="shortcode_title_font_size" className="text-brand-dark dark:text-white">{i18n.styleTypography?.titleFontSize || 'Title Font Size'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_title_font_size"
@@ -412,7 +434,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_description_font_size" className="text-brand-dark dark:text-white">Description Font Size</label>
+            <label htmlFor="shortcode_description_font_size" className="text-brand-dark dark:text-white">{i18n.styleTypography?.descriptionFontSize || 'Description Font Size'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_description_font_size"
@@ -428,7 +450,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_list_item_font_size" className="text-brand-dark dark:text-white">List Item Font Size</label>
+            <label htmlFor="shortcode_list_item_font_size" className="text-brand-dark dark:text-white">{i18n.styleTypography?.listItemFontSize || 'List Item Font Size'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_list_item_font_size"
@@ -444,7 +466,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           </div>
 
           <div>
-            <label htmlFor="shortcode_deadline_font_size" className="text-brand-dark dark:text-white">Deadline Font Size</label>
+            <label htmlFor="shortcode_deadline_font_size" className="text-brand-dark dark:text-white">{i18n.styleTypography?.deadlineFontSize || 'Deadline Font Size'}</label>
             <div className="flex items-center space-x-2">
               <TextInput
                 id="shortcode_deadline_font_size"
@@ -463,10 +485,10 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
 
       {/* Behavior Options */}
       <div>
-        <h5 className="font-medium text-brand-dark dark:text-white mb-3">Behavior Options</h5>
+        <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.behaviorOptions?.title || 'Behavior Options'}</h5>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="shortcode_width" className="text-brand-dark dark:text-white">Container Width</label>
+            <label htmlFor="shortcode_width" className="text-brand-dark dark:text-white">{i18n.behaviorOptions?.containerWidth || 'Container Width'}</label>
             <ReactSelect
               inputId="shortcode_width"
               value={{ value: formData.shortcode_width || 'full', label: 
@@ -476,19 +498,19 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
               }}
               onChange={(selectedOption) => onChange('shortcode_width', selectedOption.value)}
               options={[
-                { value: 'full', label: 'Full Width' },
-                { value: 'narrow', label: 'Narrow (600px)' },
-                { value: 'custom', label: 'Custom' }
+                { value: 'full', label: i18n.behaviorOptions?.widthFull || 'Full Width' },
+                { value: 'narrow', label: i18n.behaviorOptions?.widthNarrow || 'Narrow (600px)' },
+                { value: 'custom', label: i18n.behaviorOptions?.widthCustom || 'Custom' }
               ]}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select width..."
+              placeholder={i18n.behaviorOptions?.selectWidth || 'Select width...'}
             />
           </div>
 
           {formData.shortcode_width === 'custom' && (
             <div>
-              <label htmlFor="shortcode_custom_width" className="text-brand-dark dark:text-white">Custom Width</label>
+              <label htmlFor="shortcode_custom_width" className="text-brand-dark dark:text-white">{i18n.behaviorOptions?.customWidth || 'Custom Width'}</label>
               <div className="flex items-center space-x-2">
                 <TextInput
                   id="shortcode_custom_width"
@@ -505,7 +527,7 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
           )}
 
           <div>
-            <label htmlFor="shortcode_check_state" className="text-brand-dark dark:text-white">Checked State Storage</label>
+            <label htmlFor="shortcode_check_state" className="text-brand-dark dark:text-white">{i18n.behaviorOptions?.checkedStateStorage || 'Checked State Storage'}</label>
             <ReactSelect
               inputId="shortcode_check_state"
               value={{ value: formData.shortcode_check_state || 'session', label: 
@@ -515,13 +537,13 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
               }}
               onChange={(selectedOption) => onChange('shortcode_check_state', selectedOption.value)}
               options={[
-                { value: 'session', label: 'Session Storage' },
-                { value: 'local', label: 'Local Storage' },
-                { value: 'global', label: 'Global (Database)' }
+                { value: 'session', label: i18n.behaviorOptions?.storageSession || 'Session Storage' },
+                { value: 'local', label: i18n.behaviorOptions?.storageLocal || 'Local Storage' },
+                { value: 'global', label: i18n.behaviorOptions?.storageGlobal || 'Global (Database)' }
               ]}
               className="react-select-container"
               classNamePrefix="react-select"
-              placeholder="Select storage type..."
+              placeholder={i18n.behaviorOptions?.selectStorageType || 'Select storage type...'}
             />
           </div>
 
@@ -529,14 +551,14 @@ const ShortcodeSettings = ({ formData, onChange, checklistId }) => {
             id="shortcode_disable_drawer"
             checked={formData.shortcode_disable_drawer}
             onChange={(checked) => onChange('shortcode_disable_drawer', checked)}
-            label="Disable Drawer for this Checklist"
+            label={i18n.behaviorOptions?.disableDrawer || 'Disable Drawer for this Checklist'}
           />
 
           <Checkbox
             id="shortcode_enable_reorder"
             checked={formData.shortcode_enable_reorder}
             onChange={(checked) => onChange('shortcode_enable_reorder', checked)}
-            label="Allow Item Reordering"
+            label={i18n.behaviorOptions?.allowReordering || 'Allow Item Reordering'}
           />
         </div>
       </div>
