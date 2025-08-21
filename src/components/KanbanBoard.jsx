@@ -3,7 +3,7 @@ import { useToast } from './Toast.jsx'
 import ConfirmationModal from './ConfirmationModal.jsx'
 
 // Comment component for threaded display
-const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false }) => {
+const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false, i18n = {} }) => {
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyText, setReplyText] = useState('')
   const replyFormRef = useRef(null)
@@ -60,7 +60,7 @@ const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = fals
             <button
               onClick={() => onDelete(comment.id)}
               className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
-              title="Delete comment"
+              title={i18n.kanbanBoard?.comment?.deleteTitle || "Delete comment"}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -88,7 +88,7 @@ const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = fals
               onClick={handleShowReplyForm}
               className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              Reply
+              {i18n.kanbanBoard?.comment?.replyButton || 'Reply'}
             </button>
           )}
         </div>
@@ -100,7 +100,7 @@ const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = fals
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Write a reply..."
+              placeholder={i18n.kanbanBoard?.comment?.replyPlaceholder || "Write a reply..."}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               rows={2}
             />
@@ -109,13 +109,13 @@ const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = fals
                 onClick={() => setShowReplyForm(false)}
                 className="text-xs text-gray-500 hover:text-gray-700"
               >
-                Cancel
+                {i18n.kanbanBoard?.comment?.cancelButton || 'Cancel'}
               </button>
               <button
                 onClick={handleReply}
                 className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
               >
-                Reply
+                {i18n.kanbanBoard?.comment?.replySubmitButton || 'Reply'}
               </button>
             </div>
           </div>
@@ -134,6 +134,7 @@ const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = fals
               onDelete={onDelete}
               isAdmin={isAdmin}
               level={level + 1}
+              i18n={i18n}
             />
           ))}
         </div>
@@ -179,6 +180,43 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = "md" }) => {
 }
 
 const KanbanBoard = ({ adminData }) => {
+  // Create a state for i18n data that can be updated when available
+  const [i18n, setI18n] = useState({});
+  
+  useEffect(() => {
+    // Function to get i18n data from available sources
+    const getI18nData = () => {
+      let i18nData = {};
+      
+      // First try adminData prop
+      if (adminData?.i18n) {
+        i18nData = adminData.i18n;
+      }
+      // Then try window.mclAdminData
+      else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
+        i18nData = window.mclAdminData.i18n;
+      }
+      
+      return i18nData;
+    };
+    
+    const i18nData = getI18nData();
+    
+    // If we have i18n data, set it
+    if (Object.keys(i18nData).length > 0) {
+      setI18n(i18nData);
+    } else {
+      // If not available yet, try again after a short delay
+      // This handles cases where window.mclAdminData is loaded after component mount
+      setTimeout(() => {
+        const retryI18nData = getI18nData();
+        if (Object.keys(retryI18nData).length > 0) {
+          setI18n(retryI18nData);
+        }
+      }, 100);
+    }
+  }, [adminData]);
+
   // Core state
   const [checklists, setChecklists] = useState([])
   const [selectedChecklist, setSelectedChecklist] = useState(null)
@@ -254,7 +292,7 @@ const KanbanBoard = ({ adminData }) => {
       }
     } catch (error) {
       console.error('Error fetching checklists:', error)
-      showError('Failed to load checklists')
+      showError(i18n.kanbanBoard?.errors?.loadChecklistsFailed || 'Failed to load checklists')
     }
   }
 
@@ -276,11 +314,11 @@ const KanbanBoard = ({ adminData }) => {
         setBoard(data.data.board || [])
         setUsers(data.data.users || [])
       } else {
-        showError(data.data || 'Failed to load Kanban board')
+        showError(data.data || i18n.kanbanBoard?.errors?.loadBoardFailed || 'Failed to load Kanban board')
       }
     } catch (error) {
       console.error('Error loading Kanban board:', error)
-      showError('Failed to load Kanban board')
+      showError(i18n.kanbanBoard?.errors?.loadBoardFailed || 'Failed to load Kanban board')
     } finally {
       setLoading(false)
     }
@@ -345,14 +383,14 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (!data.success) {
-        showError('Failed to move item')
+        showError(i18n.kanbanBoard?.errors?.moveItemFailed || 'Failed to move item')
         loadKanbanBoard() // Revert
       } else {
-        showSuccess('Item moved successfully')
+        showSuccess(i18n.kanbanBoard?.success?.itemMoved || 'Item moved successfully')
       }
     } catch (error) {
       console.error('Error moving item:', error)
-      showError('Failed to move item')
+      showError(i18n.kanbanBoard?.errors?.moveItemFailed || 'Failed to move item')
       loadKanbanBoard()
     }
 
@@ -376,7 +414,7 @@ const KanbanBoard = ({ adminData }) => {
 
   const saveColumn = async () => {
     if (!columnTitle.trim()) {
-      showError('Column title is required')
+      showError(i18n.kanbanBoard?.errors?.columnTitleRequired || 'Column title is required')
       return
     }
 
@@ -419,7 +457,7 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess(editingColumn ? 'Column updated' : 'Column added')
+        showSuccess(editingColumn ? (i18n.kanbanBoard?.success?.columnUpdated || 'Column updated') : (i18n.kanbanBoard?.success?.columnAdded || 'Column added'))
       } else {
         showError('Failed to save column')
         loadKanbanBoard()
@@ -494,7 +532,7 @@ const KanbanBoard = ({ adminData }) => {
     const contentFromEditor = contentEditableRef.current?.innerHTML || taskContent
     
     if (!editingTask || !contentFromEditor.trim()) {
-      showError('Task content is required')
+      showError(i18n.kanbanBoard?.errors?.taskContentRequired || 'Task content is required')
       return
     }
 
@@ -552,7 +590,7 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (!data.success) {
-        showError('Failed to save task content')
+        showError(i18n.kanbanBoard?.errors?.saveTaskFailed || 'Failed to save task content')
         loadKanbanBoard() // Revert changes
         return
       }
@@ -566,10 +604,10 @@ const KanbanBoard = ({ adminData }) => {
       }
 
       closeTaskModal()
-      showSuccess('Task updated successfully')
+      showSuccess(i18n.kanbanBoard?.success?.taskUpdated || 'Task updated successfully')
     } catch (error) {
       console.error('Error saving task:', error)
-      showError('Failed to save task')
+      showError(i18n.kanbanBoard?.errors?.saveTaskFailed || 'Failed to save task')
       loadKanbanBoard() // Revert changes
     }
   }
@@ -677,13 +715,13 @@ const KanbanBoard = ({ adminData }) => {
         // Clear the input
         setNewComment('')
         
-        showSuccess('Comment added successfully')
+        showSuccess(i18n.kanbanBoard?.success?.commentAdded || 'Comment added successfully')
       } else {
-        showError(data.data || 'Failed to add comment')
+        showError(data.data || i18n.kanbanBoard?.errors?.addCommentFailed || 'Failed to add comment')
       }
     } catch (error) {
       console.error('Error adding comment:', error)
-      showError('Failed to add comment')
+      showError(i18n.kanbanBoard?.errors?.addCommentFailed || 'Failed to add comment')
     }
   }
 
@@ -716,13 +754,13 @@ const KanbanBoard = ({ adminData }) => {
         // Reload kanban board to update comment counts
         loadKanbanBoard()
         
-        showSuccess('Reply added successfully')
+        showSuccess(i18n.kanbanBoard?.success?.replyAdded || 'Reply added successfully')
       } else {
-        showError(data.data || 'Failed to add reply')
+        showError(data.data || i18n.kanbanBoard?.errors?.addReplyFailed || 'Failed to add reply')
       }
     } catch (error) {
       console.error('Error adding reply:', error)
-      showError('Failed to add reply')
+      showError(i18n.kanbanBoard?.errors?.addReplyFailed || 'Failed to add reply')
     }
   }
 
@@ -745,11 +783,11 @@ const KanbanBoard = ({ adminData }) => {
           updateCommentLikes(prevComments, commentId, data.data.like_count, data.data.user_liked)
         )
       } else {
-        showError(data.data || 'Failed to toggle like')
+        showError(data.data || i18n.kanbanBoard?.errors?.toggleLikeFailed || 'Failed to toggle like')
       }
     } catch (error) {
       console.error('Error toggling like:', error)
-      showError('Failed to toggle like')
+      showError(i18n.kanbanBoard?.errors?.toggleLikeFailed || 'Failed to toggle like')
     }
   }
 
@@ -769,7 +807,7 @@ const KanbanBoard = ({ adminData }) => {
   }
 
   const deleteComment = async (commentId) => {
-    if (!confirm('Are you sure you want to delete this comment and all its replies?')) {
+    if (!confirm(i18n.kanbanBoard?.confirm?.deleteComment || 'Are you sure you want to delete this comment and all its replies?')) {
       return
     }
 
@@ -792,13 +830,13 @@ const KanbanBoard = ({ adminData }) => {
         // Reload kanban board to update comment counts
         loadKanbanBoard()
         
-        showSuccess('Comment deleted successfully')
+        showSuccess(i18n.kanbanBoard?.success?.commentDeleted || 'Comment deleted successfully')
       } else {
-        showError(data.data || 'Failed to delete comment')
+        showError(data.data || i18n.kanbanBoard?.errors?.deleteCommentFailed || 'Failed to delete comment')
       }
     } catch (error) {
       console.error('Error deleting comment:', error)
-      showError('Failed to delete comment')
+      showError(i18n.kanbanBoard?.errors?.deleteCommentFailed || 'Failed to delete comment')
     }
   }
 
@@ -807,10 +845,10 @@ const KanbanBoard = ({ adminData }) => {
     const now = new Date()
     const seconds = Math.floor((now - date) / 1000)
     
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`
+    if (seconds < 60) return i18n.kanbanBoard?.time?.justNow || 'just now'
+    if (seconds < 3600) return (i18n.kanbanBoard?.time?.minutesAgo || '{minutes}m ago').replace('{minutes}', Math.floor(seconds / 60))
+    if (seconds < 86400) return (i18n.kanbanBoard?.time?.hoursAgo || '{hours}h ago').replace('{hours}', Math.floor(seconds / 3600))
+    if (seconds < 2592000) return (i18n.kanbanBoard?.time?.daysAgo || '{days}d ago').replace('{days}', Math.floor(seconds / 86400))
     return date.toLocaleDateString()
   }
 
@@ -833,7 +871,7 @@ const KanbanBoard = ({ adminData }) => {
 
   const addImageToEditor = () => {
     // Simple image URL input for now
-    const imageUrl = prompt('Enter image URL:')
+    const imageUrl = prompt(i18n.kanbanBoard?.prompts?.enterImageUrl || 'Enter image URL:')
     if (imageUrl) {
       const imageHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto; margin: 8px 0;" />`
       document.execCommand('insertHTML', false, imageHtml)
@@ -894,14 +932,14 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess('User assignment updated')
+        showSuccess(i18n.kanbanBoard?.success?.userAssignmentUpdated || 'User assignment updated')
       } else {
-        showError('Failed to assign user')
+        showError(i18n.kanbanBoard?.errors?.assignUserFailed || 'Failed to assign user')
         loadKanbanBoard()
       }
     } catch (error) {
       console.error('Error assigning user:', error)
-      showError('Failed to assign user')
+      showError(i18n.kanbanBoard?.errors?.assignUserFailed || 'Failed to assign user')
       loadKanbanBoard()
     }
   }
@@ -966,14 +1004,14 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess(newCheckedState ? 'Item checked' : 'Item unchecked')
+        showSuccess(newCheckedState ? (i18n.kanbanBoard?.success?.itemChecked || 'Item checked') : (i18n.kanbanBoard?.success?.itemUnchecked || 'Item unchecked'))
       } else {
-        showError('Failed to update item state')
+        showError(i18n.kanbanBoard?.errors?.updateItemStateFailed || 'Failed to update item state')
         loadKanbanBoard()
       }
     } catch (error) {
       console.error('Error toggling item:', error)
-      showError('Failed to update item state')
+      showError(i18n.kanbanBoard?.errors?.updateItemStateFailed || 'Failed to update item state')
       loadKanbanBoard()
     }
   }
@@ -993,14 +1031,14 @@ const KanbanBoard = ({ adminData }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <label className="text-gray-700 dark:text-white font-medium">
-              Select Checklist:
+              {i18n.kanbanBoard?.header?.selectChecklistLabel || 'Select Checklist:'}
             </label>
             <select
               value={selectedChecklist || ''}
               onChange={(e) => setSelectedChecklist(e.target.value)}
               className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">Choose a checklist...</option>
+              <option value="">{i18n.kanbanBoard?.header?.chooseChecklistOption || 'Choose a checklist...'}</option>
               {checklists.map(checklist => (
                 <option key={checklist.id} value={checklist.id}>
                   {checklist.title}
@@ -1016,7 +1054,7 @@ const KanbanBoard = ({ adminData }) => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add Column
+              {i18n.kanbanBoard?.header?.addColumnButton || 'Add Column'}
             </button>
           )}
         </div>
@@ -1072,7 +1110,7 @@ const KanbanBoard = ({ adminData }) => {
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                         >
-                          Edit Column
+                          {i18n.kanbanBoard?.column?.editButton || 'Edit Column'}
                         </button>
                         <button
                           onClick={() => {
@@ -1082,7 +1120,7 @@ const KanbanBoard = ({ adminData }) => {
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
                         >
-                          Delete Column
+                          {i18n.kanbanBoard?.column?.deleteButton || 'Delete Column'}
                         </button>
                       </div>
                     </div>
@@ -1142,7 +1180,7 @@ const KanbanBoard = ({ adminData }) => {
                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                               </svg>
-                              <span>{item.comment_count} comment{item.comment_count !== 1 ? 's' : ''}</span>
+                              <span>{item.comment_count} {item.comment_count === 1 ? (i18n.kanbanBoard?.item?.commentSingular || 'comment') : (i18n.kanbanBoard?.item?.commentPlural || 'comments')}</span>
                             </div>
                           </div>
                         )}
@@ -1167,7 +1205,7 @@ const KanbanBoard = ({ adminData }) => {
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
-                                <span className="text-xs text-gray-400">Assign</span>
+                                <span className="text-xs text-gray-400">{i18n.kanbanBoard?.item?.assignButton || 'Assign'}</span>
                               </>
                             )}
                           </button>
@@ -1186,20 +1224,20 @@ const KanbanBoard = ({ adminData }) => {
       <Modal
         isOpen={showColumnModal}
         onClose={closeColumnModal}
-        title={editingColumn ? 'Edit Column' : 'Add New Column'}
+        title={editingColumn ? (i18n.kanbanBoard?.modals?.editColumnTitle || 'Edit Column') : (i18n.kanbanBoard?.modals?.addColumnTitle || 'Add New Column')}
         footer={
           <>
             <button
               onClick={closeColumnModal}
               className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
             >
-              Cancel
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
             </button>
             <button
               onClick={saveColumn}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              {editingColumn ? 'Update' : 'Add'} Column
+              {editingColumn ? (i18n.kanbanBoard?.modals?.updateColumnButton || 'Update Column') : (i18n.kanbanBoard?.modals?.addColumnButton || 'Add Column')}
             </button>
           </>
         }
@@ -1207,19 +1245,19 @@ const KanbanBoard = ({ adminData }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Column Title
+              {i18n.kanbanBoard?.modals?.columnTitleLabel || 'Column Title'}
             </label>
             <input
               type="text"
               value={columnTitle}
               onChange={(e) => setColumnTitle(e.target.value)}
-              placeholder="Enter column title..."
+              placeholder={i18n.kanbanBoard?.modals?.columnTitlePlaceholder || "Enter column title..."}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Column Color
+              {i18n.kanbanBoard?.modals?.columnColorLabel || 'Column Color'}
             </label>
             <div className="flex items-center space-x-2">
               <input
@@ -1240,34 +1278,34 @@ const KanbanBoard = ({ adminData }) => {
       <Modal
         isOpen={showAssignModal}
         onClose={() => setShowAssignModal(false)}
-        title="Assign User"
+        title={i18n.kanbanBoard?.modals?.assignUserTitle || "Assign User"}
         footer={
           <>
             <button
               onClick={() => setShowAssignModal(false)}
               className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
             >
-              Cancel
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
             </button>
             <button
               onClick={saveAssignment}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Save Assignment
+              {i18n.kanbanBoard?.modals?.saveAssignmentButton || 'Save Assignment'}
             </button>
           </>
         }
       >
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select User
+            {i18n.kanbanBoard?.modals?.selectUserLabel || 'Select User'}
           </label>
           <select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="">Unassigned</option>
+            <option value="">{i18n.kanbanBoard?.modals?.unassignedOption || 'Unassigned'}</option>
             {users.map(user => (
               <option key={user.id} value={user.id}>
                 {user.name} ({user.email})
@@ -1281,7 +1319,7 @@ const KanbanBoard = ({ adminData }) => {
       <Modal
         isOpen={showTaskModal}
         onClose={closeTaskModal}
-        title="Edit Task"
+        title={i18n.kanbanBoard?.modals?.editTaskTitle || "Edit Task"}
         size="lg"
         footer={
           <>
@@ -1289,13 +1327,13 @@ const KanbanBoard = ({ adminData }) => {
               onClick={closeTaskModal}
               className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
             >
-              Cancel
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
             </button>
             <button
               onClick={saveTask}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Save Task
+              {i18n.kanbanBoard?.modals?.saveTaskButton || 'Save Task'}
             </button>
           </>
         }
@@ -1304,7 +1342,7 @@ const KanbanBoard = ({ adminData }) => {
           {/* Rich Text Editor */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Task Content
+              {i18n.kanbanBoard?.modals?.taskContentLabel || 'Task Content'}
             </label>
             
             {/* Simple formatting toolbar */}
@@ -1313,7 +1351,7 @@ const KanbanBoard = ({ adminData }) => {
                 type="button"
                 onClick={() => formatText('bold')}
                 className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm font-bold"
-                title="Bold"
+                title={i18n.kanbanBoard?.modals?.boldTitle || "Bold"}
               >
                 B
               </button>
@@ -1321,7 +1359,7 @@ const KanbanBoard = ({ adminData }) => {
                 type="button"
                 onClick={() => formatText('italic')}
                 className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm italic"
-                title="Italic"
+                title={i18n.kanbanBoard?.modals?.italicTitle || "Italic"}
               >
                 I
               </button>
@@ -1329,7 +1367,7 @@ const KanbanBoard = ({ adminData }) => {
                 type="button"
                 onClick={() => formatText('underline')}
                 className="p-1 rounded hover:bg-gray-200 text-gray-600 text-sm underline"
-                title="Underline"
+                title={i18n.kanbanBoard?.modals?.underlineTitle || "Underline"}
               >
                 U
               </button>
@@ -1338,7 +1376,7 @@ const KanbanBoard = ({ adminData }) => {
                 type="button"
                 onClick={addImageToEditor}
                 className="p-1 rounded hover:bg-gray-200 text-gray-600 text-xs"
-                title="Add Image"
+                title={i18n.kanbanBoard?.modals?.addImageTitle || "Add Image"}
               >
                 🖼️
               </button>
@@ -1360,7 +1398,7 @@ const KanbanBoard = ({ adminData }) => {
           {/* Comments Section */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Comments ({taskComments.length})
+              {i18n.kanbanBoard?.modals?.commentsLabel || 'Comments'} ({taskComments.length})
             </label>
             
             {/* Add New Comment */}
@@ -1368,7 +1406,7 @@ const KanbanBoard = ({ adminData }) => {
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
+                placeholder={i18n.kanbanBoard?.modals?.addCommentPlaceholder || "Add a comment..."}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
                 onKeyPress={(e) => {
@@ -1379,14 +1417,14 @@ const KanbanBoard = ({ adminData }) => {
               />
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Ctrl+Enter to post
+                  {i18n.kanbanBoard?.modals?.ctrlEnterToPost || 'Ctrl+Enter to post'}
                 </span>
                 <button
                   onClick={() => addComment()}
                   disabled={!newComment.trim()}
                   className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Comment
+                  {i18n.kanbanBoard?.modals?.commentButton || 'Comment'}
                 </button>
               </div>
             </div>
@@ -1396,14 +1434,14 @@ const KanbanBoard = ({ adminData }) => {
               {loadingComments ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-sm text-gray-500">Loading comments...</span>
+                  <span className="ml-2 text-sm text-gray-500">{i18n.kanbanBoard?.modals?.loadingComments || 'Loading comments...'}</span>
                 </div>
               ) : taskComments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  <p className="text-sm">No comments yet. Be the first to comment!</p>
+                  <p className="text-sm">{i18n.kanbanBoard?.modals?.noCommentsYet || 'No comments yet. Be the first to comment!'}</p>
                 </div>
               ) : (
                 taskComments.map(comment => (
@@ -1415,6 +1453,7 @@ const KanbanBoard = ({ adminData }) => {
                     onDelete={deleteComment}
                     isAdmin={true}
                     level={0}
+                    i18n={i18n}
                   />
                 ))
               )}
@@ -1432,12 +1471,12 @@ const KanbanBoard = ({ adminData }) => {
           setColumnToDelete(null)
         }}
         onConfirm={deleteColumn}
-        title="Delete Column"
-        message={`Are you sure you want to delete the column "${columnToDelete?.title}"?`}
-        confirmText="Delete Column"
+        title={i18n.kanbanBoard?.modals?.deleteColumnTitle || "Delete Column"}
+        message={i18n.kanbanBoard?.modals?.deleteColumnMessage?.replace('{columnTitle}', columnToDelete?.title || '') || `Are you sure you want to delete the column "${columnToDelete?.title}"?`}
+        confirmText={i18n.kanbanBoard?.modals?.deleteColumnConfirm || "Delete Column"}
         confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
         icon="delete"
-        items={columnToDelete?.items?.length > 0 ? [`This will also delete ${columnToDelete.items.length} items in this column`] : []}
+        items={columnToDelete?.items?.length > 0 ? [i18n.kanbanBoard?.modals?.deleteColumnWarning?.replace('{itemCount}', columnToDelete.items.length) || `This will also delete ${columnToDelete.items.length} items in this column`] : []}
       />
     </div>
   )

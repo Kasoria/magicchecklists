@@ -802,7 +802,8 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       {formData.theme === 'custom' && (
         <CustomThemeSettings 
           formData={formData} 
-          onChange={handleInputChange} 
+          onChange={handleInputChange}
+          adminData={adminData}
         />
       )}
 

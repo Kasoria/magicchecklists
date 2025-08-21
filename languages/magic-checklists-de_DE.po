@@ -1106,6 +1106,15 @@ msgstr "Aufgabe gelöscht"
 msgid "Comments and replies"
 msgstr "Kommentare und Antworten"
 
+msgid "Comments"
+msgstr "Kommentare"
+
+msgid "Reply"
+msgstr "Antworten"
+
+msgid "Comment"
+msgstr "Kommentieren"
+
 msgid "Send deadline notification when"
 msgstr "Benachrichtigung über Frist senden, wenn"
 
@@ -1998,6 +2007,386 @@ msgstr "Nach Titel, Beschreibung, Typ suchen..."
 
 msgid "Filter by Tags"
 msgstr "Nach Tags filtern"
+
+# Custom Theme Settings translations
+msgid "Custom Theme Settings"
+msgstr "Benutzerdefinierte Theme-Einstellungen"
+
+msgid "Customize the visual appearance of your checklist drawer."
+msgstr "Passe das visuelle Erscheinungsbild deines Checklisten-Drawers an."
+
+msgid "Colors"
+msgstr "Farben"
+
+msgid "Main background color of the drawer"
+msgstr "Haupt-Hintergrundfarbe des Drawers"
+
+msgid "List Item Background"
+msgstr "Listen-Element-Hintergrund"
+
+msgid "Background color for checklist items"
+msgstr "Hintergrundfarbe für Checklisten-Elemente"
+
+msgid "Text Color"
+msgstr "Textfarbe"
+
+msgid "Primary text color"
+msgstr "Primäre Textfarbe"
+
+msgid "Description Text Color"
+msgstr "Beschreibungstext-Farbe"
+
+msgid "Color for description text"
+msgstr "Farbe für Beschreibungstext"
+
+msgid "Typography"
+msgstr "Typografie"
+
+msgid "Heading Size"
+msgstr "Überschriftgröße"
+
+msgid "Size of the main title"
+msgstr "Größe des Haupttitels"
+
+msgid "Description Size"
+msgstr "Beschreibungsgröße"
+
+msgid "Size of description text"
+msgstr "Größe des Beschreibungstexts"
+
+msgid "List Item Size"
+msgstr "Listen-Element-Größe"
+
+msgid "Size of checklist item text"
+msgstr "Größe des Checklisten-Element-Texts"
+
+msgid "Button Colors"
+msgstr "Button-Farben"
+
+msgid "Primary Button Background"
+msgstr "Primärer Button-Hintergrund"
+
+msgid "Background color for primary buttons"
+msgstr "Hintergrundfarbe für primäre Buttons"
+
+msgid "Primary Button Text"
+msgstr "Primärer Button-Text"
+
+msgid "Text color for primary buttons"
+msgstr "Textfarbe für primäre Buttons"
+
+msgid "Secondary Button Background"
+msgstr "Sekundärer Button-Hintergrund"
+
+msgid "Background color for secondary buttons"
+msgstr "Hintergrundfarbe für sekundäre Buttons"
+
+msgid "Secondary Button Text"
+msgstr "Sekundärer Button-Text"
+
+msgid "Text color for secondary buttons"
+msgstr "Textfarbe für sekundäre Buttons"
+
+msgid "Checkbox Style"
+msgstr "Checkbox-Stil"
+
+msgid "Checkbox Background"
+msgstr "Checkbox-Hintergrund"
+
+msgid "Background color of checkboxes"
+msgstr "Hintergrundfarbe von Checkboxen"
+
+msgid "Checkbox Border Radius"
+msgstr "Checkbox-Rahmenradius"
+
+msgid "Rounded corners for checkboxes"
+msgstr "Abgerundete Ecken für Checkboxen"
+
+msgid "Checkmark Style"
+msgstr "Häkchen-Stil"
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Custom Image"
+msgstr "Benutzerdefiniertes Bild"
+
+msgid "Select checkmark style..."
+msgstr "Häkchen-Stil auswählen..."
+
+msgid "Choose between standard checkmark or custom image"
+msgstr "Wähle zwischen Standard-Häkchen oder benutzerdefiniertem Bild"
+
+msgid "Custom Checkmark Icon"
+msgstr "Benutzerdefiniertes Häkchen-Symbol"
+
+msgid "Current icon"
+msgstr "Aktuelles Symbol"
+
+msgid "Change Image"
+msgstr "Bild ändern"
+
+msgid "Select Image Button"
+msgstr "Bild auswählen"
+
+msgid "Recommended: 24x24px PNG or SVG with transparency"
+msgstr "Empfohlen: 24x24px PNG oder SVG mit Transparenz"
+
+msgid "Checkmark Color"
+msgstr "Häkchen-Farbe"
+
+msgid "Color of the standard checkmark"
+msgstr "Farbe des Standard-Häkchens"
+
+msgid "Drawer Style"
+msgstr "Drawer-Stil"
+
+msgid "Border Radius"
+msgstr "Rahmenradius"
+
+msgid "Rounded corners for the drawer"
+msgstr "Abgerundete Ecken für den Drawer"
+
+msgid "Dimensions"
+msgstr "Abmessungen"
+
+msgid "Drawer Width"
+msgstr "Drawer-Breite"
+
+msgid "Maximum width of the drawer"
+msgstr "Maximale Breite des Drawers"
+
+msgid "Drawer Height"
+msgstr "Drawer-Höhe"
+
+msgid "Maximum height of the drawer"
+msgstr "Maximale Höhe des Drawers"
+
+msgid "Floating Button Settings"
+msgstr "Schwebender Button-Einstellungen"
+
+msgid "Button Background"
+msgstr "Button-Hintergrund"
+
+msgid "Background color of floating button"
+msgstr "Hintergrundfarbe des schwebenden Buttons"
+
+msgid "Button Text Color"
+msgstr "Button-Textfarbe"
+
+msgid "Text color of floating button"
+msgstr "Textfarbe des schwebenden Buttons"
+
+msgid "Text Size"
+msgstr "Textgröße"
+
+msgid "Font size for button text"
+msgstr "Schriftgröße für Button-Text"
+
+msgid "Show Checklist Icon"
+msgstr "Checklisten-Symbol anzeigen"
+
+msgid "Display a checklist icon alongside the button text"
+msgstr "Ein Checklisten-Symbol neben dem Button-Text anzeigen"
+
+msgid "Font size must be between 10 and 50 pixels"
+msgstr "Schriftgröße muss zwischen 10 und 50 Pixeln liegen"
+
+msgid "Width must be between 400 and 2000 pixels"
+msgstr "Breite muss zwischen 400 und 2000 Pixeln liegen"
+
+msgid "Height must be between 350 and 2000 pixels"
+msgstr "Höhe muss zwischen 350 und 2000 Pixeln liegen"
+
+msgid "Please enter a valid hex color (e.g., #ffffff)"
+msgstr "Bitte gib eine gültige Hex-Farbe ein (z.B. #ffffff)"
+
+msgid "Please fix the following errors:"
+msgstr "Bitte behebe die folgenden Fehler:"
+
+msgid "Select Custom Checkmark Icon"
+msgstr "Benutzerdefiniertes Häkchen-Symbol auswählen"
+
+msgid "Use This Image"
+msgstr "Dieses Bild verwenden"
+
+# Kanban Board translations
+msgid "Select Checklist:"
+msgstr "Checkliste auswählen:"
+
+msgid "Choose a checklist..."
+msgstr "Checkliste auswählen..."
+
+msgid "Add Column"
+msgstr "Spalte hinzufügen"
+
+msgid "Edit Column"
+msgstr "Spalte bearbeiten"
+
+msgid "Delete Column"
+msgstr "Spalte löschen"
+
+msgid "Assign"
+msgstr "Zuweisen"
+
+msgid "comment"
+msgstr "Kommentar"
+
+msgid "comments"
+msgstr "Kommentare"
+
+msgid "Add New Column"
+msgstr "Neue Spalte hinzufügen"
+
+msgid "Update Column"
+msgstr "Spalte aktualisieren"
+
+msgid "Column Title"
+msgstr "Spaltentitel"
+
+msgid "Enter column title..."
+msgstr "Spaltentitel eingeben..."
+
+msgid "Column Color"
+msgstr "Spaltenfarbe"
+
+msgid "Assign User"
+msgstr "Benutzer zuweisen"
+
+msgid "Save Assignment"
+msgstr "Zuweisung speichern"
+
+msgid "Select User"
+msgstr "Benutzer auswählen"
+
+msgid "Unassigned"
+msgstr "Nicht zugewiesen"
+
+msgid "Edit Task"
+msgstr "Aufgabe bearbeiten"
+
+msgid "Save Task"
+msgstr "Aufgabe speichern"
+
+msgid "Task Content"
+msgstr "Aufgabeninhalt"
+
+msgid "Bold"
+msgstr "Fett"
+
+msgid "Italic"
+msgstr "Kursiv"
+
+msgid "Underline"
+msgstr "Unterstrichen"
+
+msgid "Add Image"
+msgstr "Bild hinzufügen"
+
+msgid "Add a comment..."
+msgstr "Kommentar hinzufügen..."
+
+msgid "Ctrl+Enter to post"
+msgstr "Strg+Enter zum Senden"
+
+msgid "Loading comments..."
+msgstr "Kommentare werden geladen..."
+
+msgid "No comments yet. Be the first to comment!"
+msgstr "Noch keine Kommentare. Sei der erste, der kommentiert!"
+
+msgid "Are you sure you want to delete the column \"{columnTitle}\"?"
+msgstr "Bist du sicher, dass du die Spalte \"{columnTitle}\" löschen möchtest?"
+
+msgid "This will also delete {itemCount} items in this column"
+msgstr "Dies wird auch {itemCount} Aufgaben in dieser Spalte löschen"
+
+msgid "Delete comment"
+msgstr "Kommentar löschen"
+
+msgid "Write a reply..."
+msgstr "Antwort schreiben..."
+
+msgid "just now"
+msgstr "gerade eben"
+
+msgid "{minutes}m ago"
+msgstr "vor {minutes}m"
+
+msgid "{hours}h ago"
+msgstr "vor {hours}h"
+
+msgid "{days}d ago"
+msgstr "vor {days}d"
+
+msgid "Enter image URL:"
+msgstr "Bild-URL eingeben:"
+
+msgid "Are you sure you want to delete this comment and all its replies?"
+msgstr "Bist du sicher, dass du diesen Kommentar und alle Antworten löschen möchtest?"
+
+msgid "Failed to load Kanban board"
+msgstr "Fehler beim Laden des Kanban-Boards"
+
+msgid "Failed to move item"
+msgstr "Fehler beim Verschieben der Aufgabe"
+
+msgid "Column title is required"
+msgstr "Spaltentitel ist erforderlich"
+
+msgid "Failed to save column"
+msgstr "Fehler beim Speichern der Spalte"
+
+msgid "Task content is required"
+msgstr "Aufgabeninhalt ist erforderlich"
+
+msgid "Failed to save task"
+msgstr "Fehler beim Speichern der Aufgabe"
+
+msgid "Failed to add comment"
+msgstr "Fehler beim Hinzufügen des Kommentars"
+
+msgid "Failed to add reply"
+msgstr "Fehler beim Hinzufügen der Antwort"
+
+msgid "Failed to toggle like"
+msgstr "Fehler beim Umschalten des Likes"
+
+msgid "Failed to delete comment"
+msgstr "Fehler beim Löschen des Kommentars"
+
+msgid "Failed to assign user"
+msgstr "Fehler beim Zuweisen des Benutzers"
+
+msgid "Failed to update item state"
+msgstr "Fehler beim Aktualisieren des Aufgabenstatus"
+
+msgid "Item moved successfully"
+msgstr "Aufgabe erfolgreich verschoben"
+
+msgid "Column updated"
+msgstr "Spalte aktualisiert"
+
+msgid "Column added"
+msgstr "Spalte hinzugefügt"
+
+msgid "Column deleted"
+msgstr "Spalte gelöscht"
+
+msgid "Task updated successfully"
+msgstr "Aufgabe erfolgreich aktualisiert"
+
+msgid "Comment added successfully"
+msgstr "Kommentar erfolgreich hinzugefügt"
+
+msgid "Reply added successfully"
+msgstr "Antwort erfolgreich hinzugefügt"
+
+msgid "Comment deleted successfully"
+msgstr "Kommentar erfolgreich gelöscht"
+
+msgid "User assignment updated"
+msgstr "Benutzerzuweisung aktualisiert"
 
 msgid "Select tags..."
 msgstr "Tags auswählen..."

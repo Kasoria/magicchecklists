@@ -24,6 +24,8 @@ class MCL_I18n {
             'common' => self::get_common_translations(),
             'analytics' => self::get_analytics_translations(),
             'accessControl' => self::get_access_control_translations(),
+            'customThemeSettings' => self::get_custom_theme_settings_translations(),
+            'kanbanBoard' => self::get_kanban_board_translations(),
             'analyticsDashboard' => self::get_analytics_dashboard_overview_translations(),
             'checklistDrawer' => self::get_checklist_drawer_translations(),
             'checklistEditor' => self::get_checklist_editor_translations(),
@@ -232,6 +234,207 @@ class MCL_I18n {
             'loadingConditions' => self::get_loading_conditions_translations(),
             'forceDeleteLock' => self::get_force_delete_lock_translations(),
             'permissions' => self::get_permissions_translations(),
+        );
+    }
+
+    /**
+     * Get all custom theme settings translations
+     * 
+     * @return array
+     */
+    public static function get_custom_theme_settings_translations() {
+        return array(
+            'title' => __('Custom Theme Settings', 'magic-checklists'),
+            'description' => __('Customize the visual appearance of your checklist drawer.', 'magic-checklists'),
+            'sections' => array(
+                'colors' => array(
+                    'title' => __('Colors', 'magic-checklists'),
+                    'backgroundColorLabel' => __('Background Color', 'magic-checklists'),
+                    'backgroundColorHelp' => __('Main background color of the drawer', 'magic-checklists'),
+                    'listItemBackgroundLabel' => __('List Item Background', 'magic-checklists'),
+                    'listItemBackgroundHelp' => __('Background color for checklist items', 'magic-checklists'),
+                    'textColorLabel' => __('Text Color', 'magic-checklists'),
+                    'textColorHelp' => __('Primary text color', 'magic-checklists'),
+                    'descriptionTextColorLabel' => __('Description Text Color', 'magic-checklists'),
+                    'descriptionTextColorHelp' => __('Color for description text', 'magic-checklists'),
+                ),
+                'typography' => array(
+                    'title' => __('Typography', 'magic-checklists'),
+                    'headingSizeLabel' => __('Heading Size', 'magic-checklists'),
+                    'headingSizeHelp' => __('Size of the main title', 'magic-checklists'),
+                    'descriptionSizeLabel' => __('Description Size', 'magic-checklists'),
+                    'descriptionSizeHelp' => __('Size of description text', 'magic-checklists'),
+                    'listItemSizeLabel' => __('List Item Size', 'magic-checklists'),
+                    'listItemSizeHelp' => __('Size of checklist item text', 'magic-checklists'),
+                ),
+                'buttonColors' => array(
+                    'title' => __('Button Colors', 'magic-checklists'),
+                    'primaryButtonBackgroundLabel' => __('Primary Button Background', 'magic-checklists'),
+                    'primaryButtonBackgroundHelp' => __('Background color for primary buttons', 'magic-checklists'),
+                    'primaryButtonTextLabel' => __('Primary Button Text', 'magic-checklists'),
+                    'primaryButtonTextHelp' => __('Text color for primary buttons', 'magic-checklists'),
+                    'secondaryButtonBackgroundLabel' => __('Secondary Button Background', 'magic-checklists'),
+                    'secondaryButtonBackgroundHelp' => __('Background color for secondary buttons', 'magic-checklists'),
+                    'secondaryButtonTextLabel' => __('Secondary Button Text', 'magic-checklists'),
+                    'secondaryButtonTextHelp' => __('Text color for secondary buttons', 'magic-checklists'),
+                ),
+                'checkboxStyle' => array(
+                    'title' => __('Checkbox Style', 'magic-checklists'),
+                    'checkboxBackgroundLabel' => __('Checkbox Background', 'magic-checklists'),
+                    'checkboxBackgroundHelp' => __('Background color of checkboxes', 'magic-checklists'),
+                    'borderRadiusLabel' => __('Checkbox Border Radius', 'magic-checklists'),
+                    'borderRadiusHelp' => __('Rounded corners for checkboxes', 'magic-checklists'),
+                    'checkmarkStyleLabel' => __('Checkmark Style', 'magic-checklists'),
+                    'standardOption' => __('Standard', 'magic-checklists'),
+                    'customImageOption' => __('Custom Image', 'magic-checklists'),
+                    'placeholder' => __('Select checkmark style...', 'magic-checklists'),
+                    'description' => __('Choose between standard checkmark or custom image', 'magic-checklists'),
+                    'customIconTitle' => __('Custom Checkmark Icon', 'magic-checklists'),
+                    'currentIconLabel' => __('Current icon', 'magic-checklists'),
+                    'changeImageButton' => __('Change Image', 'magic-checklists'),
+                    'selectImageButton' => __('Select Image Button', 'magic-checklists'),
+                    'removeButton' => __('Remove', 'magic-checklists'),
+                    'iconRecommendation' => __('Recommended: 24x24px PNG or SVG with transparency', 'magic-checklists'),
+                    'checkmarkColorLabel' => __('Checkmark Color', 'magic-checklists'),
+                    'checkmarkColorHelp' => __('Color of the standard checkmark', 'magic-checklists'),
+                ),
+                'drawerStyle' => array(
+                    'title' => __('Drawer Style', 'magic-checklists'),
+                    'borderRadiusLabel' => __('Border Radius', 'magic-checklists'),
+                    'borderRadiusHelp' => __('Rounded corners for the drawer', 'magic-checklists'),
+                ),
+                'dimensions' => array(
+                    'title' => __('Dimensions', 'magic-checklists'),
+                    'drawerWidthLabel' => __('Drawer Width', 'magic-checklists'),
+                    'drawerWidthHelp' => __('Maximum width of the drawer', 'magic-checklists'),
+                    'drawerHeightLabel' => __('Drawer Height', 'magic-checklists'),
+                    'drawerHeightHelp' => __('Maximum height of the drawer', 'magic-checklists'),
+                ),
+                'floatingButton' => array(
+                    'title' => __('Floating Button Settings', 'magic-checklists'),
+                    'buttonBackgroundLabel' => __('Button Background', 'magic-checklists'),
+                    'buttonBackgroundHelp' => __('Background color of floating button', 'magic-checklists'),
+                    'buttonTextColorLabel' => __('Button Text Color', 'magic-checklists'),
+                    'buttonTextColorHelp' => __('Text color of floating button', 'magic-checklists'),
+                    'textSizeLabel' => __('Text Size', 'magic-checklists'),
+                    'textSizeHelp' => __('Font size for button text', 'magic-checklists'),
+                    'showIconLabel' => __('Show Checklist Icon', 'magic-checklists'),
+                    'showIconDescription' => __('Display a checklist icon alongside the button text', 'magic-checklists'),
+                ),
+            ),
+            'validation' => array(
+                'fontSizeRange' => __('Font size must be between 10 and 50 pixels', 'magic-checklists'),
+                'widthRange' => __('Width must be between 400 and 2000 pixels', 'magic-checklists'),
+                'heightRange' => __('Height must be between 350 and 2000 pixels', 'magic-checklists'),
+                'invalidHexColor' => __('Please enter a valid hex color (e.g., #ffffff)', 'magic-checklists'),
+                'errorSummary' => __('Please fix the following errors:', 'magic-checklists'),
+            ),
+            'mediaUploader' => array(
+                'title' => __('Select Custom Checkmark Icon', 'magic-checklists'),
+                'buttonText' => __('Use This Image', 'magic-checklists'),
+            ),
+        );
+    }
+
+    /**
+     * Get all kanban board translations
+     * 
+     * @return array
+     */
+    public static function get_kanban_board_translations() {
+        return array(
+            'header' => array(
+                'selectChecklistLabel' => __('Select Checklist:', 'magic-checklists'),
+                'chooseChecklistOption' => __('Choose a checklist...', 'magic-checklists'),
+                'addColumnButton' => __('Add Column', 'magic-checklists'),
+            ),
+            'column' => array(
+                'editButton' => __('Edit Column', 'magic-checklists'),
+                'deleteButton' => __('Delete Column', 'magic-checklists'),
+            ),
+            'item' => array(
+                'assignButton' => __('Assign', 'magic-checklists'),
+                'commentSingular' => __('comment', 'magic-checklists'),
+                'commentPlural' => __('comments', 'magic-checklists'),
+            ),
+            'modals' => array(
+                'editColumnTitle' => __('Edit Column', 'magic-checklists'),
+                'addColumnTitle' => __('Add New Column', 'magic-checklists'),
+                'cancelButton' => __('Cancel', 'magic-checklists'),
+                'updateColumnButton' => __('Update Column', 'magic-checklists'),
+                'addColumnButton' => __('Add Column', 'magic-checklists'),
+                'columnTitleLabel' => __('Column Title', 'magic-checklists'),
+                'columnTitlePlaceholder' => __('Enter column title...', 'magic-checklists'),
+                'columnColorLabel' => __('Column Color', 'magic-checklists'),
+                'assignUserTitle' => __('Assign User', 'magic-checklists'),
+                'saveAssignmentButton' => __('Save Assignment', 'magic-checklists'),
+                'selectUserLabel' => __('Select User', 'magic-checklists'),
+                'unassignedOption' => __('Unassigned', 'magic-checklists'),
+                'editTaskTitle' => __('Edit Task', 'magic-checklists'),
+                'saveTaskButton' => __('Save Task', 'magic-checklists'),
+                'taskContentLabel' => __('Task Content', 'magic-checklists'),
+                'boldTitle' => __('Bold', 'magic-checklists'),
+                'italicTitle' => __('Italic', 'magic-checklists'),
+                'underlineTitle' => __('Underline', 'magic-checklists'),
+                'addImageTitle' => __('Add Image', 'magic-checklists'),
+                'commentsLabel' => __('Comments', 'magic-checklists'),
+                'addCommentPlaceholder' => __('Add a comment...', 'magic-checklists'),
+                'ctrlEnterToPost' => __('Ctrl+Enter to post', 'magic-checklists'),
+                'commentButton' => __('Comment', 'magic-checklists'),
+                'loadingComments' => __('Loading comments...', 'magic-checklists'),
+                'noCommentsYet' => __('No comments yet. Be the first to comment!', 'magic-checklists'),
+                'deleteColumnTitle' => __('Delete Column', 'magic-checklists'),
+                'deleteColumnMessage' => __('Are you sure you want to delete the column "{columnTitle}"?', 'magic-checklists'),
+                'deleteColumnConfirm' => __('Delete Column', 'magic-checklists'),
+                'deleteColumnWarning' => __('This will also delete {itemCount} items in this column', 'magic-checklists'),
+            ),
+            'comment' => array(
+                'deleteTitle' => __('Delete comment', 'magic-checklists'),
+                'replyButton' => __('Reply', 'magic-checklists'),
+                'replyPlaceholder' => __('Write a reply...', 'magic-checklists'),
+                'cancelButton' => __('Cancel', 'magic-checklists'),
+                'replySubmitButton' => __('Reply', 'magic-checklists'),
+            ),
+            'time' => array(
+                'justNow' => __('just now', 'magic-checklists'),
+                'minutesAgo' => __('{minutes}m ago', 'magic-checklists'),
+                'hoursAgo' => __('{hours}h ago', 'magic-checklists'),
+                'daysAgo' => __('{days}d ago', 'magic-checklists'),
+            ),
+            'prompts' => array(
+                'enterImageUrl' => __('Enter image URL:', 'magic-checklists'),
+            ),
+            'confirm' => array(
+                'deleteComment' => __('Are you sure you want to delete this comment and all its replies?', 'magic-checklists'),
+            ),
+            'errors' => array(
+                'loadChecklistsFailed' => __('Failed to load checklists', 'magic-checklists'),
+                'loadBoardFailed' => __('Failed to load Kanban board', 'magic-checklists'),
+                'moveItemFailed' => __('Failed to move item', 'magic-checklists'),
+                'columnTitleRequired' => __('Column title is required', 'magic-checklists'),
+                'saveColumnFailed' => __('Failed to save column', 'magic-checklists'),
+                'taskContentRequired' => __('Task content is required', 'magic-checklists'),
+                'saveTaskFailed' => __('Failed to save task', 'magic-checklists'),
+                'addCommentFailed' => __('Failed to add comment', 'magic-checklists'),
+                'addReplyFailed' => __('Failed to add reply', 'magic-checklists'),
+                'toggleLikeFailed' => __('Failed to toggle like', 'magic-checklists'),
+                'deleteCommentFailed' => __('Failed to delete comment', 'magic-checklists'),
+                'assignUserFailed' => __('Failed to assign user', 'magic-checklists'),
+                'updateItemStateFailed' => __('Failed to update item state', 'magic-checklists'),
+            ),
+            'success' => array(
+                'itemMoved' => __('Item moved successfully', 'magic-checklists'),
+                'columnUpdated' => __('Column updated', 'magic-checklists'),
+                'columnAdded' => __('Column added', 'magic-checklists'),
+                'columnDeleted' => __('Column deleted', 'magic-checklists'),
+                'taskUpdated' => __('Task updated successfully', 'magic-checklists'),
+                'commentAdded' => __('Comment added successfully', 'magic-checklists'),
+                'replyAdded' => __('Reply added successfully', 'magic-checklists'),
+                'commentDeleted' => __('Comment deleted successfully', 'magic-checklists'),
+                'userAssignmentUpdated' => __('User assignment updated', 'magic-checklists'),
+                'itemChecked' => __('Item checked', 'magic-checklists'),
+                'itemUnchecked' => __('Item unchecked', 'magic-checklists'),
+            ),
         );
     }
 
