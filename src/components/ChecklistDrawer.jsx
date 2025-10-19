@@ -2032,7 +2032,6 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (hasEditPermission && checklistId) {
       try {
         await saveChecklistData(checklistId, finalTitle, finalItems)
-        console.log('✓ Checklist saved successfully on close')
       } catch (err) {
         console.error('Error saving checklist on close:', err)
       }
