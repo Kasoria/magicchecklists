@@ -1612,6 +1612,8 @@ class MCL_I18n {
                 'checklistNavigation' => __('Checklist Arrow Buttons Navigation', 'magic-checklists'),
                 'progressCounter' => __('Progress Counter', 'magic-checklists'),
                 'dataCleanup' => __('Data Cleanup', 'magic-checklists'),
+                'pluginLanguage' => __('Plugin Language', 'magic-checklists'),
+                'useWordPressLanguage' => __('Use WordPress Language (Default)', 'magic-checklists'),
                 'speedDialAppearance' => __('Speed Dial Appearance', 'magic-checklists'),
                 'backgroundColor' => __('Background Color', 'magic-checklists'),
                 'iconColor' => __('Icon Color', 'magic-checklists'),
@@ -1620,6 +1622,7 @@ class MCL_I18n {
                 'checklistNavigation' => __('Enable navigation arrows to switch between active checklists when the drawer is open.', 'magic-checklists'),
                 'progressCounter' => __('Show a progress counter in checklists displaying total items, completed items, and completion percentage.', 'magic-checklists'),
                 'dataCleanup' => __('Delete all plugin data when uninstalling MagicChecklists (including checklists, settings, and database tables).', 'magic-checklists'),
+                'pluginLanguage' => __('Choose the language for the MagicChecklists plugin interface. This overrides the WordPress language setting for this plugin only.', 'magic-checklists'),
                 'speedDialAppearance' => __('Customize the appearance of the speed dial trigger button that appears when multiple checklists have floating buttons enabled.', 'magic-checklists'),
             ),
             'buttons' => array(

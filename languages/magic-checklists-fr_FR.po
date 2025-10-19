@@ -1,0 +1,4218 @@
+# Copyright (C) 2025 MagicChecklists
+# This file is distributed under the same license as the MagicChecklists plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: MagicChecklists\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/magicchecklists\n"
+"POT-Creation-Date: 2025-08-21T18:00:00+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2025-08-22 07:39+0000\n"
+"Last-Translator: \n"
+"Language-Team: Français\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Domain: magic-checklists\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Loco-Version: 2.8.0; wp-6.8.2; php-8.1.33"
+
+msgid "Total Views"
+msgstr "Vues Totales"
+
+msgid "Total Checks"
+msgstr "Vérifications Totales"
+
+msgid "Active Checklists"
+msgstr "Listes de c hecklists actives"
+
+msgid "Total Checklists"
+msgstr "Total des Listes de Contrôle"
+
+msgid "Usage Trends"
+msgstr "Tendances d'Utilisation"
+
+msgid "Item Usage Distribution"
+msgstr "Distribution de l'Utilisation des Articles"
+
+msgid "Top Performing Checklists"
+msgstr "Listes de Contrôle les Plus Performantes"
+
+msgid "All Checklists Analytics"
+msgstr "Analyse de toutes les checklists"
+
+msgid "Recent Activity"
+msgstr "Activité Récente"
+
+msgid "Clear Analytics Data"
+msgstr "Effacer les Données d'Analyse"
+
+msgid "Checklist"
+msgstr "Checklist"
+
+msgid "Views"
+msgstr "Vues"
+
+msgid "Checks"
+msgstr "Vérifications"
+
+msgid "Last Viewed"
+msgstr "Dernière Vue"
+
+msgid "Most Checked Items"
+msgstr "Articles les Plus Vérifiés"
+
+msgid "Never"
+msgstr "Jamais"
+
+msgid "Unknown"
+msgstr "Inconnu"
+
+msgid "No usage data"
+msgstr "Aucune donnée d'utilisation"
+
+msgid ""
+"No analytics data available yet. Data will appear once your checklists are "
+"being used."
+msgstr ""
+"Aucune donnée d'analyse disponible pour le moment. Les données apparaîtront "
+"une fois que vos listes de contrôle seront utilisées."
+
+msgid "No recent activity to display."
+msgstr "Aucune activité récente à afficher."
+
+msgid ""
+"This will permanently delete all analytics data including views, item checks,"
+" and activity history."
+msgstr ""
+"Cela supprimera définitivement toutes les données d'analyse, y compris les "
+"vues, les vérifications d'articles et l'historique d'activité."
+
+msgid "Clear All Analytics"
+msgstr "Effacer Toutes les Analyses"
+
+msgid "Clearing..."
+msgstr "Effacement..."
+
+msgid "Clear All Analytics Data?"
+msgstr "Effacer Toutes les Données d'Analyse ?"
+
+msgid ""
+"This will permanently delete all analytics data including view counts, item "
+"check history, and activity logs. This action cannot be undone."
+msgstr ""
+"Cela supprimera définitivement toutes les données d'analyse, y compris les "
+"comptes de vues, l'historique des vérifications d'articles et les journaux "
+"d'activité. Cette action ne peut pas être annulée."
+
+msgid "Yes, clear all data"
+msgstr "Oui, effacer toutes les données"
+
+msgid "All checklist view counts"
+msgstr "Tous les nombres de vues des checklists"
+
+msgid "All item check history"
+msgstr "Tout l'historique des vérifications d'articles"
+
+msgid "All activity logs"
+msgstr "Tous les journaux d'activité"
+
+msgid "Chart and trend data"
+msgstr "Données de graphique et de tendance"
+
+msgid "Last 7 Days"
+msgstr "Derniers 7 Jours"
+
+msgid "Last 30 Days"
+msgstr "Derniers 30 Jours"
+
+msgid "Last 90 Days"
+msgstr "Derniers 90 Jours"
+
+msgid "High Usage (10+)"
+msgstr "Utilisation Élevée (10+) "
+
+msgid "Medium Usage (3-9)"
+msgstr "Utilisation Moyenne (3-9)"
+
+msgid "Low Usage (1-2)"
+msgstr "Utilisation Faible (1-2)"
+
+msgid "Unused"
+msgstr "Non Utilisé"
+
+msgid "Checklist \"{title}\" was viewed"
+msgstr "La checklist \"{title}\" a été vue"
+
+msgid "Item {item} was checked in \"{title}\""
+msgstr "L'article {item} a été vérifié dans \"{title}\""
+
+msgid "minute"
+msgstr "minute"
+
+msgid "minutes"
+msgstr "minutes"
+
+msgid "hour"
+msgstr "heure"
+
+msgid "hours"
+msgstr "heures"
+
+msgid "day"
+msgstr "jour"
+
+msgid "days"
+msgstr "jours"
+
+msgid "ago"
+msgstr "il y a"
+
+msgid "Public Access"
+msgstr "Accès Public"
+
+msgid ""
+"Enable this if you want any website visitor without authentication to have "
+"access to the checklist."
+msgstr ""
+"Activez cela si vous souhaitez que tout visiteur du site Web sans "
+"authentification ait accès à la liste de contrôle."
+
+msgid "Public Description"
+msgstr "Description Publique"
+
+msgid "Description visible to public users"
+msgstr "Description visible aux utilisateurs publics"
+
+msgid "Public Checked State Handling"
+msgstr "Gestion de l'état vérifié public"
+
+msgid "Per User (using browser storage)"
+msgstr "Par utilisateur (utilisant le stockage du navigateur)"
+
+msgid "Global (shared between all users)"
+msgstr "Global (partagé entre tous les utilisateurs)"
+
+msgid "Public Access Level"
+msgstr "Niveau d'accès public"
+
+msgid "Enable Rate Limiting"
+msgstr "Activer la limitation de taux"
+
+msgid "Limit how frequently users can perform actions on this checklist."
+msgstr ""
+"Limiter la fréquence à laquelle les utilisateurs peuvent effectuer des "
+"actions sur cette liste de contrôle."
+
+msgid "Allowed User Roles"
+msgstr "Rôles d'utilisateur autorisés"
+
+msgid "Select user roles"
+msgstr "Sélectionner les rôles d'utilisateur"
+
+msgid "Permission Level"
+msgstr "Niveau de permission"
+
+msgid "Select permission level..."
+msgstr "Sélectionner le niveau de permission..."
+
+msgid ""
+"Select the user roles that are allowed to access this checklist and their "
+"permission level."
+msgstr ""
+"Sélectionnez les rôles d'utilisateur qui sont autorisés à accéder à cette "
+"liste de contrôle et leur niveau de permission."
+
+msgid "Allowed Users"
+msgstr "Utilisateurs autorisés"
+
+msgid "Select individual users"
+msgstr "Sélectionner des utilisateurs individuels"
+
+msgid ""
+"Select individual users who are allowed to access this checklist and their "
+"permission level."
+msgstr ""
+"Sélectionnez des utilisateurs individuels qui sont autorisés à accéder à "
+"cette liste de contrôle et leur niveau de permission."
+
+msgid "Invite Links"
+msgstr "Liens d'invitation"
+
+msgid ""
+"Generate invite links to share this checklist with anyone, even if they "
+"don't have a WordPress account."
+msgstr ""
+"Générer des liens d'invitation pour partager cette liste de contrôle avec "
+"quiconque, même s'ils n'ont pas de compte WordPress."
+
+msgid "Save checklist first to enable"
+msgstr "Veuillez d'abord enregistrer la liste de contrôle pour activer"
+
+msgid "Please save the checklist first to generate invite links"
+msgstr ""
+"Veuillez d'abord enregistrer la liste de contrôle pour générer des liens "
+"d'invitation"
+
+msgid "Expires After"
+msgstr "Expire après"
+
+msgid "Usage Limit"
+msgstr "Limite d'utilisation"
+
+msgid "0 for unlimited"
+msgstr "0 pour illimité"
+
+msgid "Set to 0 for unlimited uses"
+msgstr "Définir à 0 pour des utilisations illimitées"
+
+msgid "Generate Invite Link"
+msgstr "Générer un lien d'invitation"
+
+msgid "Generating..."
+msgstr "Génération en cours..."
+
+msgid "Loading invite links..."
+msgstr "Chargement des liens d'invitation..."
+
+msgid "Existing Invite Links"
+msgstr "Liens d'invitation existants"
+
+msgid "Expired"
+msgstr "Expiré"
+
+msgid "Limit Reached"
+msgstr "Limite atteinte"
+
+msgid "Link:"
+msgstr "Lien :"
+
+msgid "Uses:"
+msgstr "Utilisations :"
+
+msgid "Created:"
+msgstr "Créé :"
+
+msgid "Expires:"
+msgstr "Expire :"
+
+msgid "Copy"
+msgstr "Copier"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Are you sure you want to delete this invite link?"
+msgstr "Êtes-vous sûr de vouloir supprimer ce lien d'invitation ?"
+
+msgid "Invite link generated and copied to clipboard!"
+msgstr "Lien d'invitation généré et copié dans le presse-papiers !"
+
+msgid "Link copied to clipboard!"
+msgstr "Lien copié dans le presse-papiers !"
+
+msgid "Invite link deleted successfully"
+msgstr "Lien d'invitation supprimé avec succès"
+
+msgid "Failed to generate invite link:"
+msgstr "Échec de la génération du lien d'invitation :"
+
+msgid "Failed to copy link to clipboard"
+msgstr "Échec de la copie du lien dans le presse-papiers"
+
+msgid "Failed to delete invite link:"
+msgstr "Échec de la suppression du lien d'invitation :"
+
+msgid "Failed to load invite links"
+msgstr "Échec du chargement des liens d'invitation"
+
+msgid "Unknown error"
+msgstr "Erreur inconnue"
+
+msgid "1 Day"
+msgstr "1 jour"
+
+msgid "7 Days"
+msgstr "7 jours"
+
+msgid "30 Days"
+msgstr "30 jours"
+
+msgid "Loading Conditions"
+msgstr "Chargement des conditions"
+
+msgid "Control where this checklist should be available."
+msgstr "Contrôlez où cette liste de contrôle doit être disponible."
+
+msgid "Load Everywhere (Default)"
+msgstr "Charger partout (par défaut)"
+
+msgid "WordPress Admin Pages"
+msgstr "Pages d'administration WordPress"
+
+msgid "Loading admin pages..."
+msgstr "Chargement des pages administratives..."
+
+msgid "Select admin pages"
+msgstr "Sélectionner les pages administratives"
+
+msgid "No admin pages found"
+msgstr "Aucune page administrative trouvée"
+
+msgid ""
+"Select the WordPress admin pages where this checklist should be available."
+msgstr ""
+"Sélectionnez les pages administratives WordPress où cette liste de contrôle "
+"doit être disponible."
+
+msgid "Custom URLs"
+msgstr "URLs personnalisées"
+
+msgid "Enter URL pattern (e.g., /posts/*)"
+msgstr "Entrez le modèle d'URL (par exemple, /posts/*)"
+
+msgid "Add URL Pattern"
+msgstr "Ajouter un modèle d'URL"
+
+msgid "Force Delete Lock"
+msgstr "Forcer la suppression du verrou"
+
+msgid ""
+"Use this button to forcefully remove the lock on this checklist if it is "
+"stuck. Only use this if you are sure no one else is editing this checklist."
+msgstr ""
+"Utilisez ce bouton pour supprimer de force le verrou sur cette liste de "
+"contrôle s'il est bloqué. N'utilisez cela que si vous êtes sûr que personne "
+"d'autre ne modifie cette liste de contrôle."
+
+msgid "Are you sure you want to force delete the lock?"
+msgstr "Êtes-vous sûr de vouloir forcer la suppression du verrou ?"
+
+msgid "Lock has been successfully deleted."
+msgstr "Le verrou a été supprimé avec succès."
+
+msgid "Failed to delete the lock:"
+msgstr "Échec de la suppression du verrou :"
+
+msgid "An error occurred while deleting the lock."
+msgstr "Une erreur s'est produite lors de la suppression du verrou."
+
+msgid "Can View"
+msgstr "Peut voir"
+
+msgid "Can Interact"
+msgstr "Peut interagir"
+
+msgid "Can Edit"
+msgstr "Peut modifier"
+
+msgid "Checklist Analytics Overview"
+msgstr "Aperçu des analyses de la checklist"
+
+msgid "View Full Analytics"
+msgstr "Voir les analyses complètes"
+
+msgid "Approaching Deadlines"
+msgstr "Délais imminents"
+
+msgid "Item"
+msgstr "Élément"
+
+msgid "Deadline"
+msgstr "Date limite"
+
+msgid "Time Remaining"
+msgstr "Temps restant"
+
+msgid "Checklist Deadline"
+msgstr "Date limite de la checklist"
+
+msgid "Most Popular Checklist"
+msgstr "Liste de contrôle la plus populaire"
+
+msgid "view"
+msgstr "voir"
+
+msgid "Most Checked Item"
+msgstr "Élément le plus vérifié"
+
+msgid "in"
+msgstr "dans"
+
+msgid "check"
+msgstr "vérifier"
+
+msgid "Overdue"
+msgstr "En retard"
+
+msgid "Invalid date"
+msgstr "Date invalide"
+
+msgid "Entire Checklist"
+msgstr "Liste de contrôle entière"
+
+msgid "views"
+msgstr "vues"
+
+msgid "checks"
+msgstr "vérifications"
+
+msgid "Insert Image"
+msgstr "Insérer une image"
+
+msgid "Upload or Select Image"
+msgstr "Télécharger ou sélectionner une image"
+
+msgid "Choose how you would like to add an image:"
+msgstr "Choisissez comment vous souhaitez ajouter une image :"
+
+msgid "WordPress Media Library"
+msgstr "Bibliothèque de médias WordPress"
+
+msgid "Quick Upload"
+msgstr "Téléchargement rapide"
+
+msgid "Upload New"
+msgstr "Télécharger nouveau"
+
+msgid "Select Existing"
+msgstr "Sélectionner existant"
+
+msgid "Drag and drop image here or click to select"
+msgstr "Faites glisser et déposez l'image ici ou cliquez pour sélectionner"
+
+msgid "Maximum file size: 10MB. Supported formats: JPG, PNG, GIF"
+msgstr ""
+"Taille de fichier maximale : 10 Mo. Formats pris en charge : JPG, PNG, GIF"
+
+msgid "Loading images..."
+msgstr "Chargement des images..."
+
+msgid "No images found"
+msgstr "Aucune image trouvée"
+
+msgid "Enter URL..."
+msgstr "Entrez l'URL..."
+
+msgid "Upload Image"
+msgstr "Télécharger l'image"
+
+msgid "Uploading..."
+msgstr "Téléchargement en cours..."
+
+msgid "Select Image"
+msgstr "Sélectionner une image"
+
+msgid "Set Item Deadline"
+msgstr "Définir la date limite de l'élément"
+
+msgid "Deadline Date & Time"
+msgstr "Date et heure de la date limite"
+
+msgid "Leave empty to remove deadline"
+msgstr "Laissez vide pour supprimer la date limite"
+
+msgid "Clear Deadline"
+msgstr "Effacer la date limite"
+
+msgid "Save Deadline"
+msgstr "Enregistrer la date limite"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "items"
+msgstr "éléments"
+
+msgid "completed"
+msgstr "terminé"
+
+msgid "complete"
+msgstr "compléter"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Loading checklist..."
+msgstr "Chargement de la liste de contrôle..."
+
+msgid "This checklist has been automatically reset."
+msgstr "Cette liste de contrôle a été réinitialisée automatiquement."
+
+msgid ""
+"This checklist is locked by another user. You can still interact but cannot "
+"edit structure."
+msgstr ""
+"Cette liste de contrôle est verrouillée par un autre utilisateur. Vous "
+"pouvez toujours interagir mais ne pouvez pas modifier la structure."
+
+msgid "Due"
+msgstr "Échéance"
+
+msgid "Deadline passed"
+msgstr "Date limite dépassée"
+
+msgid "Start tour from this step"
+msgstr "Commencer la visite à partir de cette étape"
+
+msgid "Invalid file type. Please upload a JPG, PNG, or GIF image."
+msgstr ""
+"Type de fichier invalide. Veuillez télécharger une image JPG, PNG ou GIF."
+
+msgid "Add Item"
+msgstr "Ajouter un élément"
+
+msgid "Uncheck All"
+msgstr "Tout décocher"
+
+msgid "Drag to reorder"
+msgstr "Faites glisser pour réorganiser"
+
+msgid "Mark as in progress"
+msgstr "Marquer comme en cours"
+
+msgid "Remove from in progress"
+msgstr "Retirer de en cours"
+
+msgid "Set deadline"
+msgstr "Définir la date limite"
+
+msgid "Add image"
+msgstr "Ajouter une image"
+
+msgid "Remove item"
+msgstr "Supprimer l'élément"
+
+msgid "Add link"
+msgstr "Ajouter un lien"
+
+msgid "Remove link"
+msgstr "Supprimer le lien"
+
+msgid "Failed to load checklist type:"
+msgstr "Échec du chargement du type de liste de contrôle :"
+
+msgid "Error loading checklist type:"
+msgstr "Erreur de chargement du type de liste de contrôle :"
+
+msgid "Basic Settings"
+msgstr "Paramètres de base"
+
+msgid "Advanced Settings"
+msgstr "Paramètres avancés"
+
+msgid "Access Control"
+msgstr "Contrôle d'accès"
+
+msgid "Notifications"
+msgstr "Notifications"
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "Enter checklist title"
+msgstr "Entrez le titre de la liste de contrôle"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Enter checklist description"
+msgstr "Entrez la description de la liste de contrôle"
+
+msgid "Show description in drawer"
+msgstr "Afficher la description dans le tiroir"
+
+msgid "Tags"
+msgstr "Étiquettes"
+
+msgid ""
+"Add tags to organize your checklist. Press Enter to add a tag, then click "
+"the edit icon to change its color."
+msgstr ""
+"Ajoutez des étiquettes pour organiser votre liste de contrôle. Appuyez sur "
+"Entrée pour ajouter une étiquette, puis cliquez sur l'icône de modification "
+"pour changer sa couleur."
+
+msgid "Checklist Priority"
+msgstr "Priorité de la checklist"
+
+msgid "Select priority..."
+msgstr "Sélectionner la priorité..."
+
+msgid "Enable Item Locking"
+msgstr "Activer le verrouillage des éléments"
+
+msgid "Enable locking of individual items to prevent editing."
+msgstr ""
+"Activer le verrouillage des éléments individuels pour empêcher la "
+"modification."
+
+msgid "Enable Shortcode"
+msgstr "Activer le shortcode"
+
+msgid "Enable this to use this checklist as a shortcode in your content."
+msgstr ""
+"Activez ceci pour utiliser cette liste de contrôle comme un shortcode dans "
+"votre contenu."
+
+msgid "Auto Reset Schedule"
+msgstr "Plan de réinitialisation automatique"
+
+msgid "Enable automatic reset of checked items on a schedule."
+msgstr ""
+"Activer la réinitialisation automatique des éléments cochés selon un "
+"calendrier."
+
+msgid "Floating Button Title"
+msgstr "Titre du bouton flottant"
+
+msgid "Button title"
+msgstr "Titre du bouton"
+
+msgid "Select Icon Image"
+msgstr "Sélectionner l'image de l'icône"
+
+msgid "Title is required"
+msgstr "Le titre est requis"
+
+msgid "At least one trigger method must be selected"
+msgstr "Au moins une méthode de déclenchement doit être sélectionnée"
+
+msgid "Keyboard shortcut is required when shortcut trigger is enabled"
+msgstr ""
+"Un raccourci clavier est requis lorsque le déclencheur de raccourci est "
+"activé"
+
+msgid "This shortcut is already in use."
+msgstr "Ce raccourci est déjà utilisé."
+
+msgid "Invalid time format"
+msgstr "Format de temps invalide"
+
+msgid "Invalid day of week selected"
+msgstr "Jour de la semaine invalide sélectionné"
+
+msgid "Day of month must be between 1 and 31"
+msgstr "Le jour du mois doit être compris entre 1 et 31"
+
+msgid "At least one time period must be specified for custom intervals"
+msgstr ""
+"Au moins une période de temps doit être spécifiée pour les intervalles "
+"personnalisés"
+
+msgid "Months must be between 0 and 12"
+msgstr "Les mois doivent être compris entre 0 et 12"
+
+msgid "Weeks must be between 0 and 52"
+msgstr "Les semaines doivent être comprises entre 0 et 52"
+
+msgid "Days must be between 0 and 31"
+msgstr "Les jours doivent être compris entre 0 et 31"
+
+msgid "Usage limit must be a number"
+msgstr "La limite d'utilisation doit être un nombre"
+
+msgid "Usage limit cannot be negative"
+msgstr "La limite d'utilisation ne peut pas être négative"
+
+msgid "At least one notification method must be enabled"
+msgstr "Au moins une méthode de notification doit être activée"
+
+msgid "Email recipients are required when email notifications are enabled"
+msgstr ""
+"Les destinataires par e-mail sont requis lorsque les notifications par e-"
+"mail sont activées"
+
+msgid "At least one non-empty checklist item is required"
+msgstr "Au moins un élément de liste de contrôle non vide est requis"
+
+msgid "Failed to load checklist data"
+msgstr "Échec du chargement des données de la liste de contrôle"
+
+msgid "Error validating shortcut:"
+msgstr "Erreur de validation du raccourci :"
+
+msgid "Failed to save checklist. Please try again."
+msgstr "Échec de l'enregistrement de la liste de contrôle. Veuillez réessayer."
+
+msgid "Failed to save checklist"
+msgstr "Échec de l'enregistrement de la liste de contrôle"
+
+msgid "Active Status"
+msgstr "Statut Actif"
+
+msgid ""
+"When active, this checklist can be accessed using its keyboard shortcut or "
+"floating button."
+msgstr ""
+"Lorsque actif, cette liste de contrôle peut être accessible via son "
+"raccourci clavier ou son bouton flottant."
+
+msgid "Drawer Theme"
+msgstr "Thème du tiroir"
+
+msgid "Choose theme..."
+msgstr "Choisir un thème..."
+
+msgid "Choose the visual theme for your checklist drawer."
+msgstr "Choisissez le thème visuel pour votre tiroir de liste de contrôle."
+
+msgid "Type tag name and press Enter"
+msgstr "Tapez le nom de l'étiquette et appuyez sur Entrée"
+
+msgid "Change color"
+msgstr "Changer de couleur"
+
+msgid "Set an optional deadline for completing this checklist."
+msgstr ""
+"Définir une date limite facultative pour compléter cette liste de contrôle."
+
+msgid "Keyboard Shortcut"
+msgstr "Raccourci Clavier"
+
+msgid "Click and press your desired key combination"
+msgstr "Cliquez et appuyez sur la combinaison de touches souhaitée"
+
+msgid "Drawer Trigger Method"
+msgstr "Méthode de Déclenchement du Tiroir"
+
+msgid "Floating Button"
+msgstr "Bouton Flottant"
+
+msgid "Button Position"
+msgstr "Position du Bouton"
+
+msgid "Select position..."
+msgstr "Sélectionner la position..."
+
+msgid "Checklist Icon"
+msgstr "Icône de la checklist"
+
+msgid "Use Preset Icon"
+msgstr "Utiliser l'icône prédéfinie"
+
+msgid "Custom Icon"
+msgstr "Icône Personnalisée"
+
+msgid "Choose Icon Image"
+msgstr "Choisir l'image de l'icône"
+
+msgid "Use as Icon"
+msgstr "Utiliser comme icône"
+
+msgid "Custom icon"
+msgstr "Icône personnalisée"
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Or paste image URL"
+msgstr "Ou coller l'URL de l'image"
+
+msgid "Disable floating button when inside pagebuilders"
+msgstr ""
+"Désactiver le bouton flottant lorsqu'il est à l'intérieur des constructeurs "
+"de pages"
+
+msgid "Checked State Handling"
+msgstr "Gestion de l'état coché"
+
+msgid "Select handling method..."
+msgstr "Sélectionner la méthode de gestion..."
+
+msgid ""
+"\"Per User\" gives each user their own checked states. \"Global\" shares "
+"checked states among all users."
+msgstr ""
+"\"Par utilisateur\" donne à chaque utilisateur ses propres états cochés. "
+"\"Global\" partage les états cochés entre tous les utilisateurs."
+
+msgid "Reset Interval"
+msgstr "Réinitialiser l'intervalle"
+
+msgid "Select interval..."
+msgstr "Sélectionner l'intervalle..."
+
+msgid "Day of Week"
+msgstr "Jour de la semaine"
+
+msgid "Select day..."
+msgstr "Sélectionner le jour..."
+
+msgid "Day of Month"
+msgstr "Jour du mois"
+
+msgid "Enter day of month"
+msgstr "Entrez le jour du mois"
+
+msgid "Custom Interval"
+msgstr "Intervalle personnalisé"
+
+msgid "Months"
+msgstr "Mois"
+
+msgid "Weeks"
+msgstr "Semaines"
+
+msgid "Days"
+msgstr "Jours"
+
+msgid "At least one field must have a value greater than 0."
+msgstr "Au moins un champ doit avoir une valeur supérieure à 0."
+
+msgid "Reset Time"
+msgstr "Réinitialiser l'heure"
+
+msgid "Light"
+msgstr "Clair"
+
+msgid "Dark"
+msgstr "Sombre"
+
+msgid "Custom Theme"
+msgstr "Thème personnalisé"
+
+msgid "Bottom Right"
+msgstr "En bas à droite"
+
+msgid "Bottom Left"
+msgstr "En bas à gauche"
+
+msgid "Top Right"
+msgstr "En haut à droite"
+
+msgid "Top Left"
+msgstr "En haut à gauche"
+
+msgid "Draggable"
+msgstr "Déplaçable"
+
+msgid "Per User"
+msgstr "Par utilisateur"
+
+msgid "Global"
+msgstr "Global"
+
+msgid "Daily"
+msgstr "Quotidien"
+
+msgid "Weekly"
+msgstr "Hebdomadaire"
+
+msgid "Monthly"
+msgstr "Mensuel"
+
+msgid "Custom"
+msgstr "Personnalisé"
+
+msgid "Monday"
+msgstr "Lundi"
+
+msgid "Tuesday"
+msgstr "Mardi"
+
+msgid "Wednesday"
+msgstr "Mercredi"
+
+msgid "Thursday"
+msgstr "Jeudi"
+
+msgid "Friday"
+msgstr "Vendredi"
+
+msgid "Saturday"
+msgstr "Samedi"
+
+msgid "Sunday"
+msgstr "Dimanche"
+
+msgid "None"
+msgstr "Aucun"
+
+msgid "Low"
+msgstr "Faible"
+
+msgid "Medium"
+msgstr "Moyen"
+
+msgid "High"
+msgstr "Élevé"
+
+msgid "Critical"
+msgstr "Critique"
+
+msgid "Previous"
+msgstr "Précédent"
+
+msgid "Next"
+msgstr "Suivant"
+
+msgid "Notification Settings"
+msgstr "Paramètres de notification"
+
+msgid "Configure notification settings for this checklist"
+msgstr "Configurer les paramètres de notification pour cette liste de contrôle"
+
+msgid "Enable Notifications"
+msgstr "Activer les notifications"
+
+msgid "Send notifications when checklist events occur"
+msgstr ""
+"Envoyer des notifications lorsque des événements de la liste de contrôle se "
+"produisent"
+
+msgid "Email Notifications"
+msgstr "Notifications par e-mail"
+
+msgid "Send notifications via email"
+msgstr "Envoyer des notifications par e-mail"
+
+msgid "Recipients"
+msgstr "Destinataires"
+
+msgid "Enter email addresses (one per line)"
+msgstr "Entrez les adresses e-mail (une par ligne)"
+
+msgid "Subject Template"
+msgstr "Modèle de sujet"
+
+msgid "Email subject template"
+msgstr "Modèle de sujet d'e-mail"
+
+msgid "Message Template"
+msgstr "Modèle de message"
+
+msgid "Email message template"
+msgstr "Modèle de message d'e-mail"
+
+msgid "Webhook Notifications"
+msgstr "Notifications Webhook"
+
+msgid "Send notifications to external webhooks"
+msgstr "Envoyer des notifications à des webhooks externes"
+
+msgid "Webhook URL"
+msgstr "URL du Webhook"
+
+msgid "Enter webhook URL"
+msgstr "Entrez l'URL du webhook"
+
+msgid "HTTP Method"
+msgstr "Méthode HTTP"
+
+msgid "Select method"
+msgstr "Sélectionnez la méthode"
+
+msgid "Custom Headers"
+msgstr "En-têtes personnalisés"
+
+msgid "Add custom HTTP headers (one per line, format: Header: Value)"
+msgstr ""
+"Ajoutez des en-têtes HTTP personnalisés (un par ligne, format : En-tête : "
+"Valeur)"
+
+msgid "Payload Template"
+msgstr "Modèle de charge utile"
+
+msgid "JSON payload template"
+msgstr "Modèle de charge utile JSON"
+
+msgid "Test webhook connection"
+msgstr "Tester la connexion du webhook"
+
+msgid "Test Webhook"
+msgstr "Tester le webhook"
+
+msgid "Testing..."
+msgstr "Test en cours..."
+
+msgid "Test successful"
+msgstr "Test réussi"
+
+msgid "Test failed"
+msgstr "Test échoué"
+
+msgid "Notification Triggers"
+msgstr "Déclencheurs de notification"
+
+msgid "Choose which events trigger notifications"
+msgstr "Choisissez les événements qui déclenchent des notifications"
+
+msgid "Checklist Viewed"
+msgstr "Checklist vue"
+
+msgid "Notify when checklist is viewed"
+msgstr "Notifier lorsque la liste de contrôle est vue"
+
+msgid "Item Checked"
+msgstr "Élément coché"
+
+msgid "Notify when an item is checked"
+msgstr "Notifier lorsqu'un élément est coché"
+
+msgid "Item Unchecked"
+msgstr "Élément décoché"
+
+msgid "Notify when an item is unchecked"
+msgstr "Notifier lorsqu'un élément est décoché"
+
+msgid "Checklist Completed"
+msgstr "Checklist complétée"
+
+msgid "Notify when all items are checked"
+msgstr "Notifier lorsque tous les éléments sont cochés"
+
+msgid "Checklist Reset"
+msgstr "Checklist réinitialisée"
+
+msgid "Notify when checklist is reset"
+msgstr "Notifier lorsque la liste de contrôle est réinitialisée"
+
+msgid "Deadline Approaching"
+msgstr "Date limite approchant"
+
+msgid "Notify when deadlines are approaching"
+msgstr "Notifier lorsque les dates limites approchent"
+
+msgid "Deadline Passed"
+msgstr "Date limite dépassée"
+
+msgid "Notify when deadlines have passed"
+msgstr "Notifier lorsque les dates limites sont dépassées"
+
+msgid "Notification Frequency"
+msgstr "Fréquence de notification"
+
+msgid "Control how often notifications are sent"
+msgstr "Contrôlez la fréquence d'envoi des notifications"
+
+msgid "Immediate"
+msgstr "Immédiat"
+
+msgid "Hourly"
+msgstr "Horaire"
+
+msgid "Daily Digest"
+msgstr "Résumé quotidien"
+
+msgid "Weekly Summary"
+msgstr "Résumé hebdomadaire"
+
+msgid "Rate Limiting"
+msgstr "Limitation de taux"
+
+msgid "Prevent notification spam"
+msgstr "Prévenir le spam de notifications"
+
+msgid "Max notifications per hour"
+msgstr "Max notifications par heure"
+
+msgid "Quiet Hours"
+msgstr "Heures de silence"
+
+msgid "Suppress notifications during certain hours"
+msgstr "Supprimer les notifications pendant certaines heures"
+
+msgid "Start Time"
+msgstr "Heure de début"
+
+msgid "End Time"
+msgstr "Heure de fin"
+
+msgid "Additional notification configuration"
+msgstr "Configuration de notification supplémentaire"
+
+msgid "Retry Failed Notifications"
+msgstr "Réessayer les notifications échouées"
+
+msgid "Automatically retry failed webhook notifications"
+msgstr "Réessayer automatiquement les notifications de webhook échouées"
+
+msgid "Max Retry Attempts"
+msgstr "Max tentatives de réessai"
+
+msgid "Log Notifications"
+msgstr "Journal des notifications"
+
+msgid "Keep a log of all sent notifications"
+msgstr "Conservez un journal de toutes les notifications envoyées"
+
+msgid "Available Variables"
+msgstr "Variables disponibles"
+
+msgid "You can use these variables in templates:"
+msgstr "Vous pouvez utiliser ces variables dans les modèles :"
+
+msgid "{checklist_title}"
+msgstr "{checklist_title}"
+
+msgid "The title of the checklist"
+msgstr "Le titre de la liste de contrôle"
+
+msgid "{item_title}"
+msgstr "{item_title}"
+
+msgid "The title of the checklist item"
+msgstr "Le titre de l'élément de la liste de contrôle"
+
+msgid "{user_name}"
+msgstr "{user_name}"
+
+msgid "The name of the user who triggered the event"
+msgstr "Le nom de l'utilisateur qui a déclenché l'événement"
+
+msgid "{site_name}"
+msgstr "{site_name}"
+
+msgid "The name of the website"
+msgstr "Le nom du site web"
+
+msgid "{date}"
+msgstr "{date}"
+
+msgid "Current date and time"
+msgstr "Date et heure actuelles"
+
+msgid "POST"
+msgstr "POST"
+
+msgid "PUT"
+msgstr "PUT"
+
+msgid "PATCH"
+msgstr "PATCH"
+
+msgid "Notification Methods"
+msgstr "Méthodes de notification"
+
+msgid "Please check at least one option for the notifications to work."
+msgstr ""
+"Veuillez cocher au moins une option pour que les notifications fonctionnent."
+
+msgid "New item added"
+msgstr "Nouvel élément ajouté"
+
+msgid "Item deleted"
+msgstr "Élément supprimé"
+
+msgid "Comments and replies"
+msgstr "Commentaires et réponses"
+
+msgid "Comments"
+msgstr "Commentaires"
+
+msgid "Reply"
+msgstr "Répondre"
+
+msgid "Comment"
+msgstr "Commentaire"
+
+msgid "Send deadline notification when"
+msgstr "Envoyer une notification de délai lorsque"
+
+msgid "hours remaining"
+msgstr "heures restantes"
+
+msgid "Select frequency..."
+msgstr "Sélectionner la fréquence..."
+
+msgid "Every 15 Minutes"
+msgstr "Toutes les 15 minutes"
+
+msgid "No email recipients!"
+msgstr "Aucun destinataire d'email !"
+
+msgid "Please add email recipients to receive email notifications."
+msgstr ""
+"Veuillez ajouter des destinataires d'email pour recevoir des notifications "
+"par email."
+
+msgid "No webhook URLs configured!"
+msgstr "Aucune URL de webhook configurée !"
+
+msgid "Please add at least one webhook URL for integration notifications."
+msgstr ""
+"Veuillez ajouter au moins une URL de webhook pour les notifications "
+"d'intégration."
+
+msgid "No notification methods enabled!"
+msgstr "Aucune méthode de notification activée !"
+
+msgid ""
+"Please enable at least one notification method for notifications to work."
+msgstr ""
+"Veuillez activer au moins une méthode de notification pour que les "
+"notifications fonctionnent."
+
+msgid "Integration Notifications"
+msgstr "Notifications d'intégration"
+
+msgid "Email Recipients"
+msgstr "Destinataires d'email"
+
+msgid "email1@example.com, email2@example.com"
+msgstr "email1@example.com, email2@example.com"
+
+msgid "Enter email addresses separated by commas"
+msgstr "Entrez les adresses email séparées par des virgules"
+
+msgid "Please enter valid email addresses separated by commas"
+msgstr "Veuillez entrer des adresses email valides séparées par des virgules"
+
+msgid "Test Email"
+msgstr "Email de test"
+
+msgid "Integration Settings"
+msgstr "Paramètres d'intégration"
+
+msgid "Slack Webhook URL"
+msgstr "URL de webhook Slack"
+
+msgid "https://hooks.slack.com/services/..."
+msgstr "https://hooks.slack.com/services/..."
+
+msgid "Please enter a valid Slack webhook URL"
+msgstr "Veuillez entrer une URL de webhook Slack valide"
+
+msgid "Test Slack"
+msgstr "Test Slack"
+
+msgid "Discord Webhook URL"
+msgstr "URL de webhook Discord"
+
+msgid "https://discord.com/api/webhooks/..."
+msgstr "https://discord.com/api/webhooks/..."
+
+msgid "Please enter a valid Discord webhook URL"
+msgstr "Veuillez entrer une URL de webhook Discord valide"
+
+msgid "Test Discord"
+msgstr "Test Discord"
+
+msgid "Choose which events should trigger notifications"
+msgstr "Choisissez quels événements doivent déclencher des notifications"
+
+msgid "Send Immediately"
+msgstr "Envoyer immédiatement"
+
+msgid "Choose how often notifications should be sent"
+msgstr "Choisissez à quelle fréquence les notifications doivent être envoyées"
+
+msgid "Please enter a webhook URL first"
+msgstr "Veuillez d'abord entrer une URL de webhook"
+
+msgid "Please enter email recipients first"
+msgstr "Veuillez d'abord entrer des destinataires d'email"
+
+msgid "webhook test successful!"
+msgstr "test de webhook réussi !"
+
+msgid "Webhook test failed:"
+msgstr "Échec du test de webhook :"
+
+msgid "Webhook test failed due to network error"
+msgstr "Échec du test de webhook en raison d'une erreur réseau"
+
+msgid "Test email(s) sent successfully!"
+msgstr "Test d'email envoyé avec succès !"
+
+msgid "Email test failed:"
+msgstr "Échec du test d'email :"
+
+msgid "Email test failed due to network error"
+msgstr "Échec du test d'email en raison d'une erreur réseau"
+
+msgid "Enable notifications for this checklist"
+msgstr "Activer les notifications pour cette liste de contrôle"
+
+msgid "Item checked"
+msgstr "Élément coché"
+
+msgid "Item unchecked"
+msgstr "Élément décoché"
+
+msgid "Deadline approaching"
+msgstr "Date limite approchant"
+
+msgid "alerts.noEmailRecipients"
+msgstr "alertes.sansDestinatairesEmail"
+
+msgid "alerts.noEmailRecipientsDescription"
+msgstr "alertes.descriptionSansDestinatairesEmail"
+
+msgid "alerts.noWebhookUrls"
+msgstr "alertes.sansUrlsWebhook"
+
+msgid "alerts.noWebhookUrlsDescription"
+msgstr "alertes.descriptionSansUrlsWebhook"
+
+msgid "Checklist Items"
+msgstr "Éléments de la checklist"
+
+msgid "Add and organize your checklist items"
+msgstr "Ajoutez et organisez vos éléments de checklist"
+
+msgid "Enable Item Priorities"
+msgstr "Activer les priorités des éléments"
+
+msgid "Enable"
+msgstr "Activer"
+
+msgid "Checklists"
+msgstr "Checklists"
+
+msgid "Tours"
+msgstr "Visites"
+
+msgid "Analytics"
+msgstr "Analytique"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Add New"
+msgstr "Ajouter nouveau"
+
+msgid "All Checklists"
+msgstr "Toutes les checklists"
+
+msgid "Edit Checklist"
+msgstr "Modifier la liste de contrôle"
+
+msgid "Add New Checklist"
+msgstr "Ajouter une nouvelle checklist"
+
+msgid "Edit Tour"
+msgstr "Modifier la visite"
+
+msgid "Kanban Board"
+msgstr "Tableau Kanban"
+
+msgid "Import / Export"
+msgstr "Importer / Exporter"
+
+msgid "MagicChecklists"
+msgstr "MagicChecklists"
+
+msgid ""
+"Create and manage interactive checklists that can be accessed from anywhere "
+"on your site."
+msgstr ""
+"Créez et gérez des listes de contrôle interactives accessibles depuis "
+"n'importe où sur votre site."
+
+msgid "Modify and update your existing checklist."
+msgstr "Modifiez et mettez à jour votre liste de contrôle existante."
+
+msgid "Create a new interactive checklist for your site."
+msgstr "Créez une nouvelle liste de contrôle interactive pour votre site."
+
+msgid "Configure settings and steps for your interactive tour."
+msgstr "Configurez les paramètres et les étapes de votre visite interactive."
+
+msgid ""
+"Create and manage interactive tours to guide users through your WordPress "
+"site."
+msgstr ""
+"Créez et gérez des visites interactives pour guider les utilisateurs à "
+"travers votre site WordPress."
+
+msgid ""
+"Visualize and manage checklist tasks in a Kanban-style board with drag-and-"
+"drop functionality."
+msgstr ""
+"Visualisez et gérez les tâches de la liste de contrôle dans un tableau de "
+"style Kanban avec une fonctionnalité de glisser-déposer."
+
+msgid "Import and export classic checklists in various formats."
+msgstr ""
+"Importez et exportez des listes de contrôle classiques dans divers formats."
+
+msgid "View performance metrics and usage statistics for your checklists."
+msgstr ""
+"Consultez les indicateurs de performance et les statistiques d'utilisation "
+"de vos listes de contrôle."
+
+msgid "Configure your MagicChecklists plugin settings."
+msgstr "Configurez les paramètres de votre plugin MagicChecklists."
+
+msgid "Manage your MagicChecklists license activation."
+msgstr "Gérez l'activation de votre licence MagicChecklists."
+
+msgid "Side by Side"
+msgstr "Côte à côte"
+
+msgid "Stacked"
+msgstr "Empilé"
+
+msgid "Layout"
+msgstr "Mise en page"
+
+msgid "Back to List"
+msgstr "Retour à la liste"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
+
+msgid "Save Checklist"
+msgstr "Enregistrer la liste de contrôle"
+
+msgid "Back to Tours"
+msgstr "Retour aux visites"
+
+msgid "Create and manage interactive checklists."
+msgstr "Créez et gérez des listes de contrôle interactives."
+
+msgid "Create a new interactive checklist."
+msgstr "Créez une nouvelle liste de contrôle interactive."
+
+msgid "Create and manage interactive tours."
+msgstr "Créer et gérer des visites interactives."
+
+msgid "Visualize and manage tasks in a Kanban board."
+msgstr "Visualiser et gérer les tâches dans un tableau Kanban."
+
+msgid "View performance metrics and usage statistics."
+msgstr "Voir les indicateurs de performance et les statistiques d'utilisation."
+
+msgid "Configure your plugin settings."
+msgstr "Configurer les paramètres de votre plugin."
+
+msgid "Manage your license activation."
+msgstr "Gérer l'activation de votre licence."
+
+msgid "Light Mode"
+msgstr "Mode clair"
+
+msgid "Dark Mode"
+msgstr "Mode sombre"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "Expand sidebar"
+msgstr "Développer la barre latérale"
+
+msgid "Collapse sidebar"
+msgstr "Réduire la barre latérale"
+
+msgid "Switch to light mode"
+msgstr "Passer en mode clair"
+
+msgid "Switch to dark mode"
+msgstr "Passer en mode sombre"
+
+msgid "MCL: Waiting for React bridge..."
+msgstr "MCL : En attente du pont React..."
+
+msgid "React component bridge not found after waiting"
+msgstr "Pont de composant React introuvable après attente"
+
+msgid "MCL: Failed to initialize Magic Checklist:"
+msgstr "MCL : Échec de l'initialisation de la liste de contrôle magique :"
+
+msgid "MCL: Failed to load checklist data:"
+msgstr "MCL : Échec du chargement des données de la liste de contrôle :"
+
+msgid "MCL: Failed to fetch checklist data"
+msgstr "MCL : Échec de la récupération des données de la liste de contrôle"
+
+msgid "MCL: Failed to load general settings:"
+msgstr "MCL : Échec du chargement des paramètres généraux :"
+
+msgid "Error loading checklist data:"
+msgstr "Erreur de chargement des données de la liste de contrôle :"
+
+msgid "MCL: Legacy mcl_checklists data available:"
+msgstr "MCL : Données de mcl_checklists héritées disponibles :"
+
+msgid "MCL: Error initializing shortcode:"
+msgstr "MCL : Erreur d'initialisation du shortcode :"
+
+msgid "MCL: Error initializing dynamic shortcode:"
+msgstr "MCL : Erreur d'initialisation du shortcode dynamique :"
+
+msgid "MCL: Error initializing nested shortcode:"
+msgstr "MCL : Erreur d'initialisation du shortcode imbriqué :"
+
+msgid "MCL: Auto-initialization failed:"
+msgstr "MCL : Échec de l'auto-initialisation :"
+
+msgid "MCL: Failed to reinitialize buttons:"
+msgstr "MCL : Échec de la réinitialisation des boutons :"
+
+msgid "MCL: mclDrawer not available for button reinitialization"
+msgstr "MCL : mclDrawer non disponible pour la réinitialisation des boutons"
+
+msgid "Settings tabs"
+msgstr "Onglets des paramètres"
+
+msgid "General"
+msgstr "Général"
+
+msgid "Dashboard Widget"
+msgstr "Widget du tableau de bord"
+
+msgid "Integrations"
+msgstr "Intégrations"
+
+msgid "Failed to fetch settings"
+msgstr "Échec de la récupération des paramètres"
+
+msgid "Failed to load settings. Please try again."
+msgstr "Échec du chargement des paramètres. Veuillez réessayer."
+
+msgid "Settings Load Failed"
+msgstr "Échec du chargement des paramètres"
+
+msgid "Failed to save settings"
+msgstr "Échec de l'enregistrement des paramètres"
+
+msgid "Settings saved successfully!"
+msgstr "Paramètres enregistrés avec succès !"
+
+msgid "Settings Saved"
+msgstr "Paramètres enregistrés"
+
+msgid "Failed to save settings. Please try again."
+msgstr "Échec de l'enregistrement des paramètres. Veuillez réessayer."
+
+msgid "Save Failed"
+msgstr "Échec de l'enregistrement"
+
+msgid "Loading settings..."
+msgstr "Chargement des paramètres..."
+
+msgid ""
+"Configure the MagicChecklists dashboard widget that appears on the WordPress "
+"admin dashboard. At least one display option must be enabled for the widget "
+"to appear."
+msgstr ""
+"Configurer le widget du tableau de bord MagicChecklists qui apparaît sur le "
+"tableau de bord admin de WordPress. Au moins une option d'affichage doit "
+"être activée pour que le widget apparaisse."
+
+msgid "Enable Dashboard Widget"
+msgstr "Activer le widget du tableau de bord"
+
+msgid "Enable the MagicChecklists widget on the WordPress admin dashboard."
+msgstr ""
+"Activer le widget MagicChecklists sur le tableau de bord admin de WordPress."
+
+msgid "Show Checklists"
+msgstr "Afficher les listes de contrôle"
+
+msgid ""
+"Display a list of checklists with their current status. Choose which "
+"checklists to display below."
+msgstr ""
+"Afficher une liste de listes de contrôle avec leur statut actuel. Choisissez "
+"quelles listes de contrôle afficher ci-dessous."
+
+msgid "Select Checklists to Display"
+msgstr "Sélectionner les listes de contrôle à afficher"
+
+msgid "Select All"
+msgstr "Tout sélectionner"
+
+msgid "Deselect All"
+msgstr "Tout désélectionner"
+
+msgid ""
+"At least one checklist must be selected when \"Show Checklists\" is enabled."
+msgstr ""
+"Au moins une liste de contrôle doit être sélectionnée lorsque \"Afficher les "
+"checklists\" est activé."
+
+msgid ""
+"No checklists found. Create some checklists first to display them in the "
+"widget."
+msgstr ""
+"Aucune liste de contrôle trouvée. Créez d'abord des listes de contrôle pour "
+"les afficher dans le widget."
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Inactive"
+msgstr "Inactif"
+
+msgid ""
+"No checklists selected. All checklists will be displayed if none are "
+"specifically selected."
+msgstr ""
+"Aucune liste de contrôle sélectionnée. Toutes les listes de contrôle seront "
+"affichées si aucune n'est spécifiquement sélectionnée."
+
+msgid "checklist(s) selected for display."
+msgstr "checklist(s) sélectionnée(s) pour affichage."
+
+msgid "Show Checklist Items"
+msgstr "Afficher les éléments de la liste de contrôle"
+
+msgid "Display items from a specific checklist. Select which checklist below."
+msgstr ""
+"Afficher les éléments d'une liste de contrôle spécifique. Sélectionnez la "
+"liste de contrôle ci-dessous."
+
+msgid "Select a checklist"
+msgstr "Sélectionner une liste de contrôle"
+
+msgid "Show Deadlines"
+msgstr "Afficher les délais"
+
+msgid ""
+"Display upcoming deadlines for checklist items with color-coded urgency."
+msgstr ""
+"Afficher les délais à venir pour les éléments de la liste de contrôle avec "
+"une urgence codée par couleur."
+
+msgid "Show Tags"
+msgstr "Afficher les étiquettes"
+
+msgid "Display tags associated with each checklist."
+msgstr "Afficher les étiquettes associées à chaque liste de contrôle."
+
+msgid "Show Descriptions"
+msgstr "Afficher les descriptions"
+
+msgid "Display a truncated description for each checklist."
+msgstr "Afficher une description tronquée pour chaque liste de contrôle."
+
+msgid "Show Quick Actions"
+msgstr "Afficher les actions rapides"
+
+msgid ""
+"Display quick action buttons to activate/deactivate checklists directly from "
+"the dashboard."
+msgstr ""
+"Afficher des boutons d'action rapide pour activer/désactiver les listes de "
+"contrôle directement depuis le tableau de bord."
+
+msgid "Saving..."
+msgstr "Enregistrement..."
+
+msgid "Save Dashboard Widget Settings"
+msgstr "Enregistrer les paramètres du widget du tableau de bord"
+
+msgid "API & Webhook Settings"
+msgstr "Paramètres de l'API et du Webhook"
+
+msgid ""
+"Enable / disable the API endpoints of MagicChecklists, test webhook URLs and "
+"more."
+msgstr ""
+"Activer/désactiver les points de terminaison de l'API de MagicChecklists, "
+"tester les URL de webhook, etc."
+
+msgid "REST API Access"
+msgstr "Accès à l'API REST"
+
+msgid ""
+"Enable REST API access for MagicChecklists. When disabled, all plugin-"
+"specific API endpoints will be inaccessible."
+msgstr ""
+"Activer l'accès à l'API REST pour MagicChecklists. Lorsqu'il est désactivé, "
+"tous les points de terminaison spécifiques au plugin seront inaccessibles."
+
+msgid "Webhook Secret"
+msgstr "Secret du Webhook"
+
+msgid "Enter a secret key for webhook security"
+msgstr "Entrez une clé secrète pour la sécurité du webhook"
+
+msgid "Generate Secret"
+msgstr "Générer un secret"
+
+msgid ""
+"This secret key will be used to sign webhook payloads for security "
+"verification."
+msgstr ""
+"Cette clé secrète sera utilisée pour signer les charges utiles du webhook "
+"pour la vérification de la sécurité."
+
+msgid "Webhook Endpoints"
+msgstr "Points de terminaison du Webhook"
+
+msgid "Test"
+msgstr "Tester"
+
+msgid "Add Endpoint"
+msgstr "Ajouter un Endpoint"
+
+msgid ""
+"Add URLs where webhook notifications should be sent when checklist events "
+"occur."
+msgstr ""
+"Ajouter des URL où les notifications de webhook doivent être envoyées "
+"lorsque des événements de liste de contrôle se produisent."
+
+msgid "Are you sure you want to delete this webhook endpoint?"
+msgstr ""
+"Êtes-vous sûr de vouloir supprimer ce point de terminaison de webhook ?"
+
+msgid "Connection successful!"
+msgstr "Connexion réussie !"
+
+msgid "Webhook Test"
+msgstr "Test de Webhook"
+
+msgid "Connection failed"
+msgstr "Échec de la connexion"
+
+msgid "Webhook Test Failed"
+msgstr "Échec du test de Webhook"
+
+msgid "Network error"
+msgstr "Erreur réseau"
+
+msgid "MainWP API Key"
+msgstr "Clé API MainWP"
+
+msgid "Enter your MainWP API key"
+msgstr "Entrez votre clé API MainWP"
+
+msgid "Hide"
+msgstr "Masquer"
+
+msgid "Show"
+msgstr "Afficher"
+
+msgid ""
+"Enter the API key generated from your MainWP dashboard to enable "
+"communication between MainWP and MagicChecklists."
+msgstr ""
+"Entrez la clé API générée depuis votre tableau de bord MainWP pour activer "
+"la communication entre MainWP et MagicChecklists."
+
+msgid "MagicChecklists API Key"
+msgstr "Clé API MagicChecklists"
+
+msgid "No API key generated"
+msgstr "Aucune clé API générée"
+
+msgid "Regenerate"
+msgstr "Régénérer"
+
+msgid "Generate"
+msgstr "Générer"
+
+msgid ""
+"Are you sure you want to regenerate the API key? This will invalidate the "
+"existing key."
+msgstr ""
+"Êtes-vous sûr de vouloir régénérer la clé API ? Cela invalidera la clé "
+"existante."
+
+msgid "API key copied to clipboard!"
+msgstr "Clé API copiée dans le presse-papiers !"
+
+msgid "Copied"
+msgstr "Copié"
+
+msgid ""
+"Generate an API key to allow third-party applications to access your "
+"MagicChecklists data through the v2 API endpoints."
+msgstr ""
+"Générez une clé API pour permettre aux applications tierces d'accéder à vos "
+"données MagicChecklists via les points de terminaison de l'API v2."
+
+msgid ""
+"Warning: Regenerating the API key will invalidate any existing integrations "
+"using the current key."
+msgstr ""
+"Avertissement : La régénération de la clé API invalidera toutes les "
+"intégrations existantes utilisant la clé actuelle."
+
+msgid "Webhook Logs"
+msgstr "Journaux de Webhook"
+
+msgid "Clear Logs"
+msgstr "Effacer les journaux"
+
+msgid "Are you sure you want to clear all webhook logs?"
+msgstr "Êtes-vous sûr de vouloir effacer tous les journaux de webhook ?"
+
+msgid "Webhook logs cleared successfully!"
+msgstr "Journaux de webhook effacés avec succès !"
+
+msgid "Logs Cleared"
+msgstr "Journaux effacés"
+
+msgid "Failed to clear logs"
+msgstr "Échec de l'effacement des journaux"
+
+msgid "Failed to clear webhook logs"
+msgstr "Échec de l'effacement des journaux de webhook"
+
+msgid "Clear Failed"
+msgstr "Échec de l'effacement"
+
+msgid "Time"
+msgstr "Temps"
+
+msgid "Event"
+msgstr "Événement"
+
+msgid "Endpoint"
+msgstr "Point de terminaison"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "No webhook logs found."
+msgstr "Aucun journal de webhook trouvé."
+
+msgid "Save Integration Settings"
+msgstr "Enregistrer les paramètres d'intégration"
+
+msgid "General Settings"
+msgstr "Paramètres généraux"
+
+msgid "Configure general plugin settings and behavior."
+msgstr "Configurer les paramètres et le comportement généraux du plugin."
+
+msgid "Checklist Arrow Buttons Navigation"
+msgstr "Navigation par boutons fléchés de la liste de contrôle"
+
+msgid ""
+"Enable navigation arrows to switch between active checklists when the drawer "
+"is open."
+msgstr ""
+"Activer les flèches de navigation pour passer d'une liste de contrôle active "
+"à l'autre lorsque le tiroir est ouvert."
+
+msgid "Progress Counter"
+msgstr "Compteur de progression"
+
+msgid ""
+"Show a progress counter in checklists displaying total items, completed "
+"items, and completion percentage."
+msgstr ""
+"Afficher un compteur de progression dans les listes de contrôle affichant le "
+"nombre total d'éléments, d'éléments complétés et le pourcentage d'achèvement."
+
+msgid "Data Cleanup"
+msgstr "Nettoyage des données"
+
+msgid ""
+"Delete all plugin data when uninstalling MagicChecklists (including "
+"checklists, settings, and database tables)."
+msgstr ""
+"Supprimer toutes les données du plugin lors de la désinstallation de "
+"MagicChecklists (y compris les listes de contrôle, les paramètres et les "
+"tables de base de données)."
+
+msgid "Speed Dial Appearance"
+msgstr "Apparence du bouton de numérotation rapide"
+
+msgid "Background Color"
+msgstr "Couleur de fond"
+
+msgid "Icon Color"
+msgstr "Couleur de l'icône"
+
+msgid ""
+"Customize the appearance of the speed dial trigger button that appears when "
+"multiple checklists have floating buttons enabled."
+msgstr ""
+"Personnaliser l'apparence du bouton de déclenchement de numérotation rapide "
+"qui apparaît lorsque plusieurs listes de contrôle ont des boutons flottants "
+"activés."
+
+msgid "Save General Settings"
+msgstr "Enregistrer les paramètres généraux"
+
+msgid "Checklist imported successfully!"
+msgstr "Checklist importée avec succès !"
+
+msgid "Edit the imported checklist →"
+msgstr "Modifier la liste de contrôle importée →"
+
+msgid "Import Complete"
+msgstr "Importation terminée"
+
+msgid "Failed to import checklist. Please try again."
+msgstr "Échec de l'importation de la liste de contrôle. Veuillez réessayer."
+
+msgid "Failed to load checklists"
+msgstr "Échec du chargement des listes de contrôle"
+
+msgid "An error occurred while loading checklists"
+msgstr "Une erreur s'est produite lors du chargement des listes de contrôle"
+
+msgid "File input not found. Please try again."
+msgstr "Fichier d'entrée non trouvé. Veuillez réessayer."
+
+msgid "Please select a JSON file to import."
+msgstr "Veuillez sélectionner un fichier JSON à importer."
+
+msgid "Please select a valid JSON file."
+msgstr "Veuillez sélectionner un fichier JSON valide."
+
+msgid "PDF export started! Check your browser downloads."
+msgstr ""
+"Exportation PDF commencée ! Vérifiez vos téléchargements de navigateur."
+
+msgid "Failed to export PDF"
+msgstr "Échec de l'exportation PDF"
+
+msgid "Loading checklists..."
+msgstr "Chargement des listes de contrôle..."
+
+msgid "Export Classic Checklists"
+msgstr "Exporter les listes de contrôle classiques"
+
+msgid "No classic checklists found."
+msgstr "Aucune liste de contrôle classique trouvée."
+
+msgid "Create some classic checklists first to enable export functionality."
+msgstr ""
+"Créez d'abord quelques listes de contrôle classiques pour activer la "
+"fonctionnalité d'exportation."
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Import from Text"
+msgstr "Importer depuis le texte"
+
+msgid "Import checklist items from plain text. Enter one item per line."
+msgstr ""
+"Importer des éléments de liste de contrôle à partir d'un texte brut. Entrez "
+"un élément par ligne."
+
+msgid "Paste items (one per line)"
+msgstr "Coller des éléments (un par ligne)"
+
+msgid "Enter each checklist item on a new line..."
+msgstr ""
+"Entrez chaque élément de la liste de contrôle sur une nouvelle ligne..."
+
+msgid "Import Text"
+msgstr "Importer le texte"
+
+msgid "Import from JSON"
+msgstr "Importer depuis JSON"
+
+msgid ""
+"Import a complete checklist from a JSON file exported from MagicChecklists."
+msgstr ""
+"Importer une liste de contrôle complète à partir d'un fichier JSON exporté "
+"depuis MagicChecklists."
+
+msgid "Upload JSON File"
+msgstr "Télécharger le fichier JSON"
+
+msgid "Drag and drop JSON file here or click to select"
+msgstr ""
+"Faites glisser et déposez le fichier JSON ici ou cliquez pour sélectionner"
+
+msgid "Only .json files are supported"
+msgstr "Seules les fichiers .json sont pris en charge"
+
+msgid "Import JSON"
+msgstr "Importer JSON"
+
+msgid "PDF Export Settings"
+msgstr "Paramètres d'exportation PDF"
+
+msgid "Header Logo URL"
+msgstr "URL du logo d'en-tête"
+
+msgid "https://example.com/logo.png"
+msgstr "https://example.com/logo.png"
+
+msgid "Header Text"
+msgstr "Texte d'en-tête"
+
+msgid "Header text for your PDF..."
+msgstr "Texte d'en-tête pour votre PDF..."
+
+msgid "Contact Information"
+msgstr "Informations de contact"
+
+msgid "Contact information..."
+msgstr "Informations de contact..."
+
+msgid "Footer Text"
+msgstr "Texte de pied de page"
+
+msgid "Footer text..."
+msgstr "Texte de pied de page..."
+
+msgid "Export PDF"
+msgstr "Exporter PDF"
+
+msgid "License"
+msgstr "Licence"
+
+msgid "Manage License"
+msgstr "Gérer la licence"
+
+msgid "Enter your license key to activate MagicChecklists."
+msgstr "Entrez votre clé de licence pour activer MagicChecklists."
+
+msgid "Your license is successfully activated for this site."
+msgstr "Votre licence est activée avec succès pour ce site."
+
+msgid "License Key"
+msgstr "Clé de licence"
+
+msgid "Enter your license key"
+msgstr "Entrez votre clé de licence"
+
+msgid "Activated on"
+msgstr "Activé le"
+
+msgid "Activating..."
+msgstr "Activation en cours..."
+
+msgid "Activate License"
+msgstr "Activer la licence"
+
+msgid "Deactivating..."
+msgstr "Désactivation en cours..."
+
+msgid "Deactivate License"
+msgstr "Désactiver la licence"
+
+msgid "License deactivated successfully"
+msgstr "Licence désactivée avec succès"
+
+msgid "License activated successfully"
+msgstr "Licence activée avec succès"
+
+msgid "License operation failed"
+msgstr "Échec de l'opération de licence"
+
+msgid "An error occurred while processing the license"
+msgstr "Une erreur s'est produite lors du traitement de la licence"
+
+msgid "Error loading license status:"
+msgstr "Erreur de chargement de l'état de la licence :"
+
+msgid "Error processing license:"
+msgstr "Erreur lors du traitement de la licence :"
+
+msgid "No, cancel"
+msgstr "Non, annuler"
+
+msgid "Failed to fetch checklists"
+msgstr "Échec de la récupération des checklists"
+
+msgid "checklist"
+msgstr "checklist"
+
+msgid "has been"
+msgstr "a été"
+
+msgid "activated"
+msgstr "activé"
+
+msgid "deactivated"
+msgstr "désactivé"
+
+msgid "successfully"
+msgstr "avec succès"
+
+msgid "Activated"
+msgstr "Activé"
+
+msgid "Deactivated"
+msgstr "Désactivé"
+
+msgid "Failed to toggle status"
+msgstr "Échec du changement de statut"
+
+msgid "Failed to update checklist status. Please try again."
+msgstr "Échec de la mise à jour du statut de la checklist. Veuillez réessayer."
+
+msgid "Status Update Failed"
+msgstr "Échec de la mise à jour du statut"
+
+msgid "Delete Checklist"
+msgstr "Supprimer la checklist"
+
+msgid ""
+"Are you sure you want to delete this checklist? This action cannot be undone."
+msgstr ""
+"Êtes-vous sûr de vouloir supprimer cette checklist ? Cette action ne peut "
+"pas être annulée."
+
+msgid "Yes, delete"
+msgstr "Oui, supprimer"
+
+msgid "has been deleted"
+msgstr "a été supprimé"
+
+msgid "Checklist Deleted"
+msgstr "Checklist supprimée"
+
+msgid "Failed to delete checklist"
+msgstr "Échec de la suppression de la checklist"
+
+msgid "Failed to delete checklist. Please try again."
+msgstr "Échec de la suppression de la checklist. Veuillez réessayer."
+
+msgid "Delete Failed"
+msgstr "Échec de la suppression"
+
+msgid "Clone Checklist"
+msgstr "Cloner la checklist"
+
+msgid "Are you sure you want to clone this checklist?"
+msgstr "Êtes-vous sûr de vouloir cloner cette checklist ?"
+
+msgid "Yes, clone"
+msgstr "Oui, cloner"
+
+msgid "has been cloned"
+msgstr "a été cloné"
+
+msgid "Checklist Cloned"
+msgstr "Checklist clonée"
+
+msgid "Failed to clone checklist"
+msgstr "Échec du clonage de la liste de contrôle"
+
+msgid "Failed to clone checklist. Please try again."
+msgstr "Échec du clonage de la liste de contrôle. Veuillez réessayer."
+
+msgid "Clone Failed"
+msgstr "Échec du clonage"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+msgid "Publisher"
+msgstr "Éditeur"
+
+msgid "Classic"
+msgstr "Classique"
+
+msgid "Error loading checklists"
+msgstr "Erreur de chargement des listes de contrôle"
+
+msgid "Try Again"
+msgstr "Réessayer"
+
+msgid "Great job! 🎉"
+msgstr "Super travail ! 🎉"
+
+msgid "This checklist is currently locked for editing by another user."
+msgstr ""
+"Cette liste de contrôle est actuellement verrouillée pour modification par "
+"un autre utilisateur."
+
+msgid "Search Checklists"
+msgstr "Rechercher des listes de contrôle"
+
+msgid "Search by title, description, type..."
+msgstr "Rechercher par titre, description, type..."
+
+msgid "Filter by Tags"
+msgstr "Filtrer par étiquettes"
+
+msgid "Custom Theme Settings"
+msgstr "Paramètres de thème personnalisés"
+
+msgid "Customize the visual appearance of your checklist drawer."
+msgstr ""
+"Personnalisez l'apparence visuelle de votre tiroir de liste de contrôle."
+
+msgid "Colors"
+msgstr "Couleurs"
+
+msgid "Main background color of the drawer"
+msgstr "Couleur de fond principale du tiroir"
+
+msgid "List Item Background"
+msgstr "Fond des éléments de liste"
+
+msgid "Background color for checklist items"
+msgstr "Couleur de fond pour les éléments de la checklist"
+
+msgid "Text Color"
+msgstr "Couleur du texte"
+
+msgid "Primary text color"
+msgstr "Couleur du texte principal"
+
+msgid "Color for description text"
+msgstr "Couleur pour le texte de description"
+
+msgid "Typography"
+msgstr "Typographie"
+
+msgid "Heading Size"
+msgstr "Taille du titre"
+
+msgid "Size of the main title"
+msgstr "Taille du titre principal"
+
+msgid "Description Size"
+msgstr "Taille de la description"
+
+msgid "Size of description text"
+msgstr "Taille du texte de description"
+
+msgid "List Item Size"
+msgstr "Taille des éléments de liste"
+
+msgid "Size of checklist item text"
+msgstr "Taille du texte des éléments de la liste de contrôle"
+
+msgid "Button Colors"
+msgstr "Couleurs des boutons"
+
+msgid "Primary Button Background"
+msgstr "Fond du bouton principal"
+
+msgid "Background color for primary buttons"
+msgstr "Couleur de fond pour les boutons principaux"
+
+msgid "Primary Button Text"
+msgstr "Texte du bouton principal"
+
+msgid "Text color for primary buttons"
+msgstr "Couleur du texte pour les boutons principaux"
+
+msgid "Secondary Button Background"
+msgstr "Fond du bouton secondaire"
+
+msgid "Background color for secondary buttons"
+msgstr "Couleur de fond pour les boutons secondaires"
+
+msgid "Secondary Button Text"
+msgstr "Texte du bouton secondaire"
+
+msgid "Text color for secondary buttons"
+msgstr "Couleur du texte pour les boutons secondaires"
+
+msgid "Checkbox Style"
+msgstr "Style de case à cocher"
+
+msgid "Checkbox Background"
+msgstr "Fond de case à cocher"
+
+msgid "Background color of checkboxes"
+msgstr "Couleur de fond des cases à cocher"
+
+msgid "Checkbox Border Radius"
+msgstr "Rayon de bordure de case à cocher"
+
+msgid "Rounded corners for checkboxes"
+msgstr "Coins arrondis pour les cases à cocher"
+
+msgid "Checkmark Style"
+msgstr "Style de coche"
+
+msgid "Standard"
+msgstr "Standard"
+
+msgid "Custom Image"
+msgstr "Image personnalisée"
+
+msgid "Select checkmark style..."
+msgstr "Sélectionnez le style de coche..."
+
+msgid "Choose between standard checkmark or custom image"
+msgstr "Choisissez entre une coche standard ou une image personnalisée"
+
+msgid "Custom Checkmark Icon"
+msgstr "Icône de coche personnalisée"
+
+msgid "Current icon"
+msgstr "Icône actuelle"
+
+msgid "Change Image"
+msgstr "Changer l'image"
+
+msgid "Select Image Button"
+msgstr "Bouton de sélection d'image"
+
+msgid "Recommended: 24x24px PNG or SVG with transparency"
+msgstr "Recommandé : PNG ou SVG de 24x24px avec transparence"
+
+msgid "Checkmark Color"
+msgstr "Couleur de la coche"
+
+msgid "Color of the standard checkmark"
+msgstr "Couleur de la coche standard"
+
+msgid "Drawer Style"
+msgstr "Style de tiroir"
+
+msgid "Border Radius"
+msgstr "Rayon de bordure"
+
+msgid "Rounded corners for the drawer"
+msgstr "Coins arrondis pour le tiroir"
+
+msgid "Dimensions"
+msgstr "Dimensions"
+
+msgid "Drawer Width"
+msgstr "Largeur du tiroir"
+
+msgid "Maximum width of the drawer"
+msgstr "Largeur maximale du tiroir"
+
+msgid "Drawer Height"
+msgstr "Hauteur du tiroir"
+
+msgid "Maximum height of the drawer"
+msgstr "Hauteur maximale du tiroir"
+
+msgid "Floating Button Settings"
+msgstr "Paramètres du bouton flottant"
+
+msgid "Button Background"
+msgstr "Arrière-plan du bouton"
+
+msgid "Background color of floating button"
+msgstr "Couleur d'arrière-plan du bouton flottant"
+
+msgid "Button Text Color"
+msgstr "Couleur du texte du bouton"
+
+msgid "Text color of floating button"
+msgstr "Couleur du texte du bouton flottant"
+
+msgid "Text Size"
+msgstr "Taille du texte"
+
+msgid "Font size for button text"
+msgstr "Taille de police pour le texte du bouton"
+
+msgid "Show Checklist Icon"
+msgstr "Afficher l'icône de la liste de contrôle"
+
+msgid "Display a checklist icon alongside the button text"
+msgstr "Afficher une icône de liste de contrôle à côté du texte du bouton"
+
+msgid "Font size must be between 10 and 50 pixels"
+msgstr "La taille de la police doit être comprise entre 10 et 50 pixels"
+
+msgid "Width must be between 400 and 2000 pixels"
+msgstr "La largeur doit être comprise entre 400 et 2000 pixels"
+
+msgid "Height must be between 350 and 2000 pixels"
+msgstr "La hauteur doit être comprise entre 350 et 2000 pixels"
+
+msgid "Please enter a valid hex color (e.g., #ffffff)"
+msgstr "Veuillez entrer une couleur hexadécimale valide (par exemple, #ffffff)"
+
+msgid "Please fix the following errors:"
+msgstr "Veuillez corriger les erreurs suivantes :"
+
+msgid "Select Custom Checkmark Icon"
+msgstr "Sélectionnez l'icône de coche personnalisée"
+
+msgid "Use This Image"
+msgstr "Utiliser cette image"
+
+msgid "Select Checklist:"
+msgstr "Sélectionnez la liste de contrôle :"
+
+msgid "Choose a checklist..."
+msgstr "Choisissez une checklist..."
+
+msgid "Add Column"
+msgstr "Ajouter une colonne"
+
+msgid "Shortcode Settings"
+msgstr "Paramètres de shortcode"
+
+msgid "Shortcode"
+msgstr "Shortcode"
+
+msgid "Display Options"
+msgstr "Options d'affichage"
+
+msgid "Show Title"
+msgstr "Afficher le titre"
+
+msgid "Show Description"
+msgstr "Afficher la description"
+
+msgid "Show Deadline"
+msgstr "Afficher la date limite"
+
+msgid "Show Priority Indicators"
+msgstr "Afficher les indicateurs de priorité"
+
+msgid "Show Item Numbers"
+msgstr "Afficher les numéros d'éléments"
+
+msgid "Style Options - Colors"
+msgstr "Options de style - Couleurs"
+
+msgid "Title Text Color"
+msgstr "Couleur du texte du titre"
+
+msgid "Description Text Color"
+msgstr "Couleur du texte de la description"
+
+msgid "Deadline Text Color"
+msgstr "Couleur du texte de la date limite"
+
+msgid "List Item Text Color"
+msgstr "Couleur du texte des éléments de la liste"
+
+msgid "Checkbox Border Color"
+msgstr "Couleur de la bordure de la case à cocher"
+
+msgid "Checkbox Color Filled"
+msgstr "Couleur de la case à cocher remplie"
+
+msgid "Checkbox Color Unfilled"
+msgstr "Couleur de la case à cocher non remplie"
+
+msgid "Style Options - Spacing & Dimensions"
+msgstr "Options de style - Espacement et dimensions"
+
+msgid "Container Vertical Padding"
+msgstr "Remplissage vertical du conteneur"
+
+msgid "Container Horizontal Padding"
+msgstr "Remplissage horizontal du conteneur"
+
+msgid "Container Gap"
+msgstr "Espace entre les conteneurs"
+
+msgid "Checkbox Dimensions"
+msgstr "Dimensions de la case à cocher"
+
+msgid "Checkbox Border Thickness"
+msgstr "Épaisseur de la bordure de la case à cocher"
+
+msgid "Border Type"
+msgstr "Type de bordure"
+
+msgid "Solid"
+msgstr "Solide"
+
+msgid "Dashed"
+msgstr "Tireté"
+
+msgid "Dotted"
+msgstr "Pointillé"
+
+msgid "Select border type..."
+msgstr "Sélectionner le type de bordure..."
+
+msgid "Border Thickness"
+msgstr "Épaisseur de la bordure"
+
+msgid "Item Spacing"
+msgstr "Espacement des éléments"
+
+msgid "Compact"
+msgstr "Compact"
+
+msgid "Comfortable"
+msgstr "Confortable"
+
+msgid "Spacious"
+msgstr "Spacieux"
+
+msgid "Select spacing..."
+msgstr "Sélectionner l'espacement..."
+
+msgid "Style Options - Typography"
+msgstr "Options de style - Typographie"
+
+msgid "Title Font Size"
+msgstr "Taille de la police du titre"
+
+msgid "Description Font Size"
+msgstr "Taille de la police de la description"
+
+msgid "List Item Font Size"
+msgstr "Taille de la police des éléments de la liste"
+
+msgid "Deadline Font Size"
+msgstr "Taille de la police de la date limite"
+
+msgid "Behavior Options"
+msgstr "Options de comportement"
+
+msgid "Container Width"
+msgstr "Largeur du conteneur"
+
+msgid "Full Width"
+msgstr "Pleine largeur"
+
+msgid "Narrow (600px)"
+msgstr "Étroite (600px)"
+
+msgid "Select width..."
+msgstr "Sélectionner la largeur..."
+
+msgid "Custom Width"
+msgstr "Largeur personnalisée"
+
+msgid "Checked State Storage"
+msgstr "Stockage de l'état coché"
+
+msgid "Session Storage"
+msgstr "Stockage de session"
+
+msgid "Local Storage"
+msgstr "Stockage local"
+
+msgid "Global (Database)"
+msgstr "Global (base de données)"
+
+msgid "Select storage type..."
+msgstr "Sélectionner le type de stockage..."
+
+msgid "Disable Drawer for this Checklist"
+msgstr "Désactiver le tiroir pour cette liste de contrôle"
+
+msgid "Allow Item Reordering"
+msgstr "Autoriser le réarrangement des éléments"
+
+msgid "Enter deadline (YYYY-MM-DD HH:MM):"
+msgstr "Entrer la date limite (AAAA-MM-JJ HH:MM):"
+
+msgid "Enter image URL:"
+msgstr "Entrer l'URL de l'image :"
+
+msgid "Edit Column"
+msgstr "Modifier la colonne"
+
+msgid "Delete Column"
+msgstr "Supprimer la colonne"
+
+msgid "Assign"
+msgstr "Attribuer"
+
+msgid "comment"
+msgstr "commentaire"
+
+msgid "comments"
+msgstr "commentaires"
+
+msgid "Add New Column"
+msgstr "Ajouter une nouvelle colonne"
+
+msgid "Update Column"
+msgstr "Mettre à jour la colonne"
+
+msgid "Column Title"
+msgstr "Titre de la colonne"
+
+msgid "Enter column title..."
+msgstr "Entrer le titre de la colonne..."
+
+msgid "Column Color"
+msgstr "Couleur de la colonne"
+
+msgid "Assign User"
+msgstr "Attribuer un utilisateur"
+
+msgid "Save Assignment"
+msgstr "Enregistrer l'affectation"
+
+msgid "Select User"
+msgstr "Sélectionner l'utilisateur"
+
+msgid "Unassigned"
+msgstr "Non attribué"
+
+msgid "Edit Task"
+msgstr "Modifier la tâche"
+
+msgid "Save Task"
+msgstr "Enregistrer la tâche"
+
+msgid "Task Content"
+msgstr "Contenu de la tâche"
+
+msgid "Bold"
+msgstr "Gras"
+
+msgid "Italic"
+msgstr "Italique"
+
+msgid "Underline"
+msgstr "Souligner"
+
+msgid "Add Image"
+msgstr "Ajouter une image"
+
+msgid "Add a comment..."
+msgstr "Ajouter un commentaire..."
+
+msgid "Ctrl+Enter to post"
+msgstr "Ctrl+Entrée pour publier"
+
+msgid "Loading comments..."
+msgstr "Chargement des commentaires..."
+
+msgid "No comments yet. Be the first to comment!"
+msgstr "Pas encore de commentaires. Soyez le premier à commenter !"
+
+msgid "Are you sure you want to delete the column \"{columnTitle}\"?"
+msgstr "Êtes-vous sûr de vouloir supprimer la colonne \"{columnTitle}\" ?"
+
+msgid "This will also delete {itemCount} items in this column"
+msgstr "Cela supprimera également {itemCount} éléments dans cette colonne"
+
+msgid "Delete comment"
+msgstr "Supprimer le commentaire"
+
+msgid "Write a reply..."
+msgstr "Écrire une réponse..."
+
+msgid "just now"
+msgstr "à l'instant"
+
+msgid "{minutes}m ago"
+msgstr "il y a {minutes}m"
+
+msgid "{hours}h ago"
+msgstr "il y a {hours}h"
+
+msgid "{days}d ago"
+msgstr "il y a {days}j"
+
+msgid "Are you sure you want to delete this comment and all its replies?"
+msgstr ""
+"Êtes-vous sûr de vouloir supprimer ce commentaire et toutes ses réponses ?"
+
+msgid "Failed to load Kanban board"
+msgstr "Échec du chargement du tableau Kanban"
+
+msgid "Failed to move item"
+msgstr "Échec du déplacement de l'élément"
+
+msgid "Column title is required"
+msgstr "Le titre de la colonne est requis"
+
+msgid "Failed to save column"
+msgstr "Échec de l'enregistrement de la colonne"
+
+msgid "Task content is required"
+msgstr "Le contenu de la tâche est requis"
+
+msgid "Failed to save task"
+msgstr "Échec de l'enregistrement de la tâche"
+
+msgid "Failed to add comment"
+msgstr "Échec de l'ajout du commentaire"
+
+msgid "Failed to add reply"
+msgstr "Échec de l'ajout de la réponse"
+
+msgid "Failed to toggle like"
+msgstr "Échec du changement de j'aime"
+
+msgid "Failed to delete comment"
+msgstr "Échec de la suppression du commentaire"
+
+msgid "Failed to assign user"
+msgstr "Échec de l'attribution de l'utilisateur"
+
+msgid "Failed to update item state"
+msgstr "Échec de la mise à jour de l'état de l'élément"
+
+msgid "Item moved successfully"
+msgstr "Élément déplacé avec succès"
+
+msgid "Column updated"
+msgstr "Colonne mise à jour"
+
+msgid "Column added"
+msgstr "Colonne ajoutée"
+
+msgid "Column deleted"
+msgstr "Colonne supprimée"
+
+msgid "Task updated successfully"
+msgstr "Tâche mise à jour avec succès"
+
+msgid "Comment added successfully"
+msgstr "Commentaire ajouté avec succès"
+
+msgid "Reply added successfully"
+msgstr "Réponse ajoutée avec succès"
+
+msgid "Comment deleted successfully"
+msgstr "Commentaire supprimé avec succès"
+
+msgid "User assignment updated"
+msgstr "Affectation de l'utilisateur mise à jour"
+
+msgid "Select tags..."
+msgstr "Sélectionner des étiquettes..."
+
+msgid "Clear Filters"
+msgstr "Effacer les filtres"
+
+msgid "Time remaining"
+msgstr "Temps restant"
+
+msgid "remaining"
+msgstr "restant"
+
+msgid "d"
+msgstr "j"
+
+msgid "h"
+msgstr "h"
+
+msgid "m"
+msgstr "m"
+
+msgid "s"
+msgstr "s"
+
+msgid "Invalid deadline"
+msgstr "Date limite invalide"
+
+msgid "No deadline"
+msgstr "Pas de date limite"
+
+msgid "No checklists found"
+msgstr "Aucune liste de contrôle trouvée"
+
+msgid "No checklists match your filters"
+msgstr "Aucune liste de contrôle ne correspond à vos filtres"
+
+msgid "Create your first checklist to get started."
+msgstr "Créez votre première liste de contrôle pour commencer."
+
+msgid "Try adjusting your search or filter criteria."
+msgstr "Essayez d'ajuster votre recherche ou vos critères de filtrage."
+
+msgid "Shortcut"
+msgstr "Raccourci"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Clone"
+msgstr "Cloner"
+
+msgid "Priority"
+msgstr "Priorité"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Create New Item"
+msgstr "Créer un nouvel élément"
+
+msgid ""
+"Choose what you want to create. Each type serves different purposes and has "
+"unique features."
+msgstr ""
+"Choisissez ce que vous souhaitez créer. Chaque type a des objectifs "
+"différents et des fonctionnalités uniques."
+
+msgid "Classic Checklist"
+msgstr "Liste de contrôle classique"
+
+msgid ""
+"Traditional checklists with custom items, keyboard shortcuts, and floating "
+"buttons. Perfect for personal task management and team collaboration."
+msgstr ""
+"Listes de contrôle traditionnelles avec des éléments personnalisés, des "
+"raccourcis clavier et des boutons flottants. Parfait pour la gestion des "
+"tâches personnelles et la collaboration en équipe."
+
+msgid "Custom checklist items"
+msgstr "Éléments de liste de contrôle personnalisés"
+
+msgid "Keyboard shortcuts"
+msgstr "Raccourcis clavier"
+
+msgid "Floating buttons"
+msgstr "Boutons flottants"
+
+msgid "Access control"
+msgstr "Contrôle d'accès"
+
+msgid "Themes and customization"
+msgstr "Thèmes et personnalisation"
+
+msgid "Shortcode support"
+msgstr "Support de shortcode"
+
+msgid "Create Classic Checklist"
+msgstr "Créer une liste de contrôle classique"
+
+msgid "Publisher Checklist"
+msgstr "Liste de contrôle de l'éditeur"
+
+msgid ""
+"Content publishing requirements with automatic verification. Ensure posts "
+"and pages meet quality standards before publication."
+msgstr ""
+"Exigences de publication de contenu avec vérification automatique. Assurez-"
+"vous que les publications et les pages respectent les normes de qualité "
+"avant publication."
+
+msgid "Automatic requirement checking"
+msgstr "Vérification automatique des exigences"
+
+msgid "Word count validation"
+msgstr "Validation du nombre de mots"
+
+msgid "SEO requirements"
+msgstr "Exigences SEO"
+
+msgid "Featured image verification"
+msgstr "Vérification de l'image à la une"
+
+msgid "Link and taxonomy checks"
+msgstr "Vérifications des liens et de la taxonomie"
+
+msgid "Publishing prevention"
+msgstr "Prévention de la publication"
+
+msgid "Create Publisher Checklist"
+msgstr "Créer une liste de contrôle de l'éditeur"
+
+msgid "Tour"
+msgstr "Visite guidée"
+
+msgid ""
+"Guided tours that lead users through your WordPress admin or frontend. "
+"Perfect for onboarding, training, and feature introduction."
+msgstr ""
+"Visites guidées qui conduisent les utilisateurs à travers votre "
+"administration WordPress ou votre frontend. Parfait pour l'intégration, la "
+"formation et l'introduction des fonctionnalités."
+
+msgid "Step-by-step guidance"
+msgstr "Guidage étape par étape"
+
+msgid "Interactive elements"
+msgstr "Éléments interactifs"
+
+msgid "Conditional logic"
+msgstr "Logique conditionnelle"
+
+msgid "User targeting"
+msgstr "Ciblage des utilisateurs"
+
+msgid "Progress tracking"
+msgstr "Suivi des progrès"
+
+msgid "Visual highlights"
+msgstr "Mises en évidence visuelles"
+
+msgid "Create Interactive Tour"
+msgstr "Créer une visite interactive"
+
+msgid "Some requirements are not met"
+msgstr "Certaines exigences ne sont pas remplies"
+
+msgid "Checking..."
+msgstr "Vérification en cours..."
+
+msgid "Error checking requirements"
+msgstr "Erreur lors de la vérification des exigences"
+
+msgid "Publishing is blocked until all required items are completed."
+msgstr ""
+"La publication est bloquée jusqu'à ce que tous les éléments requis soient "
+"complétés."
+
+msgid "Please complete all required checklist items before publishing."
+msgstr ""
+"Veuillez compléter tous les éléments de la liste de contrôle requis avant de "
+"publier."
+
+msgid "Manual verification complete"
+msgstr "Vérification manuelle terminée"
+
+msgid "Custom item verification required"
+msgstr "Vérification des éléments personnalisés requise"
+
+msgid "No publisher checklists configured for this post type."
+msgstr ""
+"Aucune liste de contrôle d'éditeur configurée pour ce type de publication."
+
+msgid "Required"
+msgstr "Requis"
+
+msgid "Mark as complete"
+msgstr "Marquer comme terminé"
+
+msgid "Some required items need attention before publishing."
+msgstr ""
+"Certains éléments requis nécessitent une attention avant la publication."
+
+msgid "Checking requirements..."
+msgstr "Vérification des exigences..."
+
+msgid "Last checked:"
+msgstr "Dernière vérification :"
+
+msgid "Check Requirements"
+msgstr "Vérifier les exigences"
+
+msgid "Complete checklist requirements to publish"
+msgstr "Complétez les exigences de la liste de contrôle pour publier"
+
+msgid "Type or select a custom field..."
+msgstr "Tapez ou sélectionnez un champ personnalisé..."
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "No fields found"
+msgstr "Aucun champ trouvé"
+
+msgid "Automatically verified"
+msgstr "Vérifié automatiquement"
+
+msgid "Manual verification required"
+msgstr "Vérification manuelle requise"
+
+msgid "Posts"
+msgstr "Publications"
+
+msgid "Pages"
+msgstr "Pages"
+
+msgid "Checklist name is required"
+msgstr "Le nom de la checklist est requis"
+
+msgid "At least one post type must be selected"
+msgstr "Au moins un type de publication doit être sélectionné"
+
+msgid "At least one requirement must be enabled"
+msgstr "Au moins une exigence doit être activée"
+
+msgid "Field name is required"
+msgstr "Le nom du champ est requis"
+
+msgid "Item title is required"
+msgstr "Le titre de l'élément est requis"
+
+msgid "Publisher checklist saved successfully!"
+msgstr "Liste de contrôle de l'éditeur enregistrée avec succès !"
+
+msgid "Checklist Name"
+msgstr "Nom de la checklist"
+
+msgid "e.g., Content Quality Standards"
+msgstr "par exemple, Normes de Qualité du Contenu"
+
+msgid ""
+"This name will be shown in the Gutenberg sidebar when editing posts/pages."
+msgstr ""
+"Ce nom sera affiché dans la barre latérale de Gutenberg lors de l'édition "
+"des articles/pages."
+
+msgid "Describe the purpose of this checklist..."
+msgstr "Décrivez l'objectif de cette checklist..."
+
+msgid "Apply to Post Types"
+msgstr "Appliquer aux Post Types"
+
+msgid "Content Requirements"
+msgstr "Exigences de contenu"
+
+msgid ""
+"Configure automatic checks that will verify content quality. Required items "
+"will prevent publishing until satisfied."
+msgstr ""
+"Configurez des vérifications automatiques qui vérifieront la qualité du "
+"contenu. Les éléments requis empêcheront la publication tant qu'ils ne "
+"seront pas satisfaits."
+
+msgid "Repeatable"
+msgstr "Répétable"
+
+msgid "Update Publisher Checklist"
+msgstr "Mettre à jour la liste de contrôle de l'éditeur"
+
+msgid "Word Count"
+msgstr "Nombre de mots"
+
+msgid "Ensure content meets minimum word count requirements"
+msgstr ""
+"Assurez-vous que le contenu respecte les exigences minimales en matière de "
+"nombre de mots"
+
+msgid "Word count: %d (required: %d+)"
+msgstr "Nombre de mots : %d (requis : %d+)"
+
+msgid "Featured image is set"
+msgstr "L'image mise en avant est définie"
+
+msgid "Featured image is missing"
+msgstr "L'image mise en avant est manquante"
+
+msgid "Excerpt meets length requirements (%d characters)"
+msgstr "L'extrait respecte les exigences de longueur (%d caractères)"
+
+msgid "Excerpt is too short (%d characters, required: %d-%d)"
+msgstr "L'extrait est trop court (%d caractères, requis : %d-%d)"
+
+msgid "Excerpt is too long (%d characters, max: %d)"
+msgstr "L'extrait est trop long (%d caractères, max : %d)"
+
+msgid "Excerpt is missing"
+msgstr "L'extrait est manquant"
+
+msgid "Categories: %d (required: %d+)"
+msgstr "Catégories : %d (requis : %d+)"
+
+msgid "Tags: %d (required: %d+)"
+msgstr "Étiquettes : %d (requis : %d+)"
+
+msgid "Headings: H2:%d, H3:%d, H4:%d (required: H2:%d+, H3:%d+, H4:%d+)"
+msgstr ""
+"Titres : H2 : %d, H3 : %d, H4 : %d (requis : H2 : %d+, H3 : %d+, H4 : %d+)"
+
+msgid "Custom field '%s' is set"
+msgstr "Le champ personnalisé '%s' est défini"
+
+msgid "Custom field '%s' is missing"
+msgstr "Le champ personnalisé '%s' est manquant"
+
+msgid "Custom field '%s' requires saving post first"
+msgstr "Le champ personnalisé '%s' nécessite d'enregistrer d'abord le post"
+
+msgid "Use custom tip"
+msgstr "Utiliser une astuce personnalisée"
+
+msgid "Custom helpful tip"
+msgstr "Conseil utile personnalisé"
+
+msgid "Enter your custom tip for this requirement..."
+msgstr "Entrez votre astuce personnalisée pour cette exigence..."
+
+msgid "Minimum Words"
+msgstr "Mots minimums"
+
+msgid "Minimum Length"
+msgstr "Longueur minimale"
+
+msgid "Maximum Length"
+msgstr "Longueur maximale"
+
+msgid "Minimum Categories"
+msgstr "Catégories minimales"
+
+msgid "Minimum Tags"
+msgstr "Tags minimaux"
+
+msgid "Field Name"
+msgstr "Nom du champ"
+
+msgid "Select a custom field..."
+msgstr "Sélectionnez un champ personnalisé..."
+
+msgid "Display Label"
+msgstr "Étiquette d'affichage"
+
+msgid "Label for this field..."
+msgstr "Étiquette pour ce champ..."
+
+msgid "Minimum H2 headings"
+msgstr "Titres H2 minimum"
+
+msgid "Minimum H3 headings"
+msgstr "Titres H3 minimum"
+
+msgid "Minimum H4 headings"
+msgstr "Titres H4 minimum"
+
+msgid "Item Title"
+msgstr "Titre de l'élément"
+
+msgid "Require a featured image to be set"
+msgstr "Exiger qu'une image à la une soit définie"
+
+msgid "Ensure post has an excerpt within character limits"
+msgstr "Assurez-vous que le post a un extrait dans les limites de caractères"
+
+msgid "Require minimum number of categories"
+msgstr "Exiger un nombre minimum de catégories"
+
+msgid "Require minimum number of tags"
+msgstr "Exiger un nombre minimum de tags"
+
+msgid "Require specific custom fields to be filled"
+msgstr "Exiger que des champs personnalisés spécifiques soient remplis"
+
+msgid "Content must have specific heading counts (H2, H3, H4)"
+msgstr "Le contenu doit avoir des comptes de titres spécifiques (H2, H3, H4)"
+
+msgid "Custom checklist items requiring manual verification"
+msgstr ""
+"Éléments de liste de contrôle personnalisés nécessitant une vérification "
+"manuelle"
+
+msgid "Enter checklist name"
+msgstr "Entrez le nom de la liste de contrôle"
+
+msgid "Block Templates"
+msgstr "Modèles de blocs"
+
+msgid "Select which post types this checklist should apply to."
+msgstr ""
+"Sélectionnez les types de post auxquels cette liste de contrôle doit "
+"s'appliquer."
+
+msgid ""
+"When active, this checklist will be shown in the Gutenberg editor for the "
+"selected post types."
+msgstr ""
+"Lorsqu'elle est active, cette liste de contrôle sera affichée dans l'éditeur "
+"Gutenberg pour les types de post sélectionnés."
+
+msgid ""
+"When enabled, the Gutenberg sidebar will show helpful tips for failed "
+"requirements to guide content creators."
+msgstr ""
+"Lorsqu'il est activé, la barre latérale Gutenberg affichera des conseils "
+"utiles pour les exigences non satisfaites afin de guider les créateurs de "
+"contenu."
+
+msgid "Minimum Word Count"
+msgstr "Nombre minimum de mots"
+
+msgid "Featured Image"
+msgstr "Image à la une"
+
+msgid "Excerpt"
+msgstr "Extrait"
+
+msgid "Content must have at least [X] words"
+msgstr "Le contenu doit avoir au moins [X] mots"
+
+msgid "300"
+msgstr "300"
+
+msgid "Post must have a featured image"
+msgstr "Le post doit avoir une image à la une"
+
+msgid "Excerpt must be between [X] and [Y] characters"
+msgstr "L'extrait doit être compris entre [X] et [Y] caractères"
+
+msgid "Minimum excerpt length"
+msgstr "Longueur minimale de l'extrait"
+
+msgid "50"
+msgstr "50"
+
+msgid "Maximum excerpt length"
+msgstr "Longueur maximale de l'extrait"
+
+msgid "Post must have at least [X] categories"
+msgstr "Le post doit avoir au moins [X] catégories"
+
+msgid "Minimum categories"
+msgstr "Catégories minimales"
+
+msgid "1"
+msgstr "1"
+
+msgid "Post must have at least [X] tags"
+msgstr "Le post doit avoir au moins [X] tags"
+
+msgid "Minimum tags"
+msgstr "Tags minimaux"
+
+msgid "3"
+msgstr "3"
+
+msgid "External Links"
+msgstr "Liens externes"
+
+msgid "Content must have at least [X] external links"
+msgstr "Le contenu doit avoir au moins [X] liens externes"
+
+msgid "Minimum external links"
+msgstr "Liens externes minimums"
+
+msgid "Internal Links"
+msgstr "Liens internes"
+
+msgid "Content must have at least [X] internal links"
+msgstr "Le contenu doit avoir au moins [X] liens internes"
+
+msgid "Minimum internal links"
+msgstr "Liens internes minimums"
+
+msgid "2"
+msgstr "2"
+
+msgid "Title Length"
+msgstr "Longueur du titre"
+
+msgid "Title must be between [X] and [Y] characters"
+msgstr "Le titre doit être compris entre [X] et [Y] caractères"
+
+msgid "Minimum title length"
+msgstr "Longueur minimale du titre"
+
+msgid "10"
+msgstr "10"
+
+msgid "Maximum title length"
+msgstr "Longueur maximale du titre"
+
+msgid "60"
+msgstr "60"
+
+msgid "Meta Description"
+msgstr "Meta Description"
+
+msgid "Meta description must be between [X] and [Y] characters"
+msgstr "La méta description doit comporter entre [X] et [Y] caractères"
+
+msgid "Minimum meta description length"
+msgstr "Longueur minimale de la méta description"
+
+msgid "120"
+msgstr "120"
+
+msgid "Maximum meta description length"
+msgstr "Longueur maximale de la méta description"
+
+msgid "160"
+msgstr "160"
+
+msgid "Meta Title"
+msgstr "Meta Title"
+
+msgid "Meta title must be between [X] and [Y] characters"
+msgstr "Le titre méta doit comporter entre [X] et [Y] caractères"
+
+msgid "Minimum meta title length"
+msgstr "Longueur minimale du titre méta"
+
+msgid "30"
+msgstr "30"
+
+msgid "Maximum meta title length"
+msgstr "Longueur maximale du titre méta"
+
+msgid "Image Alt Text"
+msgstr "Texte alternatif de l'image"
+
+msgid "All images must have alt text for accessibility"
+msgstr ""
+"Toutes les images doivent avoir un texte alternatif pour l'accessibilité"
+
+msgid "Image Count"
+msgstr "Nombre d'images"
+
+msgid "Content must have at least [X] images"
+msgstr "Le contenu doit comporter au moins [X] images"
+
+msgid "Minimum images"
+msgstr "Images minimales"
+
+msgid "Custom field must be filled"
+msgstr "Le champ personnalisé doit être rempli"
+
+msgid "Add Custom Field"
+msgstr "Ajouter un champ personnalisé"
+
+msgid "Add Custom Item"
+msgstr "Ajouter un élément personnalisé"
+
+msgid ""
+"Excerpt helps users understand your content before reading. Check character "
+"limits in the excerpt section."
+msgstr ""
+"L'extrait aide les utilisateurs à comprendre votre contenu avant de lire. "
+"Vérifiez les limites de caractères dans la section extrait."
+
+msgid ""
+"Meta descriptions appear in search results. Keep within SEO-recommended "
+"character limits."
+msgstr ""
+"Les méta descriptions apparaissent dans les résultats de recherche. Restez "
+"dans les limites de caractères recommandées par le SEO."
+
+msgid "Proper heading structure (H2, H3, H4) improves readability and SEO."
+msgstr ""
+"Une structure de titres appropriée (H2, H3, H4) améliore la lisibilité et le "
+"SEO."
+
+msgid "Adequate content length helps with SEO and provides value to readers."
+msgstr ""
+"Une longueur de contenu adéquate aide au SEO et apporte de la valeur aux "
+"lecteurs."
+
+msgid ""
+"Title length affects how it displays in search results and social media."
+msgstr ""
+"La longueur du titre affecte son affichage dans les résultats de recherche "
+"et sur les réseaux sociaux."
+
+msgid "Featured images improve engagement and social media sharing."
+msgstr ""
+"Les images mises en avant améliorent l'engagement et le partage sur les "
+"réseaux sociaux."
+
+msgid "Categories help organize your content and improve navigation."
+msgstr ""
+"Les catégories aident à organiser votre contenu et à améliorer la navigation."
+
+msgid "Tags help readers discover related content and improve SEO."
+msgstr ""
+"Les tags aident les lecteurs à découvrir du contenu connexe et améliorent le "
+"SEO."
+
+msgid ""
+"External links to authoritative sources add credibility to your content."
+msgstr ""
+"Les liens externes vers des sources autorisées ajoutent de la crédibilité à "
+"votre contenu."
+
+msgid "Internal links help readers explore related content and improve SEO."
+msgstr ""
+"Les liens internes aident les lecteurs à explorer du contenu connexe et "
+"améliorent le SEO."
+
+msgid "Alt text makes images accessible to screen readers and improves SEO."
+msgstr ""
+"Le texte alternatif rend les images accessibles aux lecteurs d'écran et "
+"améliore le SEO."
+
+msgid "Images make content more engaging and help break up text."
+msgstr ""
+"Les images rendent le contenu plus engageant et aident à aérer le texte."
+
+msgid "Custom fields store additional metadata for your content."
+msgstr ""
+"Les champs personnalisés stockent des métadonnées supplémentaires pour votre "
+"contenu."
+
+msgid "Manual verification items require human review before publishing."
+msgstr ""
+"Les éléments de vérification manuelle nécessitent une révision humaine avant "
+"publication."
+
+msgid "Complete this requirement before publishing."
+msgstr "Complétez cette exigence avant de publier."
+
+msgid "Heading Count"
+msgstr "Nombre de titres"
+
+msgid "Test Custom Field"
+msgstr "Tester le champ personnalisé"
+
+msgid "Test custom Item"
+msgstr "Tester l'élément personnalisé"
+
+msgid "Excerpt is missing (required: %d-%d characters)"
+msgstr "L'extrait est manquant (requis : %d-%d caractères)"
+
+msgid "External links: %d (required: %d+)"
+msgstr "Liens externes : %d (requis : %d+) "
+
+msgid "Internal links: %d (required: %d+)"
+msgstr "Liens internes : %d (requis : %d+) "
+
+msgid "Title length: %d characters (required: %d-%d)"
+msgstr "Longueur du titre : %d caractères (requis : %d-%d) "
+
+msgid ""
+"No meta description found (required: %d-%d characters). Please add one using "
+"your SEO plugin."
+msgstr ""
+"Aucune méta description trouvée (requis : %d-%d caractères). Veuillez en "
+"ajouter une en utilisant votre plugin SEO."
+
+msgid "Meta title too long: %d characters (required: %d-%d) - %s"
+msgstr "Titre méta trop long : %d caractères (requis : %d-%d) - %s"
+
+msgid "%s - Manual verification required"
+msgstr "%s - Vérification manuelle requise"
+
+msgid "Heading requirements not met: %s"
+msgstr "Exigences de titre non satisfaites : %s"
+
+msgid "No images found in content"
+msgstr "Aucune image trouvée dans le contenu"
+
+msgid "%s is empty."
+msgstr "%s est vide."
+
+msgid "Custom Field"
+msgstr "Champ personnalisé"
+
+msgid "Custom field"
+msgstr "champ personnalisé"
+
+msgid "Display name"
+msgstr "Nom d'affichage"
+
+msgid "e.g., Author Bio"
+msgstr "p. ex., Biographie de l'auteur"
+
+msgid "Custom Item"
+msgstr "Élément personnalisé"
+
+msgid "Item title"
+msgstr "Titre de l'élément"
+
+msgid "e.g., Fact-check all statistics"
+msgstr "p. ex., Vérifiez toutes les statistiques"
+
+msgid "Description (optional)"
+msgstr "Description (facultatif)"
+
+msgid "Additional instructions..."
+msgstr "Instructions supplémentaires..."
+
+msgid "MCL Tour Playback: No tour data provided"
+msgstr "Lecture de la visite MCL : Aucune donnée de visite fournie"
+
+msgid "MCL Tour Playback: Tour has no steps"
+msgstr "Lecture de la visite MCL : La visite n'a pas d'étapes"
+
+msgid "MCL Tour Playback: Driver function not available, retrying..."
+msgstr ""
+"Lecture de la visite MCL : Fonction du conducteur non disponible, nouvelle "
+"tentative..."
+
+msgid "MCL Tour Playback: Driver function still not available after retry"
+msgstr ""
+"Lecture de la visite MCL : Fonction du conducteur toujours non disponible "
+"après la nouvelle tentative"
+
+msgid "Click \"Continue\" to go to the next page..."
+msgstr "Cliquez sur \"Continuer\" pour passer à la page suivante..."
+
+msgid "Tour Step"
+msgstr "Étape de la visite"
+
+msgid "Continue"
+msgstr "Continuer"
+
+msgid "MCL Tour: Error moving to next step"
+msgstr "Visite MCL : Erreur lors du passage à l'étape suivante"
+
+msgid "MCL Tour: Error moving to previous step within page"
+msgstr "Visite MCL : Erreur lors du passage à l'étape précédente dans la page"
+
+msgid "MCL Tour: Error moving to previous step"
+msgstr "Visite MCL : Erreur lors du passage à l'étape précédente"
+
+msgid "Are you sure you want to exit the tour?"
+msgstr "Êtes-vous sûr de vouloir quitter la visite ?"
+
+msgid "MCL Tour: Error in close confirmation:"
+msgstr "Visite MCL : Erreur dans la confirmation de fermeture :"
+
+msgid "MCL Tour Playback: Error starting tour:"
+msgstr "Lecture de la visite MCL : Erreur lors du démarrage de la visite :"
+
+msgid "MCL Tour Playback: Error continuing tour:"
+msgstr "Lecture de la visite MCL : Erreur lors de la poursuite de la visite :"
+
+msgid "Loading next page..."
+msgstr "Chargement de la page suivante..."
+
+msgid "Close tour"
+msgstr "Fermer la visite"
+
+msgid "MCL Tour: checkChecklistItem - Missing parameters"
+msgstr "Visite MCL : checkChecklistItem - Paramètres manquants"
+
+msgid "MCL Tour: Failed to check checklist item"
+msgstr ""
+"Visite MCL : Échec de la vérification de l'élément de la liste de contrôle"
+
+msgid "MCL Tour Playback: Error checking checklist item:"
+msgstr ""
+"Lecture de la visite MCL : Erreur lors de la vérification de l'élément de la "
+"liste de contrôle :"
+
+msgid "MCL Tour: uncheckChecklistItem - Missing parameters"
+msgstr "Visite MCL : uncheckChecklistItem - Paramètres manquants"
+
+msgid "MCL Tour: Failed to uncheck checklist item"
+msgstr ""
+"Visite MCL : Échec de la désélection de l'élément de la liste de contrôle"
+
+msgid "MCL Tour Playback: Error unchecking checklist item:"
+msgstr ""
+"Lecture de la visite MCL : Erreur lors de la désélection de l'élément de la "
+"liste de contrôle :"
+
+msgid "Close modal"
+msgstr "Fermer la fenêtre modale"
+
+msgid "Exit Tour?"
+msgstr "Quitter la visite ?"
+
+msgid "No, continue tour"
+msgstr "Non, continuer la visite"
+
+msgid "Yes, exit tour"
+msgstr "Oui, quitter la visite"
+
+msgid "Failed to load tour data"
+msgstr "Échec du chargement des données de la visite"
+
+msgid "Error loading tour data:"
+msgstr "Erreur de chargement des données de la visite :"
+
+msgid "Preview failed: Tour steps could not be loaded in time."
+msgstr ""
+"Échec de l'aperçu : Les étapes de la visite n'ont pas pu être chargées à "
+"temps."
+
+msgid "No tour steps available for preview. Please ensure the tour is loaded."
+msgstr ""
+"Aucune étape de visite disponible pour l'aperçu. Veuillez vous assurer que "
+"la visite est chargée."
+
+msgid "Invalid step index for preview:"
+msgstr "Index d'étape invalide pour l'aperçu :"
+
+msgid "Tour has"
+msgstr "La visite a"
+
+msgid "steps"
+msgstr "étapes"
+
+msgid "Tour preview is not available. Please refresh the page and try again."
+msgstr ""
+"L'aperçu de la visite n'est pas disponible. Veuillez actualiser la page et "
+"réessayer."
+
+msgid "Preview"
+msgstr "Aperçu"
+
+msgid "Preview Tour"
+msgstr "Aperçu de la visite"
+
+msgid "Error loading checklists:"
+msgstr "Erreur de chargement des listes de contrôle :"
+
+msgid "Step deleted successfully"
+msgstr "Étape supprimée avec succès"
+
+msgid "Tour title is required to save."
+msgstr "Le titre de la visite est requis pour enregistrer."
+
+msgid "Tour saved successfully!"
+msgstr "Visite enregistrée avec succès !"
+
+msgid "Error saving tour"
+msgstr "Erreur lors de l'enregistrement de la visite"
+
+msgid "Please add some steps before previewing the tour."
+msgstr "Veuillez ajouter quelques étapes avant de prévisualiser la visite."
+
+msgid "Failed to save tour data. Preview may not work correctly."
+msgstr ""
+"Échec de l'enregistrement des données de la visite. L'aperçu peut ne pas "
+"fonctionner correctement."
+
+msgid "Click on an element to select it..."
+msgstr "Cliquez sur un élément pour le sélectionner..."
+
+msgid "Tour Creator"
+msgstr "Créateur de visite"
+
+msgid "Select Mode"
+msgstr "Mode sélection"
+
+msgid "Navigate Mode"
+msgstr "Mode navigation"
+
+msgid "Navigate"
+msgstr "Naviguer"
+
+msgid "Select"
+msgstr "Sélectionner"
+
+msgid "Click on elements to create tour steps"
+msgstr "Cliquez sur des éléments pour créer des étapes de visite"
+
+msgid "Navigate the site normally - links and forms will work"
+msgstr ""
+"Naviguez sur le site normalement - les liens et les formulaires "
+"fonctionneront"
+
+msgid "Exit"
+msgstr "Sortir"
+
+msgid "step"
+msgstr "étape"
+
+msgid "No steps added yet. Click on elements to create steps."
+msgstr ""
+"Aucune étape ajoutée pour le moment. Cliquez sur des éléments pour créer des "
+"étapes."
+
+msgid "Untitled Step"
+msgstr "Étape sans titre"
+
+msgid "No element"
+msgstr "Aucun élément"
+
+msgid "Edit Tour Step"
+msgstr "Modifier l'étape de visite"
+
+msgid "Step Title"
+msgstr "Titre de l'étape"
+
+msgid "Enter step title..."
+msgstr "Entrez le titre de l'étape..."
+
+msgid "Step Content"
+msgstr "Contenu de l'étape"
+
+msgid "Enter the content for this step..."
+msgstr "Entrez le contenu pour cette étape..."
+
+msgid "You can use HTML for formatting."
+msgstr "Vous pouvez utiliser HTML pour le formatage."
+
+msgid "Link to Checklist"
+msgstr "Lien vers la liste de contrôle"
+
+msgid "Select a checklist (optional)"
+msgstr "Sélectionnez une liste de contrôle (facultatif)"
+
+msgid "Link to Item"
+msgstr "Lien vers l'élément"
+
+msgid "Select an item (optional)"
+msgstr "Sélectionnez un élément (facultatif)"
+
+msgid "Popover Position"
+msgstr "Position du popover"
+
+msgid "Bottom (Default)"
+msgstr "Bas (par défaut)"
+
+msgid "Top"
+msgstr "Haut"
+
+msgid "Left"
+msgstr "Gauche"
+
+msgid "Right"
+msgstr "Droite"
+
+msgid "Target Element"
+msgstr "Élément cible"
+
+msgid "CSS selector (e.g., #my-button)"
+msgstr "Sélecteur CSS (par exemple, #mon-bouton)"
+
+msgid "Click to select element visually"
+msgstr "Cliquez pour sélectionner visuellement l'élément"
+
+msgid ""
+"Enter a CSS selector or click the crosshairs to select an element visually."
+msgstr ""
+"Entrez un sélecteur CSS ou cliquez sur les réticules pour sélectionner un "
+"élément visuellement."
+
+msgid "Page URL"
+msgstr "URL de la page"
+
+msgid "Leave empty for current page"
+msgstr "Laissez vide pour la page actuelle"
+
+msgid ""
+"The page where this step should appear. Leave empty to use the current page."
+msgstr ""
+"La page où cette étape doit apparaître. Laissez vide pour utiliser la page "
+"actuelle."
+
+msgid "Show navigation buttons"
+msgstr "Afficher les boutons de navigation"
+
+msgid "Save Step"
+msgstr "Enregistrer l'étape"
+
+msgid "Exit Tour Creator?"
+msgstr "Sortir du créateur de visite ?"
+
+msgid "Are you sure you want to exit? Any unsaved changes will be lost."
+msgstr ""
+"Êtes-vous sûr de vouloir sortir ? Tous les changements non enregistrés "
+"seront perdus."
+
+msgid "Yes, exit"
+msgstr "Oui, sortir"
+
+msgid "No, continue editing"
+msgstr "Non, continuer à éditer"
+
+msgid "Delete Tour Step?"
+msgstr "Supprimer l'étape de visite ?"
+
+msgid "Are you sure you want to delete"
+msgstr "Êtes-vous sûr de vouloir supprimer"
+
+msgid "Are you sure you want to delete this step?"
+msgstr "Êtes-vous sûr de vouloir supprimer cette étape ?"
+
+msgid "No, keep it"
+msgstr "Non, gardez-la"
+
+msgid "Error updating tour status"
+msgstr "Erreur lors de la mise à jour du statut de la visite"
+
+msgid "Tour duplicated successfully"
+msgstr "Visite dupliquée avec succès"
+
+msgid "Error duplicating tour"
+msgstr "Erreur lors de la duplication de la visite"
+
+msgid "Tour deleted successfully"
+msgstr "Visite supprimée avec succès"
+
+msgid "Error deleting tour"
+msgstr "Erreur lors de la suppression de la visite"
+
+msgid "CSS Selector"
+msgstr "Sélecteur CSS"
+
+msgid "First Login"
+msgstr "Première connexion"
+
+msgid "Any Page"
+msgstr "Toute page"
+
+msgid "All Users"
+msgstr "Tous les utilisateurs"
+
+msgid "Logged In"
+msgstr "Connecté"
+
+msgid "Logged Out"
+msgstr "Déconnecté"
+
+msgid "Specific Users"
+msgstr "Utilisateurs spécifiques"
+
+msgid "Specific Roles"
+msgstr "Rôles spécifiques"
+
+msgid "No tours yet"
+msgstr "Pas encore de visites"
+
+msgid "Create your first tour to guide users through your WordPress site."
+msgstr ""
+"Créez votre première visite pour guider les utilisateurs à travers votre "
+"site WordPress."
+
+msgid "Create Your First Tour"
+msgstr "Créez votre première visite"
+
+msgid "(no title)"
+msgstr "(sans titre)"
+
+msgid "Auto-start"
+msgstr "Démarrage automatique"
+
+msgid "Tour Settings"
+msgstr "Paramètres de la visite"
+
+msgid "Open Creator"
+msgstr "Ouvrir le créateur"
+
+msgid "Duplicate"
+msgstr "Dupliquer"
+
+msgid "Reset Completion"
+msgstr "Réinitialiser l'achèvement"
+
+msgid "Delete Tour"
+msgstr "Supprimer la visite"
+
+msgid "Are you sure you want to delete the tour"
+msgstr "Êtes-vous sûr de vouloir supprimer la visite"
+
+msgid "This action cannot be undone."
+msgstr "Cette action ne peut pas être annulée."
+
+msgid "Deleting..."
+msgstr "Suppression en cours..."
+
+msgid "Permission denied"
+msgstr "Permission refusée"
+
+msgid "Failed to save tour"
+msgstr "Échec de l'enregistrement de la visite"
+
+msgid "Failed to delete tour"
+msgstr "Échec de la suppression de la visite"
+
+msgid "Invalid nonce"
+msgstr "Nonce invalide"
+
+msgid "Tour not found"
+msgstr "Visite non trouvée"
+
+msgid "Invalid parameters"
+msgstr "Paramètres invalides"
+
+msgid "Step count mismatch"
+msgstr "Incohérence dans le nombre d'étapes"
+
+msgid "You do not have permission to interact with this checklist"
+msgstr "Vous n'avez pas la permission d'interagir avec cette liste de contrôle"
+
+msgid "Failed to duplicate tour"
+msgstr "Échec de la duplication de la visite"
+
+msgid "Basic Information"
+msgstr "Informations de base"
+
+msgid "Give your tour a descriptive name."
+msgstr "Donnez à votre visite un nom descriptif."
+
+msgid "Enter tour title..."
+msgstr "Entrez le titre de la visite..."
+
+msgid "Optional description for this tour..."
+msgstr "Description optionnelle pour cette visite..."
+
+msgid "Optional description to help you remember what this tour is for."
+msgstr ""
+"Description optionnelle pour vous aider à vous souvenir de l'objectif de "
+"cette visite."
+
+msgid "Active (show this tour to users)"
+msgstr "Actif (afficher cette visite aux utilisateurs)"
+
+msgid "Only active tours will be displayed to users."
+msgstr "Seules les visites actives seront affichées aux utilisateurs."
+
+msgid "Trigger Location"
+msgstr "Emplacement de déclenchement"
+
+msgid "Specific Page URL"
+msgstr "URL de page spécifique"
+
+msgid "Select a template or enter custom URL"
+msgstr "Sélectionnez un modèle ou entrez une URL personnalisée"
+
+msgid "e.g., /wp-admin/edit.php"
+msgstr "par exemple, /wp-admin/edit.php"
+
+msgid "Enter the URL where this tour should trigger. Use * for wildcards."
+msgstr ""
+"Entrez l'URL où cette visite doit se déclencher. Utilisez * pour les jokers."
+
+msgid "When CSS Selector Exists"
+msgstr "Lorsque le sélecteur CSS existe"
+
+msgid "e.g., .my-button, #specific-element"
+msgstr "par exemple, .my-button, #élément-spécifique"
+
+msgid "The tour will trigger when this CSS selector is found on the page."
+msgstr ""
+"La visite se déclenchera lorsque ce sélecteur CSS sera trouvé sur la page."
+
+msgid "User's First Login (any page)"
+msgstr "Première connexion de l'utilisateur (toute page)"
+
+msgid "Tour will show only on the user's first login to WordPress."
+msgstr ""
+"La visite ne s'affichera que lors de la première connexion de l'utilisateur "
+"à WordPress."
+
+msgid "Tour can trigger on any page (use with caution)."
+msgstr ""
+"La visite peut se déclencher sur n'importe quelle page (à utiliser avec "
+"prudence)."
+
+msgid "User Conditions"
+msgstr "Conditions utilisateur"
+
+msgid "Who should see this tour?"
+msgstr "Qui devrait voir cette visite ?"
+
+msgid "All Users (logged in and logged out)"
+msgstr "Tous les utilisateurs (connectés et déconnectés)"
+
+msgid "All Logged In Users"
+msgstr "Tous les utilisateurs connectés"
+
+msgid "All Logged Out Users"
+msgstr "Tous les utilisateurs déconnectés"
+
+msgid "Specific Users Only"
+msgstr "Utilisateurs spécifiques uniquement"
+
+msgid "Type usernames..."
+msgstr "Tapez les noms d'utilisateur..."
+
+msgid "Specific User Roles Only"
+msgstr "Rôles d'utilisateur spécifiques uniquement"
+
+msgid "Select user roles..."
+msgstr "Sélectionnez les rôles d'utilisateur..."
+
+msgid "Auto-start tour when triggered"
+msgstr "Démarrer automatiquement la visite lorsqu'elle est déclenchée"
+
+msgid ""
+"If enabled, the tour will start automatically when the trigger conditions "
+"are met."
+msgstr ""
+"Si activé, la visite commencera automatiquement lorsque les conditions de "
+"déclenchement sont remplies."
+
+msgid "Show only once per user"
+msgstr "Afficher uniquement une fois par utilisateur"
+
+msgid ""
+"If checked, each user will only see this tour once. Tracked by user account "
+"or browser cookie."
+msgstr ""
+"Si coché, chaque utilisateur ne verra cette visite qu'une seule fois. Suivi "
+"par compte utilisateur ou cookie de navigateur."
+
+msgid "Appearance & Behavior"
+msgstr "Apparence et comportement"
+
+msgid "Animation"
+msgstr "Animation"
+
+msgid "Enable animated transitions"
+msgstr "Activer les transitions animées"
+
+msgid ""
+"When enabled, the tour will smoothly animate between steps. Disable for a "
+"static, instant appearance."
+msgstr ""
+"Lorsque activé, la visite animera en douceur entre les étapes. Désactivez "
+"pour une apparence statique et instantanée."
+
+msgid "Progress Display"
+msgstr "Affichage de la progression"
+
+msgid "Show progress indicator"
+msgstr "Afficher l'indicateur de progression"
+
+msgid "Progress Text Template"
+msgstr "Modèle de texte de progression"
+
+msgid "{{current}} of {{total}}"
+msgstr "{{current}} sur {{total}}"
+
+msgid ""
+"Customize the progress text. Use {{current}} for current step and {{total}} "
+"for total steps."
+msgstr ""
+"Personnalisez le texte de progression. Utilisez {{current}} pour l'étape "
+"actuelle et {{total}} pour le nombre total d'étapes."
+
+msgid "Exit Control"
+msgstr "Contrôle de sortie"
+
+msgid "Allow users to close tour"
+msgstr "Permettre aux utilisateurs de fermer la visite"
+
+msgid ""
+"When disabled, users must complete the entire tour before they can exit."
+msgstr ""
+"Lorsque désactivé, les utilisateurs doivent compléter toute la visite avant "
+"de pouvoir sortir."
+
+msgid "Show confirmation dialog before exit"
+msgstr "Afficher une boîte de dialogue de confirmation avant la sortie"
+
+msgid "Exit Confirmation Message"
+msgstr "Message de confirmation de sortie"
+
+msgid ""
+"Message shown when users try to exit the tour (only when confirmation is "
+"enabled)."
+msgstr ""
+"Message affiché lorsque les utilisateurs essaient de quitter la visite "
+"(uniquement lorsque la confirmation est activée)."
+
+msgid "Button Text"
+msgstr "Texte du bouton"
+
+msgid "Next Button Text"
+msgstr "Texte du bouton Suivant"
+
+msgid "Previous Button Text"
+msgstr "Texte du bouton Précédent"
+
+msgid "Done Button Text"
+msgstr "Texte du bouton Terminé"
+
+msgid "Close Button Text"
+msgstr "Texte du bouton Fermer"
+
+msgid "Customize the text displayed on tour navigation buttons."
+msgstr ""
+"Personnalisez le texte affiché sur les boutons de navigation de la visite."
+
+msgid "Default Buttons to Show"
+msgstr "Boutons par défaut à afficher"
+
+msgid "Next button"
+msgstr "Bouton Suivant"
+
+msgid "Previous button"
+msgstr "Bouton Précédent"
+
+msgid "Close button"
+msgstr "Bouton Fermer"
+
+msgid ""
+"Select which buttons should be shown by default on each tour step. "
+"Individual steps can override these settings."
+msgstr ""
+"Sélectionnez quels boutons doivent être affichés par défaut à chaque étape "
+"de la visite. Les étapes individuelles peuvent remplacer ces paramètres."
+
+msgid "Overlay Style"
+msgstr "Style de superposition"
+
+msgid "Overlay Color"
+msgstr "Couleur de superposition"
+
+msgid "Overlay Opacity"
+msgstr "Opacité de superposition"
+
+msgid "Customize the background overlay that appears behind the tour popover."
+msgstr ""
+"Personnalisez la superposition d'arrière-plan qui apparaît derrière la "
+"fenêtre contextuelle de la visite."
+
+msgid "Popover Style"
+msgstr "Style de fenêtre contextuelle"
+
+msgid "Custom CSS Class"
+msgstr "Classe CSS personnalisée"
+
+msgid "my-custom-tour-theme"
+msgstr "mon-thème-visite-personnalisé"
+
+msgid ""
+"Add a custom CSS class to style the popover. Leave empty for default styling."
+" Try: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-"
+"rounded, or mcl-theme-large."
+msgstr ""
+"Ajoutez une classe CSS personnalisée pour styliser la fenêtre contextuelle. "
+"Laissez vide pour le style par défaut. Essayez : mcl-theme-dark, mcl-theme-"
+"primary, mcl-theme-minimal, mcl-theme-rounded, ou mcl-theme-large."
+
+msgid "Advanced Options"
+msgstr "Options avancées"
+
+msgid "Highlight Padding"
+msgstr "Marge de surlignage"
+
+msgid "Padding around highlighted elements in pixels."
+msgstr "Marge autour des éléments surlignés en pixels."
+
+msgid "Smooth Scroll"
+msgstr "Défilement fluide"
+
+msgid "Enable smooth scrolling to highlighted elements."
+msgstr "Activer le défilement fluide vers les éléments surlignés."
+
+msgid "Tour Steps"
+msgstr "Étapes de la visite"
+
+msgid "(drag to reorder)"
+msgstr "(faites glisser pour réorganiser)"
+
+msgid "No steps added yet. Use the visual creator to add steps."
+msgstr ""
+"Aucune étape ajoutée pour le moment. Utilisez le créateur visuel pour "
+"ajouter des étapes."
+
+msgid "View All Steps"
+msgstr "Voir toutes les étapes"
+
+msgid "Save & Open Visual Creator"
+msgstr "Enregistrer et ouvrir le créateur visuel"
+
+msgid "Save Settings Only"
+msgstr "Enregistrer uniquement les paramètres"
+
+msgid "Reset My Completion"
+msgstr "Réinitialiser ma progression"
+
+msgid "Getting Started"
+msgstr "Commencer"
+
+msgid "Create Your Tour"
+msgstr "Créez votre visite"
+
+msgid "Configure Settings"
+msgstr "Configurer les paramètres"
+
+msgid ""
+"Set up the basic information, trigger conditions, and customize the "
+"appearance."
+msgstr ""
+"Configurez les informations de base, les conditions de déclenchement et "
+"personnalisez l'apparence."
+
+msgid "Add Tour Steps"
+msgstr "Ajouter des étapes de visite"
+
+msgid ""
+"Use the visual tour creator to add interactive steps by clicking on elements."
+msgstr ""
+"Utilisez le créateur de visite visuel pour ajouter des étapes interactives "
+"en cliquant sur les éléments."
+
+msgid "Preview & Test"
+msgstr "Aperçu et test"
+
+msgid "Use the preview feature to test your tour and make adjustments."
+msgstr ""
+"Utilisez la fonction d'aperçu pour tester votre visite et apporter des "
+"ajustements."
+
+msgid "Test & Activate"
+msgstr "Tester et activer"
+
+msgid "Preview your tour, make adjustments, then activate it for your users."
+msgstr ""
+"Aperçu de votre visite, apportez des ajustements, puis activez-la pour vos "
+"utilisateurs."
+
+msgid "Configure Trigger"
+msgstr "Configurer le déclencheur"
+
+msgid "Choose when and where your tour should appear to users."
+msgstr ""
+"Choisissez quand et où votre visite doit apparaître pour les utilisateurs."
+
+msgid "Save & Create"
+msgstr "Enregistrer et créer"
+
+msgid "Click \"Save & Open Visual Creator\" to start adding interactive steps."
+msgstr ""
+"Cliquez sur \"Enregistrer et ouvrir le créateur visuel\" pour commencer à "
+"ajouter des étapes interactives."
+
+msgid "Add Steps"
+msgstr "Ajouter des étapes"
+
+msgid "Use the visual creator to add step-by-step guidance to your tour."
+msgstr ""
+"Utilisez le créateur visuel pour ajouter des conseils étape par étape à "
+"votre visite."

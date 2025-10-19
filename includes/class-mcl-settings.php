@@ -33,6 +33,7 @@ class MCL_Settings {
         add_action('wp_ajax_mcl_get_webhook_logs', array($this, 'ajax_get_webhook_logs'));
         add_action('wp_ajax_mcl_test_webhook', array($this, 'ajax_test_webhook'));
         add_action('wp_ajax_mcl_clear_webhook_logs', array($this, 'ajax_clear_webhook_logs'));
+        add_action('wp_ajax_mcl_get_available_languages', array($this, 'ajax_get_available_languages'));
         
         // Add public AJAX handler for getting general settings (for frontend styling)
         add_action('wp_ajax_mcl_get_general_settings', array($this, 'ajax_get_general_settings'));
@@ -485,6 +486,16 @@ class MCL_Settings {
             }
         }
 
+        // Handle plugin language setting
+        if (isset($input['plugin_language'])) {
+            $plugin_language = sanitize_text_field($input['plugin_language']);
+            // Validate that it's either empty (use WordPress default) or a valid locale code
+            if (empty($plugin_language) || preg_match('/^[a-z]{2}_[A-Z]{2}$/', $plugin_language)) {
+                $sanitized['plugin_language'] = $plugin_language;
+            } else {
+                $sanitized['plugin_language'] = ''; // Default to WordPress language
+            }
+        }
 
         
         return $sanitized;
@@ -1345,5 +1356,103 @@ class MCL_Settings {
         <?php
     }
 
+    /**
+     * AJAX handler to get available languages
+     */
+    public function ajax_get_available_languages() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.'));
+        }
+
+        check_ajax_referer('mcl_admin_nonce', 'nonce');
+
+        $languages = $this->get_available_languages();
+        wp_send_json_success($languages);
+    }
+
+    /**
+     * Get available languages by scanning for .mo files
+     */
+    private function get_available_languages() {
+        $languages = array();
+        
+        // Always include the default WordPress language option
+        $languages[] = array(
+            'value' => '', 
+            'label' => __('Use WordPress Language (Default)', 'magic-checklists')
+        );
+        
+        // Always include English
+        $languages[] = array(
+            'value' => 'en_US', 
+            'label' => 'English'
+        );
+        
+        $language_dir = dirname(plugin_basename(MAGIC_CHECKLISTS_PLUGIN_FILE)) . '/languages/';
+        $full_path = WP_PLUGIN_DIR . '/' . $language_dir;
+        
+        if (is_dir($full_path)) {
+            $mo_files = glob($full_path . 'magic-checklists-*.mo');
+            
+            foreach ($mo_files as $mo_file) {
+                $filename = basename($mo_file, '.mo');
+                $locale = str_replace('magic-checklists-', '', $filename);
+                
+                // Skip if it's already added (like en_US) or if it's not a valid locale format
+                if ($locale === 'en_US' || !preg_match('/^[a-z]{2}_[A-Z]{2}$/', $locale)) {
+                    continue;
+                }
+                
+                // Get language name from WordPress
+                $language_name = $this->get_language_name($locale);
+                
+                $languages[] = array(
+                    'value' => $locale,
+                    'label' => $language_name
+                );
+            }
+        }
+        
+        return $languages;
+    }
+    
+    /**
+     * Get human-readable language name from locale code
+     */
+    private function get_language_name($locale) {
+        $language_names = array(
+            'de_DE' => 'Deutsch (German)',
+            'fr_FR' => 'Français (French)',
+            'es_ES' => 'Español (Spanish)',
+            'it_IT' => 'Italiano (Italian)',
+            'pt_PT' => 'Português (Portuguese)',
+            'pt_BR' => 'Português do Brasil (Brazilian Portuguese)',
+            'nl_NL' => 'Nederlands (Dutch)',
+            'sv_SE' => 'Svenska (Swedish)',
+            'no_NO' => 'Norsk (Norwegian)',
+            'da_DK' => 'Dansk (Danish)',
+            'fi_FI' => 'Suomi (Finnish)',
+            'ru_RU' => 'Русский (Russian)',
+            'zh_CN' => '简体中文 (Chinese Simplified)',
+            'zh_TW' => '繁體中文 (Chinese Traditional)',
+            'ja_JP' => '日本語 (Japanese)',
+            'ko_KR' => '한국어 (Korean)',
+            'ar_AR' => 'العربية (Arabic)',
+            'he_IL' => 'עברית (Hebrew)',
+            'tr_TR' => 'Türkçe (Turkish)',
+            'pl_PL' => 'Polski (Polish)',
+            'cs_CZ' => 'Čeština (Czech)',
+            'sk_SK' => 'Slovenčina (Slovak)',
+            'hu_HU' => 'Magyar (Hungarian)',
+            'ro_RO' => 'Română (Romanian)',
+            'bg_BG' => 'Български (Bulgarian)',
+            'hr_HR' => 'Hrvatski (Croatian)',
+            'sr_RS' => 'Српски (Serbian)',
+            'uk_UA' => 'Українська (Ukrainian)',
+            'el_GR' => 'Ελληνικά (Greek)',
+        );
+        
+        return isset($language_names[$locale]) ? $language_names[$locale] : $locale;
+    }
 
 }

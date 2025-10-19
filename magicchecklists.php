@@ -89,23 +89,72 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Initialize hooks
          */
         private function init_hooks() {
-            add_action('plugins_loaded', array($this, 'load_textdomain'));
+            // Apply language override filter very early
+            add_action('plugins_loaded', array($this, 'setup_language_override'), 5);
+            add_action('plugins_loaded', array($this, 'load_textdomain'), 10);
             add_action('init', array($this, 'init'));
             add_action('plugins_loaded', array($this, 'check_version'));
+        }
+
+        /**
+         * Setup language override filter early
+         */
+        public function setup_language_override() {
+            // Check if user has set a custom language for the plugin
+            $settings = get_option('mcl_settings', array());
+            $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
+            
+            // If a custom language is set, add filters before any textdomain is loaded
+            if (!empty($plugin_language)) {
+                add_filter('plugin_locale', array($this, 'override_plugin_locale'), 10, 2);
+                add_filter('load_textdomain_mofile', array($this, 'override_mo_file'), 10, 2);
+            }
         }
 
         /**
          * Load plugin textdomain
          */
         public function load_textdomain() {
-            // For testing German translations: uncomment the next line
-            // switch_to_locale('de_DE');
-            
             load_plugin_textdomain(
                 'magic-checklists',
                 false,
                 dirname(plugin_basename(__FILE__)) . '/languages/'
             );
+        }
+        
+        /**
+         * Override the locale for our plugin only
+         */
+        public function override_plugin_locale($locale, $domain) {
+            if ($domain === 'magic-checklists') {
+                $settings = get_option('mcl_settings', array());
+                $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
+                
+                if (!empty($plugin_language)) {
+                    return $plugin_language;
+                }
+            }
+            return $locale;
+        }
+
+        /**
+         * Override the MO file path for our plugin
+         */
+        public function override_mo_file($mofile, $domain) {
+            if ($domain === 'magic-checklists') {
+                $settings = get_option('mcl_settings', array());
+                $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
+                
+                if (!empty($plugin_language)) {
+                    $languages_path = dirname(plugin_basename(__FILE__)) . '/languages/';
+                    $new_mofile = WP_PLUGIN_DIR . '/' . $languages_path . 'magic-checklists-' . $plugin_language . '.mo';
+                    
+                    if (file_exists($new_mofile)) {
+                        return $new_mofile;
+                    }
+                }
+            }
+            return $mofile;
         }
 
         /**

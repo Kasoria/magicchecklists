@@ -10,8 +10,17 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     enable_progress_counter: false,
     delete_data_on_uninstall: false,
     speed_dial_bg_color: '#374151',
-    speed_dial_icon_color: '#ffffff'
+    speed_dial_icon_color: '#ffffff',
+    plugin_language: ''  // Empty string means use WordPress language
   })
+  
+  const [availableLanguages, setAvailableLanguages] = useState([
+    { value: '', label: 'Use WordPress Language (Default)' },
+    { value: 'en_US', label: 'English' }
+  ])
+  
+  // Track the original language to detect changes
+  const [originalLanguage, setOriginalLanguage] = useState('')
 
   useEffect(() => {
     if (settings) {
@@ -19,8 +28,36 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
         ...prev,
         ...settings
       }))
+      // Track the original language setting
+      setOriginalLanguage(settings.plugin_language || '')
     }
   }, [settings])
+
+  // Fetch available languages on component mount
+  useEffect(() => {
+    const fetchAvailableLanguages = async () => {
+      try {
+        const formData = new FormData()
+        formData.append('action', 'mcl_get_available_languages')
+        formData.append('nonce', window.mclAdminData?.nonces?.mcl_admin || '')
+
+        const response = await fetch(window.mclAdminData?.ajaxUrl || '/wp-admin/admin-ajax.php', {
+          method: 'POST',
+          body: formData
+        })
+
+        const result = await response.json()
+        if (result.success && result.data) {
+          setAvailableLanguages(result.data)
+        }
+      } catch (error) {
+        console.error('Error fetching available languages:', error)
+        // Keep default languages if fetch fails
+      }
+    }
+
+    fetchAvailableLanguages()
+  }, [])
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
@@ -31,7 +68,34 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSave(formData)
+    
+    // Check if language setting has changed
+    const languageChanged = formData.plugin_language !== originalLanguage
+    
+    // Call onSave which returns a Promise from the parent component
+    const savePromise = onSave(formData)
+    
+    // If language changed, reload the page after successful save
+    if (languageChanged) {
+      if (savePromise && typeof savePromise.then === 'function') {
+        savePromise.then(() => {
+          // Success: reload after a short delay to show success message
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500) // Delay to allow success message to be visible
+        }).catch((error) => {
+          // Save failed, don't reload
+          console.error('Settings save failed:', error)
+        })
+      } else {
+        // Fallback if onSave doesn't return a Promise
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      }
+    }
+    
+    return savePromise
   }
 
   return (
@@ -104,6 +168,29 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {i18n.generalSettings?.descriptions?.dataCleanup || 'Delete all plugin data when uninstalling MagicChecklists (including checklists, settings, and database tables).'}
+          </p>
+        </div>
+
+        {/* Plugin Language */}
+        <div className="space-y-2">
+          <Label className="text-brand-dark dark:text-white font-medium">
+            {i18n.generalSettings?.labels?.pluginLanguage || 'Plugin Language'}
+          </Label>
+          <div className="mt-2">
+            <select
+              value={formData.plugin_language}
+              onChange={(e) => handleInputChange('plugin_language', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-accent focus:border-brand-accent text-brand-dark dark:text-white"
+            >
+              {availableLanguages.map(lang => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {i18n.generalSettings?.descriptions?.pluginLanguage || 'Choose the language for the MagicChecklists plugin interface. This overrides the WordPress language setting for this plugin only.'}
           </p>
         </div>
 

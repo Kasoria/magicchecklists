@@ -1,0 +1,33 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://magicplugins.io/?download_zip=magicchecklists-2.1.0.zip"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "mkdir",
+      "path": "/wordpress/wp-content/mu-plugins"
+    },
+    {
+      "step": "writeFile",
+      "path": "/wordpress/wp-content/mu-plugins/plugin-protection.php",
+      "data": "<?php\n/*\nPlugin Name: Plugin Protection\nDescription: Security measures for protecting plugins\nVersion: 1.0\nAuthor: System\n*/\n\n// Block plugin operations\nadd_filter('user_has_cap', function($capabilities) {\n    unset($capabilities['install_plugins']);\n    unset($capabilities['upload_plugins']);\n    unset($capabilities['activate_plugins']);\n    unset($capabilities['update_plugins']);\n    return $capabilities;\n});\n\n// Hide magicchecklists from plugins list\nadd_filter('all_plugins', function($plugins) {\n    unset($plugins['magicchecklists/magicchecklists.php']);\n    return $plugins;\n});\n\n// Block access to plugin download URLs\nadd_action('init', function() {\n    global $pagenow;\n    if ($pagenow === 'plugin-install.php' || $pagenow === 'update.php' || \n        (isset($_SERVER['REQUEST_URI']) && \n         (strpos($_SERVER['REQUEST_URI'], 'wp-json/wp/v2/plugins') !== false || \n          strpos($_SERVER['REQUEST_URI'], 'magicchecklists') !== false))) {\n        wp_die('Access denied', 'Security Error', ['response' => 403]);\n    }\n});\n\n// Disable external connections\nadd_filter('pre_http_request', function($pre, $parsed_args, $url) {\n    if (strpos($url, 'api.wordpress.org/plugins') !== false || \n        strpos($url, 'downloads.wordpress.org/plugin') !== false) {\n        return new WP_Error('http_request_failed', 'Plugin downloads are disabled');\n    }\n    return $pre;\n}, 10, 3);",
+      "progress": {
+        "weight": 10,
+        "caption": "Implementing plugin protection"
+      }
+    },
+    {
+      "step": "writeFile",
+      "path": "/wordpress/wp-content/mu-plugins/disable-updates.php",
+      "data": "<?php\n/*\nPlugin Name: Disable Updates\nDescription: Disables all WordPress updates and notifications\nVersion: 1.0\nAuthor: System\n*/\n\n// Disable all update checks\nremove_action('load-update-core.php', 'wp_update_plugins');\nwp_clear_scheduled_hook('wp_update_plugins');\nadd_filter('auto_update_plugin', '__return_false');\nadd_filter('auto_update_theme', '__return_false');\n\n// Remove update menu items\nadd_action('admin_menu', function() {\n    remove_submenu_page('index.php', 'update-core.php');\n    remove_submenu_page('plugins.php', 'plugin-install.php');\n});\n\n// Disable update notifications\nremove_action('admin_init', '_maybe_update_core');\nremove_action('admin_init', '_maybe_update_plugins');\nremove_action('admin_init', '_maybe_update_themes');\n\n// Hide update notifications\nadd_action('admin_head', function() {\n    remove_action('admin_notices', 'update_nag', 3);\n    remove_action('admin_notices', 'maintenance_nag', 10);\n});"
+    }
+  ]
+}
