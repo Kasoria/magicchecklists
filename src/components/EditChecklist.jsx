@@ -495,14 +495,18 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     }
     
     if (!isValid) return
-    
-    try {
-      setLoading(true)
-      
-      console.log('Submitting form data:', formData) // Debug: Log form data being submitted
-      
-      // Prepare form data for submission
-      const submitData = new URLSearchParams({
+
+    // Set loading state first
+    setLoading(true)
+
+    // Use requestAnimationFrame to defer work until after the browser paints
+    // This ensures the loading spinner is visible before we start the heavy work
+    requestAnimationFrame(() => {
+      setTimeout(async () => {
+        try {
+
+          // Prepare form data for submission
+          const submitData = new URLSearchParams({
         action: 'save_checklist',
         checklist_id: checklistId || '',
         checklist_type: checklistType,
@@ -673,12 +677,14 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
       } else {
         throw new Error('Failed to save checklist')
       }
-    } catch (error) {
-      console.error('Error saving checklist:', error)
-      setErrors({ general: i18n.checklistEditor?.editChecklist?.actions?.errorSavingChecklist || 'Failed to save checklist. Please try again.' })
-    } finally {
-      setLoading(false)
-    }
+        } catch (error) {
+          console.error('Error saving checklist:', error)
+          setErrors({ general: i18n.checklistEditor?.editChecklist?.actions?.errorSavingChecklist || 'Failed to save checklist. Please try again.' })
+        } finally {
+          setLoading(false)
+        }
+      }, 0) // Execute on next tick
+    }) // requestAnimationFrame callback
   }
 
   const renderProgressTracker = () => (
@@ -1401,7 +1407,22 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {/* Global Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 flex flex-col items-center gap-4 shadow-xl">
+            <svg className="animate-spin h-12 w-12 text-brand-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              {i18n.checklistEditor?.editChecklist?.actions?.saving || 'Saving...'}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error Alert */}
       {errors.general && (
         <Alert color="failure" className="mb-6">
@@ -1453,8 +1474,19 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
                   <Button
                     className="bg-brand-accent hover:bg-brand-accent/90 text-brand-dark dark:bg-brand-accent hover:dark:bg-brand-accent/90"
                     type="submit"
+                    disabled={loading}
                   >
-                    {i18n.checklistEditor?.editChecklist?.actions?.save || i18n.common?.save || 'Save'}
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {i18n.checklistEditor?.editChecklist?.actions?.saving || 'Saving...'}
+                      </span>
+                    ) : (
+                      i18n.checklistEditor?.editChecklist?.actions?.save || i18n.common?.save || 'Save'
+                    )}
                   </Button>
                 ) : (
                   <Button

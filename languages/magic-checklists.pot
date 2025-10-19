@@ -476,6 +476,9 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
+msgid "Saving..."
+msgstr ""
+
 msgid "items"
 msgstr ""
 

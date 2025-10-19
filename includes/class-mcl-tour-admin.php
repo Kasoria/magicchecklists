@@ -22,7 +22,13 @@ class MCL_Tour_Admin {
         add_action('wp_ajax_nopriv_mcl_tour_step_check_item', array($this, 'tour_step_check_item'));
         add_action('wp_ajax_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
         add_action('wp_ajax_nopriv_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
-        
+
+        // Batch tour connection checks (optimized)
+        add_action('wp_ajax_mcl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
+        add_action('wp_ajax_nopriv_mcl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
+        add_action('wp_ajax_mcl_has_active_tours', array($this, 'has_active_tours'));
+        add_action('wp_ajax_nopriv_mcl_has_active_tours', array($this, 'has_active_tours'));
+
         // React component AJAX handlers
         add_action('wp_ajax_mcl_get_tours_list', array($this, 'get_tours_list'));
         add_action('wp_ajax_mcl_duplicate_tour', array($this, 'duplicate_tour'));
@@ -306,7 +312,8 @@ class MCL_Tour_Admin {
         
         // Clear any caches that might prevent tour detection
         wp_cache_delete('mcl_tours_active', 'mcl_tours');
-        
+        delete_transient('mcl_has_active_tours'); // Clear tour existence cache
+
         // Debug logging
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('MCL Tour Admin: Saved tour ' . $tour_id . ' with active=' . ($sanitized_settings['active'] ? 'true' : 'false') . ', autostart=' . ($sanitized_settings['autostart'] ? 'true' : 'false') . ', trigger_type=' . $trigger_type . ', trigger_value=' . $trigger_value);
@@ -327,8 +334,10 @@ class MCL_Tour_Admin {
         }
 
         $tour_id = intval($_POST['tour_id']);
-        
+
         if (wp_delete_post($tour_id, true)) {
+            // Clear tour existence cache when deleting a tour
+            delete_transient('mcl_has_active_tours');
             wp_send_json_success();
         } else {
             wp_send_json_error(__('Failed to delete tour', 'magic-checklists'));
@@ -386,9 +395,12 @@ class MCL_Tour_Admin {
         $tour_id = intval($_POST['tour_id']);
         $current_status = get_post_meta($tour_id, '_mcl_tour_active', true);
         $new_status = $current_status ? 0 : 1;
-        
+
         update_post_meta($tour_id, '_mcl_tour_active', $new_status);
-        
+
+        // Clear tour existence cache when toggling status
+        delete_transient('mcl_has_active_tours');
+
         wp_send_json_success(array('active' => $new_status));
     }
 
@@ -713,6 +725,157 @@ class MCL_Tour_Admin {
             'connections' => $connections,
             'checklist_id' => $checklist_id,
             'item_id' => $item_id
+        ));
+    }
+
+    /**
+     * Check if any active tours exist in the system (early exit optimization)
+     */
+    public function has_active_tours() {
+        // Check for tour nonces or checklist nonces
+        $nonce_verified = false;
+        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_admin_nonce')) {
+            $nonce_verified = true;
+        }
+
+        if (!$nonce_verified) {
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+        }
+
+        // Check transient cache first (5 minute cache)
+        $cache_key = 'mcl_has_active_tours';
+        $cached_result = get_transient($cache_key);
+
+        if ($cached_result !== false) {
+            wp_send_json_success(array(
+                'has_tours' => (bool)$cached_result,
+                'cached' => true
+            ));
+            return;
+        }
+
+        // Query for any active tours
+        $tours = get_posts(array(
+            'post_type' => 'mcl_tour',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_tour_active',
+                    'value' => '1',
+                    'compare' => '='
+                )
+            )
+        ));
+
+        $has_tours = !empty($tours);
+
+        // Cache the result for 5 minutes
+        set_transient($cache_key, $has_tours ? 1 : 0, 5 * MINUTE_IN_SECONDS);
+
+        wp_send_json_success(array(
+            'has_tours' => $has_tours,
+            'cached' => false
+        ));
+    }
+
+    /**
+     * Get tour connections for multiple checklist items at once (batch optimization)
+     */
+    public function get_batch_tour_connections() {
+        // Check for tour nonces or checklist nonces
+        $nonce_verified = false;
+        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+            $nonce_verified = true;
+        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_admin_nonce')) {
+            $nonce_verified = true;
+        }
+
+        if (!$nonce_verified) {
+            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+        }
+
+        $checklist_id = intval($_POST['checklist_id']);
+        $item_ids_json = $_POST['item_ids'] ?? '[]';
+
+        // Parse item IDs
+        if (is_string($item_ids_json)) {
+            $item_ids = json_decode($item_ids_json, true);
+        } else {
+            $item_ids = $item_ids_json;
+        }
+
+        if (!is_array($item_ids)) {
+            $item_ids = array();
+        }
+
+        if (!$checklist_id || empty($item_ids)) {
+            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+        }
+
+        // Get all active tours (do this once for all items)
+        $tours = get_posts(array(
+            'post_type' => 'mcl_tour',
+            'posts_per_page' => -1,
+            'meta_query' => array(
+                array(
+                    'key' => '_mcl_tour_active',
+                    'value' => '1',
+                    'compare' => '='
+                )
+            )
+        ));
+
+        // Build a map of item_id => connections
+        $connections_map = array();
+
+        // Initialize empty arrays for all item IDs
+        foreach ($item_ids as $item_id) {
+            $connections_map[$item_id] = array();
+        }
+
+        // Check each tour for connections to our items
+        foreach ($tours as $tour) {
+            $steps = get_post_meta($tour->ID, '_mcl_tour_steps', true) ?: array();
+
+            foreach ($steps as $step_index => $step) {
+                if (!empty($step['checklist_id']) && !empty($step['checklist_item_id']) &&
+                    $step['checklist_id'] == $checklist_id) {
+
+                    $step_item_id = $step['checklist_item_id'];
+
+                    // Check if this item ID is in our requested list
+                    if (in_array($step_item_id, $item_ids)) {
+                        $connections_map[$step_item_id][] = array(
+                            'tour_id' => $tour->ID,
+                            'tour_title' => $tour->post_title,
+                            'step_index' => $step_index,
+                            'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
+                            'step_content' => !empty($step['content']) ? wp_trim_words(strip_tags($step['content']), 10) : ''
+                        );
+                    }
+                }
+            }
+        }
+
+        wp_send_json_success(array(
+            'connections' => $connections_map,
+            'checklist_id' => $checklist_id,
+            'item_count' => count($item_ids)
         ));
     }
 

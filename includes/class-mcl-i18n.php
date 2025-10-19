@@ -1085,6 +1085,7 @@ class MCL_I18n {
             ),
             'actions' => array(
                 'save' => __('Save', 'magic-checklists'),
+                'saving' => __('Saving...', 'magic-checklists'),
                 'loadingChecklist' => __('Loading checklist...', 'magic-checklists'),
                 'errorLoadingChecklist' => __('Failed to load checklist data', 'magic-checklists'),
                 'errorValidatingShortcut' => __('Error validating shortcut:', 'magic-checklists'),

@@ -650,6 +650,36 @@ const useLinkManager = () => {
 const useTourIntegration = () => {
   const { makeRequest } = useAPI()
 
+  // Check if any active tours exist (optimized with server-side caching)
+  const hasActiveTours = useCallback(async () => {
+    try {
+      const response = await makeRequest('mcl_has_active_tours', {})
+      if (response.success) {
+        return response.data.has_tours
+      }
+    } catch (error) {
+      console.error('Error checking for active tours:', error)
+    }
+    return false
+  }, [makeRequest])
+
+  // Batch check tour connections for multiple items (optimized)
+  const checkBatchTourConnections = useCallback(async (checklistId, itemIds) => {
+    try {
+      const response = await makeRequest('mcl_get_batch_tour_connections', {
+        checklist_id: checklistId,
+        item_ids: JSON.stringify(itemIds)
+      })
+
+      if (response.success) {
+        return response.data.connections || {}
+      }
+    } catch (error) {
+      console.error('Error batch checking tour connections:', error)
+    }
+    return {}
+  }, [makeRequest])
+
   const checkTourConnections = useCallback(async (checklistId, itemId) => {
     try {
       const response = await makeRequest('mcl_get_item_tour_connections', {
@@ -783,10 +813,12 @@ const useTourIntegration = () => {
     window.location.href = tourUrl
   }, [makeRequest])
 
-  return useMemo(() => ({ 
-    checkTourConnections, 
-    startTourFromConnection 
-  }), [checkTourConnections, startTourFromConnection])
+  return useMemo(() => ({
+    checkTourConnections,
+    checkBatchTourConnections,
+    hasActiveTours,
+    startTourFromConnection
+  }), [checkTourConnections, checkBatchTourConnections, hasActiveTours, startTourFromConnection])
 }
 
 // Content editing utilities
@@ -1605,6 +1637,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [isClosing, setIsClosing] = useState(false)
+
+  // Refs to track latest state values for reliable saving
+  const itemsRef = useRef([])
+  const titleRef = useRef('')
+  const currentChecklistIdRef = useRef(null)
+  const canEditRef = useRef(false)
   
   // Tour integration - check if tours are enabled globally and track item connections
   const toursEnabled = useMemo(() => {
@@ -1656,7 +1694,6 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Refs
   const drawerRef = useRef(null)
   const itemsListRef = useRef(null)
-  const titleRef = useRef(null)
   const bindingRef = useRef(false) // Prevent duplicate bindings
 
   // Custom hooks
@@ -1667,9 +1704,9 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const imageManager = useImageManager(canEdit, currentChecklistId, items, title, setItems)
   const linkManager = useLinkManager()
   const contentEditing = useContentEditing()
-  const { checkTourConnections, startTourFromConnection } = useTourIntegration()
+  const { checkTourConnections, checkBatchTourConnections, hasActiveTours, startTourFromConnection } = useTourIntegration()
 
-  // Check tour connections for all items once when checklist loads
+  // Check tour connections for all items once when checklist loads (optimized batch fetching)
   const checkAllItemTourConnections = useCallback(async (checklistId, itemList) => {
     if (!toursEnabled || !checklistId || !itemList.length) {
       setItemsWithTourConnections(new Set())
@@ -1677,26 +1714,33 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
 
     try {
-      const connectedItems = new Set()
-      
-      // Check each item for tour connections
-      for (const item of itemList) {
-        try {
-          const connections = await checkTourConnections(checklistId, item.id)
-          if (connections.length > 0) {
-            connectedItems.add(item.id)
-          }
-        } catch (error) {
-          console.warn(`Error checking tour connections for item ${item.id}:`, error)
-        }
+      // First, check if any tours exist (early exit optimization)
+      const toursExist = await hasActiveTours()
+
+      if (!toursExist) {
+        // No tours exist - early exit
+        setItemsWithTourConnections(new Set())
+        return
       }
-      
+
+      // Tours exist, now batch fetch connections for all items
+      const itemIds = itemList.map(item => item.id)
+      const connectionsMap = await checkBatchTourConnections(checklistId, itemIds)
+
+      // Build set of item IDs that have connections
+      const connectedItems = new Set()
+      Object.entries(connectionsMap).forEach(([itemId, connections]) => {
+        if (connections && connections.length > 0) {
+          connectedItems.add(parseInt(itemId, 10))
+        }
+      })
+
       setItemsWithTourConnections(connectedItems)
     } catch (error) {
       console.error('Error checking tour connections:', error)
       setItemsWithTourConnections(new Set())
     }
-  }, [toursEnabled, checkTourConnections])
+  }, [toursEnabled, hasActiveTours, checkBatchTourConnections])
 
   // Simple tour button handler
   const handleTourButtonClick = useCallback(async (itemId) => {
@@ -1930,46 +1974,73 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Use activeChecklists directly - it's already stable
   const memoizedActiveChecklists = activeChecklists
 
+  // Keep refs in sync with state for reliable saving
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
+  useEffect(() => {
+    titleRef.current = title
+  }, [title])
+
+  useEffect(() => {
+    currentChecklistIdRef.current = currentChecklistId
+  }, [currentChecklistId])
+
+  useEffect(() => {
+    canEditRef.current = canEdit
+  }, [canEdit])
+
   // Core checklist operations
-  const closeDrawer = useCallback(() => {
-    // Release server side lock before starting close animation
-    if (currentChecklistId) {
-      makeRequest('mcl_release_lock', { checklist_id: currentChecklistId }).catch(() => {})
-    }
+  const closeDrawer = useCallback(async () => {
+    // Get the latest values from refs (most current state)
+    let finalItems = itemsRef.current
+    let finalTitle = titleRef.current
+    const checklistId = currentChecklistIdRef.current
+    const hasEditPermission = canEditRef.current
 
     // Capture content from any focused elements before closing
     const activeElement = document.activeElement
-    let updatedItems = items
-    let updatedTitle = title
-    
+
     if (activeElement && activeElement.classList.contains('mcl-item-content') && activeElement.isContentEditable) {
       const itemId = activeElement.closest('[data-item-id]')?.getAttribute('data-item-id')
       if (itemId) {
         const content = activeElement.innerHTML
         // Update the items array with the current content
-        updatedItems = items.map(item => 
+        finalItems = finalItems.map(item =>
           item.id === itemId ? { ...item, content } : item
         )
-        
-        // Update state for consistency
-        setItems(updatedItems)
-        
-        // Also blur the element to ensure consistency
+
+        // Update state and refs immediately
+        setItems(finalItems)
+        itemsRef.current = finalItems
+
+        // Blur the element
         activeElement.blur()
       }
     }
 
     // Also capture title changes if title is focused
     if (activeElement && activeElement.classList.contains('mcl-drawer-title') && activeElement.isContentEditable) {
-      updatedTitle = activeElement.textContent
-      setTitle(updatedTitle)
+      finalTitle = activeElement.textContent
+      setTitle(finalTitle)
+      titleRef.current = finalTitle
       activeElement.blur()
     }
 
-    // Trigger save of checklist data before closing using the captured values
-    if (canEdit && currentChecklistId) {
-      saveChecklistData(currentChecklistId, updatedTitle, updatedItems)
-        .catch(err => console.warn('Error saving checklist on close:', err))
+    // CRITICAL: Save to server and AWAIT completion before closing
+    if (hasEditPermission && checklistId) {
+      try {
+        await saveChecklistData(checklistId, finalTitle, finalItems)
+        console.log('✓ Checklist saved successfully on close')
+      } catch (err) {
+        console.error('Error saving checklist on close:', err)
+      }
+    }
+
+    // Release server side lock after save completes
+    if (checklistId) {
+      makeRequest('mcl_release_lock', { checklist_id: checklistId }).catch(() => {})
     }
     
     // Start closing animation
@@ -2778,18 +2849,42 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }, 0)
   }, [items, canEdit, locked, currentChecklistId, title, saveChecklistData, checklistData])
 
-  // Auto-save effect
+  // Note: Removed debounced auto-save effect - we now save reliably on drawer close
+  // using refs to capture the latest state. This prevents race conditions and ensures
+  // all changes are saved before the drawer closes.
+
+  // Save before page unload to prevent data loss
   useEffect(() => {
-    if (!currentChecklistId || !canEdit) return
+    const handleBeforeUnload = (e) => {
+      const checklistId = currentChecklistIdRef.current
+      const hasEditPermission = canEditRef.current
+      const finalItems = itemsRef.current
+      const finalTitle = titleRef.current
 
-    const saveTimer = setTimeout(() => {
-      if (items.length > 0) {
-        saveChecklistData(currentChecklistId, title, items)
+      if (hasEditPermission && checklistId && finalItems.length > 0) {
+        // Use sendBeacon for reliable async save on page unload
+        const data = new FormData()
+        data.append('action', 'mcl_update_checklist')
+        data.append('checklist_id', checklistId)
+        data.append('title', finalTitle)
+        data.append('items', JSON.stringify(finalItems))
+
+        const nonce = window.mcl_checklists?.nonce
+        if (nonce) {
+          data.append('nonce', nonce)
+        }
+
+        const ajaxUrl = window.mcl_checklists?.ajax_url
+        if (ajaxUrl) {
+          // sendBeacon is designed for this exact use case
+          navigator.sendBeacon(ajaxUrl, data)
+        }
       }
-    }, 1000) // Debounce saves by 1 second
+    }
 
-    return () => clearTimeout(saveTimer)
-  }, [title, items, currentChecklistId, canEdit, saveChecklistData])
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, []) // Empty deps - we use refs which are always current
 
   // Update progress counter when items or checked items change
   useEffect(() => {

@@ -73,6 +73,11 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
+
+  // Tour connections state (optimized batch fetching)
+  const [tourConnections, setTourConnections] = useState({})
+  const [toursExist, setToursExist] = useState(null) // null = not checked, true/false = checked
+  const [tourConnectionsLoading, setTourConnectionsLoading] = useState(false)
   
   // CSS for styling links in the content editable areas
   const linkStyles = `
@@ -153,7 +158,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   useEffect(() => {
     const deadlines = {}
     const inProgress = []
-    
+
     items.forEach(item => {
       if (item.deadline) {
         deadlines[item.id] = item.deadline
@@ -162,10 +167,92 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         inProgress.push(item.id)
       }
     })
-    
+
     setItemDeadlines(deadlines)
     setInProgressItems(inProgress)
   }, [items])
+
+  // Batch fetch tour connections on mount (optimized)
+  useEffect(() => {
+    // Only run once when component mounts and we have items
+    if (!checklistId || items.length === 0 || toursExist !== null) {
+      return
+    }
+
+    const fetchTourConnections = async () => {
+      try {
+        // First, check if any tours exist (early exit optimization)
+        const formData = new FormData()
+        formData.append('action', 'mcl_has_active_tours')
+
+        const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+        if (nonce) {
+          formData.append('nonce', nonce)
+        }
+
+        const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+        const toursExistResponse = await fetch(ajaxUrl, {
+          method: 'POST',
+          body: formData,
+          credentials: 'same-origin'
+        })
+
+        if (!toursExistResponse.ok) {
+          throw new Error(`HTTP error! status: ${toursExistResponse.status}`)
+        }
+
+        const toursExistResult = await toursExistResponse.json()
+
+        if (toursExistResult.success && !toursExistResult.data.has_tours) {
+          // No tours exist - early exit
+          setToursExist(false)
+          setTourConnections({})
+          return
+        }
+
+        // Tours exist, now batch fetch connections for all items
+        setToursExist(true)
+        setTourConnectionsLoading(true)
+
+        const itemIds = items.map(item => item.id)
+        const batchFormData = new FormData()
+        batchFormData.append('action', 'mcl_get_batch_tour_connections')
+        batchFormData.append('checklist_id', checklistId)
+        batchFormData.append('item_ids', JSON.stringify(itemIds))
+
+        if (nonce) {
+          batchFormData.append('nonce', nonce)
+        }
+
+        const batchResponse = await fetch(ajaxUrl, {
+          method: 'POST',
+          body: batchFormData,
+          credentials: 'same-origin'
+        })
+
+        if (!batchResponse.ok) {
+          throw new Error(`HTTP error! status: ${batchResponse.status}`)
+        }
+
+        const batchResult = await batchResponse.json()
+
+        if (batchResult.success) {
+          setTourConnections(batchResult.data.connections || {})
+        } else {
+          console.error('Failed to fetch batch tour connections:', batchResult.data?.message)
+          setTourConnections({})
+        }
+      } catch (error) {
+        console.error('Error fetching tour connections:', error)
+        setTourConnections({})
+        setToursExist(false)
+      } finally {
+        setTourConnectionsLoading(false)
+      }
+    }
+
+    fetchTourConnections()
+  }, [checklistId, items.length]) // Only re-run if checklistId or item count changes
 
   // Deadline countdown management
   useEffect(() => {
@@ -397,48 +484,15 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     onChange(newItems)
   }
 
-  // Tour integration
-  const checkTourConnections = async (itemId) => {
-    if (!checklistId || !window.mcl_checklists?.ajax_url) return []
-    
-    try {
-      const formData = new FormData()
-      formData.append('action', 'mcl_get_item_tour_connections')
-      formData.append('checklist_id', checklistId)
-      formData.append('item_id', itemId)
-      
-      const nonce = window.mcl_checklists?.nonce
-      if (nonce) {
-        formData.append('nonce', nonce)
-      }
-
-      const response = await fetch(window.mcl_checklists.ajax_url, {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin'
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-      
-      if (result.success && result.data.connections.length > 0) {
-        return result.data.connections
-      }
-    } catch (error) {
-      console.error('Error checking tour connections:', error)
-    }
-    return []
-  }
-
+  // Tour integration - helper function to start tour from connection
   const startTourFromConnection = (connections) => {
+    if (!connections || connections.length === 0) return
+
     const connection = connections[0]
     const params = new URLSearchParams()
     params.set('mcl_continue_tour', connection.tour_id)
     params.set('mcl_tour_step', connection.step_index)
-    
+
     let tourUrl = window.location.pathname
     if (window.location.search) {
       const existingParams = new URLSearchParams(window.location.search)
@@ -449,27 +503,16 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     } else {
       tourUrl += '?' + params.toString()
     }
-    
+
     window.location.href = tourUrl
   }
 
-  // Tour Button Component
-  const TourButton = ({ itemId }) => {
-    const [hasConnections, setHasConnections] = useState(false)
-    const [connections, setConnections] = useState([])
-
-    useEffect(() => {
-      if (itemId && checklistId) {
-        checkTourConnections(itemId).then(conns => {
-          if (conns.length > 0) {
-            setHasConnections(true)
-            setConnections(conns)
-          }
-        })
-      }
-    }, [itemId])
-
-    if (!hasConnections) return null
+  // Tour Button Component - Now a pure presentational component (React.memo for performance)
+  const TourButton = React.memo(({ connections = [] }) => {
+    // Don't render if no connections or tours don't exist
+    if (!toursExist || connections.length === 0) {
+      return null
+    }
 
     return (
       <button
@@ -489,7 +532,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         </svg>
       </button>
     )
-  }
+  })
 
   const createNewItem = (index = 0) => ({
     id: `item_${Date.now()}_${index}`,
@@ -1566,8 +1609,10 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               </svg>
             </button>
 
-            {/* Tour Button - conditionally rendered */}
-            <TourButton itemId={item.id} />
+            {/* Tour Button - only render if tours exist and we have connection data */}
+            {toursExist && tourConnections[item.id] && (
+              <TourButton connections={tourConnections[item.id]} />
+            )}
 
             {/* Lock Toggle Button */}
             {enableLocking && (
