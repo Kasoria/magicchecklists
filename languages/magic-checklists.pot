@@ -479,6 +479,9 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
+msgid "Page will reload automatically"
+msgstr ""
+
 msgid "items"
 msgstr ""
 

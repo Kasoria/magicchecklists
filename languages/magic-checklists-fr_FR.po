@@ -1695,6 +1695,9 @@ msgstr ""
 msgid "Saving..."
 msgstr "Enregistrement..."
 
+msgid "Page will reload automatically"
+msgstr "La page se rechargera automatiquement"
+
 msgid "Save Dashboard Widget Settings"
 msgstr "Enregistrer les paramètres du widget du tableau de bord"
 

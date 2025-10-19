@@ -1566,6 +1566,9 @@ msgstr "Schnellaktions-Schaltflächen anzeigen, um Checklisten direkt vom Dashbo
 msgid "Saving..."
 msgstr "Wird gespeichert..."
 
+msgid "Page will reload automatically"
+msgstr "Seite wird automatisch neu geladen"
+
 msgid "Save Dashboard Widget Settings"
 msgstr "Dashboard-Widget-Einstellungen speichern"
 
