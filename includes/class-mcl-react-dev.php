@@ -736,6 +736,15 @@ class MCL_React_Dev {
         $tour_mode_detected = $is_tour_mode || $continue_tour_id || $has_tour_id;
         
         // Base public data
+        global $mcl_public_instance;
+
+        $is_pagebuilder_context = false;
+        if ( $mcl_public_instance && method_exists( $mcl_public_instance, 'is_inside_pagebuilder_context' ) ) {
+            $is_pagebuilder_context = (bool) $mcl_public_instance->is_inside_pagebuilder_context();
+        }
+
+        $is_iframe_request = $this->is_iframe_like_request();
+
         $public_data = array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'restUrl' => rest_url( 'mcl/v1/' ),
@@ -751,6 +760,10 @@ class MCL_React_Dev {
             'isAdmin' => current_user_can( 'manage_options' ),
             'isDev' => $this->is_dev_mode,
             'pluginUrl' => MAGIC_CHECKLISTS_PLUGIN_URL,
+            'context' => array(
+                'isPageBuilder' => $is_pagebuilder_context,
+                'isIframeRequest' => $is_iframe_request,
+            ),
             'priorityColors' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_colors() : array(),
             'priorityNumbers' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_numbers() : array(),
             'i18n' => $this->get_localization_data()
@@ -1231,5 +1244,21 @@ class MCL_React_Dev {
         }
         
         // React isolation will be handled globally via enqueue_public_* methods
+    }
+
+    private function is_iframe_like_request() {
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe' ) {
+            return true;
+        }
+
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_MODE'] ) && $_SERVER['HTTP_SEC_FETCH_MODE'] === 'navigate' ) {
+            return false;
+        }
+
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_SITE'] ) && $_SERVER['HTTP_SEC_FETCH_SITE'] === 'same-origin' && isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'nested-document' ) {
+            return true;
+        }
+
+        return false;
     }
 }

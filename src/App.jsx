@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import ReactDOM from 'react-dom/client'
 import ChecklistDrawer from './components/ChecklistDrawer'
 import FloatingButtons from './components/FloatingButtons'
@@ -20,6 +20,37 @@ const App = () => {
     speed_dial_icon_color: '#ffffff'
   })
   const [i18n, setI18n] = useState({})
+
+  const contextFlags = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {}
+    }
+
+    return window.mclPublicData?.context || window.mclAdminData?.context || {}
+  }, [])
+
+  const isInIframe = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    try {
+      return window.self !== window.top
+    } catch (error) {
+      return true
+    }
+  }, [])
+
+  const shouldRenderFloatingUI = useMemo(() => !isInIframe, [isInIframe])
+  const isPageBuilderContext = !!contextFlags.isPageBuilder
+
+  const floatingChecklists = useMemo(() => {
+    if (!isPageBuilderContext) {
+      return activeChecklists
+    }
+
+    return activeChecklists.filter((checklist) => !checklist.disableInBuilders)
+  }, [activeChecklists, isPageBuilderContext])
 
   // Helper function to get translated text
   const __ = (key, fallback) => {
@@ -104,7 +135,7 @@ const App = () => {
   }, [waitForElement])
 
   // Check for tour mode from URL params or cookies
-  const checkTourMode = () => {
+  const checkTourMode = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const tourModeParam = urlParams.get('mcl_tour_mode')
     const continueTourParam = urlParams.get('mcl_continue_tour')
@@ -114,7 +145,7 @@ const App = () => {
     )?.split('=')[1]
 
     return (tourModeParam === '1' || continueTourParam || tourIdParam || tourModeCookie === '1')
-  }
+  }, [])
 
   useEffect(() => {
     // Set up i18n data
@@ -125,6 +156,17 @@ const App = () => {
     // Check tour mode first
     const tourModeDetected = checkTourMode()
     setIsTourMode(tourModeDetected)
+
+    if (window.mclTourPlaybackData) {
+      setTourData(window.mclTourPlaybackData)
+    } else if (window.mclTourData) {
+      setTourData(window.mclTourData)
+    }
+
+    if (!shouldRenderFloatingUI) {
+      setLoading(false)
+      return
+    }
 
     // Load initial data and set up the existing JavaScript functionality
     const initializeApp = async () => {
@@ -147,7 +189,15 @@ const App = () => {
         if (checklistResponse.ok) {
           const data = await checklistResponse.json()
           if (data.success) {
-            setActiveChecklists(data.data.checklists || [])
+            const normalizedChecklists = (data.data.checklists || []).map((checklist) => {
+              const disableValue = checklist.disableInBuilders ?? checklist.disable_in_builders
+
+              return {
+                ...checklist,
+                disableInBuilders: disableValue === true || disableValue === '1' || disableValue === 1 || disableValue === 'true'
+              }
+            })
+            setActiveChecklists(normalizedChecklists)
             setDrawerTheme(data.data.theme || 'light')
           } else {
             console.warn(__('failedToLoadChecklistData', 'MCL: Failed to load checklist data:'), data)
@@ -190,7 +240,15 @@ const App = () => {
         console.error(__('errorLoadingChecklistData', 'Error loading checklist data:'), error)
         // If we can't load data, try to use any existing data from the global object
         if (window.mcl_checklists?.active_checklists) {
-          setActiveChecklists(window.mcl_checklists.active_checklists)
+          const legacyChecklists = window.mcl_checklists.active_checklists.map((checklist) => {
+            const disableValue = checklist.disableInBuilders ?? checklist.disable_in_builders
+
+            return {
+              ...checklist,
+              disableInBuilders: disableValue === true || disableValue === '1' || disableValue === 1 || disableValue === 'true'
+            }
+          })
+          setActiveChecklists(legacyChecklists)
         }
         
         // Make mcl_checklists data available globally for backward compatibility
@@ -206,10 +264,14 @@ const App = () => {
 
     // Initialize the app
     initializeApp()
-  }, [])
+  }, [checkTourMode, shouldRenderFloatingUI])
 
   // Initialize the bridge functionality after React components are ready
   useEffect(() => {
+    if (!shouldRenderFloatingUI) {
+      return
+    }
+
     // Only initialize checklist bridge when there is at least one active checklist.
     // Otherwise the legacy mclDrawer bootstrapping churns, causing React 301 errors
     // on pages that only contain tours.
@@ -304,11 +366,15 @@ const App = () => {
         window.mcl_cleanup()
       }
     }
-  }, [componentsReady, loading, initializeMagicChecklist, activeChecklists.length])
+  }, [shouldRenderFloatingUI, componentsReady, loading, initializeMagicChecklist, activeChecklists.length])
 
   // Re-initialize floating buttons when activeChecklists changes
   useEffect(() => {
-    if (!componentsReady || loading || activeChecklists.length === 0) return
+    if (!shouldRenderFloatingUI) {
+      return
+    }
+
+    if (!componentsReady || loading || floatingChecklists.length === 0) return
 
     // Re-bind floating buttons when the checklist data changes
     const reinitializeButtons = () => {
@@ -332,7 +398,7 @@ const App = () => {
     }
 
     reinitializeButtons()
-  }, [activeChecklists, componentsReady, loading])
+  }, [shouldRenderFloatingUI, floatingChecklists, componentsReady, loading])
 
   if (loading) {
     return null // Don't render anything while loading to avoid flicker
@@ -366,11 +432,11 @@ const App = () => {
   return (
     <div className={`mcl-react-app ${isTourMode ? 'mcl-tour-mode' : ''}`}>
       {/* Render checklist UI only when at least one checklist is active */}
-      {activeChecklists.length > 0 && (
-        <>
-          <ChecklistDrawer theme={drawerTheme} />
-          <FloatingButtons activeChecklists={activeChecklists} settings={generalSettings} />
-        </>
+      {shouldRenderFloatingUI && activeChecklists.length > 0 && (
+        <ChecklistDrawer theme={drawerTheme} />
+      )}
+      {shouldRenderFloatingUI && floatingChecklists.length > 0 && (
+        <FloatingButtons activeChecklists={floatingChecklists} settings={generalSettings} />
       )}
 
       {/* Tour components when in tour mode */}

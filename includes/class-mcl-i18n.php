@@ -1013,7 +1013,7 @@ class MCL_I18n {
                 'customIconAlt' => __('Custom icon', 'magic-checklists'),
                 'remove' => __('Remove', 'magic-checklists'),
                 'pasteImageUrl' => __('Or paste image URL', 'magic-checklists'),
-                'disableInBuilders' => __('Disable floating button when inside pagebuilders', 'magic-checklists'),
+                'disableInBuilders' => __('Disable floating UI inside page builders', 'magic-checklists'),
                 'checkedStateHandling' => __('Checked State Handling', 'magic-checklists'),
                 'selectHandlingMethod' => __('Select handling method...', 'magic-checklists'),
                 'checkedStateDescription' => __('"Per User" gives each user their own checked states. "Global" shares checked states among all users.', 'magic-checklists'),

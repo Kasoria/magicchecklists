@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { formatDate } from '../utils/dateUtils'
+import ShortcodeKanbanView from './ShortcodeKanbanView'
 
 const ShortcodeRenderer = ({ 
   checklistId, 
@@ -522,9 +523,9 @@ const ShortcodeRenderer = ({
       if (!number) {
         return null
       }
-      
+
       return (
-        <span 
+        <span
           className={`mcl-priority-indicator mcl-priority-number ${clickable ? 'cursor-pointer' : ''}`}
           style={{
             backgroundColor: getPriorityColor(priority),
@@ -549,7 +550,7 @@ const ShortcodeRenderer = ({
       )
     } else {
       return (
-        <span 
+        <span
           className={`mcl-priority-indicator ${clickable ? 'cursor-pointer' : ''}`}
           style={{
             backgroundColor: getPriorityColor(priority),
@@ -569,6 +570,19 @@ const ShortcodeRenderer = ({
   const formatDeadline = (deadline) => {
     if (!deadline) return ''
     return formatDate(deadline * 1000, 'date')
+  }
+
+  // If display mode is kanban, render the kanban view instead
+  if (settings.display_mode === 'kanban') {
+    return (
+      <ShortcodeKanbanView
+        checklistId={checklistId}
+        items={shortcodeItems}
+        permissions={permissions}
+        settings={settings}
+        checklist={checklist}
+      />
+    )
   }
 
   // Build CSS variables for styling

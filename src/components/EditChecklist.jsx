@@ -144,6 +144,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     deadline_threshold_hours: '24',
     batch_interval: 'fifteen_minutes',
     // Shortcode settings
+    shortcode_display_mode: 'list',
     shortcode_show_title: true,
     shortcode_show_description: true,
     shortcode_show_deadline: false,
@@ -585,6 +586,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         float_button_text_color: formData.float_button_text_color,
         float_button_font_size: formData.float_button_font_size,
         show_float_button_icon: formData.show_float_button_icon ? '1' : '0',
+        shortcode_display_mode: formData.shortcode_display_mode || 'list',
         shortcode_show_title: formData.shortcode_show_title ? '1' : '0',
         shortcode_show_description: formData.shortcode_show_description ? '1' : '0',
         shortcode_show_deadline: formData.shortcode_show_deadline ? '1' : '0',

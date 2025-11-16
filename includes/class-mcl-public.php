@@ -80,6 +80,20 @@ class MCL_Public {
         add_action('wp_ajax_nopriv_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
         add_action('wp_ajax_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
         add_action('wp_ajax_nopriv_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
+        add_action('wp_ajax_mcl_get_kanban_board', array($this, 'get_kanban_board'), 5);
+        add_action('wp_ajax_nopriv_mcl_get_kanban_board', array($this, 'get_kanban_board'), 5);
+        add_action('wp_ajax_mcl_save_kanban_board', array($this, 'save_kanban_board'), 5);
+        add_action('wp_ajax_nopriv_mcl_save_kanban_board', array($this, 'save_kanban_board'), 5);
+
+        // Threaded comments for tasks (public-facing with priority 5 to run before admin hooks)
+        add_action('wp_ajax_mcl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
+        add_action('wp_ajax_nopriv_mcl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
+        add_action('wp_ajax_mcl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
+        add_action('wp_ajax_nopriv_mcl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
+        add_action('wp_ajax_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
+        add_action('wp_ajax_nopriv_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
+        add_action('wp_ajax_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
+        add_action('wp_ajax_nopriv_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
     }
 
     /**
@@ -168,6 +182,16 @@ class MCL_Public {
 
         // If the loop completes without returning true, no checklist met the criteria for loading assets.
         return false;
+    }
+
+    private function should_skip_checklist_in_builder($checklist_id) {
+        if (!$this->is_inside_pagebuilder_context()) {
+            return false;
+        }
+
+        $disable_flag = get_post_meta($checklist_id, '_mcl_disable_in_builders', true);
+
+        return !empty($disable_flag) && $disable_flag !== '0';
     }
 
     private function should_show_checklist($checklist_id) {
@@ -626,20 +650,6 @@ class MCL_Public {
             'posts_per_page' => -1,
         );
     
-        if ($this->is_inside_pagebuilder()) {
-            $query_args_base['meta_query'][] = array(
-                'relation' => 'OR',
-                array(
-                    'key' => '_mcl_disable_in_builders',
-                    'compare' => 'NOT EXISTS'
-                ),
-                array(
-                    'key' => '_mcl_disable_in_builders',
-                    'value' => '0'
-                )
-            );
-        }
-    
         $active_checklists_posts = get_posts($query_args_base);
         $visible_checklists_data = [];
     
@@ -724,7 +734,7 @@ class MCL_Public {
 
         );
     
-        if ($this->is_inside_pagebuilder()) {
+        if ($this->is_inside_pagebuilder_context()) {
             $query_args_base['meta_query'][] = array(
                 'relation' => 'OR',
                 array(
@@ -748,6 +758,10 @@ class MCL_Public {
             // Step 1: Check view permission first (this is crucial and involves its own meta checks)
             if (!$this->has_permission($checklist_id, 'view')) {
                 continue; 
+            }
+
+            if ($this->should_skip_checklist_in_builder($checklist_id)) {
+                continue;
             }
 
             // Step 1.5: Check if the drawer is disabled for this checklist via shortcode settings
@@ -1319,6 +1333,66 @@ class MCL_Public {
 
         update_post_meta($checklist_id, '_mcl_items', $processed_items);
 
+        // Also sync to _mcl_kanban_board for Kanban view compatibility
+        $existing_board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+
+        if ($existing_board && is_array($existing_board) && !empty($existing_board)) {
+            // Update existing board structure - preserve column structure, update item titles
+            $items_map = array();
+            foreach ($processed_items as $item) {
+                $items_map[$item['id']] = $item;
+            }
+
+            foreach ($existing_board as &$column) {
+                if (isset($column['items']) && is_array($column['items'])) {
+                    foreach ($column['items'] as &$board_item) {
+                        // Update title from _mcl_items content if item exists
+                        if (isset($items_map[$board_item['id']])) {
+                            $board_item['title'] = $items_map[$board_item['id']]['content'];
+                        }
+                    }
+                }
+            }
+            unset($column, $board_item);
+
+            update_post_meta($checklist_id, '_mcl_kanban_board', $existing_board);
+        } else {
+            // No existing board, create a default one from items
+            $board_items = array();
+            foreach ($processed_items as $item) {
+                $board_items[] = array(
+                    'id' => $item['id'],
+                    'title' => $item['content'],
+                    'checked' => false,
+                    'comment_count' => 0,
+                    'assigned_user' => null
+                );
+            }
+
+            $default_board = array(
+                array(
+                    'id' => 'col_todo',
+                    'title' => 'To Do',
+                    'color' => '#ef4444',
+                    'items' => $board_items
+                ),
+                array(
+                    'id' => 'col_inprogress',
+                    'title' => 'In Progress',
+                    'color' => '#f59e0b',
+                    'items' => array()
+                ),
+                array(
+                    'id' => 'col_done',
+                    'title' => 'Done',
+                    'color' => '#22c55e',
+                    'items' => array()
+                )
+            );
+
+            update_post_meta($checklist_id, '_mcl_kanban_board', $default_board);
+        }
+
         wp_send_json_success();
     }
 
@@ -1548,29 +1622,113 @@ class MCL_Public {
         }
     }
 
-    private function is_inside_pagebuilder() {
-        if (
-            isset($_GET['elementor-preview']) || 
-            (defined('ELEMENTOR_VERSION') && \Elementor\Plugin::$instance->preview->is_preview_mode())
-        ) {
+    public function is_inside_pagebuilder_context() {
+        static $cached_result = null;
+
+        if ($cached_result !== null) {
+            return $cached_result;
+        }
+
+        $cached_result = $this->detect_pagebuilder_context();
+        return $cached_result;
+    }
+
+    private function detect_pagebuilder_context() {
+        $param_sets = array();
+        $param_sets[] = $this->normalize_param_array($_GET);
+
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $referer_query = wp_parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY);
+            if ($referer_query) {
+                parse_str($referer_query, $referer_params);
+                $param_sets[] = $this->normalize_param_array($referer_params);
+            }
+        }
+
+        foreach ($param_sets as $params) {
+            if (empty($params)) {
+                continue;
+            }
+
+            if (!empty($params['elementor-preview'])) {
+                return true;
+            }
+
+            if (!empty($params['bricks']) || isset($params['bricks_iframe'])) {
+                return true;
+            }
+
+            if (!empty($params['breakdance']) || !empty($params['breakdance_iframe']) || !empty($params['breakdance_browser'])) {
+                return true;
+            }
+
+            if (!empty($params['et_fb']) || !empty($params['et_builder'])) {
+                return true;
+            }
+
+            if (!empty($params['fl_builder'])) {
+                return true;
+            }
+
+            if (!empty($params['ct_builder'])) {
+                return true;
+            }
+
+            if (!empty($params['tve'])) {
+                return true;
+            }
+
+            if (!empty($params['vc_editable'])) {
+                return true;
+            }
+
+            if (!empty($params['fb-edit']) || !empty($params['fusion-editor'])) {
+                return true;
+            }
+
+            if (!empty($params['ux_builder']) || !empty($params['ux-builder'])) {
+                return true;
+            }
+
+            if (!empty($params['preview']) || !empty($params['preview_iframe']) || !empty($params['iframe'])) {
+                return true;
+            }
+        }
+
+        if (defined('ELEMENTOR_VERSION') &&
+            class_exists('\Elementor\Plugin') &&
+            isset(\Elementor\Plugin::$instance->preview) &&
+            method_exists(\Elementor\Plugin::$instance->preview, 'is_preview_mode') &&
+            \Elementor\Plugin::$instance->preview->is_preview_mode()) {
             return true;
         }
-    
-        if (
-            isset($_GET['bricks']) || 
-            (function_exists('bricks_is_builder') && bricks_is_builder())
-        ) {
+
+        if (function_exists('bricks_is_builder') && bricks_is_builder()) {
             return true;
         }
-    
-        if (
-            isset($_GET['et_fb']) || 
-            (function_exists('et_core_is_fb_enabled') && et_core_is_fb_enabled())
-        ) {
+
+        if (function_exists('et_core_is_fb_enabled') && et_core_is_fb_enabled()) {
             return true;
         }
-    
+
+        if (isset($_SERVER['HTTP_SEC_FETCH_DEST']) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe') {
+            return true;
+        }
+
         return false;
+    }
+
+    private function normalize_param_array($params) {
+        if (empty($params) || !is_array($params)) {
+            return array();
+        }
+
+        $normalized = array();
+        foreach ($params as $key => $value) {
+            $normalized[strtolower((string) $key)] = $value;
+        }
+
+        return $normalized;
     }
 
     public function save_in_progress_state() {
@@ -1678,11 +1836,12 @@ class MCL_Public {
                 }
                 
                 // Get meta values
-                $priority = get_post_meta($checklist_id, '_mcl_priority', true) ?: 'none';
+            $priority = get_post_meta($checklist_id, '_mcl_priority', true) ?: 'none';
                 $short_title = get_post_meta($checklist_id, '_mcl_short_title', true) ?: '';
                 $button_position = get_post_meta($checklist_id, '_mcl_button_position', true) ?: 'bottom-right';
                 $theme = get_post_meta($checklist_id, '_mcl_theme', true) ?: 'light';
                 $trigger_button = get_post_meta($checklist_id, '_mcl_trigger_button', true);
+            $disable_in_builders = get_post_meta($checklist_id, '_mcl_disable_in_builders', true);
                 
                 $priority_colors = MCL_Priority_Utils::get_priority_colors();
                 $priority_levels = MCL_Priority_Utils::get_priority_levels();
@@ -1701,7 +1860,8 @@ class MCL_Public {
                     'checklist_icon_custom' => get_post_meta($checklist_id, '_mcl_checklist_icon_custom', true) ?: '',
                     'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true) ?: '#ffffff',
                     'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true) ?: '#1a1a1a',
-                    'has_floating_button' => $trigger_button == '1'
+                    'has_floating_button' => $trigger_button == '1',
+                    'disableInBuilders' => !empty($disable_in_builders) && $disable_in_builders !== '0'
                 );
             }
             
@@ -1812,7 +1972,717 @@ class MCL_Public {
         
         // Trigger notification
         do_action('mcl_item_deleted', $checklist_id, $deleted_item);
-        
+
         wp_send_json_success(array('deleted_item' => $deleted_item));
+    }
+
+    /**
+     * Get kanban board structure for a checklist
+     */
+    public function get_kanban_board() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $context = isset($_POST['context']) ? sanitize_text_field($_POST['context']) : 'admin';
+
+        if (!$checklist_id) {
+            wp_send_json_error('Invalid checklist ID');
+            return;
+        }
+
+        // Check permissions
+        if (!$this->has_permission($checklist_id, 'view')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+
+        // Get the kanban board structure from post meta
+        $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+
+        // If no board exists, create a default structure from checklist items
+        if (!$board || !is_array($board) || empty($board)) {
+            $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+            $checked_state = $this->get_checked_state($checklist_id, $context);
+
+            // Map items to board structure
+            $boardItems = array();
+            foreach ($items as $item) {
+                $boardItems[] = array(
+                    'id' => $item['id'],
+                    'title' => $item['content'],
+                    'checked' => in_array($item['id'], $checked_state),
+                    'comment_count' => 0,
+                    'assigned_user' => null
+                );
+            }
+
+            // Create default 3-column board
+            $board = array(
+                array(
+                    'id' => 'col_todo',
+                    'title' => 'To Do',
+                    'color' => '#ef4444',
+                    'items' => $boardItems
+                ),
+                array(
+                    'id' => 'col_inprogress',
+                    'title' => 'In Progress',
+                    'color' => '#f59e0b',
+                    'items' => array()
+                ),
+                array(
+                    'id' => 'col_done',
+                    'title' => 'Done',
+                    'color' => '#22c55e',
+                    'items' => array()
+                )
+            );
+        }
+
+        // Enrich board items with comment counts and user assignments
+        global $wpdb;
+        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+
+        // Check if comments table exists
+        $comments_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$comments_table'") == $comments_table;
+
+        foreach ($board as &$column) {
+            if (isset($column['items']) && is_array($column['items'])) {
+                foreach ($column['items'] as &$item) {
+                    // Get comment count if table exists
+                    if ($comments_table_exists) {
+                        // Strip ALL non-numeric characters to get unique ID (e.g., "item_123_1" -> "1231")
+                        // This matches the frontend logic: /\D/g
+                        $item_id_numeric = intval(preg_replace('/[^0-9]/', '', $item['id']));
+                        $comment_count = $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM $comments_table WHERE checklist_id = %d AND item_id = %d",
+                            $checklist_id,
+                            $item_id_numeric
+                        ));
+                        $item['comment_count'] = intval($comment_count);
+                    } else {
+                        $item['comment_count'] = 0;
+                    }
+
+                    // Ensure assigned_user is set (may be null)
+                    if (!isset($item['assigned_user'])) {
+                        $item['assigned_user'] = null;
+                    }
+                }
+            }
+        }
+
+        // Get list of users for assignment dropdown
+        $users = array();
+        if (function_exists('get_users')) {
+            $wp_users = get_users(array('fields' => array('ID', 'display_name', 'user_email')));
+            foreach ($wp_users as $user) {
+                $users[] = array(
+                    'id' => $user->ID,
+                    'name' => $user->display_name,
+                    'email' => $user->user_email,
+                    'avatar' => get_avatar_url($user->ID, array('size' => 40))
+                );
+            }
+        }
+
+        wp_send_json_success(array(
+            'board' => $board,
+            'users' => $users
+        ));
+    }
+
+    /**
+     * Save kanban board structure for a checklist
+     */
+    public function save_kanban_board() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $board = isset($_POST['board']) ? json_decode(stripslashes($_POST['board']), true) : null;
+        $context = isset($_POST['context']) ? sanitize_text_field($_POST['context']) : 'admin';
+
+        if (!$checklist_id || !$board) {
+            wp_send_json_error('Missing required data');
+            return;
+        }
+
+        // Check permissions - need interact permission minimum to move items
+        if (!$this->has_permission($checklist_id, 'interact')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+
+        // Sanitize the board data
+        $sanitized_board = array();
+        foreach ($board as $column) {
+            $sanitized_column = array(
+                'id' => sanitize_text_field($column['id']),
+                'title' => sanitize_text_field($column['title']),
+                'color' => sanitize_hex_color($column['color']),
+                'items' => array()
+            );
+
+            if (isset($column['items']) && is_array($column['items'])) {
+                foreach ($column['items'] as $item) {
+                    $sanitized_item = array(
+                        'id' => sanitize_text_field($item['id']),
+                        'title' => wp_kses_post($item['title']),
+                        'checked' => !empty($item['checked'])
+                    );
+
+                    // Preserve assigned user if present
+                    if (isset($item['assigned_user']) && is_array($item['assigned_user'])) {
+                        $sanitized_item['assigned_user'] = array(
+                            'id' => intval($item['assigned_user']['id']),
+                            'name' => sanitize_text_field($item['assigned_user']['name']),
+                            'avatar' => esc_url_raw($item['assigned_user']['avatar'])
+                        );
+                    } else {
+                        $sanitized_item['assigned_user'] = null;
+                    }
+
+                    // Comment count is not saved, it's always calculated dynamically
+                    // but we include it for consistency
+                    $sanitized_item['comment_count'] = isset($item['comment_count']) ? intval($item['comment_count']) : 0;
+
+                    $sanitized_column['items'][] = $sanitized_item;
+                }
+            }
+
+            $sanitized_board[] = $sanitized_column;
+        }
+
+        // Save the board structure
+        update_post_meta($checklist_id, '_mcl_kanban_board', $sanitized_board);
+
+        // Also sync kanban board data to _mcl_items for drawer compatibility
+        // Get existing items to preserve parent_id and priority fields
+        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $existing_items_map = array();
+        foreach ($existing_items as $existing_item) {
+            $existing_items_map[$existing_item['id']] = $existing_item;
+        }
+
+        // Build updated items array from kanban board
+        $updated_items = array();
+        foreach ($sanitized_board as $column) {
+            foreach ($column['items'] as $item) {
+                $item_data = array(
+                    'id' => $item['id'],
+                    'content' => $item['title'], // Map title to content
+                    'parent_id' => '',
+                    'priority' => 'none',
+                    'locked' => false
+                );
+
+                // Preserve parent_id, priority, and locked status if item already exists
+                if (isset($existing_items_map[$item['id']])) {
+                    $existing = $existing_items_map[$item['id']];
+                    $item_data['parent_id'] = isset($existing['parent_id']) ? $existing['parent_id'] : '';
+                    $item_data['priority'] = isset($existing['priority']) ? $existing['priority'] : 'none';
+                    $item_data['locked'] = isset($existing['locked']) ? $existing['locked'] : false;
+                }
+
+                $updated_items[] = $item_data;
+            }
+        }
+
+        // Update _mcl_items to keep it in sync with kanban board
+        update_post_meta($checklist_id, '_mcl_items', $updated_items);
+
+        // Also update checked state based on kanban board
+        $checked_items = array();
+        foreach ($sanitized_board as $column) {
+            foreach ($column['items'] as $item) {
+                if ($item['checked']) {
+                    $checked_items[] = $item['id'];
+                }
+            }
+        }
+
+        // Update checked state
+        $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
+
+        if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
+        } else if ($checked_state_handling === 'global') {
+            $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
+            update_post_meta($checklist_id, $meta_key, $checked_items);
+        }
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Get threaded comments for a task (public-facing)
+     */
+    public function get_threaded_comments_public() {
+        try {
+            // Verify nonce for public context
+            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $is_logged_in = is_user_logged_in();
+
+            if ($is_logged_in) {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            } else {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            }
+
+            $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+            $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+
+            if (!$checklist_id || !$item_id) {
+                wp_send_json_error('Invalid parameters');
+                return;
+            }
+
+            // Check permissions - need at least view permission
+            if (!$this->has_permission($checklist_id, 'view')) {
+                wp_send_json_error('Permission denied');
+                return;
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                if (class_exists('MCL_DB_Manager')) {
+                    MCL_DB_Manager::get_instance()->install();
+                }
+            }
+
+            $current_user_email = '';
+            if ($is_logged_in) {
+                $current_user = wp_get_current_user();
+                $current_user_email = $current_user->user_email;
+            }
+
+            // Get all comments
+            $comments = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $comments_table
+                 WHERE checklist_id = %d AND item_id = %d
+                 ORDER BY parent_id IS NULL DESC, created_at ASC",
+                $checklist_id,
+                $item_id
+            ));
+
+            // Get like information for each comment
+            foreach ($comments as &$comment) {
+                // Get like count
+                $like_count = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM $likes_table WHERE comment_id = %d",
+                    $comment->id
+                ));
+                $comment->like_count = intval($like_count);
+
+                // Check if current user liked this comment
+                if ($is_logged_in && $current_user_email) {
+                    $user_liked = $wpdb->get_var($wpdb->prepare(
+                        "SELECT COUNT(*) FROM $likes_table WHERE comment_id = %d AND user_email = %s",
+                        $comment->id,
+                        $current_user_email
+                    ));
+                    $comment->user_liked = intval($user_liked) > 0 ? 1 : 0;
+                } else {
+                    $comment->user_liked = 0;
+                }
+            }
+
+            // Organize comments into threaded structure
+            $threaded_comments = $this->organize_threaded_comments($comments);
+
+            wp_send_json_success(array(
+                'comments' => $threaded_comments
+            ));
+        } catch (Exception $e) {
+            error_log('Error in get_threaded_comments_public: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to load comments'));
+        }
+    }
+
+    /**
+     * Add a threaded comment (public-facing)
+     */
+    public function add_threaded_comment_public() {
+        try {
+            // Verify nonce for public context
+            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $is_logged_in = is_user_logged_in();
+
+            if ($is_logged_in) {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            } else {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            }
+
+            $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+            $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+            $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
+            $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+
+            if (!$checklist_id || !$item_id || empty($comment_content)) {
+                wp_send_json_error('Invalid parameters');
+                return;
+            }
+
+            // Check permissions - need at least interact permission to comment
+            if (!$this->has_permission($checklist_id, 'interact')) {
+                wp_send_json_error('Permission denied');
+                return;
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                if (class_exists('MCL_DB_Manager')) {
+                    MCL_DB_Manager::get_instance()->install();
+                }
+            }
+
+            // Validate parent comment exists and belongs to same item (if replying)
+            if ($parent_id) {
+                $parent_comment = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM $comments_table WHERE id = %d AND checklist_id = %d AND item_id = %d",
+                    $parent_id,
+                    $checklist_id,
+                    $item_id
+                ));
+
+                if (!$parent_comment) {
+                    wp_send_json_error('Invalid parent comment');
+                    return;
+                }
+
+                // Don't allow replies to replies (max 2 levels)
+                if ($parent_comment->parent_id !== null) {
+                    wp_send_json_error('Cannot reply to a reply');
+                    return;
+                }
+            }
+
+            // Get user info
+            $user_id = 0;
+            $user_name = 'Guest';
+            $user_email = '';
+            $user_avatar = '';
+
+            if ($is_logged_in) {
+                $current_user = wp_get_current_user();
+                $user_id = $current_user->ID;
+                $user_name = $current_user->display_name;
+                $user_email = $current_user->user_email;
+                $user_avatar = get_avatar_url($current_user->ID, array('size' => 40));
+            } else {
+                // For guests, use a default avatar
+                $user_avatar = get_avatar_url('', array('size' => 40, 'default' => 'mystery'));
+            }
+
+            $result = $wpdb->insert(
+                $comments_table,
+                array(
+                    'checklist_id' => $checklist_id,
+                    'item_id' => $item_id,
+                    'parent_id' => $parent_id,
+                    'user_id' => $user_id,
+                    'user_name' => $user_name,
+                    'user_email' => $user_email,
+                    'user_avatar' => $user_avatar,
+                    'comment_content' => $comment_content,
+                    'like_count' => 0,
+                    'created_at' => current_time('mysql'),
+                    'updated_at' => current_time('mysql')
+                ),
+                array('%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s')
+            );
+
+            if ($result === false) {
+                wp_send_json_error('Failed to add comment');
+                return;
+            }
+
+            $comment_id = $wpdb->insert_id;
+            $new_comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            // Add user_liked field for consistency
+            $new_comment->user_liked = 0;
+
+            wp_send_json_success(array(
+                'message' => 'Comment added successfully',
+                'comment' => $new_comment
+            ));
+        } catch (Exception $e) {
+            error_log('Error in add_threaded_comment_public: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to add comment'));
+        }
+    }
+
+    /**
+     * Toggle like on a comment (public-facing)
+     */
+    public function toggle_comment_like_public() {
+        try {
+            // Verify nonce for public context
+            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $is_logged_in = is_user_logged_in();
+
+            if ($is_logged_in) {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            } else {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            }
+
+            // Guest users can't like comments
+            if (!$is_logged_in) {
+                wp_send_json_error('Must be logged in to like comments');
+                return;
+            }
+
+            $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+
+            if (!$comment_id) {
+                wp_send_json_error('Invalid parameters');
+                return;
+            }
+
+            $current_user = wp_get_current_user();
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                // Try to create tables
+                if (class_exists('MCL_DB_Manager')) {
+                    MCL_DB_Manager::get_instance()->install();
+                }
+            }
+
+            // Check if comment exists and get checklist_id for permission check
+            $comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            if (!$comment) {
+                wp_send_json_error('Comment not found');
+                return;
+            }
+
+            // Check permissions - need at least interact permission
+            if (!$this->has_permission($comment->checklist_id, 'interact')) {
+                wp_send_json_error('Permission denied');
+                return;
+            }
+
+            // Check if user already liked this comment
+            $existing_like = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $likes_table WHERE comment_id = %d AND user_email = %s",
+                $comment_id,
+                $current_user->user_email
+            ));
+
+            if ($existing_like) {
+                // Unlike - remove the like
+                $wpdb->delete(
+                    $likes_table,
+                    array('id' => $existing_like->id),
+                    array('%d')
+                );
+
+                // Update comment like count
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $comments_table SET like_count = like_count - 1 WHERE id = %d",
+                    $comment_id
+                ));
+
+                $action = 'unliked';
+            } else {
+                // Like - add the like
+                $wpdb->insert(
+                    $likes_table,
+                    array(
+                        'comment_id' => $comment_id,
+                        'user_id' => $current_user->ID,
+                        'user_email' => $current_user->user_email,
+                        'user_name' => $current_user->display_name,
+                        'created_at' => current_time('mysql')
+                    ),
+                    array('%d', '%d', '%s', '%s', '%s')
+                );
+
+                // Update comment like count
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $comments_table SET like_count = like_count + 1 WHERE id = %d",
+                    $comment_id
+                ));
+
+                $action = 'liked';
+            }
+
+            // Get updated like count
+            $updated_comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT like_count FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            wp_send_json_success(array(
+                'message' => "Comment $action successfully",
+                'action' => $action,
+                'like_count' => $updated_comment->like_count,
+                'user_liked' => $action === 'liked' ? 1 : 0
+            ));
+        } catch (Exception $e) {
+            error_log('Error in toggle_comment_like_public: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to toggle like'));
+        }
+    }
+
+    /**
+     * Delete threaded comment (public-facing, requires edit permission)
+     */
+    public function delete_threaded_comment_public() {
+        try {
+            // Verify nonce for public context
+            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $is_logged_in = is_user_logged_in();
+
+            if ($is_logged_in) {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            } else {
+                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                    // If public nonce fails, return early and let admin hook try
+                    return;
+                }
+            }
+
+            $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
+
+            if (!$comment_id) {
+                wp_send_json_error('Invalid parameters');
+                return;
+            }
+
+            global $wpdb;
+            $comments_table = $wpdb->prefix . 'mcl_task_comments';
+            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+
+            // Check if tables exist
+            if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
+                $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
+                wp_send_json_error('Tables not found');
+                return;
+            }
+
+            // Get comment to check permissions
+            $comment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $comments_table WHERE id = %d",
+                $comment_id
+            ));
+
+            if (!$comment) {
+                wp_send_json_error('Comment not found');
+                return;
+            }
+
+            // Check permissions - need edit permission to delete comments
+            if (!$this->has_permission($comment->checklist_id, 'edit')) {
+                wp_send_json_error('Permission denied');
+                return;
+            }
+
+            // Delete all replies first
+            $wpdb->delete(
+                $comments_table,
+                array('parent_id' => $comment_id),
+                array('%d')
+            );
+
+            // Delete likes for all replies
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM $likes_table WHERE comment_id IN (SELECT id FROM $comments_table WHERE parent_id = %d)",
+                $comment_id
+            ));
+
+            // Delete likes for the comment
+            $wpdb->delete(
+                $likes_table,
+                array('comment_id' => $comment_id),
+                array('%d')
+            );
+
+            // Delete the comment itself
+            $wpdb->delete(
+                $comments_table,
+                array('id' => $comment_id),
+                array('%d')
+            );
+
+            wp_send_json_success(array('message' => 'Comment deleted successfully'));
+        } catch (Exception $e) {
+            error_log('Error in delete_threaded_comment_public: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to delete comment'));
+        }
+    }
+
+    /**
+     * Organize flat comments array into threaded structure
+     */
+    private function organize_threaded_comments($comments) {
+        $threaded = array();
+        $indexed = array();
+
+        // First pass: index all comments by ID
+        foreach ($comments as $comment) {
+            $comment->replies = array();
+            $indexed[$comment->id] = $comment;
+        }
+
+        // Second pass: build the tree structure
+        foreach ($indexed as $comment) {
+            if ($comment->parent_id === null) {
+                // Top level comment
+                $threaded[] = $comment;
+            } else {
+                // Reply to another comment
+                if (isset($indexed[$comment->parent_id])) {
+                    $indexed[$comment->parent_id]->replies[] = $comment;
+                }
+            }
+        }
+
+        return $threaded;
     }
 }

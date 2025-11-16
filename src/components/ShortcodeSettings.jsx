@@ -91,41 +91,63 @@ const ShortcodeSettings = ({ formData, onChange, checklistId, adminData }) => {
       {/* Display Options */}
       <div>
         <h5 className="font-medium text-brand-dark dark:text-white mb-3">{i18n.displayOptions?.title || 'Display Options'}</h5>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Checkbox
-            id="shortcode_show_title"
-            checked={formData.shortcode_show_title}
-            onChange={(checked) => onChange('shortcode_show_title', checked)}
-            label={i18n.displayOptions?.showTitle || 'Show Title'}
-          />
+        <div className="space-y-4">
+          {/* Display Mode */}
+          <div>
+            <label htmlFor="shortcode_display_mode" className="text-brand-dark dark:text-white">{i18n.displayOptions?.displayMode || 'Display Mode'}</label>
+            <ReactSelect
+              inputId="shortcode_display_mode"
+              value={{ value: formData.shortcode_display_mode || 'list', label:
+                formData.shortcode_display_mode === 'kanban' ? (i18n.displayOptions?.displayModeKanban || 'Kanban Board') :
+                (i18n.displayOptions?.displayModeList || 'List View')
+              }}
+              onChange={(selectedOption) => onChange('shortcode_display_mode', selectedOption.value)}
+              options={[
+                { value: 'list', label: i18n.displayOptions?.displayModeList || 'List View' },
+                { value: 'kanban', label: i18n.displayOptions?.displayModeKanban || 'Kanban Board' }
+              ]}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              placeholder={i18n.displayOptions?.selectDisplayMode || 'Select display mode...'}
+            />
+          </div>
 
-          <Checkbox
-            id="shortcode_show_description"
-            checked={formData.shortcode_show_description}
-            onChange={(checked) => onChange('shortcode_show_description', checked)}
-            label={i18n.displayOptions?.showDescription || 'Show Description'}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Checkbox
+              id="shortcode_show_title"
+              checked={formData.shortcode_show_title}
+              onChange={(checked) => onChange('shortcode_show_title', checked)}
+              label={i18n.displayOptions?.showTitle || 'Show Title'}
+            />
 
-          <Checkbox
-            id="shortcode_show_deadline"
-            checked={formData.shortcode_show_deadline}
-            onChange={(checked) => onChange('shortcode_show_deadline', checked)}
-            label={i18n.displayOptions?.showDeadline || 'Show Deadline'}
-          />
+            <Checkbox
+              id="shortcode_show_description"
+              checked={formData.shortcode_show_description}
+              onChange={(checked) => onChange('shortcode_show_description', checked)}
+              label={i18n.displayOptions?.showDescription || 'Show Description'}
+            />
 
-          <Checkbox
-            id="shortcode_show_priority"
-            checked={formData.shortcode_show_priority}
-            onChange={(checked) => onChange('shortcode_show_priority', checked)}
-            label={i18n.displayOptions?.showPriority || 'Show Priority Indicators'}
-          />
+            <Checkbox
+              id="shortcode_show_deadline"
+              checked={formData.shortcode_show_deadline}
+              onChange={(checked) => onChange('shortcode_show_deadline', checked)}
+              label={i18n.displayOptions?.showDeadline || 'Show Deadline'}
+            />
 
-          <Checkbox
-            id="shortcode_show_numbers"
-            checked={formData.shortcode_show_numbers}
-            onChange={(checked) => onChange('shortcode_show_numbers', checked)}
-            label={i18n.displayOptions?.showNumbers || 'Show Item Numbers'}
-          />
+            <Checkbox
+              id="shortcode_show_priority"
+              checked={formData.shortcode_show_priority}
+              onChange={(checked) => onChange('shortcode_show_priority', checked)}
+              label={i18n.displayOptions?.showPriority || 'Show Priority Indicators'}
+            />
+
+            <Checkbox
+              id="shortcode_show_numbers"
+              checked={formData.shortcode_show_numbers}
+              onChange={(checked) => onChange('shortcode_show_numbers', checked)}
+              label={i18n.displayOptions?.showNumbers || 'Show Item Numbers'}
+            />
+          </div>
         </div>
       </div>
 

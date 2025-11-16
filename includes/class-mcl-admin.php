@@ -889,6 +889,7 @@ class MCL_Admin {
         if ($enable_shortcode) {
             $shortcode_settings = array(
                 // Display Options
+                'display_mode'     => sanitize_text_field($_POST['shortcode_display_mode'] ?? 'list'),
                 'show_title'       => (isset($_POST['shortcode_show_title']) && $_POST['shortcode_show_title'] === '1') ? 1 : 0,
                 'show_description' => (isset($_POST['shortcode_show_description']) && $_POST['shortcode_show_description'] === '1') ? 1 : 0,
                 'show_deadline'    => (isset($_POST['shortcode_show_deadline']) && $_POST['shortcode_show_deadline'] === '1') ? 1 : 0,
@@ -1670,6 +1671,7 @@ class MCL_Admin {
     public static function get_shortcode_settings($checklist_id) {
         $defaults = array(
             // Display Options
+            'display_mode' => 'list',
             'show_title' => 1,
             'show_description' => 1,
             'show_deadline' => 0,

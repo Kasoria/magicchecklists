@@ -256,6 +256,16 @@ const KanbanBoard = ({ adminData }) => {
   // Rich text editor refs
   const contentEditableRef = useRef(null)
 
+  // Image management state
+  const [showImageModal, setShowImageModal] = useState(null) // 'choice', 'upload', or null
+  const [existingImages, setExistingImages] = useState([])
+  const [loadingImages, setLoadingImages] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+  const [selectedImageFile, setSelectedImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [selectedExistingImage, setSelectedExistingImage] = useState(null)
+
   const { showSuccess, showError } = useToast()
 
   // Fetch checklists on mount
@@ -560,31 +570,16 @@ const KanbanBoard = ({ adminData }) => {
     setBoard(newBoard)
 
     try {
-      // Save task content to the database (same as ChecklistDrawer)
-      const updatedItems = []
-      newBoard.forEach(column => {
-        column.items.forEach(item => {
-          updatedItems.push({
-            id: item.id,
-            content: item.title,
-            parent_id: null,
-            priority: 'none',
-            locked: false,
-            in_progress: false,
-            deadline: null
-          })
-        })
-      })
-
+      // Save kanban board structure to the database
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_update_checklist',
+          action: 'mcl_save_kanban_board',
           checklist_id: selectedChecklist,
-          title: 'Kanban Board', // You might want to get the actual checklist title
-          items: JSON.stringify(updatedItems),
-          nonce: adminData.nonces?.mcl_admin || ''
+          board: JSON.stringify(newBoard),
+          nonce: adminData.nonces?.mcl_admin || '',
+          context: 'admin'
         })
       })
 
@@ -640,8 +635,8 @@ const KanbanBoard = ({ adminData }) => {
 
   // Enhanced comment system functions
   const loadTaskComments = async (itemId) => {
-    // Extract numeric part from item ID (e.g., "item_1751278307602_1" -> 1751278307602)
-    const numericId = itemId.toString().replace(/^item_(\d+).*/, '$1')
+    // Strip ALL non-numeric characters to get unique ID (e.g., "item_123_1" -> "1231")
+    const numericId = itemId.toString().replace(/\D/g, '')
     const itemIdInt = parseInt(numericId, 10)
     const checklistIdInt = parseInt(selectedChecklist, 10)
     
@@ -683,11 +678,11 @@ const KanbanBoard = ({ adminData }) => {
 
   const addComment = async (commentText = null) => {
     const text = commentText || newComment
-    
+
     if (!text.trim()) return
 
-    // Extract numeric ID from editingTask.id
-    const numericId = editingTask.id.toString().replace(/^item_(\d+).*/, '$1')
+    // Strip ALL non-numeric characters to get unique ID (e.g., "item_123_1" -> "1231")
+    const numericId = editingTask.id.toString().replace(/\D/g, '')
     const itemIdInt = parseInt(numericId, 10)
 
     try {
@@ -728,8 +723,8 @@ const KanbanBoard = ({ adminData }) => {
   const addReply = async (parentId, replyText) => {
     if (!replyText.trim()) return
 
-    // Extract numeric ID from editingTask.id  
-    const numericId = editingTask.id.toString().replace(/^item_(\d+).*/, '$1')
+    // Strip ALL non-numeric characters to get unique ID (e.g., "item_123_1" -> "1231")
+    const numericId = editingTask.id.toString().replace(/\D/g, '')
     const itemIdInt = parseInt(numericId, 10)
 
     try {
@@ -869,13 +864,182 @@ const KanbanBoard = ({ adminData }) => {
     }
   }
 
-  const addImageToEditor = () => {
-    // Simple image URL input for now
-    const imageUrl = prompt(i18n.kanbanBoard?.prompts?.enterImageUrl || 'Enter image URL:')
-    if (imageUrl) {
-      const imageHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto; margin: 8px 0;" />`
-      document.execCommand('insertHTML', false, imageHtml)
+  // Image management functions
+  const handleAddImage = () => {
+    setImageError(null)
+
+    // Check if user is logged in and can use media library
+    const isLoggedIn = adminData?.currentUser || false
+
+    if (isLoggedIn && typeof wp !== 'undefined' && wp.media) {
+      // Show choice modal for logged in users
+      setShowImageModal('choice')
+    } else {
+      // Show upload area directly for non-logged in users
+      setShowImageModal('upload')
     }
+  }
+
+  const closeImageModal = () => {
+    setShowImageModal(null)
+    setExistingImages([])
+    setSelectedImageFile(null)
+    setImagePreview(null)
+    setSelectedExistingImage(null)
+    setImageError(null)
+  }
+
+  const openMediaLibrary = () => {
+    if (typeof wp === 'undefined' || !wp.media) {
+      console.error('WordPress media library not available')
+      return
+    }
+
+    const mediaFrame = wp.media({
+      title: i18n.kanbanBoard?.modals?.selectImage || 'Select Image',
+      library: { type: 'image' },
+      multiple: false,
+      button: { text: i18n.kanbanBoard?.modals?.insertImage || 'Insert Image' }
+    })
+
+    mediaFrame.on('select', () => {
+      const attachment = mediaFrame.state().get('selection').first().toJSON()
+      insertImageIntoEditor(attachment)
+      closeImageModal()
+    })
+
+    mediaFrame.open()
+  }
+
+  const loadExistingImages = async () => {
+    if (!selectedChecklist) return
+    setLoadingImages(true)
+    try {
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('checklist_id', selectedChecklist)
+
+      const nonce = adminData?.nonces?.mcl_admin || ''
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setExistingImages(result.data)
+      } else {
+        console.error('Failed to load existing images:', result.data?.message)
+        setExistingImages([])
+      }
+    } catch (error) {
+      console.error('Error loading existing images:', error)
+      setExistingImages([])
+    } finally {
+      setLoadingImages(false)
+    }
+  }
+
+  const uploadImage = async (file) => {
+    setUploadingImage(true)
+    setImageError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('action', 'mcl_upload_image')
+      formData.append('file', file)
+      formData.append('checklist_id', selectedChecklist || 0)
+
+      const nonce = adminData?.nonces?.mcl_admin || ''
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        insertImageIntoEditor(result.data)
+        closeImageModal()
+      } else {
+        setImageError(result.data?.message || i18n.kanbanBoard?.errors?.uploadFailed || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      setImageError(i18n.kanbanBoard?.errors?.uploadFailed || 'Upload failed. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const insertImageIntoEditor = (imageData) => {
+    if (!contentEditableRef.current) return
+
+    // Focus the editor first to ensure cursor position
+    contentEditableRef.current.focus()
+
+    const maxWidth = 200
+    const aspectRatio = imageData.height / imageData.width
+    let width = Math.min(imageData.width, maxWidth)
+    let height = Math.round(width * aspectRatio)
+
+    const imageHtml = `<img src="${imageData.url}" alt="${imageData.alt || 'Uploaded image'}" style="max-width: 100%; height: auto; margin: 8px 0;" />`
+
+    // Insert at cursor position (or at the end if no cursor)
+    const selection = window.getSelection()
+    if (selection.rangeCount > 0) {
+      document.execCommand('insertHTML', false, imageHtml)
+    } else {
+      // If no selection, append to the end
+      contentEditableRef.current.innerHTML += imageHtml
+    }
+  }
+
+  const handleFileSelect = (selectedFile) => {
+    // Validate file
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setImageError(i18n.kanbanBoard?.errors?.invalidFileType || 'Invalid file type. Please upload a JPG, PNG, or GIF image.')
+      return
+    }
+
+    if (selectedFile.size > maxSize) {
+      setImageError(i18n.kanbanBoard?.errors?.fileTooLarge || 'File is too large. Maximum size is 10MB.')
+      return
+    }
+
+    setSelectedImageFile(selectedFile)
+    setImageError(null)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => setImagePreview(e.target.result)
+    reader.readAsDataURL(selectedFile)
+  }
+
+  const addImageToEditor = () => {
+    handleAddImage()
   }
 
   const formatText = (command, value = null) => {
@@ -1154,13 +1318,14 @@ const KanbanBoard = ({ adminData }) => {
                                 </svg>
                               )}
                             </button>
-                            <h4 className={`font-medium text-sm flex-1 ${
-                              item.checked 
-                                ? 'text-gray-500 dark:text-gray-400 line-through' 
-                                : 'text-gray-900 dark:text-white'
-                            }`}>
-                              {item.title}
-                            </h4>
+                            <div
+                              className={`font-medium text-sm flex-1 ${
+                                item.checked
+                                  ? 'text-gray-500 dark:text-gray-400 line-through'
+                                  : 'text-gray-900 dark:text-white'
+                              }`}
+                              dangerouslySetInnerHTML={{ __html: item.title }}
+                            />
                           </div>
                         </div>
 
@@ -1478,6 +1643,185 @@ const KanbanBoard = ({ adminData }) => {
         icon="delete"
         items={columnToDelete?.items?.length > 0 ? [i18n.kanbanBoard?.modals?.deleteColumnWarning?.replace('{itemCount}', columnToDelete.items.length) || `This will also delete ${columnToDelete.items.length} items in this column`] : []}
       />
+
+      {/* Image Choice Modal */}
+      {showImageModal === 'choice' && (
+        <Modal isOpen={true} onClose={closeImageModal} title={i18n.kanbanBoard?.modals?.insertImage || 'Insert Image'}>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{i18n.kanbanBoard?.modals?.chooseImageMethod || 'Choose how you would like to add an image:'}</p>
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              onClick={openMediaLibrary}
+            >
+              {i18n.kanbanBoard?.modals?.mediaLibrary || 'WordPress Media Library'}
+            </button>
+            <button
+              type="button"
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+              onClick={() => setShowImageModal('upload')}
+            >
+              {i18n.kanbanBoard?.modals?.quickUpload || 'Quick Upload'}
+            </button>
+            <button
+              type="button"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+              onClick={closeImageModal}
+            >
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Image Upload Modal */}
+      {showImageModal === 'upload' && (
+        <Modal
+          isOpen={true}
+          onClose={closeImageModal}
+          title={i18n.kanbanBoard?.modals?.uploadOrSelectImage || 'Upload or Select Image'}
+          size="lg"
+          footer={
+            <div className="flex justify-between w-full">
+              <button
+                type="button"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                onClick={closeImageModal}
+              >
+                {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                onClick={() => {
+                  if (selectedImageFile) {
+                    uploadImage(selectedImageFile)
+                  } else if (selectedExistingImage) {
+                    insertImageIntoEditor(selectedExistingImage)
+                    closeImageModal()
+                  }
+                }}
+                disabled={(!selectedImageFile && !selectedExistingImage) || uploadingImage}
+              >
+                {uploadingImage ? (i18n.kanbanBoard?.modals?.uploading || 'Uploading...') : selectedImageFile ? (i18n.kanbanBoard?.modals?.uploadImage || 'Upload Image') : (i18n.kanbanBoard?.modals?.selectImage || 'Select Image')}
+              </button>
+            </div>
+          }
+        >
+          <div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-600 mb-4">
+              <button
+                type="button"
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  !existingImages.length || existingImages.length === 0
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setExistingImages([])}
+              >
+                {i18n.kanbanBoard?.modals?.uploadNew || 'Upload New'}
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  existingImages.length > 0
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={loadExistingImages}
+              >
+                {i18n.kanbanBoard?.modals?.selectExisting || 'Select Existing'}
+              </button>
+            </div>
+
+            {/* Upload Tab */}
+            {(!existingImages.length || existingImages.length === 0) && (
+              <div>
+                <div
+                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
+                  onDragOver={e => { e.preventDefault() }}
+                  onDrop={e => {
+                    e.preventDefault()
+                    if (e.dataTransfer.files[0]) {
+                      handleFileSelect(e.dataTransfer.files[0])
+                    }
+                  }}
+                  onClick={() => document.getElementById('kanban-image-upload-input').click()}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])}
+                    className="hidden"
+                    id="kanban-image-upload-input"
+                  />
+
+                  {!imagePreview ? (
+                    <div className="space-y-3">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="text-gray-600 dark:text-gray-400">{i18n.kanbanBoard?.modals?.dragDropImage || 'Drag and drop image here or click to select'}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{i18n.kanbanBoard?.modals?.imageRestrictions || 'Maximum file size: 10MB. Supported formats: JPG, PNG, GIF'}</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <img src={imagePreview} alt="Preview" className="max-w-full h-auto rounded-md" />
+                      <button
+                        className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-opacity-70 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImageFile(null)
+                          setImagePreview(null)
+                          setImageError(null)
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {imageError && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                    {imageError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Select Tab */}
+            {existingImages.length > 0 && (
+              <div>
+                {loadingImages ? (
+                  <div className="text-center py-8 text-gray-500">{i18n.kanbanBoard?.modals?.loadingImages || 'Loading images...'}</div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                    {existingImages.map((image) => (
+                      <div
+                        key={image.url}
+                        className={`border-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedExistingImage === image
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setSelectedExistingImage(image)}
+                      >
+                        <img src={image.url} alt={image.filename} className="w-full h-24 object-cover rounded-t-md" />
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-gray-800 truncate">{image.filename}</p>
+                          <p className="text-xs text-gray-500">{image.width}×{image.height}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
