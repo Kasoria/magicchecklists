@@ -1946,6 +1946,7 @@ class MCL_Admin {
             $tags = get_post_meta($checklist->ID, '_mcl_tags', true) ?: array();
             $active = get_post_meta($checklist->ID, '_mcl_active', true);
             $keyboard_shortcut = get_post_meta($checklist->ID, '_mcl_keyboard_shortcut', true);
+            $enable_shortcode = (bool) get_post_meta($checklist->ID, '_mcl_enable_shortcode', true);
 
             $formatted_checklists[] = array(
                 'id' => $checklist->ID,
@@ -1957,6 +1958,7 @@ class MCL_Admin {
                 'status' => $active ? 'active' : 'inactive',
                 'items_count' => count($items),
                 'keyboard_shortcut' => $keyboard_shortcut ?: '',
+                'enable_shortcode' => $enable_shortcode,
                 'created_date' => get_the_date('Y-m-d', $checklist->ID),
                 'last_modified' => get_the_modified_date('Y-m-d', $checklist->ID)
             );
@@ -1996,6 +1998,8 @@ class MCL_Admin {
     }
 
     public function ajax_clone_checklist() {
+        global $wpdb;
+
         // Verify nonce
         if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
             wp_send_json_error(array('message' => 'Invalid security token'));
@@ -2009,7 +2013,7 @@ class MCL_Admin {
         }
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        
+
         if (!$checklist_id) {
             wp_send_json_error(array('message' => 'Invalid checklist ID'));
             return;
@@ -2031,24 +2035,88 @@ class MCL_Admin {
         );
 
         $new_checklist_id = wp_insert_post($new_post);
-        
+
         if (is_wp_error($new_checklist_id)) {
             wp_send_json_error(array('message' => 'Failed to create checklist clone'));
             return;
         }
 
-        // Copy all meta data
-        $meta_keys = array(
-            '_mcl_items', '_mcl_priority', '_mcl_checklist_type', '_mcl_tags',
-            '_mcl_keyboard_shortcut', '_mcl_active', '_mcl_theme', '_mcl_trigger_shortcut',
-            '_mcl_trigger_button', '_mcl_short_title', '_mcl_public_access',
-            '_mcl_public_permission', '_mcl_public_description'
+        // Copy ALL meta data from original checklist (like the non-ajax version)
+        $all_meta = get_post_meta($checklist_id);
+
+        // Meta keys to exclude from cloning (runtime/state data that should be fresh)
+        $exclude_meta_keys = array(
+            '_mcl_reset_next',      // Should be recalculated
+            '_mcl_reset_counter',   // Should start fresh
+            '_mcl_lock',            // Lock state should be fresh
+            '_mcl_deadline_notification_sent', // Notification state should be fresh
+            '_edit_lock',           // WordPress edit lock
+            '_edit_last'            // WordPress edit last
         );
 
-        foreach ($meta_keys as $meta_key) {
-            $meta_value = get_post_meta($checklist_id, $meta_key, true);
-            if ($meta_value !== '') {
-                update_post_meta($new_checklist_id, $meta_key, $meta_value);
+        foreach ($all_meta as $meta_key => $meta_values) {
+            // Skip excluded meta keys
+            if (in_array($meta_key, $exclude_meta_keys)) {
+                continue;
+            }
+
+            foreach ($meta_values as $meta_value) {
+                update_post_meta($new_checklist_id, $meta_key, maybe_unserialize($meta_value));
+            }
+        }
+
+        // For publisher checklists, also copy the requirements from the database table
+        $checklist_type = get_post_meta($checklist_id, '_mcl_checklist_type', true);
+        if ($checklist_type === 'publisher') {
+            $requirements = MCL_DB_Manager::get_publisher_requirements($checklist_id);
+            if (!empty($requirements)) {
+                MCL_DB_Manager::save_publisher_requirements($new_checklist_id, $requirements);
+            }
+        }
+
+        // Clone notification settings from database table
+        $notification_manager = MCL_Notification_Manager::get_instance();
+        $notification_settings = $notification_manager->get_notification_settings($checklist_id);
+        if ($notification_settings) {
+            $settings_array = array(
+                'notifications_enabled' => $notification_settings->notifications_enabled,
+                'email_enabled' => $notification_settings->email_enabled,
+                'integration_enabled' => $notification_settings->integration_enabled,
+                'email_recipients' => $notification_settings->email_recipients,
+                'slack_webhook_url' => $notification_settings->slack_webhook_url,
+                'discord_webhook_url' => $notification_settings->discord_webhook_url,
+                'notify_on_new_item' => $notification_settings->notify_on_new_item,
+                'notify_on_delete_item' => $notification_settings->notify_on_delete_item,
+                'notify_on_check_item' => $notification_settings->notify_on_check_item,
+                'notify_on_uncheck_item' => $notification_settings->notify_on_uncheck_item,
+                'notify_on_deadline' => $notification_settings->notify_on_deadline,
+                'notify_on_comments' => $notification_settings->notify_on_comments,
+                'deadline_threshold_hours' => $notification_settings->deadline_threshold_hours,
+                'batch_interval' => $notification_settings->batch_interval
+            );
+            $notification_manager->save_notification_settings($new_checklist_id, $settings_array);
+        }
+
+        // Clone kanban columns from database table (but not kanban state - that's runtime data)
+        $columns_table = $wpdb->prefix . 'mcl_kanban_columns';
+        $columns = $wpdb->get_results($wpdb->prepare(
+            "SELECT column_id, title, color, position FROM $columns_table WHERE checklist_id = %d ORDER BY position ASC",
+            $checklist_id
+        ));
+
+        if (!empty($columns)) {
+            foreach ($columns as $column) {
+                $wpdb->insert(
+                    $columns_table,
+                    array(
+                        'checklist_id' => $new_checklist_id,
+                        'column_id' => $column->column_id,
+                        'title' => $column->title,
+                        'color' => $column->color,
+                        'position' => $column->position
+                    ),
+                    array('%d', '%s', '%s', '%s', '%d')
+                );
             }
         }
 

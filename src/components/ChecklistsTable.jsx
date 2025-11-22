@@ -324,6 +324,9 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
     return type === 'publisher' ? (i18n.checklistsTable?.types?.publisher || 'Publisher') : (i18n.checklistsTable?.types?.classic || 'Classic')
   }
 
+  // Check if any checklist has shortcode enabled
+  const hasShortcodeEnabled = filteredChecklists.some(checklist => checklist.enable_shortcode)
+
   // Get unique tags for filter
   const allTags = checklists.reduce((tags, checklist) => {
     if (checklist.tags && Array.isArray(checklist.tags)) {
@@ -686,6 +689,9 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                     </div>
                   </TableHeadCell>
                   <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.tags || 'Tags'}</TableHeadCell>
+                  {hasShortcodeEnabled && (
+                    <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.shortcode || 'Shortcode'}</TableHeadCell>
+                  )}
                   <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.description || 'Description'}</TableHeadCell>
                   <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.status || 'Status'}</TableHeadCell>
                   <TableHeadCell className="text-brand-dark dark:text-white">{i18n.checklistsTable?.table?.headers?.shortcut || 'Shortcut'}</TableHeadCell>
@@ -730,6 +736,17 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                         ))}
                       </div>
                     </TableCell>
+                    {hasShortcodeEnabled && (
+                      <TableCell>
+                        {checklist.enable_shortcode ? (
+                          <code className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-sm whitespace-nowrap">
+                            [magic_checklist id="{checklist.id}"]
+                          </code>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">—</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="max-w-xs truncate text-gray-700 dark:text-gray-300">
                       {checklist.description}
                     </TableCell>
@@ -753,7 +770,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                         <span className="text-gray-400 dark:text-gray-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="relative">
+                    <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button
                           size="xs"

@@ -437,9 +437,15 @@
     padding: var(--mcl-shortcode-spacing-xs);
   }
 
-  /* Always show action buttons on mobile */
+  /* Hide action buttons on mobile by default, show on focus */
   .mcl-item-actions {
-    opacity: 0.7 !important;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mcl-shortcode-item:focus-within .mcl-item-actions {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .mcl-item-actions button {

@@ -3,6 +3,474 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { formatDate } from '../utils/dateUtils'
 import ShortcodeKanbanView from './ShortcodeKanbanView'
 
+// Link Manager Hook
+const useLinkManager = () => {
+  const [isToolbarVisible, setIsToolbarVisible] = useState(false)
+  const [selectedText, setSelectedText] = useState(null)
+  const [linkUrl, setLinkUrl] = useState('')
+  const [currentSelection, setCurrentSelection] = useState(null)
+
+  const showLinkToolbar = useCallback((selection) => {
+    setCurrentSelection(selection)
+    setSelectedText(selection.toString())
+    setIsToolbarVisible(true)
+  }, [])
+
+  const hideLinkToolbar = useCallback(() => {
+    setIsToolbarVisible(false)
+    setSelectedText(null)
+    setLinkUrl('')
+    setCurrentSelection(null)
+  }, [])
+
+  const createLink = useCallback((url) => {
+    if (!currentSelection || !url) return
+
+    try {
+      // Normalize URL
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url
+      }
+
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.style.color = '#2563eb'
+      link.style.textDecoration = 'underline'
+      link.textContent = currentSelection.toString()
+
+      // Replace selected text with link
+      const range = currentSelection.getRangeAt(0)
+      range.deleteContents()
+      range.insertNode(link)
+
+      hideLinkToolbar()
+    } catch (error) {
+      console.error('Error creating link:', error)
+    }
+  }, [currentSelection, hideLinkToolbar])
+
+  const isValidUrl = useCallback((url) => {
+    if (!url) return false
+
+    url = url.trim()
+    if (!url) return false
+
+    // If it doesn't start with a protocol, check if it's a valid domain
+    if (!/^https?:\/\//i.test(url)) {
+      // Basic domain validation (allows domains like example.com, sub.example.com)
+      return /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/i.test(url)
+    }
+
+    // If it has a protocol, validate it as a full URL
+    try {
+      const urlObject = new URL(url)
+      return ['http:', 'https:'].includes(urlObject.protocol)
+    } catch {
+      return false
+    }
+  }, [])
+
+  return {
+    isToolbarVisible,
+    selectedText,
+    linkUrl,
+    setLinkUrl,
+    showLinkToolbar,
+    hideLinkToolbar,
+    createLink,
+    isValidUrl
+  }
+}
+
+// Link Toolbar Component with inline styles
+const LinkToolbar = ({
+  isVisible,
+  position,
+  linkUrl,
+  setLinkUrl,
+  onCreateLink,
+  onClose,
+  isValidUrl
+}) => {
+  const i18n = (typeof window !== 'undefined' && (window.mclShortcode?.i18n)) || {}
+
+  if (!isVisible) return null
+
+  const handleCreateLink = (url) => {
+    if (url && url.trim() && isValidUrl(url.trim())) {
+      onCreateLink(url.trim())
+    }
+  }
+
+  return (
+    <div
+      data-link-toolbar="true"
+      style={{
+        position: 'fixed',
+        top: position?.y || 0,
+        left: position?.x || 0,
+        transform: 'translateX(-50%)',
+        zIndex: 100001,
+        backgroundColor: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        padding: '8px'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <input
+          type="text"
+          placeholder={i18n.imageModal?.enterUrl || "Enter URL..."}
+          value={linkUrl}
+          onChange={(e) => setLinkUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.stopPropagation()
+              handleCreateLink(linkUrl)
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              onClose()
+            }
+          }}
+          autoFocus
+          style={{
+            padding: '4px 12px',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            fontSize: '14px',
+            width: '192px',
+            outline: 'none'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#3b82f6'
+            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#d1d5db'
+            e.target.style.boxShadow = 'none'
+          }}
+        />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            handleCreateLink(linkUrl)
+          }}
+          disabled={!linkUrl || !linkUrl.trim() || !isValidUrl(linkUrl.trim())}
+          style={{
+            backgroundColor: (!linkUrl || !linkUrl.trim() || !isValidUrl(linkUrl.trim())) ? '#d1d5db' : '#3b82f6',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            border: 'none',
+            cursor: (!linkUrl || !linkUrl.trim() || !isValidUrl(linkUrl.trim())) ? 'not-allowed' : 'pointer',
+            opacity: (!linkUrl || !linkUrl.trim() || !isValidUrl(linkUrl.trim())) ? 0.5 : 1,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!e.target.disabled) e.target.style.backgroundColor = '#2563eb'
+          }}
+          onMouseLeave={(e) => {
+            if (!e.target.disabled) e.target.style.backgroundColor = '#3b82f6'
+          }}
+        >
+          ✓
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Base Modal Component with inline styles for frontend compatibility
+const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
+  if (!isOpen) return null
+
+  const sizeMap = {
+    sm: '28rem',
+    md: '28rem',
+    lg: '42rem',
+    xl: '56rem'
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '16px',
+        overflowY: 'auto'
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          width: '100%',
+          maxWidth: sizeMap[size],
+          marginTop: '32px',
+          marginBottom: '32px',
+          maxHeight: 'calc(100vh - 4rem)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px',
+          borderBottom: '1px solid #e5e7eb',
+          position: 'sticky',
+          top: 0,
+          backgroundColor: 'white',
+          zIndex: 10,
+          borderTopLeftRadius: '8px',
+          borderTopRightRadius: '8px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#1f2937',
+            margin: 0
+          }}>
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#9ca3af',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#6b7280'}
+            onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
+          >
+            <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div style={{
+          padding: '16px',
+          overflowY: 'auto',
+          maxHeight: 'calc(100vh - 12rem)',
+          flex: 1
+        }}>
+          {children}
+        </div>
+
+        {/* Footer */}
+        {footer && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px',
+            padding: '16px',
+            borderTop: '1px solid #e5e7eb',
+            position: 'sticky',
+            bottom: 0,
+            backgroundColor: 'white',
+            borderBottomLeftRadius: '8px',
+            borderBottomRightRadius: '8px'
+          }}>
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Deadline Modal Component
+const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
+  const [dateTime, setDateTime] = useState('')
+  const i18n = (typeof window !== 'undefined' && (window.mclShortcode?.i18n)) || {}
+
+  useEffect(() => {
+    if (isOpen && currentDeadline) {
+      // Convert UTC timestamp to local browser time for datetime-local input
+      const date = new Date(currentDeadline * 1000)
+
+      // Format for datetime-local input (uses local timezone)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+
+      setDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
+    } else if (isOpen) {
+      setDateTime('')
+    }
+  }, [isOpen, currentDeadline])
+
+  const handleSave = () => {
+    if (dateTime) {
+      // Convert datetime-local input to timestamp
+      const date = new Date(dateTime)
+      const timestamp = Math.floor(date.getTime() / 1000)
+
+      onSave(timestamp)
+    } else {
+      onSave(null) // Remove deadline
+    }
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={i18n.shortcodeRenderer?.deadlineModal?.setDeadlineTitle || 'Set Item Deadline'}
+      size="lg"
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <button
+            type="button"
+            onClick={() => {
+              onSave(null) // Clear the deadline
+              onClose()
+            }}
+            disabled={!currentDeadline}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: !currentDeadline ? '#fef2f2' : '#fef2f2',
+              color: !currentDeadline ? '#d1d5db' : '#dc2626',
+              border: '1px solid',
+              borderColor: !currentDeadline ? '#e5e7eb' : '#fecaca',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: !currentDeadline ? 'not-allowed' : 'pointer',
+              opacity: !currentDeadline ? 0.5 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (currentDeadline) {
+                e.target.style.backgroundColor = '#fee2e2'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentDeadline) {
+                e.target.style.backgroundColor = '#fef2f2'
+              }
+            }}
+          >
+            {i18n.shortcodeRenderer?.deadlineModal?.clearDeadline || 'Clear Deadline'}
+          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+            >
+              {i18n.buttons?.cancel || 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            >
+              {i18n.shortcodeRenderer?.deadlineModal?.saveDeadline || 'Save Deadline'}
+            </button>
+          </div>
+        </div>
+      }
+    >
+      <div>
+        <label style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#374151',
+          marginBottom: '8px'
+        }}>
+          {i18n.shortcodeRenderer?.deadlineModal?.deadlineDateTimeLabel || 'Deadline Date & Time'}
+        </label>
+        <input
+          type="datetime-local"
+          value={dateTime}
+          onChange={(e) => setDateTime(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #d1d5db',
+            borderRadius: '6px',
+            fontSize: '14px',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#3b82f6'
+            e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#d1d5db'
+            e.target.style.boxShadow = 'none'
+          }}
+        />
+        <p style={{
+          fontSize: '12px',
+          color: '#6b7280',
+          marginTop: '8px',
+          margin: '8px 0 0 0'
+        }}>
+          {i18n.shortcodeRenderer?.deadlineModal?.leaveEmptyHint || 'Leave empty to remove deadline'}
+        </p>
+      </div>
+    </Modal>
+  )
+}
+
 const ShortcodeRenderer = ({ 
   checklistId, 
   instanceId, 
@@ -21,7 +489,33 @@ const ShortcodeRenderer = ({
   const [itemDeadlines, setItemDeadlines] = useState({})
   const [tooltip, setTooltip] = useState(null)
   const [tooltipTimer, setTooltipTimer] = useState(null)
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false)
+  const [deadlineModalItem, setDeadlineModalItem] = useState(null)
+
+  // Image management state
+  const [showImageModal, setShowImageModal] = useState(null) // 'choice', 'upload', or null
+  const [currentImageItemId, setCurrentImageItemId] = useState(null)
+  const [existingImages, setExistingImages] = useState([])
+  const [loadingImages, setLoadingImages] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+  const [selectedImageFile, setSelectedImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [selectedExistingImage, setSelectedExistingImage] = useState(null)
+  const [activeImageTab, setActiveImageTab] = useState('upload') // 'upload' or 'existing'
+
   const containerRef = useRef(null)
+  const itemRefs = useRef({})
+
+  // Link management state
+  const linkManager = useLinkManager()
+  const [selectionLinkButton, setSelectionLinkButton] = useState(null)
+  const [currentTextSelection, setCurrentTextSelection] = useState(null)
+  const [linkToolbarVisible, setLinkToolbarVisible] = useState(false)
+  const [linkToolbarPosition, setLinkToolbarPosition] = useState({ x: 0, y: 0 })
+
+  // Track hovered/focused item to show actions
+  const [hoveredItemId, setHoveredItemId] = useState(null)
 
   // Initialize i18n
   useEffect(() => {
@@ -156,29 +650,114 @@ const ShortcodeRenderer = ({
   // Handle content editing
   const handleContentBlur = useCallback((e, itemId) => {
     if (!permissions.can_edit) return
-    
+
     const newContent = e.target.innerHTML
-    const newItems = shortcodeItems.map(item => 
+    const newItems = shortcodeItems.map(item =>
       item.id === itemId ? { ...item, content: newContent } : item
     )
     setShortcodeItems(newItems)
     saveItemsToServer(newItems)
   }, [shortcodeItems, permissions.can_edit])
 
+  const handlePaste = useCallback((e, itemId) => {
+    if (!permissions.can_edit) return
+
+    // Get pasted text
+    const pastedText = e.clipboardData.getData('text/plain')
+
+    // Check if it's a URL
+    const urlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-@?^=%&/~\+#])?$/i
+
+    if (urlRegex.test(pastedText.trim())) {
+      e.preventDefault()
+
+      // Normalize URL
+      let url = pastedText.trim()
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url
+      }
+
+      // Create link element
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.style.color = '#2563eb'
+      link.style.textDecoration = 'underline'
+      link.textContent = pastedText.trim()
+
+      // Insert the link at cursor position
+      const selection = window.getSelection()
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0)
+        range.deleteContents()
+        range.insertNode(link)
+
+        // Move cursor after the link
+        range.setStartAfter(link)
+        range.setEndAfter(link)
+        selection.removeAllRanges()
+        selection.addRange(range)
+
+        // Update the item content
+        const contentElement = e.target
+        if (contentElement) {
+          const newContent = contentElement.innerHTML
+          const newItems = shortcodeItems.map(item =>
+            item.id === itemId ? { ...item, content: newContent } : item
+          )
+          setShortcodeItems(newItems)
+          saveItemsToServer(newItems)
+        }
+      }
+    }
+  }, [permissions.can_edit, shortcodeItems])
+
   const handleContentKeyDown = useCallback((e, itemId) => {
     if (!permissions.can_edit) return
-    
+
     // Handle Enter key to add new item
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      addNewItemAfter(itemId)
+
+      const currentIndex = shortcodeItems.findIndex(item => item.id === itemId)
+      const newItem = {
+        id: `item_${Date.now()}_${Math.random()}`,
+        content: '',
+        priority: 'none',
+        checked: false,
+        deadline: null,
+        inProgress: false,
+        locked: false,
+        parent_id: null
+      }
+
+      const newItems = [...shortcodeItems]
+      newItems.splice(currentIndex + 1, 0, newItem)
+      setShortcodeItems(newItems)
+      saveItemsToServer(newItems)
+
+      // Focus the new item using refs
+      setTimeout(() => {
+        const newItemElement = itemRefs.current[newItem.id]
+        if (newItemElement) {
+          newItemElement.focus()
+          // Place cursor at the start
+          const selection = window.getSelection()
+          const range = document.createRange()
+          range.selectNodeContents(newItemElement)
+          range.collapse(true)
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
+      }, 100)
     }
-  }, [permissions.can_edit])
+  }, [permissions.can_edit, shortcodeItems])
 
   // Add new item after current item
   const addNewItemAfter = (afterItemId) => {
     if (!permissions.can_edit) return
-    
+
     const currentIndex = shortcodeItems.findIndex(item => item.id === afterItemId)
     const newItem = {
       id: `item_${Date.now()}_${Math.random()}`,
@@ -190,17 +769,24 @@ const ShortcodeRenderer = ({
       locked: false,
       parent_id: null
     }
-    
+
     const newItems = [...shortcodeItems]
     newItems.splice(currentIndex + 1, 0, newItem)
     setShortcodeItems(newItems)
     saveItemsToServer(newItems)
-    
-    // Focus the new item
+
+    // Focus the new item using refs
     setTimeout(() => {
-      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"] .mcl-shortcode-item-content`)
+      const newItemElement = itemRefs.current[newItem.id]
       if (newItemElement) {
         newItemElement.focus()
+        // Place cursor at the start
+        const selection = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(newItemElement)
+        range.collapse(true)
+        selection.removeAllRanges()
+        selection.addRange(range)
       }
     }, 100)
   }
@@ -250,46 +836,46 @@ const ShortcodeRenderer = ({
     })
   }
 
-  // Handle deadline click
+  // Handle deadline click - open modal
   const handleDeadlineClick = (itemId) => {
     if (!permissions.can_edit) return
-    
-    const currentItem = shortcodeItems.find(item => item.id === itemId)
-    const existingDeadline = currentItem?.deadline
 
-    const newDeadline = prompt(
-      i18n.deadline?.enterPrompt || 'Enter deadline (YYYY-MM-DD HH:MM):', 
-      existingDeadline ? new Date(existingDeadline * 1000).toISOString().slice(0, 16) : ''
-    )
-    
-    if (newDeadline !== null) {
-      if (newDeadline === '') {
-        // Remove deadline
-        setItemDeadlines(prev => {
-          const newDeadlines = { ...prev }
-          delete newDeadlines[itemId]
-          return newDeadlines
-        })
-        
-        const newItems = shortcodeItems.map(item => 
-          item.id === itemId ? { ...item, deadline: null } : item
-        )
-        setShortcodeItems(newItems)
-        saveItemsToServer(newItems)
-      } else {
-        // Set new deadline
-        const timestamp = Math.floor(new Date(newDeadline).getTime() / 1000)
-        setItemDeadlines(prev => ({
-          ...prev,
-          [itemId]: timestamp
-        }))
-        
-        const newItems = shortcodeItems.map(item => 
-          item.id === itemId ? { ...item, deadline: timestamp } : item
-        )
-        setShortcodeItems(newItems)
-        saveItemsToServer(newItems)
-      }
+    const currentItem = shortcodeItems.find(item => item.id === itemId)
+    setDeadlineModalItem(currentItem)
+    setShowDeadlineModal(true)
+  }
+
+  // Handle deadline save from modal
+  const handleDeadlineSave = (timestamp) => {
+    if (!deadlineModalItem) return
+
+    const itemId = deadlineModalItem.id
+
+    if (timestamp === null) {
+      // Remove deadline
+      setItemDeadlines(prev => {
+        const newDeadlines = { ...prev }
+        delete newDeadlines[itemId]
+        return newDeadlines
+      })
+
+      const newItems = shortcodeItems.map(item =>
+        item.id === itemId ? { ...item, deadline: null } : item
+      )
+      setShortcodeItems(newItems)
+      saveItemsToServer(newItems)
+    } else {
+      // Set new deadline
+      setItemDeadlines(prev => ({
+        ...prev,
+        [itemId]: timestamp
+      }))
+
+      const newItems = shortcodeItems.map(item =>
+        item.id === itemId ? { ...item, deadline: timestamp } : item
+      )
+      setShortcodeItems(newItems)
+      saveItemsToServer(newItems)
     }
   }
 
@@ -309,24 +895,427 @@ const ShortcodeRenderer = ({
     saveItemsToServer(newItems)
   }
 
-  // Handle image insertion
+  // Image management functions
   const handleImageClick = (itemId) => {
     if (!permissions.can_edit) return
-    
-    // Simple image URL prompt for now
-    const imageUrl = prompt(i18n.image?.enterUrlPrompt || 'Enter image URL:')
-    if (imageUrl) {
-      const currentItem = shortcodeItems.find(item => item.id === itemId)
-      const imageHtml = `<br><img src="${imageUrl}" alt="Image" style="max-width: 200px; height: auto;" />`
-      const newContent = (currentItem?.content || '') + imageHtml
-      
-      const newItems = shortcodeItems.map(item => 
-        item.id === itemId ? { ...item, content: newContent } : item
-      )
-      setShortcodeItems(newItems)
-      saveItemsToServer(newItems)
+
+    setCurrentImageItemId(itemId)
+    setImageError(null)
+
+    // Show choice modal first
+    setShowImageModal('choice')
+  }
+
+  const closeImageModal = () => {
+    setShowImageModal(null)
+    setCurrentImageItemId(null)
+    setExistingImages([])
+    setSelectedImageFile(null)
+    setImagePreview(null)
+    setSelectedExistingImage(null)
+    setImageError(null)
+    setActiveImageTab('upload')
+  }
+
+  const openMediaLibrary = () => {
+    if (typeof wp === 'undefined' || !wp.media) {
+      console.error('WordPress media library not available')
+      return
+    }
+
+    const mediaFrame = wp.media({
+      title: i18n.imageModal?.selectImage || 'Select Image',
+      library: { type: 'image' },
+      multiple: false,
+      button: { text: i18n.imageModal?.insertImage || 'Insert Image' }
+    })
+
+    let imageSelected = false
+
+    mediaFrame.on('select', () => {
+      const attachment = mediaFrame.state().get('selection').first().toJSON()
+      insertImageIntoItem(attachment)
+      imageSelected = true
+      closeImageModal()
+    })
+
+    mediaFrame.on('close', () => {
+      // Clean up if user closes without selecting
+      if (!imageSelected && currentImageItemId) {
+        closeImageModal()
+      }
+    })
+
+    mediaFrame.open()
+  }
+
+  const loadExistingImages = async () => {
+    if (!checklistId) return
+    setLoadingImages(true)
+    try {
+      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.mclShortcode?.nonce || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('checklist_id', checklistId)
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setExistingImages(result.data)
+      } else {
+        console.error('Failed to load existing images:', result.data?.message)
+        setExistingImages([])
+      }
+    } catch (error) {
+      console.error('Error loading existing images:', error)
+      setExistingImages([])
+    } finally {
+      setLoadingImages(false)
     }
   }
+
+  const uploadImage = async (file) => {
+    setUploadingImage(true)
+    setImageError(null)
+
+    try {
+      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.mclShortcode?.nonce || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_upload_image')
+      formData.append('file', file)
+      formData.append('checklist_id', checklistId || 0)
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        insertImageIntoItem(result.data)
+        closeImageModal()
+      } else {
+        setImageError(result.data?.message || i18n.errors?.uploadFailed || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      setImageError(i18n.errors?.uploadFailed || 'Upload failed. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const insertImageIntoItem = (imageData) => {
+    if (!currentImageItemId) return
+
+    const currentItem = shortcodeItems.find(item => item.id === currentImageItemId)
+    const imageHtml = `<br><img src="${imageData.url}" alt="${imageData.alt || 'Uploaded image'}" style="max-width: 200px; height: auto; margin: 8px 0;" />`
+    const newContent = (currentItem?.content || '') + imageHtml
+
+    const newItems = shortcodeItems.map(item =>
+      item.id === currentImageItemId ? { ...item, content: newContent } : item
+    )
+    setShortcodeItems(newItems)
+    saveItemsToServer(newItems)
+  }
+
+  const handleFileSelect = (selectedFile) => {
+    // Validate file
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
+
+    if (!allowedTypes.includes(selectedFile.type)) {
+      setImageError(i18n.errors?.invalidFileType || 'Invalid file type. Please upload a JPG, PNG, or GIF image.')
+      return
+    }
+
+    if (selectedFile.size > maxSize) {
+      setImageError(i18n.errors?.fileTooLarge || 'File is too large. Maximum size is 10MB.')
+      return
+    }
+
+    setSelectedImageFile(selectedFile)
+    setImageError(null)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => setImagePreview(e.target.result)
+    reader.readAsDataURL(selectedFile)
+  }
+
+  // Link management functions
+  const handleTextSelection = useCallback((e) => {
+    if (!permissions.can_edit) return
+
+    // Small delay to let selection settle
+    setTimeout(() => {
+      const selection = window.getSelection()
+
+      if (selection.rangeCount > 0 && !selection.isCollapsed) {
+        const selectedText = selection.toString().trim()
+
+        if (selectedText.length > 0) {
+          // Get the range and its position
+          const range = selection.getRangeAt(0)
+          const rect = range.getBoundingClientRect()
+
+          // Check if the selected text contains a link
+          const containsLink = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+            ? range.commonAncestorContainer.parentElement?.tagName === 'A' ||
+              range.commonAncestorContainer.parentElement?.closest('a') !== null
+            : range.commonAncestorContainer.querySelector?.('a') !== null ||
+              range.commonAncestorContainer.closest?.('a') !== null
+
+          // Store the current selection for later use
+          setCurrentTextSelection({
+            selection,
+            range,
+            text: selectedText,
+            containsLink
+          })
+
+          // Show small link/unlink button above selected text
+          setSelectionLinkButton({
+            x: rect.left + rect.width / 2,
+            y: rect.top - 35, // Don't add scrollY - rect.top is already viewport relative for fixed positioning
+            isUnlink: containsLink
+          })
+        } else {
+          setSelectionLinkButton(null)
+          setCurrentTextSelection(null)
+        }
+      } else {
+        // Hide button when no text is selected
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+      }
+    }, 10)
+  }, [permissions.can_edit])
+
+  const removeLinkFromSelection = useCallback(() => {
+    if (!currentTextSelection || !currentTextSelection.containsLink) return
+
+    try {
+      const range = currentTextSelection.range
+
+      // Find the link element(s) within the selection
+      let linkElement = null
+
+      // Check if the selection is entirely within a single link
+      if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+        linkElement = range.commonAncestorContainer.parentElement?.closest('a')
+      } else {
+        linkElement = range.commonAncestorContainer.querySelector?.('a') ||
+                      range.commonAncestorContainer.closest?.('a')
+      }
+
+      if (linkElement) {
+        // Get the text content of the link
+        const linkText = linkElement.textContent
+
+        // Create a text node to replace the link
+        const textNode = document.createTextNode(linkText)
+
+        // Replace the link with the text node
+        linkElement.parentNode.replaceChild(textNode, linkElement)
+
+        // Clear the selection and hide any toolbars
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+        window.getSelection().removeAllRanges()
+
+        // Update the item content after removing the link
+        const itemElement = textNode.parentElement?.closest('[data-item-id]')
+        if (itemElement) {
+          const itemId = itemElement.getAttribute('data-item-id')
+          const contentElement = itemElement.querySelector('[contenteditable="true"]')
+          if (contentElement && itemId) {
+            // Update local state immediately
+            const newContent = contentElement.innerHTML
+            const newItems = shortcodeItems.map(item =>
+              item.id === itemId ? { ...item, content: newContent } : item
+            )
+            setShortcodeItems(newItems)
+            saveItemsToServer(newItems)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error removing link:', error)
+    }
+  }, [currentTextSelection, shortcodeItems])
+
+  const handleSelectionLinkButtonClick = useCallback(() => {
+    if (currentTextSelection) {
+      if (currentTextSelection.containsLink) {
+        // If selection contains a link, remove it
+        removeLinkFromSelection()
+      } else {
+        // If selection doesn't contain a link, show link creation toolbar
+        // Position the link toolbar near the button
+        setLinkToolbarPosition({
+          x: selectionLinkButton.x,
+          y: selectionLinkButton.y - 50
+        })
+
+        // Show the link toolbar
+        linkManager.showLinkToolbar(currentTextSelection.selection)
+        setLinkToolbarVisible(true)
+
+        // Hide the selection button since we're showing the toolbar
+        setSelectionLinkButton(null)
+      }
+    }
+  }, [linkManager, currentTextSelection, selectionLinkButton, removeLinkFromSelection])
+
+  const createLinkFromSelection = useCallback((url) => {
+    if (!currentTextSelection || !url) {
+      return
+    }
+
+    try {
+      // Normalize URL - trim whitespace first
+      url = url.trim()
+      if (!url) {
+        return
+      }
+
+      // Add https:// if no protocol is present
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url
+      }
+
+      // Validate the URL is properly formed
+      try {
+        new URL(url)
+      } catch (e) {
+        console.error('Invalid URL:', url)
+        return
+      }
+
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.style.color = '#2563eb'
+      link.style.textDecoration = 'underline'
+      link.textContent = currentTextSelection.text
+
+      // Replace selected text with link
+      const range = currentTextSelection.range
+      range.deleteContents()
+      range.insertNode(link)
+
+      // Clear selection
+      window.getSelection().removeAllRanges()
+
+      // Clear the selection and hide toolbar AFTER successfully creating the link
+      linkManager.hideLinkToolbar()
+      setLinkToolbarVisible(false)
+      setCurrentTextSelection(null)
+
+      // Update the item content after creating the link
+      const itemElement = link.closest('[data-item-id]')
+      if (itemElement) {
+        const itemId = itemElement.getAttribute('data-item-id')
+        const contentElement = itemElement.querySelector('[contenteditable="true"]')
+        if (contentElement && itemId) {
+          // Update local state immediately
+          const newContent = contentElement.innerHTML
+          const newItems = shortcodeItems.map(item =>
+            item.id === itemId ? { ...item, content: newContent } : item
+          )
+          setShortcodeItems(newItems)
+          saveItemsToServer(newItems)
+        }
+      }
+    } catch (error) {
+      console.error('Error creating link:', error)
+    }
+  }, [currentTextSelection, linkManager, shortcodeItems])
+
+  // Handle selection changes globally to hide link button when selection is lost
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      // Don't clear selection if link toolbar is visible - we need it for link creation
+      if (linkToolbarVisible) return
+
+      const selection = window.getSelection()
+      if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
+        setSelectionLinkButton(null)
+        setCurrentTextSelection(null)
+      }
+    }
+
+    const handleClickAnywhere = (e) => {
+      // Check if clicking on link toolbar elements
+      if (e.target.closest('[data-link-toolbar="true"]')) {
+        return
+      }
+
+      // If link toolbar is visible and clicking outside, close it
+      if (linkToolbarVisible) {
+        linkManager.hideLinkToolbar()
+        setLinkToolbarVisible(false)
+        setCurrentTextSelection(null)
+        return
+      }
+
+      // Small delay to allow selection to complete first
+      setTimeout(() => {
+        const selection = window.getSelection()
+        if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
+          setSelectionLinkButton(null)
+          setCurrentTextSelection(null)
+        }
+      }, 50)
+    }
+
+    const handleKeyDown = (e) => {
+      // Close link toolbar on Tab or Escape
+      if (linkToolbarVisible && (e.key === 'Tab' || e.key === 'Escape')) {
+        linkManager.hideLinkToolbar()
+        setLinkToolbarVisible(false)
+        setCurrentTextSelection(null)
+      }
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange)
+    document.addEventListener('mousedown', handleClickAnywhere)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange)
+      document.removeEventListener('mousedown', handleClickAnywhere)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [linkToolbarVisible, linkManager])
 
   const saveCheckedState = async (checkedSet) => {
     const checkedArray = Array.from(checkedSet)
@@ -678,20 +1667,20 @@ const ShortcodeRenderer = ({
         </div>
       )}
 
-      {settings.show_title && (
+      {!!settings.show_title && (
         <h3 className="mcl-shortcode-title">
           {checklist.title}
         </h3>
       )}
 
-      {settings.show_description && checklist.content && (
-        <div 
+      {!!settings.show_description && !!checklist.content && (
+        <div
           className="mcl-shortcode-description"
           dangerouslySetInnerHTML={{ __html: checklist.content }}
         />
       )}
 
-      {settings.show_deadline && checklist.deadline && (
+      {!!settings.show_deadline && !!checklist.deadline && (
         <div className="mcl-shortcode-deadline mcl-countdown" data-deadline={checklist.deadline}>
           {formatDate(parseInt(checklist.deadline) * 1000, 'date')}
         </div>
@@ -723,6 +1712,8 @@ const ShortcodeRenderer = ({
                         {...provided.draggableProps}
                         className={`mcl-shortcode-item group ${isChecked ? 'mcl-shortcode-checked' : ''} ${snapshot.isDragging ? 'mcl-dragging' : ''} ${isInProgress ? 'mcl-in-progress' : ''}`}
                         data-item-id={item.id}
+                        onMouseEnter={() => setHoveredItemId(item.id)}
+                        onMouseLeave={() => setHoveredItemId(null)}
                         style={{
                           ...provided.draggableProps.style,
                           // Ensure dragging item follows mouse correctly
@@ -733,9 +1724,9 @@ const ShortcodeRenderer = ({
                         }}
                       >
                         {/* Drag Handle - only show if reordering is enabled */}
-                        {settings.enable_reorder && permissions.can_interact && (
-                          <span 
-                            {...provided.dragHandleProps} 
+                        {!!settings.enable_reorder && !!permissions.can_interact && (
+                          <span
+                            {...provided.dragHandleProps}
                             className="mcl-item-drag-handle"
                             style={{
                               display: 'inline-block',
@@ -753,109 +1744,178 @@ const ShortcodeRenderer = ({
                           </span>
                         )}
                         
-                        <div className="mcl-item-main">
-                          <label className="mcl-item-label">
+                        <div className="mcl-item-main" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+                          {/* Checkbox - standalone, not in label */}
+                          <div style={{
+                            position: 'relative',
+                            flexShrink: 0,
+                            width: 'var(--mcl-shortcode-checkbox-dimensions)',
+                            height: 'var(--mcl-shortcode-checkbox-dimensions)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
                             <input
                               type="checkbox"
                               className="mcl-item-checkbox"
                               checked={isChecked}
-                              onChange={(e) => handleCheckboxChange(item.id, e.target.checked)}
+                              onChange={(e) => {
+                                e.stopPropagation() // Prevent event bubbling
+                                handleCheckboxChange(item.id, e.target.checked)
+                              }}
                               disabled={!permissions.can_interact}
                               style={{
                                 appearance: 'none',
                                 WebkitAppearance: 'none',
+                                MozAppearance: 'none',
                                 width: 'var(--mcl-shortcode-checkbox-dimensions)',
                                 height: 'var(--mcl-shortcode-checkbox-dimensions)',
+                                minWidth: 'var(--mcl-shortcode-checkbox-dimensions)',
+                                minHeight: 'var(--mcl-shortcode-checkbox-dimensions)',
+                                maxWidth: 'var(--mcl-shortcode-checkbox-dimensions)',
+                                maxHeight: 'var(--mcl-shortcode-checkbox-dimensions)',
                                 border: 'var(--mcl-shortcode-checkbox-border-thickness) solid var(--mcl-shortcode-checkbox-border-color)',
                                 borderRadius: 'var(--mcl-shortcode-checkbox-border-radius)',
                                 backgroundColor: isChecked ? 'var(--mcl-shortcode-checkbox-color-filled)' : 'var(--mcl-shortcode-checkbox-color-unfilled)',
                                 position: 'relative',
                                 cursor: permissions.can_interact ? 'pointer' : 'not-allowed',
-                                margin: '0 8px 0 0',
-                                transition: 'all 0.2s ease'
+                                margin: '0',
+                                padding: '0',
+                                boxSizing: 'border-box',
+                                transition: 'all 0.2s ease',
+                                flexShrink: 0
                               }}
                             />
-                            
-                            {/* Custom checkmark */}
+
+                            {/* Custom checkmark - SVG with proper centering */}
                             {isChecked && (
-                              <span
+                              <div
                                 style={{
                                   position: 'absolute',
-                                  left: '6px',
                                   top: '50%',
-                                  width: '4px',
-                                  height: '8px',
-                                  border: 'solid var(--mcl-shortcode-checkmark-color)',
-                                  borderWidth: '0 2px 2px 0',
-                                  transform: 'translateY(-60%) rotate(45deg)',
-                                  pointerEvents: 'none'
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  pointerEvents: 'none',
+                                  width: '100%',
+                                  height: '100%'
                                 }}
-                              />
-                            )}
-
-                            {settings.show_numbers === true && (
-                              <span className="mcl-item-number" style={{ marginRight: '8px', opacity: '0.7' }}>
-                                {index + 1}.
-                              </span>
-                            )}
-
-                            {renderPriorityIndicator(item.priority, permissions.can_edit, () => cyclePriority(item.id))}
-
-                            <div className="mcl-content-container">
-                              <div
-                                className="mcl-shortcode-item-content"
-                                contentEditable={permissions.can_edit && !item.locked}
-                                suppressContentEditableWarning={true}
-                                onBlur={(e) => handleContentBlur(e, item.id)}
-                                onKeyDown={(e) => handleContentKeyDown(e, item.id)}
-                                dangerouslySetInnerHTML={{ __html: item.content }}
-                                style={{
-                                  flex: '1',
-                                  minWidth: '0',
-                                  color: 'var(--mcl-shortcode-list-item-text-color)',
-                                  fontSize: 'var(--mcl-shortcode-list-item-font-size)',
-                                  lineHeight: '1.5',
-                                  transition: 'opacity 0.2s ease',
-                                  opacity: isChecked ? '0.8' : '1',
-                                  cursor: permissions.can_edit && !item.locked ? 'text' : 'default',
-                                  padding: '4px',
-                                  borderRadius: '4px',
-                                  outline: 'none',
-                                  border: permissions.can_edit && !item.locked ? '1px solid transparent' : 'none'
-                                }}
-                              />
-
-                              {/* Deadline Badge */}
-                              {deadline && (
-                                <div 
-                                  className="mcl-deadline-badge"
-                                  style={{
-                                    fontSize: '10px',
-                                    padding: '2px 6px',
-                                    backgroundColor: '#fee2e2',
-                                    color: '#991b1b',
-                                    borderRadius: '12px',
-                                    marginTop: '4px',
-                                    cursor: permissions.can_edit ? 'pointer' : 'default'
-                                  }}
-                                  onClick={permissions.can_edit ? () => handleDeadlineClick(item.id) : undefined}
+                              >
+                                <svg
+                                  width="60%"
+                                  height="60%"
+                                  viewBox="0 0 20 20"
+                                  fill="var(--mcl-shortcode-checkmark-color)"
+                                  style={{ flexShrink: 0, display: 'block' }}
                                 >
-                                  {i18n.deadline?.dueLabel || 'Due'}: {formatDeadline(deadline)}
-                                </div>
-                              )}
-                            </div>
-                          </label>
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
 
-                          {/* Action buttons - show on hover when can edit */}
-                          {permissions.can_edit && !item.locked && (
-                            <div 
-                              className="mcl-item-actions" 
+                          {/* Item number */}
+                          {settings.show_numbers === true && (
+                            <span className="mcl-item-number" style={{ flexShrink: 0, opacity: '0.7' }}>
+                              {index + 1}.
+                            </span>
+                          )}
+
+                          {/* Priority indicator */}
+                          <div style={{ flexShrink: 0 }}>
+                            {renderPriorityIndicator(item.priority, permissions.can_edit, () => cyclePriority(item.id))}
+                          </div>
+
+                          {/* Content area - completely separate from checkbox */}
+                          <div className="mcl-content-container" style={{ flex: '1', minWidth: '0' }}>
+                            <div
+                              ref={(el) => {
+                                if (el) {
+                                  itemRefs.current[item.id] = el
+                                }
+                              }}
+                              className="mcl-shortcode-item-content"
+                              data-item-id={item.id}
+                              contentEditable={permissions.can_edit && !item.locked}
+                              suppressContentEditableWarning={true}
+                              onFocus={() => setHoveredItemId(item.id)}
+                              onBlur={(e) => {
+                                handleContentBlur(e, item.id)
+                                // Don't clear hover if we're clicking on action buttons
+                                setTimeout(() => {
+                                  if (!e.relatedTarget?.closest('.mcl-item-actions')) {
+                                    setHoveredItemId(null)
+                                  }
+                                }, 100)
+                              }}
+                              onKeyDown={(e) => handleContentKeyDown(e, item.id)}
+                              onPaste={(e) => handlePaste(e, item.id)}
+                              onMouseUp={handleTextSelection}
+                              onKeyUp={handleTextSelection}
+                              onClick={(e) => {
+                                // Allow links to be clicked
+                                if (e.target.tagName === 'A') {
+                                  e.stopPropagation() // Prevent item click handler
+                                  // Manually open the link to ensure it works
+                                  const url = e.target.href
+                                  if (url) {
+                                    window.open(url, '_blank', 'noopener,noreferrer')
+                                    e.preventDefault() // Prevent default since we're handling it manually
+                                  }
+                                  return
+                                }
+                              }}
+                              dangerouslySetInnerHTML={{ __html: item.content }}
+                              style={{
+                                width: '100%',
+                                color: 'var(--mcl-shortcode-list-item-text-color)',
+                                fontSize: 'var(--mcl-shortcode-list-item-font-size)',
+                                lineHeight: '1.5',
+                                transition: 'opacity 0.2s ease',
+                                opacity: isChecked ? '0.8' : '1',
+                                textDecoration: isChecked ? 'line-through' : 'none',
+                                cursor: permissions.can_edit && !item.locked ? 'text' : 'default',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                outline: 'none',
+                                border: permissions.can_edit && !item.locked ? '1px solid transparent' : 'none'
+                              }}
+                            />
+
+                            {/* Deadline Badge */}
+                            {!!deadline && (
+                              <div
+                                className="mcl-deadline-badge"
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '2px 6px',
+                                  backgroundColor: '#fee2e2',
+                                  color: '#991b1b',
+                                  borderRadius: '12px',
+                                  marginTop: '4px',
+                                  cursor: permissions.can_edit ? 'pointer' : 'default',
+                                  display: 'inline-block'
+                                }}
+                                onClick={permissions.can_edit ? () => handleDeadlineClick(item.id) : undefined}
+                              >
+                                {i18n.deadline?.dueLabel || 'Due'}: {formatDeadline(deadline)}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action buttons - show on hover/focus when can edit */}
+                          {!!permissions.can_edit && !item.locked && (
+                            <div
+                              className="mcl-item-actions"
                               style={{
                                 position: 'absolute',
                                 top: '50%',
                                 right: '8px',
                                 transform: 'translateY(-50%)',
-                                opacity: 0,
+                                opacity: hoveredItemId === item.id ? 1 : 0,
+                                pointerEvents: hoveredItemId === item.id ? 'auto' : 'none',
                                 display: 'flex',
                                 gap: '4px',
                                 backgroundColor: 'white',
@@ -887,6 +1947,8 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   toggleInProgress(item.id)
                                 }}
+                                onFocus={() => setHoveredItemId(item.id)}
+                                onBlur={() => setHoveredItemId(null)}
                                 onMouseEnter={(e) => showTooltip(e.target, isInProgress ? (i18n.tooltips?.removeFromProgress || 'Remove from in progress') : (i18n.tooltips?.markAsProgress || 'Mark as in progress'))}
                                 onMouseLeave={hideTooltip}
                               >
@@ -914,6 +1976,8 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   handleDeadlineClick(item.id)
                                 }}
+                                onFocus={() => setHoveredItemId(item.id)}
+                                onBlur={() => setHoveredItemId(null)}
                                 onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.setDeadline || 'Set deadline')}
                                 onMouseLeave={hideTooltip}
                               >
@@ -941,6 +2005,8 @@ const ShortcodeRenderer = ({
                                   e.stopPropagation()
                                   handleImageClick(item.id)
                                 }}
+                                onFocus={() => setHoveredItemId(item.id)}
+                                onBlur={() => setHoveredItemId(null)}
                                 onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.addImage || 'Add image')}
                                 onMouseLeave={hideTooltip}
                               >
@@ -969,6 +2035,8 @@ const ShortcodeRenderer = ({
                                     e.stopPropagation()
                                     removeItem(item.id)
                                   }}
+                                  onFocus={() => setHoveredItemId(item.id)}
+                                  onBlur={() => setHoveredItemId(null)}
                                   onMouseEnter={(e) => showTooltip(e.target, i18n.tooltips?.removeItem || 'Remove item')}
                                   onMouseLeave={hideTooltip}
                                 >
@@ -989,9 +2057,10 @@ const ShortcodeRenderer = ({
         </Droppable>
       </DragDropContext>
 
-      {/* Add item button - only show when can edit */}
-      {permissions.can_edit && (
-        <div style={{ marginTop: '16px' }}>
+      {/* Add item button and Uncheck All button */}
+      <div style={{ marginTop: '16px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {/* Add item button - only show when can edit */}
+        {!!permissions.can_edit && (
           <button
             type="button"
             onClick={() => addNewItemAfter(shortcodeItems[shortcodeItems.length - 1]?.id)}
@@ -1021,8 +2090,495 @@ const ShortcodeRenderer = ({
             <span style={{ fontSize: '16px' }}>+</span>
             {i18n.buttons?.addItem || 'Add Item'}
           </button>
+        )}
+
+        {/* Uncheck All button - only show when at least one item is checked */}
+        {checkedItems.size > 0 && permissions.can_interact && (
+          <button
+            type="button"
+            onClick={() => {
+              setCheckedItems(new Set())
+              saveCheckedState(new Set())
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#f3f4f6',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              borderRadius: 'var(--mcl-shortcode-border-radius)',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#e5e7eb'
+              e.target.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#f3f4f6'
+              e.target.style.transform = 'translateY(0)'
+            }}
+          >
+            <svg style={{ width: '16px', height: '16px' }} fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {i18n.buttons?.uncheckAll || 'Uncheck All'}
+          </button>
+        )}
+      </div>
+
+      {/* Deadline Modal */}
+      {showDeadlineModal && (
+        <DeadlineModal
+          isOpen={showDeadlineModal}
+          onClose={() => {
+            setShowDeadlineModal(false)
+            setDeadlineModalItem(null)
+          }}
+          onSave={handleDeadlineSave}
+          itemId={deadlineModalItem?.id}
+          currentDeadline={deadlineModalItem?.deadline}
+        />
+      )}
+
+      {/* Image Choice Modal */}
+      {showImageModal === 'choice' && (
+        <Modal isOpen={true} onClose={closeImageModal} title={i18n.imageModal?.insertImage || 'Insert Image'}>
+          <p style={{ color: '#6b7280', marginBottom: '16px', fontSize: '14px' }}>
+            {i18n.imageModal?.chooseImageMethod || 'Choose how you would like to add an image:'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                // Close the choice modal and open WP Media Library
+                setShowImageModal(null)
+                openMediaLibrary()
+              }}
+              style={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+            >
+              {i18n.imageModal?.mediaLibrary || 'WordPress Media Library'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveImageTab('upload')
+                setShowImageModal('upload')
+              }}
+              style={{
+                backgroundColor: '#6b7280',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#4b5563'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#6b7280'}
+            >
+              {i18n.imageModal?.quickUpload || 'Quick Upload'}
+            </button>
+            <button
+              type="button"
+              onClick={closeImageModal}
+              style={{
+                backgroundColor: '#e5e7eb',
+                color: '#374151',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#d1d5db'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+            >
+              {i18n.buttons?.cancel || 'Cancel'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Image Upload Modal */}
+      {showImageModal === 'upload' && (
+        <Modal
+          isOpen={true}
+          onClose={closeImageModal}
+          title={i18n.imageModal?.uploadOrSelectImage || 'Upload or Select Image'}
+          size="xl"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={closeImageModal}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+              >
+                {i18n.buttons?.cancel || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedImageFile) {
+                    uploadImage(selectedImageFile)
+                  } else if (selectedExistingImage) {
+                    insertImageIntoItem(selectedExistingImage)
+                    closeImageModal()
+                  }
+                }}
+                disabled={(!selectedImageFile && !selectedExistingImage) || uploadingImage}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: (!selectedImageFile && !selectedExistingImage) || uploadingImage ? '#d1d5db' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: (!selectedImageFile && !selectedExistingImage) || uploadingImage ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#2563eb'
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#3b82f6'
+                }}
+              >
+                {uploadingImage ? (i18n.imageModal?.uploading || 'Uploading...') : selectedImageFile ? (i18n.imageModal?.uploadImage || 'Upload Image') : (i18n.imageModal?.selectImage || 'Select Image')}
+              </button>
+            </>
+          }
+        >
+          <div>
+            {/* Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setActiveImageTab('upload')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeImageTab === 'upload' ? '#3b82f6' : '#6b7280',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: activeImageTab === 'upload' ? '2px solid #3b82f6' : '2px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#374151'}
+                onMouseLeave={(e) => {
+                  if (activeImageTab !== 'upload') e.target.style.color = '#6b7280'
+                }}
+              >
+                {i18n.imageModal?.uploadNew || 'Upload New'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveImageTab('existing')
+                  loadExistingImages()
+                }}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: activeImageTab === 'existing' ? '#3b82f6' : '#6b7280',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: activeImageTab === 'existing' ? '2px solid #3b82f6' : '2px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#374151'}
+                onMouseLeave={(e) => {
+                  if (activeImageTab !== 'existing') e.target.style.color = '#6b7280'
+                }}
+              >
+                {i18n.imageModal?.selectExisting || 'Select Existing'}
+              </button>
+            </div>
+
+            {/* Upload Tab */}
+            {activeImageTab === 'upload' && (
+              <div>
+                <div
+                  style={{
+                    border: '2px dashed #d1d5db',
+                    borderRadius: '8px',
+                    padding: '32px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onDragOver={(e) => { e.preventDefault() }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    if (e.dataTransfer.files[0]) {
+                      handleFileSelect(e.dataTransfer.files[0])
+                    }
+                  }}
+                  onClick={() => document.getElementById('shortcode-renderer-image-upload-input').click()}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])}
+                    style={{ display: 'none' }}
+                    id="shortcode-renderer-image-upload-input"
+                  />
+
+                  {!imagePreview ? (
+                    <div>
+                      <svg style={{ width: '48px', height: '48px', margin: '0 auto 12px', color: '#9ca3af' }} stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p style={{ color: '#6b7280', marginBottom: '8px', fontSize: '14px' }}>
+                        {i18n.imageModal?.dragDropImage || 'Drag and drop image here or click to select'}
+                      </p>
+                      <p style={{ color: '#9ca3af', fontSize: '12px' }}>
+                        {i18n.imageModal?.imageRestrictions || 'Maximum file size: 10MB. Supported formats: JPG, PNG, GIF'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ position: 'relative' }}>
+                      <img src={imagePreview} alt="Preview" style={{ maxWidth: '100%', height: 'auto', borderRadius: '6px' }} />
+                      <button
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImageFile(null)
+                          setImagePreview(null)
+                          setImageError(null)
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {imageError && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    backgroundColor: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    color: '#dc2626',
+                    fontSize: '14px'
+                  }}>
+                    {imageError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Select Tab */}
+            {activeImageTab === 'existing' && (
+              <div>
+                {loadingImages ? (
+                  <div style={{ textAlign: 'center', padding: '32px', color: '#6b7280', fontSize: '14px' }}>
+                    {i18n.imageModal?.loadingImages || 'Loading images...'}
+                  </div>
+                ) : existingImages.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px', color: '#9ca3af', fontSize: '14px' }}>
+                    {i18n.imageModal?.noImages || 'No images found'}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                    gap: '12px',
+                    maxHeight: '24rem',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    width: '100%'
+                  }}>
+                    {existingImages.map((image) => (
+                      <div
+                        key={image.url}
+                        onClick={() => setSelectedExistingImage(image)}
+                        style={{
+                          border: selectedExistingImage === image ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+                          backgroundColor: selectedExistingImage === image ? '#eff6ff' : 'white',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          overflow: 'hidden',
+                          minWidth: 0
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedExistingImage !== image) e.currentTarget.style.borderColor = '#d1d5db'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedExistingImage !== image) e.currentTarget.style.borderColor = '#e5e7eb'
+                        }}
+                      >
+                        <img
+                          src={image.url}
+                          alt={image.filename}
+                          style={{
+                            width: '100%',
+                            height: '120px',
+                            objectFit: 'cover',
+                            borderTopLeftRadius: '6px',
+                            borderTopRightRadius: '6px',
+                            display: 'block'
+                          }}
+                        />
+                        <div style={{ padding: '8px', minWidth: 0 }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            color: '#1f2937',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            margin: '0 0 4px 0'
+                          }}>
+                            {image.filename}
+                          </p>
+                          <p style={{
+                            fontSize: '11px',
+                            color: '#6b7280',
+                            margin: 0
+                          }}>
+                            {image.width}×{image.height}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Selection Link Button */}
+      {!!selectionLinkButton && (
+        <div
+          data-link-toolbar="true"
+          style={{
+            position: 'fixed',
+            left: `${selectionLinkButton.x}px`,
+            top: `${selectionLinkButton.y}px`,
+            transform: 'translateX(-50%)',
+            zIndex: 100002
+          }}
+        >
+          <button
+            onClick={handleSelectionLinkButtonClick}
+            onMouseDown={(e) => e.preventDefault()} // Prevent losing text selection
+            title={selectionLinkButton.isUnlink ? (i18n.tooltips?.removeLink || 'Remove link') : (i18n.tooltips?.addLink || 'Add link')}
+            style={{
+              backgroundColor: selectionLinkButton.isUnlink ? '#dc2626' : '#3b82f6',
+              color: 'white',
+              padding: '4px',
+              borderRadius: '9999px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              transition: 'background-color 0.2s, color 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = selectionLinkButton.isUnlink ? '#b91c1c' : '#2563eb'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = selectionLinkButton.isUnlink ? '#dc2626' : '#3b82f6'
+            }}
+          >
+            {selectionLinkButton.isUnlink ? (
+              // Unlink icon
+              <svg style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                <line x1="8" y1="8" x2="16" y2="16" />
+              </svg>
+            ) : (
+              // Link icon
+              <svg style={{ width: '16px', height: '16px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                <line x1="11" y1="13" x2="13" y2="11" />
+              </svg>
+            )}
+          </button>
         </div>
       )}
+
+      {/* Link Toolbar */}
+      <LinkToolbar
+        isVisible={linkToolbarVisible}
+        position={linkToolbarPosition}
+        linkUrl={linkManager.linkUrl}
+        setLinkUrl={linkManager.setLinkUrl}
+        onCreateLink={createLinkFromSelection}
+        onClose={() => {
+          linkManager.hideLinkToolbar()
+          setLinkToolbarVisible(false)
+          setCurrentTextSelection(null)
+        }}
+        isValidUrl={linkManager.isValidUrl}
+      />
     </div>
   )
 }
