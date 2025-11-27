@@ -352,6 +352,8 @@ class MCL_I18n {
                 'selectChecklistLabel' => __('Select Checklist:', 'magic-checklists'),
                 'chooseChecklistOption' => __('Choose a checklist...', 'magic-checklists'),
                 'addColumnButton' => __('Add Column', 'magic-checklists'),
+                'featureBoardSettingsButton' => __('Feature Board', 'magic-checklists'),
+                'ideaSubmissionsButton' => __('Idea Submissions', 'magic-checklists'),
             ),
             'column' => array(
                 'editButton' => __('Edit Column', 'magic-checklists'),
@@ -439,6 +441,96 @@ class MCL_I18n {
                 'userAssignmentUpdated' => __('User assignment updated', 'magic-checklists'),
                 'itemChecked' => __('Item checked', 'magic-checklists'),
                 'itemUnchecked' => __('Item unchecked', 'magic-checklists'),
+            ),
+            'featureBoard' => array(
+                // Header buttons
+                'featureBoardSettingsButton' => __('Feature Board', 'magic-checklists'),
+                'ideaSubmissionsButton' => __('Idea Submissions', 'magic-checklists'),
+                'submitIdeaButton' => __('Submit Idea', 'magic-checklists'),
+
+                // Settings modal
+                'settingsTitle' => __('Feature Board Settings', 'magic-checklists'),
+                'saving' => __('Saving...', 'magic-checklists'),
+                'saveButton' => __('Save Settings', 'magic-checklists'),
+                'settingsSaved' => __('Feature board settings saved', 'magic-checklists'),
+                'saveFailed' => __('Failed to save settings', 'magic-checklists'),
+
+                // Enable toggle
+                'enableLabel' => __('Enable Feature Board', 'magic-checklists'),
+                'enableDescription' => __('Allow public visitors to interact with this board', 'magic-checklists'),
+
+                // Upvote settings
+                'upvoteSettings' => __('Upvote Settings', 'magic-checklists'),
+                'upvoteModeLabel' => __('Who can upvote?', 'magic-checklists'),
+                'upvoteModeAnyone' => __('Anyone (no login required)', 'magic-checklists'),
+                'upvoteModeLoggedIn' => __('Logged-in users only', 'magic-checklists'),
+                'upvoteModeEmailVerified' => __('Email verification required', 'magic-checklists'),
+                'requireVerificationLabel' => __('Require email verification before counting upvote', 'magic-checklists'),
+                'showUpvoteCountLabel' => __('Show upvote count on items', 'magic-checklists'),
+                'upvoteTitle' => __('Upvote this item', 'magic-checklists'),
+
+                // Upvote protection for anonymous users
+                'anonUpvoteProtection' => __('Anonymous Upvote Protection', 'magic-checklists'),
+                'anonUpvoteProtectionDesc' => __('Prevent users from upvoting multiple times without logging in.', 'magic-checklists'),
+                'localStorageCheckLabel' => __('Browser storage check (localStorage)', 'magic-checklists'),
+                'localStorageCheckDesc' => __('Remembers upvotes in the browser. Can be bypassed by clearing browser data or using incognito mode.', 'magic-checklists'),
+                'ipCheckLabel' => __('IP address check (server-side)', 'magic-checklists'),
+                'ipCheckDesc' => __('Stores hashed IP addresses to prevent duplicate upvotes. More reliable than browser storage.', 'magic-checklists'),
+                'gdprNotice' => __('GDPR Notice:', 'magic-checklists'),
+                'gdprNoticeText' => __('Even hashed IP addresses may be considered personal data under GDPR. Ensure you have appropriate consent mechanisms and privacy policy disclosures if enabling this option for EU visitors.', 'magic-checklists'),
+
+                // Comment settings
+                'commentSettings' => __('Comment Settings', 'magic-checklists'),
+                'commentModeLabel' => __('Who can comment?', 'magic-checklists'),
+                'commentModeAnyone' => __('Anyone (no login required)', 'magic-checklists'),
+                'commentModeLoggedIn' => __('Logged-in users only', 'magic-checklists'),
+                'commentModeDisabled' => __('Comments disabled', 'magic-checklists'),
+                'showCommentCountLabel' => __('Show comment count on items', 'magic-checklists'),
+
+                // Idea submission settings
+                'ideaSubmissionSettings' => __('Idea Submission Settings', 'magic-checklists'),
+                'enableIdeaSubmission' => __('Allow visitors to submit new ideas', 'magic-checklists'),
+                'ideaSubmissionModeLabel' => __('Who can submit ideas?', 'magic-checklists'),
+                'ideaModeAnyone' => __('Anyone (no login required)', 'magic-checklists'),
+                'ideaModeLoggedIn' => __('Logged-in users only', 'magic-checklists'),
+                'defaultColumnLabel' => __('Default column for new ideas', 'magic-checklists'),
+                'selectColumn' => __('Select a column...', 'magic-checklists'),
+                'enableModerationLabel' => __('Require admin approval before publishing ideas', 'magic-checklists'),
+
+                // Idea submission modal (frontend)
+                'submitIdeaTitle' => __('Submit Your Idea', 'magic-checklists'),
+                'ideaTitleLabel' => __('Title', 'magic-checklists'),
+                'ideaTitlePlaceholder' => __('Enter your idea title...', 'magic-checklists'),
+                'ideaDescriptionLabel' => __('Description (optional)', 'magic-checklists'),
+                'ideaDescriptionPlaceholder' => __('Describe your idea in detail...', 'magic-checklists'),
+                'submitting' => __('Submitting...', 'magic-checklists'),
+                'moderationNotice' => __('Your idea will be reviewed by our team before being published.', 'magic-checklists'),
+
+                // Email prompt modal
+                'loginRequiredTitle' => __('Login Required', 'magic-checklists'),
+                'loginRequiredMessage' => __('Please log in to perform this action.', 'magic-checklists'),
+                'loginButton' => __('Log In', 'magic-checklists'),
+                'emailPromptTitle' => __('Enter Your Details', 'magic-checklists'),
+                'emailPromptUpvote' => __('Enter your email to upvote this item.', 'magic-checklists'),
+                'emailPromptIdea' => __('Enter your details to submit your idea.', 'magic-checklists'),
+                'nameLabel' => __('Name', 'magic-checklists'),
+                'namePlaceholder' => __('Your name (optional)', 'magic-checklists'),
+                'emailLabel' => __('Email', 'magic-checklists'),
+                'emailPlaceholder' => __('your@email.com', 'magic-checklists'),
+                'emailVerificationNotice' => __('A verification link will be sent to your email.', 'magic-checklists'),
+                'emailVerificationSent' => __('Please check your email to verify your upvote', 'magic-checklists'),
+                'continueButton' => __('Continue', 'magic-checklists'),
+
+                // Idea submissions modal (admin)
+                'ideaSubmissionsTitle' => __('Idea Submissions', 'magic-checklists'),
+                'noIdeas' => __('No pending idea submissions', 'magic-checklists'),
+                'submittedBy' => __('Submitted by', 'magic-checklists'),
+                'approveButton' => __('Approve', 'magic-checklists'),
+                'rejectButton' => __('Reject', 'magic-checklists'),
+                'ideaApproved' => __('Idea approved and added to board', 'magic-checklists'),
+                'approveFailed' => __('Failed to approve idea', 'magic-checklists'),
+                'ideaRejected' => __('Idea rejected', 'magic-checklists'),
+                'rejectFailed' => __('Failed to reject idea', 'magic-checklists'),
             ),
         );
     }

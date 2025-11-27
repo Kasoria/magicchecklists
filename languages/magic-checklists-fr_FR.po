@@ -4219,3 +4219,181 @@ msgid "Use the visual creator to add step-by-step guidance to your tour."
 msgstr ""
 "Utilisez le créateur visuel pour ajouter des conseils étape par étape à "
 "votre visite."
+
+
+msgid "Anonymous Upvote Protection"
+msgstr "Protection des votes anonymes"
+
+msgid "Prevent users from upvoting multiple times without logging in."
+msgstr "Empêcher les utilisateurs de voter plusieurs fois sans se connecter."
+
+msgid "Browser storage check (localStorage)"
+msgstr "Vérification du stockage du navigateur (localStorage)"
+
+msgid "Remembers upvotes in the browser. Can be bypassed by clearing browser data or using incognito mode."
+msgstr "Mémorise les votes dans le navigateur. Peut être contourné en effaçant les données du navigateur ou en utilisant le mode navigation privée."
+
+msgid "IP address check (server-side)"
+msgstr "Vérification de l'adresse IP (côté serveur)"
+
+msgid "Stores hashed IP addresses to prevent duplicate upvotes. More reliable than browser storage."
+msgstr "Stocke les adresses IP hachées pour empêcher les votes en double. Plus fiable que le stockage du navigateur."
+
+msgid "GDPR Notice:"
+msgstr "Avis RGPD :"
+
+msgid "Even hashed IP addresses may be considered personal data under GDPR. Ensure you have appropriate consent mechanisms and privacy policy disclosures if enabling this option for EU visitors."
+msgstr "Même les adresses IP hachées peuvent être considérées comme des données personnelles selon le RGPD. Assurez-vous d'avoir des mécanismes de consentement appropriés et des mentions dans votre politique de confidentialité si vous activez cette option pour les visiteurs de l'UE."
+
+# Feature Board - Header buttons
+msgid "Feature Board"
+msgstr "Tableau de fonctionnalités"
+
+msgid "Idea Submissions"
+msgstr "Soumissions d'idées"
+
+msgid "Submit Idea"
+msgstr "Soumettre une idée"
+
+# Feature Board - Settings modal
+msgid "Feature Board Settings"
+msgstr "Paramètres du tableau de fonctionnalités"
+
+msgid "Feature board settings saved"
+msgstr "Paramètres du tableau de fonctionnalités enregistrés"
+
+# Feature Board - Enable toggle
+msgid "Enable Feature Board"
+msgstr "Activer le tableau de fonctionnalités"
+
+msgid "Allow public visitors to interact with this board"
+msgstr "Permettre aux visiteurs publics d'interagir avec ce tableau"
+
+# Feature Board - Upvote settings
+msgid "Upvote Settings"
+msgstr "Paramètres des votes"
+
+msgid "Who can upvote?"
+msgstr "Qui peut voter ?"
+
+msgid "Anyone (no login required)"
+msgstr "Tout le monde (connexion non requise)"
+
+msgid "Logged-in users only"
+msgstr "Utilisateurs connectés uniquement"
+
+msgid "Email verification required"
+msgstr "Vérification par e-mail requise"
+
+msgid "Require email verification before counting upvote"
+msgstr "Exiger une vérification par e-mail avant de comptabiliser le vote"
+
+msgid "Show upvote count on items"
+msgstr "Afficher le nombre de votes sur les éléments"
+
+msgid "Upvote this item"
+msgstr "Voter pour cet élément"
+
+# Feature Board - Comment settings
+msgid "Comment Settings"
+msgstr "Paramètres des commentaires"
+
+msgid "Who can comment?"
+msgstr "Qui peut commenter ?"
+
+msgid "Comments disabled"
+msgstr "Commentaires désactivés"
+
+msgid "Show comment count on items"
+msgstr "Afficher le nombre de commentaires sur les éléments"
+
+# Feature Board - Idea submission settings
+msgid "Idea Submission Settings"
+msgstr "Paramètres de soumission d'idées"
+
+msgid "Allow visitors to submit new ideas"
+msgstr "Permettre aux visiteurs de soumettre de nouvelles idées"
+
+msgid "Who can submit ideas?"
+msgstr "Qui peut soumettre des idées ?"
+
+msgid "Default column for new ideas"
+msgstr "Colonne par défaut pour les nouvelles idées"
+
+msgid "Select a column..."
+msgstr "Sélectionner une colonne..."
+
+msgid "Require admin approval before publishing ideas"
+msgstr "Exiger l'approbation de l'administrateur avant de publier les idées"
+
+# Feature Board - Idea submission modal (frontend)
+msgid "Submit Your Idea"
+msgstr "Soumettez votre idée"
+
+msgid "Enter your idea title..."
+msgstr "Entrez le titre de votre idée..."
+
+msgid "Describe your idea in detail..."
+msgstr "Décrivez votre idée en détail..."
+
+msgid "Submitting..."
+msgstr "Envoi en cours..."
+
+msgid "Your idea will be reviewed by our team before being published."
+msgstr "Votre idée sera examinée par notre équipe avant d'être publiée."
+
+# Feature Board - Email prompt modal
+msgid "Login Required"
+msgstr "Connexion requise"
+
+msgid "Please log in to perform this action."
+msgstr "Veuillez vous connecter pour effectuer cette action."
+
+msgid "Log In"
+msgstr "Se connecter"
+
+msgid "Enter Your Details"
+msgstr "Entrez vos coordonnées"
+
+msgid "Enter your email to upvote this item."
+msgstr "Entrez votre e-mail pour voter pour cet élément."
+
+msgid "Enter your details to submit your idea."
+msgstr "Entrez vos coordonnées pour soumettre votre idée."
+
+msgid "Your name (optional)"
+msgstr "Votre nom (optionnel)"
+
+msgid "your@email.com"
+msgstr "votre@email.com"
+
+msgid "A verification link will be sent to your email."
+msgstr "Un lien de vérification sera envoyé à votre e-mail."
+
+msgid "Please check your email to verify your upvote"
+msgstr "Veuillez vérifier votre e-mail pour confirmer votre vote"
+
+# Feature Board - Idea submissions modal (admin)
+msgid "No pending idea submissions"
+msgstr "Aucune soumission d'idée en attente"
+
+msgid "Submitted by"
+msgstr "Soumis par"
+
+msgid "Approve"
+msgstr "Approuver"
+
+msgid "Reject"
+msgstr "Rejeter"
+
+msgid "Idea approved and added to board"
+msgstr "Idée approuvée et ajoutée au tableau"
+
+msgid "Failed to approve idea"
+msgstr "Échec de l'approbation de l'idée"
+
+msgid "Idea rejected"
+msgstr "Idée rejetée"
+
+msgid "Failed to reject idea"
+msgstr "Échec du rejet de l'idée"
