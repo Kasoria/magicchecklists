@@ -97,23 +97,78 @@ class MCL_Public {
     }
 
     /**
+     * Check if a shortcode-enabled checklist is present on the current page content.
+     * This is used to ensure assets load for shortcode checklists even if disable_drawer is set.
+     *
+     * @param int $checklist_id The checklist ID to check
+     * @return bool True if the shortcode for this checklist is present on the current page
+     */
+    private function is_shortcode_present_on_page($checklist_id) {
+        // Only check on frontend pages with post content
+        if (is_admin()) {
+            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - is_admin=true, returning false");
+            return false;
+        }
+
+        // Check if shortcode is enabled for this checklist
+        if (!MCL_Admin::is_shortcode_enabled($checklist_id)) {
+            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - shortcode not enabled, returning false");
+            return false;
+        }
+
+        global $post;
+        if (!$post || empty($post->post_content)) {
+            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - no post or empty content, returning false");
+            return false;
+        }
+
+        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - checking post ID {$post->ID}, content length: " . strlen($post->post_content));
+
+        // Check if the magic_checklist shortcode is present in the content
+        if (!has_shortcode($post->post_content, 'magic_checklist')) {
+            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - magic_checklist shortcode not found in content");
+            return false;
+        }
+
+        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - magic_checklist shortcode found, parsing attributes");
+
+        // Parse shortcode attributes to check if this specific checklist ID is used
+        $pattern = get_shortcode_regex(array('magic_checklist'));
+        if (preg_match_all('/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $atts = shortcode_parse_atts($match[3]);
+                error_log("MCL Debug [is_shortcode_present_on_page]: Found shortcode with atts: " . print_r($atts, true));
+                if (isset($atts['id']) && intval($atts['id']) === $checklist_id) {
+                    error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - MATCH FOUND!");
+                    return true;
+                }
+            }
+        }
+
+        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - no matching shortcode ID found");
+        return false;
+    }
+
+    /**
      * Determine if assets should be loaded for the current page
      */
     public function should_load_assets() {
-        
+        error_log("MCL Debug [should_load_assets]: Starting check, is_admin=" . (is_admin() ? 'true' : 'false') . ", REQUEST_URI=" . $_SERVER['REQUEST_URI']);
+
         // Check for tour mode parameters first - if present, always load assets for tours
         $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
         $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
-        
+
         // Check for active tours that match the current context
         if (class_exists('MCL_Tour_CPT')) {
             $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
+                error_log("MCL Debug [should_load_assets]: Returning true for tours");
                 return true;
             }
         }
-        
+
         $active_checklists = get_posts(array(
             'post_type' => 'mcl_checklist',
             'meta_key' => '_mcl_active',
@@ -121,66 +176,79 @@ class MCL_Public {
             'posts_per_page' => -1
         ));
 
+        error_log("MCL Debug [should_load_assets]: Found " . count($active_checklists) . " active checklists");
+
         if (empty($active_checklists)) {
+            error_log("MCL Debug [should_load_assets]: No active checklists, returning false");
             return false; // No active checklists, so no assets to load.
         }
 
-        // Debug current user context
-        $current_user_id = get_current_user_id();
-        $is_logged_in = is_user_logged_in();
-        $user_roles = $is_logged_in ? wp_get_current_user()->roles : array();
-
         foreach ($active_checklists as $checklist_post_obj) {
             $checklist_id = $checklist_post_obj->ID;
-            $checklist_title = $checklist_post_obj->post_title;
+            error_log("MCL Debug [should_load_assets]: Checking checklist {$checklist_id} ({$checklist_post_obj->post_title})");
 
-            // Debug checklist settings
-            $public_access = get_post_meta($checklist_id, '_mcl_public_access', true);
-            $access_roles = get_post_meta($checklist_id, '_mcl_access_roles', true) ?: array();
-            $access_users = get_post_meta($checklist_id, '_mcl_access_users', true) ?: array();
+            // Get loading settings
             $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
-            $trigger_button = get_post_meta($checklist_id, '_mcl_trigger_button', true);
 
             // First, check if the user has permission to view this specific checklist.
             $has_permission = $this->permissions->has_permission($checklist_id, 'view');
-            
+
             if (!$has_permission) {
+                error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - no view permission, skipping");
                 continue;
+            }
+
+            // Check if this checklist is used via shortcode on the current page.
+            // If so, we need to load assets regardless of disable_drawer setting.
+            $shortcode_present = $this->is_shortcode_present_on_page($checklist_id);
+            error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - shortcode_present=" . ($shortcode_present ? 'true' : 'false'));
+            if ($shortcode_present) {
+                error_log("MCL Debug [should_load_assets]: Returning true - shortcode found on page for checklist {$checklist_id}");
+                return true; // Shortcode checklist found on page, load assets.
             }
 
             // Check if the drawer is disabled for this checklist via shortcode settings.
+            // Only skip if the checklist is NOT present as a shortcode on this page.
             $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
-                continue;
+                error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - disable_drawer=true, skipping for drawer purposes");
+                continue; // Skip for drawer/floating button purposes, but shortcode already checked above
             }
 
-            // Now check the specific loading conditions for this checklist.
+            // Now check the specific loading conditions for this checklist (drawer/floating button).
             if ($load_everywhere) {
+                error_log("MCL Debug [should_load_assets]: Returning true - load_everywhere for checklist {$checklist_id}");
                 return true; // Found a reason to load assets, no need to check further.
             }
 
             $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
             if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
+                error_log("MCL Debug [should_load_assets]: Returning true - allowed_pages match for checklist {$checklist_id}");
                 return true; // Found a reason to load assets.
             }
 
             $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+            error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - allowed_urls=" . print_r($allowed_urls, true));
             if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
+                error_log("MCL Debug [should_load_assets]: Returning true - allowed_urls match for checklist {$checklist_id}");
                 return true; // Found a reason to load assets.
             }
-            
+
             // For frontend pages, also check if this is a common frontend page that should load assets
-            if (!is_admin()) {
-                // If no specific restrictions are set (no allowed_pages and no allowed_urls), 
+            // Also check for AJAX requests from frontend
+            $is_frontend = !is_admin() || ($this->is_ajax_request() && $this->is_ajax_from_frontend());
+            if ($is_frontend) {
+                // If no specific restrictions are set (no allowed_pages and no allowed_urls),
                 // load assets on all frontend pages by default
                 if (empty($allowed_pages) && empty($allowed_urls)) {
+                    error_log("MCL Debug [should_load_assets]: Returning true - frontend page with no restrictions for checklist {$checklist_id}");
                     return true;
                 }
-            } else {
             }
         }
 
         // If the loop completes without returning true, no checklist met the criteria for loading assets.
+        error_log("MCL Debug [should_load_assets]: Loop completed, returning false");
         return false;
     }
 
@@ -230,67 +298,140 @@ class MCL_Public {
     }
 
     private function is_allowed_admin_page($allowed_pages) {
-        if (!is_admin() || empty($allowed_pages)) {
+        if (empty($allowed_pages)) {
             return false;
         }
-    
+
+        // For non-admin pages (and non-AJAX from admin), return false
+        if (!is_admin() && !$this->is_ajax_request()) {
+            return false;
+        }
+
         global $pagenow, $plugin_page;
-        
+
         $current_page = '';
-        
-        if (!empty($plugin_page)) {
-            $current_page = $plugin_page;
+        $current_pagenow = $pagenow;
+        $current_plugin_page = $plugin_page;
+        $get_params = $_GET;
+
+        // For AJAX requests, parse the referer URL to get the actual admin page
+        if ($this->is_ajax_request() && !empty($_SERVER['HTTP_REFERER'])) {
+            $referer = $_SERVER['HTTP_REFERER'];
+            $referer_parts = wp_parse_url($referer);
+
+            // Only process if referer is an admin page
+            if (!empty($referer_parts['path']) && strpos($referer_parts['path'], '/wp-admin/') !== false) {
+                // Extract the page name from the path
+                $path = $referer_parts['path'];
+                $admin_page = basename($path);
+                $current_pagenow = $admin_page;
+
+                // Parse query string for plugin_page and other params
+                if (!empty($referer_parts['query'])) {
+                    parse_str($referer_parts['query'], $query_params);
+                    if (!empty($query_params['page'])) {
+                        $current_plugin_page = $query_params['page'];
+                    }
+                    $get_params = $query_params;
+                }
+
+                error_log("MCL Debug [is_allowed_admin_page]: AJAX detected, using referer admin page: {$current_pagenow}, plugin_page: " . ($current_plugin_page ?: 'none'));
+            } else {
+                // AJAX from non-admin page
+                error_log("MCL Debug [is_allowed_admin_page]: AJAX from non-admin page, returning false");
+                return false;
+            }
+        }
+
+        if (!empty($current_plugin_page)) {
+            $current_page = $current_plugin_page;
+            error_log("MCL Debug [is_allowed_admin_page]: Using plugin_page: {$current_page}");
         } else {
-            $current_page = str_replace('.php', '', $pagenow);
-            
-            $page_mapping = array(
-                'index' => 'dashboard',
-                'edit' => 'posts',
-                'upload' => 'media',
-                'edit-comments' => 'comments',
-                'themes' => 'themes',
-                'plugins' => 'plugins',
-                'users' => 'users',
-                'tools' => 'tools',
-                'options-general' => 'settings'
-            );
-            
-            $current_page = isset($page_mapping[$current_page]) ? $page_mapping[$current_page] : $current_page;
+            // Use the raw page slug without mapping
+            // The allowed_pages array contains raw WordPress slugs like 'upload', 'options-general', etc.
+            // since that's what get_registered_admin_pages() returns and what gets saved
+            $current_page = str_replace('.php', '', $current_pagenow);
+            error_log("MCL Debug [is_allowed_admin_page]: Using raw page slug: {$current_page}");
         }
-    
-        if (!empty($_GET['post_type'])) {
-            $current_page .= '&post_type=' . sanitize_text_field($_GET['post_type']);
+
+        if (!empty($get_params['post_type'])) {
+            $current_page .= '&post_type=' . sanitize_text_field($get_params['post_type']);
         }
-        if (!empty($_GET['taxonomy'])) {
-            $current_page .= '&taxonomy=' . sanitize_text_field($_GET['taxonomy']);
+        if (!empty($get_params['taxonomy'])) {
+            $current_page .= '&taxonomy=' . sanitize_text_field($get_params['taxonomy']);
         }
-    
-        return in_array($current_page, $allowed_pages);
+
+        $is_allowed = in_array($current_page, $allowed_pages);
+        error_log("MCL Debug [is_allowed_admin_page]: FINAL current_page={$current_page}, allowed_pages=" . implode(', ', $allowed_pages) . ", is_allowed=" . ($is_allowed ? 'true' : 'false'));
+
+        return $is_allowed;
     }
     
     private function matches_url_pattern($allowed_urls) {
         if (empty($allowed_urls)) {
             return false;
         }
-    
+
         $current_url = $_SERVER['REQUEST_URI'];
-    
+
+        // For AJAX requests, use the referrer URL instead of admin-ajax.php
+        if ($this->is_ajax_request() && !empty($_SERVER['HTTP_REFERER'])) {
+            $referer_parts = wp_parse_url($_SERVER['HTTP_REFERER']);
+            if (!empty($referer_parts['path'])) {
+                $current_url = $referer_parts['path'];
+                // Include query string if present
+                if (!empty($referer_parts['query'])) {
+                    $current_url .= '?' . $referer_parts['query'];
+                }
+            }
+            error_log("MCL Debug [matches_url_pattern]: AJAX detected, using referer URL: {$current_url}");
+        }
+
+        error_log("MCL Debug [matches_url_pattern]: current_url={$current_url}");
+
         foreach ($allowed_urls as $pattern) {
             $pattern = trim($pattern);
             if (empty($pattern)) continue;
-    
+
             $regex = str_replace(
                 array('\*', '\?'),
                 array('.*', '.'),
                 preg_quote($pattern, '/')
             );
-    
+
+            error_log("MCL Debug [matches_url_pattern]: Testing pattern '{$pattern}' -> regex '/^{$regex}$/' against '{$current_url}'");
+
             if (preg_match('/^' . $regex . '$/', $current_url)) {
+                error_log("MCL Debug [matches_url_pattern]: MATCH FOUND for pattern '{$pattern}'");
                 return true;
             }
         }
-    
+
+        error_log("MCL Debug [matches_url_pattern]: No patterns matched");
         return false;
+    }
+
+    /**
+     * Check if current request is an AJAX request
+     */
+    private function is_ajax_request() {
+        return defined('DOING_AJAX') && DOING_AJAX;
+    }
+
+    /**
+     * Check if AJAX request originated from a frontend page (not wp-admin)
+     */
+    private function is_ajax_from_frontend() {
+        if (empty($_SERVER['HTTP_REFERER'])) {
+            return false;
+        }
+
+        $referer = $_SERVER['HTTP_REFERER'];
+
+        // If referer doesn't contain wp-admin, it's from frontend
+        $is_frontend = strpos($referer, '/wp-admin/') === false;
+        error_log("MCL Debug [is_ajax_from_frontend]: referer={$referer}, is_frontend=" . ($is_frontend ? 'true' : 'false'));
+        return $is_frontend;
     }
 
     /**
@@ -639,6 +780,8 @@ class MCL_Public {
      * Returns an array of [ 'id' => checklist_id, 'theme' => theme_value ]
      */
     private function get_all_active_checklists_for_page() {
+        error_log("MCL Debug [get_all_active_checklists_for_page]: Starting, is_admin=" . (is_admin() ? 'true' : 'false'));
+
         $query_args_base = array(
             'post_type' => 'mcl_checklist',
             'meta_query' => array(
@@ -649,42 +792,72 @@ class MCL_Public {
             ),
             'posts_per_page' => -1,
         );
-    
+
         $active_checklists_posts = get_posts($query_args_base);
         $visible_checklists_data = [];
-    
+
+        error_log("MCL Debug [get_all_active_checklists_for_page]: Found " . count($active_checklists_posts) . " active checklists in DB");
+
         foreach ($active_checklists_posts as $checklist_post) {
             $checklist_id = $checklist_post->ID;
+            error_log("MCL Debug [get_all_active_checklists_for_page]: Checking checklist {$checklist_id} ({$checklist_post->post_title})");
 
             // Check view permission
             if (!$this->has_permission($checklist_id, 'view')) {
-                continue; 
+                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - no view permission, skipping");
+                continue;
             }
 
+            // Check if this checklist is used via shortcode on the current page.
+            // If so, include it regardless of disable_drawer setting.
+            $shortcode_present = $this->is_shortcode_present_on_page($checklist_id);
+            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - shortcode_present=" . ($shortcode_present ? 'true' : 'false'));
+
             // Check if the drawer is disabled for this checklist via shortcode settings
+            // Only skip if the checklist is NOT present as a shortcode on this page.
             $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
-            if (!empty($shortcode_settings['disable_drawer'])) {
+            $disable_drawer = !empty($shortcode_settings['disable_drawer']);
+            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - disable_drawer=" . ($disable_drawer ? 'true' : 'false'));
+
+            if ($disable_drawer && !$shortcode_present) {
+                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - skipping (disable_drawer && no shortcode)");
                 continue;
             }
 
             // Check loading conditions
             $is_visible_based_on_conditions = false;
-            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
 
-            if ($load_everywhere) {
+            // If shortcode is present, mark as visible
+            if ($shortcode_present) {
                 $is_visible_based_on_conditions = true;
+                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to shortcode presence");
             } else {
-                $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
-                if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
+                $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+
+                if ($load_everywhere) {
                     $is_visible_based_on_conditions = true;
+                    error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to load_everywhere");
                 } else {
-                    $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
-                    if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
+                    $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+                    if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                         $is_visible_based_on_conditions = true;
+                        error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to allowed_pages");
                     } else {
-                        // For frontend pages, show if no specific restrictions are set
-                        if (!is_admin() && empty($allowed_pages) && empty($allowed_urls)) {
+                        $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+                        error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - allowed_urls=" . print_r($allowed_urls, true));
+                        if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                             $is_visible_based_on_conditions = true;
+                            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to allowed_urls");
+                        } else {
+                            // For frontend pages, show if no specific restrictions are set
+                            // Also check for AJAX requests from frontend (referrer is not wp-admin)
+                            $is_frontend = !is_admin() || ($this->is_ajax_request() && $this->is_ajax_from_frontend());
+                            if ($is_frontend && empty($allowed_pages) && empty($allowed_urls)) {
+                                $is_visible_based_on_conditions = true;
+                                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to no restrictions (frontend)");
+                            } else {
+                                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - NOT visible (no conditions met), is_frontend=" . ($is_frontend ? 'true' : 'false'));
+                            }
                         }
                     }
                 }
@@ -696,8 +869,11 @@ class MCL_Public {
                     'id' => $checklist_id,
                     'theme' => $theme ?: 'light'
                 ];
+                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} ADDED to visible list");
             }
         }
+
+        error_log("MCL Debug [get_all_active_checklists_for_page]: Returning " . count($visible_checklists_data) . " visible checklists");
         return $visible_checklists_data;
     }
     
@@ -787,7 +963,9 @@ class MCL_Public {
                         $is_visible_based_on_conditions = true;
                     } else {
                         // For frontend pages, show floating buttons if no specific restrictions are set
-                        if (!is_admin() && empty($allowed_pages) && empty($allowed_urls)) {
+                        // Also check for AJAX requests from frontend
+                        $is_frontend = !is_admin() || ($this->is_ajax_request() && $this->is_ajax_from_frontend());
+                        if ($is_frontend && empty($allowed_pages) && empty($allowed_urls)) {
                             $is_visible_based_on_conditions = true;
                         }
                     }
@@ -1810,6 +1988,8 @@ class MCL_Public {
 
     public function get_active_checklists_data() {
         try {
+            error_log("MCL Debug [get_active_checklists_data]: AJAX called");
+
             // Optional nonce verification for logged-in users
             if (is_user_logged_in() && isset($_POST['nonce'])) {
                 if (!wp_verify_nonce($_POST['nonce'], 'mcl_admin_nonce')) {
@@ -1820,9 +2000,10 @@ class MCL_Public {
                     return;
                 }
             }
-            
+
             // Get ALL active checklists that should be loaded on this page
             $active_checklists = $this->get_all_active_checklists_for_page();
+            error_log("MCL Debug [get_active_checklists_data]: Found " . count($active_checklists) . " active checklists");
             
             // Format the checklists for React
             $formatted_checklists = array();
