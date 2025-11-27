@@ -517,6 +517,34 @@ const ShortcodeKanbanView = ({
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
 
+  // Feature board state
+  const [featureBoardSettings, setFeatureBoardSettings] = useState({
+    enabled: false,
+    upvote_mode: 'logged_in',
+    upvote_require_email_verification: false,
+    upvote_anon_check_localstorage: true,
+    upvote_anon_check_ip: false,
+    comments_mode: 'logged_in',
+    idea_submission_enabled: false,
+    idea_submission_mode: 'logged_in',
+    idea_default_column: 'col_todo',
+    idea_moderation_enabled: true,
+    show_upvote_count: true,
+    show_comment_count: true
+  })
+  const [localUpvotes, setLocalUpvotes] = useState({}) // Track upvotes in localStorage
+  const [itemUpvotes, setItemUpvotes] = useState({})
+  const [showIdeaModal, setShowIdeaModal] = useState(false)
+  const [ideaTitle, setIdeaTitle] = useState('')
+  const [ideaDescription, setIdeaDescription] = useState('')
+  const [showEmailPrompt, setShowEmailPrompt] = useState(false)
+  const [emailPromptType, setEmailPromptType] = useState(null) // 'upvote' or 'idea'
+  const [pendingUpvoteItem, setPendingUpvoteItem] = useState(null)
+  const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
+  const [submittingIdea, setSubmittingIdea] = useState(false)
+  const [ideaMessage, setIdeaMessage] = useState(null)
+
   // Initialize i18n
   useEffect(() => {
     if (window.mcl_checklists && window.mcl_checklists.i18n && window.mcl_checklists.i18n.kanbanBoard) {
@@ -527,7 +555,15 @@ const ShortcodeKanbanView = ({
   // Load kanban board structure
   useEffect(() => {
     loadKanbanBoard()
+    loadFeatureBoardSettings()
   }, [checklistId])
+
+  // Load upvotes when board is loaded
+  useEffect(() => {
+    if (board.length > 0 && featureBoardSettings.enabled) {
+      loadItemUpvotes()
+    }
+  }, [board, featureBoardSettings.enabled])
 
   const loadKanbanBoard = async () => {
     try {
@@ -586,6 +622,323 @@ const ShortcodeKanbanView = ({
       }
     ]
     setBoard(defaultBoard)
+  }
+
+  // Feature board functions
+  const loadFeatureBoardSettings = async () => {
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_feature_board_settings',
+          checklist_id: checklistId,
+          nonce: nonce
+        })
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.settings) {
+        setFeatureBoardSettings(data.data.settings)
+      }
+    } catch (error) {
+      console.error('Error loading feature board settings:', error)
+    }
+  }
+
+  // localStorage helpers for anonymous upvote tracking
+  const getLocalStorageKey = () => `mcl_upvotes_${checklistId}`
+
+  const loadLocalUpvotes = () => {
+    try {
+      const stored = localStorage.getItem(getLocalStorageKey())
+      if (stored) {
+        setLocalUpvotes(JSON.parse(stored))
+      }
+    } catch (error) {
+      console.error('Error loading local upvotes:', error)
+    }
+  }
+
+  const saveLocalUpvote = (itemId) => {
+    try {
+      const updated = { ...localUpvotes, [itemId]: true }
+      localStorage.setItem(getLocalStorageKey(), JSON.stringify(updated))
+      setLocalUpvotes(updated)
+    } catch (error) {
+      console.error('Error saving local upvote:', error)
+    }
+  }
+
+  const removeLocalUpvote = (itemId) => {
+    try {
+      const updated = { ...localUpvotes }
+      delete updated[itemId]
+      localStorage.setItem(getLocalStorageKey(), JSON.stringify(updated))
+      setLocalUpvotes(updated)
+    } catch (error) {
+      console.error('Error removing local upvote:', error)
+    }
+  }
+
+  const hasLocalUpvote = (itemId) => {
+    return !!localUpvotes[itemId]
+  }
+
+  // Check if item is upvoted (combines server state + localStorage for anonymous users)
+  const isItemUpvoted = (itemId) => {
+    // First check server-provided state
+    if (itemUpvotes[itemId]?.user_upvoted) {
+      return true
+    }
+    // For anonymous users with localStorage check enabled, also check localStorage
+    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    if (!isLoggedIn && featureBoardSettings.upvote_mode === 'anyone' && featureBoardSettings.upvote_anon_check_localstorage) {
+      return hasLocalUpvote(itemId)
+    }
+    return false
+  }
+
+  // Load localStorage upvotes on mount
+  useEffect(() => {
+    loadLocalUpvotes()
+  }, [checklistId])
+
+  const loadItemUpvotes = async () => {
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      // Collect all item IDs from board
+      const itemIds = []
+      board.forEach(column => {
+        column.items?.forEach(item => {
+          itemIds.push(item.id)
+        })
+      })
+
+      if (itemIds.length === 0) return
+
+      // Use FormData to properly send array of item IDs
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_item_upvotes')
+      formData.append('checklist_id', checklistId)
+      formData.append('nonce', nonce)
+      // Append each item ID separately to create proper array in PHP
+      itemIds.forEach(id => {
+        formData.append('item_ids[]', id)
+      })
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.upvotes) {
+        setItemUpvotes(data.data.upvotes)
+      }
+    } catch (error) {
+      console.error('Error loading item upvotes:', error)
+    }
+  }
+
+  const handleUpvote = async (itemId) => {
+    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const upvoteMode = featureBoardSettings.upvote_mode
+
+    // Check if login is required
+    if (upvoteMode === 'logged_in' && !isLoggedIn) {
+      setEmailPromptType('login_required')
+      setShowEmailPrompt(true)
+      return
+    }
+
+    // Check if email verification is required for anonymous upvote
+    if (!isLoggedIn && upvoteMode === 'email_verified') {
+      setPendingUpvoteItem(itemId)
+      setEmailPromptType('upvote')
+      setShowEmailPrompt(true)
+      return
+    }
+
+    // For 'anyone' mode, check localStorage if enabled (and user is not logged in)
+    if (!isLoggedIn && upvoteMode === 'anyone' && featureBoardSettings.upvote_anon_check_localstorage) {
+      if (hasLocalUpvote(itemId)) {
+        // User already upvoted this item - toggle off (remove upvote)
+        await submitUpvote(itemId)
+        return
+      }
+    }
+
+    // Mode is 'anyone' or user is logged in - proceed directly
+    await submitUpvote(itemId)
+  }
+
+  const submitUpvote = async (itemId, email = '', name = '') => {
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_toggle_item_upvote',
+          checklist_id: checklistId,
+          item_id: itemId,
+          user_email: email,
+          user_name: name,
+          nonce: nonce
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        if (data.data.action === 'pending_verification') {
+          setIdeaMessage({ type: 'info', text: data.data.message || i18n.featureBoard?.emailVerificationSent || 'Please check your email to verify your upvote' })
+        } else {
+          // Update local upvote state
+          setItemUpvotes(prev => ({
+            ...prev,
+            [itemId]: {
+              count: data.data.upvote_count,
+              user_upvoted: data.data.user_upvoted
+            }
+          }))
+
+          // Update localStorage for anonymous users if localStorage check is enabled
+          const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+          if (!isLoggedIn && featureBoardSettings.upvote_mode === 'anyone' && featureBoardSettings.upvote_anon_check_localstorage) {
+            if (data.data.action === 'added') {
+              saveLocalUpvote(itemId)
+            } else if (data.data.action === 'removed') {
+              removeLocalUpvote(itemId)
+            }
+          }
+        }
+        setShowEmailPrompt(false)
+        setPendingUpvoteItem(null)
+        setUserEmail('')
+        setUserName('')
+      } else {
+        if (data.data?.require_login) {
+          setEmailPromptType('login_required')
+          setShowEmailPrompt(true)
+        } else if (data.data?.require_email) {
+          setPendingUpvoteItem(itemId)
+          setEmailPromptType('upvote')
+          setShowEmailPrompt(true)
+        } else {
+          console.error('Error upvoting:', data.data?.message)
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting upvote:', error)
+    }
+  }
+
+  const handleEmailPromptSubmit = () => {
+    if (!userEmail.trim()) {
+      return
+    }
+
+    if (emailPromptType === 'upvote' && pendingUpvoteItem) {
+      submitUpvote(pendingUpvoteItem, userEmail, userName)
+    } else if (emailPromptType === 'idea') {
+      submitIdea()
+    }
+  }
+
+  const openIdeaModal = () => {
+    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const submissionMode = featureBoardSettings.idea_submission_mode
+
+    if (submissionMode === 'logged_in' && !isLoggedIn) {
+      setEmailPromptType('login_required')
+      setShowEmailPrompt(true)
+      return
+    }
+
+    setShowIdeaModal(true)
+    setIdeaTitle('')
+    setIdeaDescription('')
+    setIdeaMessage(null)
+  }
+
+  const submitIdea = async () => {
+    if (!ideaTitle.trim()) return
+
+    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const submissionMode = featureBoardSettings.idea_submission_mode
+
+    // Check if email verification is required for anonymous submission
+    if (!isLoggedIn && submissionMode === 'email_verified' && !userEmail.trim()) {
+      setEmailPromptType('idea')
+      setShowEmailPrompt(true)
+      return
+    }
+
+    setSubmittingIdea(true)
+
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_submit_idea',
+          checklist_id: checklistId,
+          title: ideaTitle,
+          description: ideaDescription,
+          user_email: userEmail,
+          user_name: userName,
+          nonce: nonce
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setIdeaMessage({ type: 'success', text: data.data.message })
+        setIdeaTitle('')
+        setIdeaDescription('')
+        setUserEmail('')
+        setUserName('')
+
+        // Reload board if idea was auto-approved
+        if (data.data.status === 'approved') {
+          loadKanbanBoard()
+        }
+
+        // Close modal after showing message
+        setTimeout(() => {
+          setShowIdeaModal(false)
+          setShowEmailPrompt(false)
+          setIdeaMessage(null)
+        }, 3000)
+      } else {
+        if (data.data?.require_login) {
+          setShowIdeaModal(false)
+          setEmailPromptType('login_required')
+          setShowEmailPrompt(true)
+        } else if (data.data?.require_email) {
+          setEmailPromptType('idea')
+          setShowEmailPrompt(true)
+        } else {
+          setIdeaMessage({ type: 'error', text: data.data?.message || 'Failed to submit idea' })
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting idea:', error)
+      setIdeaMessage({ type: 'error', text: 'Failed to submit idea' })
+    } finally {
+      setSubmittingIdea(false)
+    }
   }
 
   // Drag and Drop handlers
@@ -1235,9 +1588,9 @@ const ShortcodeKanbanView = ({
         />
       )}
 
-      {/* Add Column Button */}
-      {permissions.can_edit && (
-        <div style={{ marginBottom: '16px' }}>
+      {/* Add Column Button and Submit Idea Button */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {permissions.can_edit && (
           <button
             onClick={() => openColumnModal()}
             style={{
@@ -1260,14 +1613,45 @@ const ShortcodeKanbanView = ({
             <span style={{ fontSize: '18px' }}>+</span>
             {i18n.header?.addColumnButton || 'Add Column'}
           </button>
-        </div>
-      )}
+        )}
+
+        {/* Submit Idea Button - Feature Board */}
+        {featureBoardSettings.enabled && featureBoardSettings.idea_submission_enabled && (
+          <button
+            onClick={openIdeaModal}
+            style={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#059669'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#10b981'}
+          >
+            <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            {i18n.featureBoard?.submitIdeaButton || 'Submit Idea'}
+          </button>
+        )}
+      </div>
 
       {/* Kanban Board */}
       <div style={{
         display: 'flex',
         gap: '16px',
+        alignItems: 'flex-start',
         overflowX: 'auto',
+        overflowY: 'auto',
+        maxHeight: '70vh',
         paddingBottom: '16px'
       }}>
         {board.map(column => (
@@ -1412,21 +1796,34 @@ const ShortcodeKanbanView = ({
                   key={item.id}
                   draggable={permissions.can_interact}
                   onDragStart={(e) => handleDragStart(e, item, column.id)}
-                  onDoubleClick={() => permissions.can_edit && openTaskModal(item, column.id)}
+                  onClick={() => {
+                    // Feature board: single click opens view modal for anyone
+                    // Non-feature board: only editors can double-click to edit
+                    if (featureBoardSettings.enabled) {
+                      openTaskModal(item, column.id)
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    // Non-feature board: double-click to edit (requires edit permission)
+                    if (!featureBoardSettings.enabled && permissions.can_edit) {
+                      openTaskModal(item, column.id)
+                    }
+                  }}
                   style={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '6px',
                     padding: '12px',
                     marginBottom: '8px',
-                    cursor: permissions.can_interact ? 'move' : 'default',
+                    cursor: featureBoardSettings.enabled ? 'pointer' : (permissions.can_interact ? 'move' : 'default'),
                     transition: 'box-shadow 0.2s',
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'}
                   onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                 >
                   <div style={{ display: 'flex', alignItems: 'start', gap: '8px', marginBottom: '8px' }}>
-                    {permissions.can_interact && (
+                    {/* Hide checkbox when feature board is enabled */}
+                    {permissions.can_interact && !featureBoardSettings.enabled && (
                       <button
                         onClick={() => toggleItemCheck(item, column.id)}
                         style={{
@@ -1472,14 +1869,51 @@ const ShortcodeKanbanView = ({
                     </div>
                   )}
 
-                  {/* Item Footer - User Assignment */}
+                  {/* Item Footer - Upvote and User Assignment */}
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingTop: '8px',
-                    borderTop: '1px solid #f3f4f6'
+                    borderTop: '1px solid #f3f4f6',
+                    gap: '8px'
                   }}>
+                    {/* Upvote Button - Feature Board */}
+                    {featureBoardSettings.enabled && featureBoardSettings.show_upvote_count && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleUpvote(item.id)
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          background: isItemUpvoted(item.id) ? '#fef3c7' : 'none',
+                          border: isItemUpvoted(item.id) ? '1px solid #fbbf24' : '1px solid #e5e7eb',
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          transition: 'all 0.2s',
+                          fontSize: '12px',
+                          color: isItemUpvoted(item.id) ? '#d97706' : '#6b7280'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = isItemUpvoted(item.id) ? '#fde68a' : '#f3f4f6'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = isItemUpvoted(item.id) ? '#fef3c7' : 'transparent'
+                        }}
+                        title={i18n.featureBoard?.upvoteTitle || 'Upvote this item'}
+                      >
+                        <svg style={{ width: '14px', height: '14px' }} fill={isItemUpvoted(item.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        <span style={{ fontWeight: '500' }}>{itemUpvotes[item.id]?.count || 0}</span>
+                      </button>
+                    )}
+
+                    {/* User Assignment */}
                     <button
                       onClick={() => openAssignModal(item, column.id)}
                       style={{
@@ -1491,7 +1925,8 @@ const ShortcodeKanbanView = ({
                         cursor: permissions.can_edit ? 'pointer' : 'default',
                         padding: '4px',
                         borderRadius: '4px',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
+                        marginLeft: 'auto'
                       }}
                       onMouseEnter={(e) => permissions.can_edit && (e.target.style.backgroundColor = '#f3f4f6')}
                       onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
@@ -1627,7 +2062,7 @@ const ShortcodeKanbanView = ({
       <Modal
         isOpen={showTaskModal}
         onClose={closeTaskModal}
-        title={i18n.modals?.editTaskTitle || "Edit Task"}
+        title={permissions.can_edit ? (i18n.modals?.editTaskTitle || "Edit Task") : (i18n.modals?.viewItemTitle || "View Item")}
         size="lg"
         footer={
           <>
@@ -1647,26 +2082,28 @@ const ShortcodeKanbanView = ({
               onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
               onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
             >
-              {i18n.modals?.cancelButton || 'Cancel'}
+              {permissions.can_edit ? (i18n.modals?.cancelButton || 'Cancel') : (i18n.modals?.closeButton || 'Close')}
             </button>
-            <button
-              onClick={saveTask}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-            >
-              {i18n.modals?.saveTaskButton || 'Save'}
-            </button>
+            {permissions.can_edit && (
+              <button
+                onClick={saveTask}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              >
+                {i18n.modals?.saveTaskButton || 'Save'}
+              </button>
+            )}
           </>
         }
       >
@@ -1675,102 +2112,104 @@ const ShortcodeKanbanView = ({
             {i18n.modals?.taskContentLabel || 'Task Content'}
           </label>
 
-          {/* Simple formatting toolbar */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            marginBottom: '8px',
-            padding: '8px',
-            backgroundColor: '#f9fafb',
-            borderRadius: '6px',
-            border: '1px solid #e5e7eb'
-          }}>
-            <button
-              type="button"
-              onClick={() => formatText('bold')}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: 'transparent',
-                fontWeight: 'bold',
-                color: '#374151',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              title="Bold"
-            >
-              B
-            </button>
-            <button
-              type="button"
-              onClick={() => formatText('italic')}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: 'transparent',
-                fontStyle: 'italic',
-                color: '#374151',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              title="Italic"
-            >
-              I
-            </button>
-            <button
-              type="button"
-              onClick={() => formatText('underline')}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: 'transparent',
-                textDecoration: 'underline',
-                color: '#374151',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              title="Underline"
-            >
-              U
-            </button>
-            <button
-              type="button"
-              onClick={addImageToEditor}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: 'transparent',
-                color: '#374151',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-              title={i18n.modals?.insertImageTitle || "Insert Image"}
-            >
-              <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </button>
-          </div>
+          {/* Simple formatting toolbar - only for editors */}
+          {permissions.can_edit && (
+            <div style={{
+              display: 'flex',
+              gap: '4px',
+              marginBottom: '8px',
+              padding: '8px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '6px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <button
+                type="button"
+                onClick={() => formatText('bold')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  fontWeight: 'bold',
+                  color: '#374151',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                title="Bold"
+              >
+                B
+              </button>
+              <button
+                type="button"
+                onClick={() => formatText('italic')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  fontStyle: 'italic',
+                  color: '#374151',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                title="Italic"
+              >
+                I
+              </button>
+              <button
+                type="button"
+                onClick={() => formatText('underline')}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                  color: '#374151',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                title="Underline"
+              >
+                U
+              </button>
+              <button
+                type="button"
+                onClick={addImageToEditor}
+                style={{
+                  padding: '4px 8px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  color: '#374151',
+                  transition: 'background-color 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                title={i18n.modals?.insertImageTitle || "Insert Image"}
+              >
+                <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
+          )}
 
-          {/* Rich text editor */}
+          {/* Rich text editor / read-only view */}
           <div
             ref={contentEditableRef}
-            contentEditable
+            contentEditable={permissions.can_edit}
             suppressContentEditableWarning={true}
             style={{
               width: '100%',
@@ -1781,14 +2220,18 @@ const ShortcodeKanbanView = ({
               fontSize: '14px',
               lineHeight: '1.5',
               outline: 'none',
-              transition: 'border-color 0.2s'
+              transition: 'border-color 0.2s',
+              backgroundColor: permissions.can_edit ? 'white' : '#f9fafb',
+              cursor: permissions.can_edit ? 'text' : 'default'
             }}
             dangerouslySetInnerHTML={{ __html: taskContent }}
-            onPaste={handlePaste}
-            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+            onPaste={permissions.can_edit ? handlePaste : undefined}
+            onFocus={(e) => permissions.can_edit && (e.target.style.borderColor = '#3b82f6')}
             onBlur={(e) => {
               e.target.style.borderColor = '#d1d5db'
-              setTaskContent(e.target.innerHTML)
+              if (permissions.can_edit) {
+                setTaskContent(e.target.innerHTML)
+              }
             }}
           />
 
@@ -1813,48 +2256,65 @@ const ShortcodeKanbanView = ({
               {i18n.comment?.sectionTitle || 'Comments'}
             </h4>
 
-            {/* Add comment form */}
-            {permissions.can_interact && (
-              <div style={{ marginBottom: '16px' }}>
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={i18n.comment?.placeholder || "Add a comment..."}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical',
-                    outline: 'none',
-                    transition: 'border-color 0.2s'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                  rows={3}
-                />
-                <button
-                  onClick={addComment}
-                  style={{
-                    marginTop: '8px',
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
-                >
-                  {i18n.comment?.submitButton || 'Post Comment'}
-                </button>
-              </div>
-            )}
+            {/* Add comment form - show based on feature board settings or permissions */}
+            {(() => {
+              const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+              let canComment = false
+
+              if (featureBoardSettings.enabled) {
+                // Feature board: check comments_mode setting
+                if (featureBoardSettings.comments_mode === 'anyone') {
+                  canComment = true
+                } else if (featureBoardSettings.comments_mode === 'logged_in' && isLoggedIn) {
+                  canComment = true
+                }
+              } else {
+                // Non-feature board: use standard permissions
+                canComment = permissions.can_interact
+              }
+
+              return canComment ? (
+                <div style={{ marginBottom: '16px' }}>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder={i18n.comment?.placeholder || "Add a comment..."}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      resize: 'vertical',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                    rows={3}
+                  />
+                  <button
+                    onClick={addComment}
+                    style={{
+                      marginTop: '8px',
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                  >
+                    {i18n.comment?.submitButton || 'Post Comment'}
+                  </button>
+                </div>
+              ) : null
+            })()}
 
             {/* Comments list */}
             {loadingComments ? (
@@ -2310,6 +2770,369 @@ const ShortcodeKanbanView = ({
             )}
           </div>
         </Modal>
+      )}
+
+      {/* Feature Board - Idea Submission Modal */}
+      <Modal
+        isOpen={showIdeaModal}
+        onClose={() => {
+          setShowIdeaModal(false)
+          setIdeaTitle('')
+          setIdeaDescription('')
+          setIdeaMessage(null)
+        }}
+        title={i18n.featureBoard?.submitIdeaTitle || 'Submit Your Idea'}
+        footer={
+          ideaMessage?.type !== 'success' && (
+            <>
+              <button
+                onClick={() => {
+                  setShowIdeaModal(false)
+                  setIdeaTitle('')
+                  setIdeaDescription('')
+                  setIdeaMessage(null)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+              >
+                {i18n.modals?.cancelButton || 'Cancel'}
+              </button>
+              <button
+                onClick={submitIdea}
+                disabled={!ideaTitle.trim() || submittingIdea}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: !ideaTitle.trim() || submittingIdea ? '#d1d5db' : '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: !ideaTitle.trim() || submittingIdea ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#059669'
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#10b981'
+                }}
+              >
+                {submittingIdea ? (i18n.featureBoard?.submitting || 'Submitting...') : (i18n.featureBoard?.submitButton || 'Submit Idea')}
+              </button>
+            </>
+          )
+        }
+      >
+        <div>
+          {ideaMessage && (
+            <div style={{
+              padding: '12px',
+              borderRadius: '6px',
+              marginBottom: '16px',
+              backgroundColor: ideaMessage.type === 'success' ? '#d1fae5' : ideaMessage.type === 'error' ? '#fee2e2' : '#dbeafe',
+              color: ideaMessage.type === 'success' ? '#065f46' : ideaMessage.type === 'error' ? '#991b1b' : '#1e40af',
+              fontSize: '14px'
+            }}>
+              {ideaMessage.text}
+            </div>
+          )}
+
+          {ideaMessage?.type !== 'success' && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#374151',
+                  fontWeight: '500',
+                  fontSize: '14px'
+                }}>
+                  {i18n.featureBoard?.ideaTitleLabel || 'Title'} <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={ideaTitle}
+                  onChange={(e) => setIdeaTitle(e.target.value)}
+                  placeholder={i18n.featureBoard?.ideaTitlePlaceholder || 'Enter your idea title...'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#374151',
+                  fontWeight: '500',
+                  fontSize: '14px'
+                }}>
+                  {i18n.featureBoard?.ideaDescriptionLabel || 'Description (optional)'}
+                </label>
+                <textarea
+                  value={ideaDescription}
+                  onChange={(e) => setIdeaDescription(e.target.value)}
+                  placeholder={i18n.featureBoard?.ideaDescriptionPlaceholder || 'Describe your idea in detail...'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    resize: 'vertical',
+                    minHeight: '100px',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  rows={4}
+                />
+              </div>
+
+              {featureBoardSettings.idea_moderation_enabled && (
+                <p style={{
+                  fontSize: '12px',
+                  color: '#6b7280',
+                  marginTop: '12px'
+                }}>
+                  {i18n.featureBoard?.moderationNotice || 'Your idea will be reviewed by our team before being published.'}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Feature Board - Email Prompt Modal */}
+      <Modal
+        isOpen={showEmailPrompt}
+        onClose={() => {
+          setShowEmailPrompt(false)
+          setUserEmail('')
+          setUserName('')
+          setPendingUpvoteItem(null)
+          setEmailPromptType(null)
+        }}
+        title={
+          emailPromptType === 'login_required'
+            ? (i18n.featureBoard?.loginRequiredTitle || 'Login Required')
+            : (i18n.featureBoard?.emailPromptTitle || 'Enter Your Details')
+        }
+        footer={
+          emailPromptType !== 'login_required' && (
+            <>
+              <button
+                onClick={() => {
+                  setShowEmailPrompt(false)
+                  setUserEmail('')
+                  setUserName('')
+                  setPendingUpvoteItem(null)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+              >
+                {i18n.modals?.cancelButton || 'Cancel'}
+              </button>
+              <button
+                onClick={handleEmailPromptSubmit}
+                disabled={!userEmail.trim()}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: !userEmail.trim() ? '#d1d5db' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: !userEmail.trim() ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#2563eb'
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.target.disabled) e.target.style.backgroundColor = '#3b82f6'
+                }}
+              >
+                {i18n.featureBoard?.continueButton || 'Continue'}
+              </button>
+            </>
+          )
+        }
+      >
+        <div>
+          {emailPromptType === 'login_required' ? (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <svg style={{ width: '48px', height: '48px', margin: '0 auto 16px', color: '#9ca3af' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <p style={{
+                fontSize: '14px',
+                color: '#6b7280',
+                marginBottom: '16px'
+              }}>
+                {i18n.featureBoard?.loginRequiredMessage || 'Please log in to perform this action.'}
+              </p>
+              <button
+                onClick={() => {
+                  setShowEmailPrompt(false)
+                  // Redirect to login or show login modal
+                  if (window.mcl_checklists?.login_url) {
+                    window.location.href = window.mcl_checklists.login_url
+                  }
+                }}
+                style={{
+                  padding: '8px 24px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              >
+                {i18n.featureBoard?.loginButton || 'Log In'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <p style={{
+                fontSize: '14px',
+                color: '#6b7280',
+                marginBottom: '16px'
+              }}>
+                {emailPromptType === 'upvote'
+                  ? (i18n.featureBoard?.emailPromptUpvote || 'Enter your email to upvote this item.')
+                  : (i18n.featureBoard?.emailPromptIdea || 'Enter your details to submit your idea.')
+                }
+              </p>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#374151',
+                  fontWeight: '500',
+                  fontSize: '14px'
+                }}>
+                  {i18n.featureBoard?.nameLabel || 'Name'}
+                </label>
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder={i18n.featureBoard?.namePlaceholder || 'Your name (optional)'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  color: '#374151',
+                  fontWeight: '500',
+                  fontSize: '14px'
+                }}>
+                  {i18n.featureBoard?.emailLabel || 'Email'} <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder={i18n.featureBoard?.emailPlaceholder || 'your@email.com'}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                />
+              </div>
+
+              {featureBoardSettings.upvote_require_email_verification && emailPromptType === 'upvote' && (
+                <p style={{
+                  fontSize: '12px',
+                  color: '#6b7280'
+                }}>
+                  {i18n.featureBoard?.emailVerificationNotice || 'A verification link will be sent to your email.'}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Feature Board - Global Message Display */}
+      {ideaMessage && !showIdeaModal && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          backgroundColor: ideaMessage.type === 'success' ? '#10b981' : ideaMessage.type === 'error' ? '#ef4444' : '#3b82f6',
+          color: 'white',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          zIndex: 9999,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {ideaMessage.text}
+        </div>
       )}
     </div>
   )

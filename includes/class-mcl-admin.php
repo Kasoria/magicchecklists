@@ -63,6 +63,13 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment'));
         add_action('wp_ajax_mcl_toggle_comment_like', array($this, 'toggle_comment_like'));
         add_action('wp_ajax_nopriv_mcl_toggle_comment_like', array($this, 'toggle_comment_like'));
+
+        // Feature board settings and moderation
+        add_action('wp_ajax_mcl_save_feature_board_settings', array($this, 'save_feature_board_settings'));
+        add_action('wp_ajax_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'));
+        add_action('wp_ajax_mcl_get_idea_submissions', array($this, 'get_idea_submissions'));
+        add_action('wp_ajax_mcl_approve_idea', array($this, 'approve_idea'));
+        add_action('wp_ajax_mcl_reject_idea', array($this, 'reject_idea'));
     }
 
     public function add_admin_menu() {
@@ -4089,7 +4096,7 @@ class MCL_Admin {
     private function organize_threaded_comments($comments) {
         $threaded = array();
         $replies = array();
-        
+
         // Separate parent comments and replies
         foreach ($comments as $comment) {
             if ($comment->parent_id === null) {
@@ -4102,16 +4109,372 @@ class MCL_Admin {
                 $replies[$comment->parent_id][] = $comment;
             }
         }
-        
+
         // Attach replies to their parent comments
         foreach ($threaded as &$parent_comment) {
             if (isset($replies[$parent_comment->id])) {
                 $parent_comment->replies = $replies[$parent_comment->id];
             }
         }
-        
+
         return $threaded;
     }
 
+    /**
+     * Get feature board settings for a checklist (admin)
+     */
+    public function get_feature_board_settings() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
 
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+
+        if (!$checklist_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_feature_board_settings';
+
+        $settings = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE checklist_id = %d",
+            $checklist_id
+        ), ARRAY_A);
+
+        // Return default settings if none exist
+        if (!$settings) {
+            $settings = array(
+                'enabled' => false,
+                'upvote_mode' => 'logged_in',
+                'upvote_require_email_verification' => false,
+                'upvote_anon_check_localstorage' => true,
+                'upvote_anon_check_ip' => false,
+                'comments_mode' => 'logged_in',
+                'comments_require_email_verification' => false,
+                'idea_submission_enabled' => false,
+                'idea_submission_mode' => 'logged_in',
+                'idea_submission_require_email_verification' => false,
+                'idea_default_column' => 'col_todo',
+                'idea_moderation_enabled' => true,
+                'show_upvote_count' => true,
+                'show_comment_count' => true,
+                'allow_anonymous_viewing' => true,
+                'visible_columns' => null
+            );
+        } else {
+            $settings['enabled'] = (bool) $settings['enabled'];
+            $settings['upvote_require_email_verification'] = (bool) $settings['upvote_require_email_verification'];
+            $settings['upvote_anon_check_localstorage'] = isset($settings['upvote_anon_check_localstorage']) ? (bool) $settings['upvote_anon_check_localstorage'] : true;
+            $settings['upvote_anon_check_ip'] = isset($settings['upvote_anon_check_ip']) ? (bool) $settings['upvote_anon_check_ip'] : false;
+            $settings['comments_require_email_verification'] = (bool) $settings['comments_require_email_verification'];
+            $settings['idea_submission_enabled'] = (bool) $settings['idea_submission_enabled'];
+            $settings['idea_submission_require_email_verification'] = (bool) $settings['idea_submission_require_email_verification'];
+            $settings['idea_moderation_enabled'] = (bool) $settings['idea_moderation_enabled'];
+            $settings['show_upvote_count'] = (bool) $settings['show_upvote_count'];
+            $settings['show_comment_count'] = (bool) $settings['show_comment_count'];
+            $settings['allow_anonymous_viewing'] = (bool) $settings['allow_anonymous_viewing'];
+            $settings['visible_columns'] = $settings['visible_columns'] ? maybe_unserialize($settings['visible_columns']) : null;
+        }
+
+        wp_send_json_success(array('settings' => $settings));
+    }
+
+    /**
+     * Save feature board settings for a checklist
+     */
+    public function save_feature_board_settings() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+
+        if (!$checklist_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        // Settings are sent directly in POST, not as a nested 'settings' array
+        $settings = array(
+            'enabled' => isset($_POST['enabled']) && ($_POST['enabled'] === 'true' || $_POST['enabled'] === '1'),
+            'upvote_mode' => isset($_POST['upvote_mode']) ? sanitize_text_field($_POST['upvote_mode']) : 'logged_in',
+            'upvote_require_email_verification' => isset($_POST['upvote_require_email_verification']) && ($_POST['upvote_require_email_verification'] === 'true' || $_POST['upvote_require_email_verification'] === '1'),
+            'upvote_anon_check_localstorage' => isset($_POST['upvote_anon_check_localstorage']) && ($_POST['upvote_anon_check_localstorage'] === 'true' || $_POST['upvote_anon_check_localstorage'] === '1'),
+            'upvote_anon_check_ip' => isset($_POST['upvote_anon_check_ip']) && ($_POST['upvote_anon_check_ip'] === 'true' || $_POST['upvote_anon_check_ip'] === '1'),
+            'comments_mode' => isset($_POST['comments_mode']) ? sanitize_text_field($_POST['comments_mode']) : 'logged_in',
+            'idea_submission_enabled' => isset($_POST['idea_submission_enabled']) && ($_POST['idea_submission_enabled'] === 'true' || $_POST['idea_submission_enabled'] === '1'),
+            'idea_submission_mode' => isset($_POST['idea_submission_mode']) ? sanitize_text_field($_POST['idea_submission_mode']) : 'logged_in',
+            'idea_default_column' => isset($_POST['idea_default_column']) ? sanitize_text_field($_POST['idea_default_column']) : '',
+            'idea_moderation_enabled' => isset($_POST['idea_moderation_enabled']) && ($_POST['idea_moderation_enabled'] === 'true' || $_POST['idea_moderation_enabled'] === '1'),
+            'show_upvote_count' => isset($_POST['show_upvote_count']) && ($_POST['show_upvote_count'] === 'true' || $_POST['show_upvote_count'] === '1'),
+            'show_comment_count' => isset($_POST['show_comment_count']) && ($_POST['show_comment_count'] === 'true' || $_POST['show_comment_count'] === '1'),
+        );
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_feature_board_settings';
+
+        // Check if settings already exist
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table WHERE checklist_id = %d",
+            $checklist_id
+        ));
+
+        $data = array(
+            'checklist_id' => $checklist_id,
+            'enabled' => !empty($settings['enabled']) ? 1 : 0,
+            'upvote_mode' => isset($settings['upvote_mode']) ? sanitize_text_field($settings['upvote_mode']) : 'logged_in',
+            'upvote_require_email_verification' => !empty($settings['upvote_require_email_verification']) ? 1 : 0,
+            'upvote_anon_check_localstorage' => !empty($settings['upvote_anon_check_localstorage']) ? 1 : 0,
+            'upvote_anon_check_ip' => !empty($settings['upvote_anon_check_ip']) ? 1 : 0,
+            'comments_mode' => isset($settings['comments_mode']) ? sanitize_text_field($settings['comments_mode']) : 'logged_in',
+            'comments_require_email_verification' => !empty($settings['comments_require_email_verification']) ? 1 : 0,
+            'idea_submission_enabled' => !empty($settings['idea_submission_enabled']) ? 1 : 0,
+            'idea_submission_mode' => isset($settings['idea_submission_mode']) ? sanitize_text_field($settings['idea_submission_mode']) : 'logged_in',
+            'idea_submission_require_email_verification' => !empty($settings['idea_submission_require_email_verification']) ? 1 : 0,
+            'idea_default_column' => isset($settings['idea_default_column']) ? sanitize_text_field($settings['idea_default_column']) : 'col_todo',
+            'idea_moderation_enabled' => isset($settings['idea_moderation_enabled']) ? ($settings['idea_moderation_enabled'] ? 1 : 0) : 1,
+            'show_upvote_count' => isset($settings['show_upvote_count']) ? ($settings['show_upvote_count'] ? 1 : 0) : 1,
+            'show_comment_count' => isset($settings['show_comment_count']) ? ($settings['show_comment_count'] ? 1 : 0) : 1,
+            'allow_anonymous_viewing' => isset($settings['allow_anonymous_viewing']) ? ($settings['allow_anonymous_viewing'] ? 1 : 0) : 1,
+            'visible_columns' => isset($settings['visible_columns']) ? maybe_serialize($settings['visible_columns']) : null
+        );
+
+        $format = array('%d', '%d', '%s', '%d', '%d', '%d', '%s', '%d', '%d', '%s', '%d', '%s', '%d', '%d', '%d', '%d', '%s');
+
+        if ($existing) {
+            $wpdb->update($table, $data, array('checklist_id' => $checklist_id), $format, array('%d'));
+        } else {
+            $wpdb->insert($table, $data, $format);
+        }
+
+        wp_send_json_success(array('message' => 'Settings saved successfully'));
+    }
+
+    /**
+     * Get idea submissions for moderation
+     */
+    public function get_idea_submissions() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'pending';
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        $where_clause = "status = %s";
+        $args = array($status);
+
+        if ($checklist_id) {
+            $where_clause .= " AND checklist_id = %d";
+            $args[] = $checklist_id;
+        }
+
+        $submissions = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table WHERE $where_clause ORDER BY created_at DESC",
+            ...$args
+        ));
+
+        // Add checklist titles
+        foreach ($submissions as &$submission) {
+            $submission->checklist_title = get_the_title($submission->checklist_id);
+        }
+
+        wp_send_json_success(array('submissions' => $submissions));
+    }
+
+    /**
+     * Approve an idea submission
+     */
+    public function approve_idea() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+
+        // Accept both 'idea_id' (from frontend) and 'submission_id' (legacy)
+        $submission_id = isset($_POST['idea_id']) ? intval($_POST['idea_id']) : (isset($_POST['submission_id']) ? intval($_POST['submission_id']) : 0);
+        $target_column = isset($_POST['target_column']) ? sanitize_text_field($_POST['target_column']) : '';
+
+        if (!$submission_id) {
+            wp_send_json_error(array('message' => 'Invalid submission ID'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        $submission = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE id = %d",
+            $submission_id
+        ));
+
+        if (!$submission) {
+            wp_send_json_error(array('message' => 'Submission not found'));
+            return;
+        }
+
+        // Update the target column if provided
+        if ($target_column) {
+            $wpdb->update(
+                $table,
+                array('target_column' => $target_column),
+                array('id' => $submission_id),
+                array('%s'),
+                array('%d')
+            );
+        }
+
+        // Update status to approved
+        $wpdb->update(
+            $table,
+            array(
+                'status' => 'approved',
+                'approved_by' => get_current_user_id(),
+                'approved_at' => current_time('mysql')
+            ),
+            array('id' => $submission_id),
+            array('%s', '%d', '%s'),
+            array('%d')
+        );
+
+        // Add idea to the kanban board
+        $this->add_idea_to_board($submission->checklist_id, $submission_id);
+
+        wp_send_json_success(array('message' => 'Idea approved and added to board'));
+    }
+
+    /**
+     * Reject an idea submission
+     */
+    public function reject_idea() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+
+        // Accept both 'idea_id' (from frontend) and 'submission_id' (legacy)
+        $submission_id = isset($_POST['idea_id']) ? intval($_POST['idea_id']) : (isset($_POST['submission_id']) ? intval($_POST['submission_id']) : 0);
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
+
+        if (!$submission_id) {
+            wp_send_json_error(array('message' => 'Invalid submission ID'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        $wpdb->update(
+            $table,
+            array('status' => 'rejected'),
+            array('id' => $submission_id),
+            array('%s'),
+            array('%d')
+        );
+
+        // Optionally send rejection notification to user
+        // (Implementation can be added later)
+
+        wp_send_json_success(array('message' => 'Idea rejected'));
+    }
+
+    /**
+     * Add an approved idea to the kanban board (admin helper)
+     */
+    private function add_idea_to_board($checklist_id, $submission_id) {
+        global $wpdb;
+        $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        $submission = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $submissions_table WHERE id = %d",
+            $submission_id
+        ));
+
+        if (!$submission) {
+            return false;
+        }
+
+        // Get the current kanban board
+        $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+        if (!is_array($board)) {
+            $board = array();
+        }
+
+        // Create new item ID
+        $new_item_id = 'idea_' . $submission_id;
+
+        // Create the new item
+        $new_item = array(
+            'id' => $new_item_id,
+            'title' => $submission->title,
+            'description' => $submission->description,
+            'checked' => false,
+            'submitted_by' => array(
+                'name' => $submission->user_name,
+                'email' => $submission->user_email
+            ),
+            'submitted_at' => $submission->created_at
+        );
+
+        // Find the target column and add the item
+        $target_column = $submission->target_column ?: 'col_todo';
+        $column_found = false;
+
+        foreach ($board as &$column) {
+            if ($column['id'] === $target_column) {
+                if (!isset($column['items'])) {
+                    $column['items'] = array();
+                }
+                $column['items'][] = $new_item;
+                $column_found = true;
+                break;
+            }
+        }
+
+        // If target column not found, add to first column
+        if (!$column_found && !empty($board)) {
+            if (!isset($board[0]['items'])) {
+                $board[0]['items'] = array();
+            }
+            $board[0]['items'][] = $new_item;
+        }
+
+        // Save the updated board
+        update_post_meta($checklist_id, '_mcl_kanban_board', $board);
+
+        return true;
+    }
 }

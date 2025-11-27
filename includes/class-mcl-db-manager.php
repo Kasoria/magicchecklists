@@ -5,13 +5,31 @@ if (!defined('ABSPATH')) {
 
 class MCL_DB_Manager {
     private static $instance = null;
-    private $db_version = '2.0'; // Comment notifications
+    private $db_version = '2.2'; // Added upvote protection settings
     
     public static function get_instance() {
         if (self::$instance === null) {
             self::$instance = new self();
+            self::$instance->init();
         }
         return self::$instance;
+    }
+
+    /**
+     * Initialize DB manager and check for upgrades on admin_init
+     */
+    public function init() {
+        add_action('admin_init', array($this, 'check_for_upgrades'));
+    }
+
+    /**
+     * Check if database needs upgrading and run upgrade if needed
+     */
+    public function check_for_upgrades() {
+        $current_version = get_option('mcl_db_version', '1.0.0');
+        if (version_compare($current_version, $this->db_version, '<')) {
+            $this->install();
+        }
     }
 
     public function install() {
@@ -225,7 +243,84 @@ class MCL_DB_Manager {
             KEY created_at (created_at)
         ) $charset_collate;";
         dbDelta($sql);
-    
+
+        // Create item upvotes table for feature board
+        $item_upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $sql = "CREATE TABLE IF NOT EXISTS $item_upvotes_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            item_id varchar(100) NOT NULL,
+            user_id bigint(20) UNSIGNED DEFAULT NULL,
+            user_email varchar(255) NOT NULL,
+            user_name varchar(255) NOT NULL,
+            ip_hash varchar(64) DEFAULT NULL,
+            email_verified tinyint(1) NOT NULL DEFAULT 0,
+            verification_token varchar(64) DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY unique_upvote (checklist_id, item_id, user_email),
+            KEY checklist_id (checklist_id),
+            KEY item_id (item_id),
+            KEY user_id (user_id),
+            KEY user_email (user_email),
+            KEY ip_hash (ip_hash)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create feature board settings table
+        $feature_board_settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $sql = "CREATE TABLE IF NOT EXISTS $feature_board_settings_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            enabled tinyint(1) NOT NULL DEFAULT 0,
+            upvote_mode varchar(20) NOT NULL DEFAULT 'logged_in',
+            upvote_require_email_verification tinyint(1) NOT NULL DEFAULT 0,
+            upvote_anon_check_localstorage tinyint(1) NOT NULL DEFAULT 1,
+            upvote_anon_check_ip tinyint(1) NOT NULL DEFAULT 0,
+            comments_mode varchar(20) NOT NULL DEFAULT 'logged_in',
+            comments_require_email_verification tinyint(1) NOT NULL DEFAULT 0,
+            idea_submission_enabled tinyint(1) NOT NULL DEFAULT 0,
+            idea_submission_mode varchar(20) NOT NULL DEFAULT 'logged_in',
+            idea_submission_require_email_verification tinyint(1) NOT NULL DEFAULT 0,
+            idea_default_column varchar(100) DEFAULT 'col_todo',
+            idea_moderation_enabled tinyint(1) NOT NULL DEFAULT 1,
+            show_upvote_count tinyint(1) NOT NULL DEFAULT 1,
+            show_comment_count tinyint(1) NOT NULL DEFAULT 1,
+            allow_anonymous_viewing tinyint(1) NOT NULL DEFAULT 1,
+            visible_columns text DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY checklist_id (checklist_id)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Create idea submissions table for moderation queue
+        $idea_submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+        $sql = "CREATE TABLE IF NOT EXISTS $idea_submissions_table (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            checklist_id bigint(20) UNSIGNED NOT NULL,
+            title text NOT NULL,
+            description text DEFAULT NULL,
+            user_id bigint(20) UNSIGNED DEFAULT NULL,
+            user_name varchar(255) NOT NULL,
+            user_email varchar(255) NOT NULL,
+            email_verified tinyint(1) NOT NULL DEFAULT 0,
+            verification_token varchar(64) DEFAULT NULL,
+            status varchar(20) NOT NULL DEFAULT 'pending',
+            approved_by bigint(20) UNSIGNED DEFAULT NULL,
+            approved_at datetime DEFAULT NULL,
+            target_column varchar(100) DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY checklist_id (checklist_id),
+            KEY status (status),
+            KEY user_email (user_email),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        dbDelta($sql);
+
         // Log any errors silently instead of outputting them
         if ($wpdb->last_error) {
             error_log('MCL DB Creation Error: ' . $wpdb->last_error);
@@ -363,21 +458,58 @@ class MCL_DB_Manager {
         if (version_compare($from_version, '2.0', '<')) {
             // Add notify_on_comments column to notification settings table
             $notification_settings_table = $wpdb->prefix . 'mcl_notification_settings';
-            
+
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $notification_settings_table LIKE 'notify_on_comments'");
             if (empty($column_exists)) {
                 $wpdb->query("ALTER TABLE $notification_settings_table ADD COLUMN notify_on_comments tinyint(1) NOT NULL DEFAULT 0 AFTER notify_on_deadline");
             }
-            
+
             // Log successful upgrade
             error_log('MCL DB Manager: Upgraded to version 2.0 - Comment notifications');
+        }
+
+        if (version_compare($from_version, '2.1', '<')) {
+            // Add feature board tables: item_upvotes, feature_board_settings, idea_submissions
+            $this->create_tables();
+
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 2.1 - Feature board with item upvotes, idea submissions');
+        }
+
+        if (version_compare($from_version, '2.2', '<')) {
+            // Add upvote protection settings columns
+            $feature_board_settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $item_upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+
+            // Add new columns to feature board settings
+            $columns_to_add = [
+                'upvote_anon_check_localstorage' => "ALTER TABLE $feature_board_settings_table ADD COLUMN upvote_anon_check_localstorage tinyint(1) NOT NULL DEFAULT 1 AFTER upvote_require_email_verification",
+                'upvote_anon_check_ip' => "ALTER TABLE $feature_board_settings_table ADD COLUMN upvote_anon_check_ip tinyint(1) NOT NULL DEFAULT 0 AFTER upvote_anon_check_localstorage"
+            ];
+
+            foreach ($columns_to_add as $column => $sql) {
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $feature_board_settings_table LIKE '$column'");
+                if (empty($column_exists)) {
+                    $wpdb->query($sql);
+                }
+            }
+
+            // Add ip_hash column to item upvotes table
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $item_upvotes_table LIKE 'ip_hash'");
+            if (empty($column_exists)) {
+                $wpdb->query("ALTER TABLE $item_upvotes_table ADD COLUMN ip_hash varchar(64) DEFAULT NULL AFTER user_name");
+                $wpdb->query("ALTER TABLE $item_upvotes_table ADD INDEX ip_hash (ip_hash)");
+            }
+
+            // Log successful upgrade
+            error_log('MCL DB Manager: Upgraded to version 2.2 - Added upvote protection settings');
         }
 
     }
 
     public function uninstall() {
         global $wpdb;
-        
+
         // Drop all plugin tables
         $tables = array(
             'mcl_invite_links',
@@ -388,7 +520,10 @@ class MCL_DB_Manager {
             'mcl_kanban_columns',
             'mcl_comment_likes',
             'mcl_task_comments',
-            'mcl_global_notifications'
+            'mcl_global_notifications',
+            'mcl_item_upvotes',
+            'mcl_feature_board_settings',
+            'mcl_idea_submissions'
         );
 
         foreach ($tables as $table) {
@@ -401,7 +536,7 @@ class MCL_DB_Manager {
     
     public function verify_tables() {
         global $wpdb;
-        
+
         $tables = array(
             'mcl_invite_links' => 'Invite links table',
             'mcl_notification_settings' => 'Notification settings table',
@@ -411,7 +546,10 @@ class MCL_DB_Manager {
             'mcl_kanban_columns' => 'Kanban columns table',
             'mcl_comment_likes' => 'Comment likes table',
             'mcl_task_comments' => 'Task comments table',
-            'mcl_global_notifications' => 'Global notifications table'
+            'mcl_global_notifications' => 'Global notifications table',
+            'mcl_item_upvotes' => 'Item upvotes table',
+            'mcl_feature_board_settings' => 'Feature board settings table',
+            'mcl_idea_submissions' => 'Idea submissions table'
         );
         
         $result = array(

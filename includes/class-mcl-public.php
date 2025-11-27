@@ -94,6 +94,44 @@ class MCL_Public {
         add_action('wp_ajax_nopriv_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
         add_action('wp_ajax_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
         add_action('wp_ajax_nopriv_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
+
+        // Feature board AJAX handlers
+        add_action('wp_ajax_mcl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
+        add_action('wp_ajax_nopriv_mcl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
+        add_action('wp_ajax_mcl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
+        add_action('wp_ajax_nopriv_mcl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
+        add_action('wp_ajax_mcl_submit_idea', array($this, 'submit_idea'), 5);
+        add_action('wp_ajax_nopriv_mcl_submit_idea', array($this, 'submit_idea'), 5);
+        add_action('wp_ajax_mcl_verify_email', array($this, 'verify_email'), 5);
+        add_action('wp_ajax_nopriv_mcl_verify_email', array($this, 'verify_email'), 5);
+        add_action('wp_ajax_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
+        add_action('wp_ajax_nopriv_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
+
+        // Schedule daily cleanup of expired IP hashes (for GDPR compliance)
+        if (!wp_next_scheduled('mcl_cleanup_expired_ip_hashes')) {
+            wp_schedule_event(time(), 'daily', 'mcl_cleanup_expired_ip_hashes');
+        }
+        add_action('mcl_cleanup_expired_ip_hashes', array($this, 'cleanup_expired_ip_hashes'));
+    }
+
+    /**
+     * Cleanup expired IP hashes from upvotes table (GDPR compliance)
+     * IP hashes older than 30 days are cleared to minimize stored personal data
+     */
+    public function cleanup_expired_ip_hashes() {
+        global $wpdb;
+        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $expiry_days = 30;
+
+        // Clear IP hashes that are older than 30 days (set to NULL instead of deleting the upvote record)
+        $result = $wpdb->query($wpdb->prepare(
+            "UPDATE $upvotes_table SET ip_hash = NULL WHERE ip_hash IS NOT NULL AND created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+            $expiry_days
+        ));
+
+        if ($result !== false) {
+            error_log("MCL: Cleaned up IP hashes from {$result} upvote records older than {$expiry_days} days");
+        }
     }
 
     /**
@@ -106,46 +144,35 @@ class MCL_Public {
     private function is_shortcode_present_on_page($checklist_id) {
         // Only check on frontend pages with post content
         if (is_admin()) {
-            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - is_admin=true, returning false");
             return false;
         }
 
         // Check if shortcode is enabled for this checklist
         if (!MCL_Admin::is_shortcode_enabled($checklist_id)) {
-            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - shortcode not enabled, returning false");
             return false;
         }
 
         global $post;
         if (!$post || empty($post->post_content)) {
-            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - no post or empty content, returning false");
             return false;
         }
-
-        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - checking post ID {$post->ID}, content length: " . strlen($post->post_content));
 
         // Check if the magic_checklist shortcode is present in the content
         if (!has_shortcode($post->post_content, 'magic_checklist')) {
-            error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - magic_checklist shortcode not found in content");
             return false;
         }
-
-        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - magic_checklist shortcode found, parsing attributes");
 
         // Parse shortcode attributes to check if this specific checklist ID is used
         $pattern = get_shortcode_regex(array('magic_checklist'));
         if (preg_match_all('/' . $pattern . '/s', $post->post_content, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 $atts = shortcode_parse_atts($match[3]);
-                error_log("MCL Debug [is_shortcode_present_on_page]: Found shortcode with atts: " . print_r($atts, true));
                 if (isset($atts['id']) && intval($atts['id']) === $checklist_id) {
-                    error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - MATCH FOUND!");
                     return true;
                 }
             }
         }
 
-        error_log("MCL Debug [is_shortcode_present_on_page]: Checklist {$checklist_id} - no matching shortcode ID found");
         return false;
     }
 
@@ -153,8 +180,6 @@ class MCL_Public {
      * Determine if assets should be loaded for the current page
      */
     public function should_load_assets() {
-        error_log("MCL Debug [should_load_assets]: Starting check, is_admin=" . (is_admin() ? 'true' : 'false') . ", REQUEST_URI=" . $_SERVER['REQUEST_URI']);
-
         // Check for tour mode parameters first - if present, always load assets for tours
         $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
         $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
@@ -164,7 +189,6 @@ class MCL_Public {
         if (class_exists('MCL_Tour_CPT')) {
             $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
-                error_log("MCL Debug [should_load_assets]: Returning true for tours");
                 return true;
             }
         }
@@ -176,16 +200,12 @@ class MCL_Public {
             'posts_per_page' => -1
         ));
 
-        error_log("MCL Debug [should_load_assets]: Found " . count($active_checklists) . " active checklists");
-
         if (empty($active_checklists)) {
-            error_log("MCL Debug [should_load_assets]: No active checklists, returning false");
             return false; // No active checklists, so no assets to load.
         }
 
         foreach ($active_checklists as $checklist_post_obj) {
             $checklist_id = $checklist_post_obj->ID;
-            error_log("MCL Debug [should_load_assets]: Checking checklist {$checklist_id} ({$checklist_post_obj->post_title})");
 
             // Get loading settings
             $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
@@ -194,16 +214,13 @@ class MCL_Public {
             $has_permission = $this->permissions->has_permission($checklist_id, 'view');
 
             if (!$has_permission) {
-                error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - no view permission, skipping");
                 continue;
             }
 
             // Check if this checklist is used via shortcode on the current page.
             // If so, we need to load assets regardless of disable_drawer setting.
             $shortcode_present = $this->is_shortcode_present_on_page($checklist_id);
-            error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - shortcode_present=" . ($shortcode_present ? 'true' : 'false'));
             if ($shortcode_present) {
-                error_log("MCL Debug [should_load_assets]: Returning true - shortcode found on page for checklist {$checklist_id}");
                 return true; // Shortcode checklist found on page, load assets.
             }
 
@@ -211,26 +228,21 @@ class MCL_Public {
             // Only skip if the checklist is NOT present as a shortcode on this page.
             $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
-                error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - disable_drawer=true, skipping for drawer purposes");
                 continue; // Skip for drawer/floating button purposes, but shortcode already checked above
             }
 
             // Now check the specific loading conditions for this checklist (drawer/floating button).
             if ($load_everywhere) {
-                error_log("MCL Debug [should_load_assets]: Returning true - load_everywhere for checklist {$checklist_id}");
                 return true; // Found a reason to load assets, no need to check further.
             }
 
             $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
             if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
-                error_log("MCL Debug [should_load_assets]: Returning true - allowed_pages match for checklist {$checklist_id}");
                 return true; // Found a reason to load assets.
             }
 
             $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
-            error_log("MCL Debug [should_load_assets]: Checklist {$checklist_id} - allowed_urls=" . print_r($allowed_urls, true));
             if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
-                error_log("MCL Debug [should_load_assets]: Returning true - allowed_urls match for checklist {$checklist_id}");
                 return true; // Found a reason to load assets.
             }
 
@@ -241,14 +253,12 @@ class MCL_Public {
                 // If no specific restrictions are set (no allowed_pages and no allowed_urls),
                 // load assets on all frontend pages by default
                 if (empty($allowed_pages) && empty($allowed_urls)) {
-                    error_log("MCL Debug [should_load_assets]: Returning true - frontend page with no restrictions for checklist {$checklist_id}");
                     return true;
                 }
             }
         }
 
         // If the loop completes without returning true, no checklist met the criteria for loading assets.
-        error_log("MCL Debug [should_load_assets]: Loop completed, returning false");
         return false;
     }
 
@@ -334,24 +344,19 @@ class MCL_Public {
                     }
                     $get_params = $query_params;
                 }
-
-                error_log("MCL Debug [is_allowed_admin_page]: AJAX detected, using referer admin page: {$current_pagenow}, plugin_page: " . ($current_plugin_page ?: 'none'));
             } else {
                 // AJAX from non-admin page
-                error_log("MCL Debug [is_allowed_admin_page]: AJAX from non-admin page, returning false");
                 return false;
             }
         }
 
         if (!empty($current_plugin_page)) {
             $current_page = $current_plugin_page;
-            error_log("MCL Debug [is_allowed_admin_page]: Using plugin_page: {$current_page}");
         } else {
             // Use the raw page slug without mapping
             // The allowed_pages array contains raw WordPress slugs like 'upload', 'options-general', etc.
             // since that's what get_registered_admin_pages() returns and what gets saved
             $current_page = str_replace('.php', '', $current_pagenow);
-            error_log("MCL Debug [is_allowed_admin_page]: Using raw page slug: {$current_page}");
         }
 
         if (!empty($get_params['post_type'])) {
@@ -361,10 +366,7 @@ class MCL_Public {
             $current_page .= '&taxonomy=' . sanitize_text_field($get_params['taxonomy']);
         }
 
-        $is_allowed = in_array($current_page, $allowed_pages);
-        error_log("MCL Debug [is_allowed_admin_page]: FINAL current_page={$current_page}, allowed_pages=" . implode(', ', $allowed_pages) . ", is_allowed=" . ($is_allowed ? 'true' : 'false'));
-
-        return $is_allowed;
+        return in_array($current_page, $allowed_pages);
     }
     
     private function matches_url_pattern($allowed_urls) {
@@ -384,10 +386,7 @@ class MCL_Public {
                     $current_url .= '?' . $referer_parts['query'];
                 }
             }
-            error_log("MCL Debug [matches_url_pattern]: AJAX detected, using referer URL: {$current_url}");
         }
-
-        error_log("MCL Debug [matches_url_pattern]: current_url={$current_url}");
 
         foreach ($allowed_urls as $pattern) {
             $pattern = trim($pattern);
@@ -399,15 +398,11 @@ class MCL_Public {
                 preg_quote($pattern, '/')
             );
 
-            error_log("MCL Debug [matches_url_pattern]: Testing pattern '{$pattern}' -> regex '/^{$regex}$/' against '{$current_url}'");
-
             if (preg_match('/^' . $regex . '$/', $current_url)) {
-                error_log("MCL Debug [matches_url_pattern]: MATCH FOUND for pattern '{$pattern}'");
                 return true;
             }
         }
 
-        error_log("MCL Debug [matches_url_pattern]: No patterns matched");
         return false;
     }
 
@@ -426,12 +421,8 @@ class MCL_Public {
             return false;
         }
 
-        $referer = $_SERVER['HTTP_REFERER'];
-
         // If referer doesn't contain wp-admin, it's from frontend
-        $is_frontend = strpos($referer, '/wp-admin/') === false;
-        error_log("MCL Debug [is_ajax_from_frontend]: referer={$referer}, is_frontend=" . ($is_frontend ? 'true' : 'false'));
-        return $is_frontend;
+        return strpos($_SERVER['HTTP_REFERER'], '/wp-admin/') === false;
     }
 
     /**
@@ -780,8 +771,6 @@ class MCL_Public {
      * Returns an array of [ 'id' => checklist_id, 'theme' => theme_value ]
      */
     private function get_all_active_checklists_for_page() {
-        error_log("MCL Debug [get_all_active_checklists_for_page]: Starting, is_admin=" . (is_admin() ? 'true' : 'false'));
-
         $query_args_base = array(
             'post_type' => 'mcl_checklist',
             'meta_query' => array(
@@ -796,31 +785,24 @@ class MCL_Public {
         $active_checklists_posts = get_posts($query_args_base);
         $visible_checklists_data = [];
 
-        error_log("MCL Debug [get_all_active_checklists_for_page]: Found " . count($active_checklists_posts) . " active checklists in DB");
-
         foreach ($active_checklists_posts as $checklist_post) {
             $checklist_id = $checklist_post->ID;
-            error_log("MCL Debug [get_all_active_checklists_for_page]: Checking checklist {$checklist_id} ({$checklist_post->post_title})");
 
             // Check view permission
             if (!$this->has_permission($checklist_id, 'view')) {
-                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - no view permission, skipping");
                 continue;
             }
 
             // Check if this checklist is used via shortcode on the current page.
             // If so, include it regardless of disable_drawer setting.
             $shortcode_present = $this->is_shortcode_present_on_page($checklist_id);
-            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - shortcode_present=" . ($shortcode_present ? 'true' : 'false'));
 
             // Check if the drawer is disabled for this checklist via shortcode settings
             // Only skip if the checklist is NOT present as a shortcode on this page.
             $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
             $disable_drawer = !empty($shortcode_settings['disable_drawer']);
-            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - disable_drawer=" . ($disable_drawer ? 'true' : 'false'));
 
             if ($disable_drawer && !$shortcode_present) {
-                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - skipping (disable_drawer && no shortcode)");
                 continue;
             }
 
@@ -830,33 +812,25 @@ class MCL_Public {
             // If shortcode is present, mark as visible
             if ($shortcode_present) {
                 $is_visible_based_on_conditions = true;
-                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to shortcode presence");
             } else {
                 $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
 
                 if ($load_everywhere) {
                     $is_visible_based_on_conditions = true;
-                    error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to load_everywhere");
                 } else {
                     $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
                     if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                         $is_visible_based_on_conditions = true;
-                        error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to allowed_pages");
                     } else {
                         $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
-                        error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - allowed_urls=" . print_r($allowed_urls, true));
                         if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                             $is_visible_based_on_conditions = true;
-                            error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to allowed_urls");
                         } else {
                             // For frontend pages, show if no specific restrictions are set
                             // Also check for AJAX requests from frontend (referrer is not wp-admin)
                             $is_frontend = !is_admin() || ($this->is_ajax_request() && $this->is_ajax_from_frontend());
                             if ($is_frontend && empty($allowed_pages) && empty($allowed_urls)) {
                                 $is_visible_based_on_conditions = true;
-                                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - visible due to no restrictions (frontend)");
-                            } else {
-                                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} - NOT visible (no conditions met), is_frontend=" . ($is_frontend ? 'true' : 'false'));
                             }
                         }
                     }
@@ -869,11 +843,9 @@ class MCL_Public {
                     'id' => $checklist_id,
                     'theme' => $theme ?: 'light'
                 ];
-                error_log("MCL Debug [get_all_active_checklists_for_page]: Checklist {$checklist_id} ADDED to visible list");
             }
         }
 
-        error_log("MCL Debug [get_all_active_checklists_for_page]: Returning " . count($visible_checklists_data) . " visible checklists");
         return $visible_checklists_data;
     }
     
@@ -1988,8 +1960,6 @@ class MCL_Public {
 
     public function get_active_checklists_data() {
         try {
-            error_log("MCL Debug [get_active_checklists_data]: AJAX called");
-
             // Optional nonce verification for logged-in users
             if (is_user_logged_in() && isset($_POST['nonce'])) {
                 if (!wp_verify_nonce($_POST['nonce'], 'mcl_admin_nonce')) {
@@ -2003,7 +1973,6 @@ class MCL_Public {
 
             // Get ALL active checklists that should be loaded on this page
             $active_checklists = $this->get_all_active_checklists_for_page();
-            error_log("MCL Debug [get_active_checklists_data]: Found " . count($active_checklists) . " active checklists");
             
             // Format the checklists for React
             $formatted_checklists = array();
@@ -2178,14 +2147,15 @@ class MCL_Public {
         // Get the kanban board structure from post meta
         $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
 
+        // Get checklist items for syncing
+        $checklist_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $checked_state = $this->get_checked_state($checklist_id, $context);
+
         // If no board exists, create a default structure from checklist items
         if (!$board || !is_array($board) || empty($board)) {
-            $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
-            $checked_state = $this->get_checked_state($checklist_id, $context);
-
             // Map items to board structure
             $boardItems = array();
-            foreach ($items as $item) {
+            foreach ($checklist_items as $item) {
                 $boardItems[] = array(
                     'id' => $item['id'],
                     'title' => $item['content'],
@@ -2216,6 +2186,52 @@ class MCL_Public {
                     'items' => array()
                 )
             );
+        } else {
+            // Sync: Check for new checklist items not yet in the kanban board
+            // Collect all item IDs currently in the board
+            $board_item_ids = array();
+            foreach ($board as $column) {
+                if (isset($column['items']) && is_array($column['items'])) {
+                    foreach ($column['items'] as $item) {
+                        $board_item_ids[] = $item['id'];
+                    }
+                }
+            }
+
+            // Find new items that aren't in the board yet
+            $new_items = array();
+            foreach ($checklist_items as $item) {
+                if (!in_array($item['id'], $board_item_ids)) {
+                    $new_items[] = array(
+                        'id' => $item['id'],
+                        'title' => $item['content'],
+                        'checked' => in_array($item['id'], $checked_state),
+                        'comment_count' => 0,
+                        'assigned_user' => null
+                    );
+                }
+            }
+
+            // Add new items to the first column (To Do)
+            if (!empty($new_items)) {
+                // Find the first column (usually 'col_todo' or index 0)
+                $first_column_index = 0;
+                foreach ($board as $index => $column) {
+                    if ($column['id'] === 'col_todo') {
+                        $first_column_index = $index;
+                        break;
+                    }
+                }
+
+                // Append new items to the first column
+                if (!isset($board[$first_column_index]['items'])) {
+                    $board[$first_column_index]['items'] = array();
+                }
+                $board[$first_column_index]['items'] = array_merge($board[$first_column_index]['items'], $new_items);
+
+                // Save the updated board
+                update_post_meta($checklist_id, '_mcl_kanban_board', $board);
+            }
         }
 
         // Enrich board items with comment counts and user assignments
@@ -2421,13 +2437,33 @@ class MCL_Public {
                 return;
             }
 
-            // Check permissions - need at least view permission
-            if (!$this->has_permission($checklist_id, 'view')) {
+            global $wpdb;
+
+            // Check feature board settings for comments - allow reading if comments are enabled for anyone
+            $can_read_comments = false;
+            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $fb_settings = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $settings_table WHERE checklist_id = %d",
+                $checklist_id
+            ));
+
+            // If feature board is enabled, check comments_mode
+            if ($fb_settings && $fb_settings->enabled) {
+                $comments_mode = $fb_settings->comments_mode;
+
+                if ($comments_mode === 'anyone') {
+                    $can_read_comments = true;
+                } elseif ($comments_mode === 'logged_in' && $is_logged_in) {
+                    $can_read_comments = true;
+                }
+            }
+
+            // Fall back to normal permission check if feature board doesn't allow
+            if (!$can_read_comments && !$this->has_permission($checklist_id, 'view')) {
                 wp_send_json_error('Permission denied');
                 return;
             }
 
-            global $wpdb;
             $comments_table = $wpdb->prefix . 'mcl_task_comments';
             $likes_table = $wpdb->prefix . 'mcl_comment_likes';
 
@@ -2520,13 +2556,36 @@ class MCL_Public {
                 return;
             }
 
-            // Check permissions - need at least interact permission to comment
-            if (!$this->has_permission($checklist_id, 'interact')) {
+            global $wpdb;
+
+            // Check feature board settings for comments
+            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $fb_settings = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $settings_table WHERE checklist_id = %d",
+                $checklist_id
+            ));
+
+            $can_comment = false;
+
+            // If feature board is enabled, check comments_mode
+            if ($fb_settings && $fb_settings->enabled) {
+                $comments_mode = $fb_settings->comments_mode;
+
+                if ($comments_mode === 'anyone') {
+                    $can_comment = true;
+                } elseif ($comments_mode === 'logged_in' && $is_logged_in) {
+                    $can_comment = true;
+                } elseif ($comments_mode === 'disabled') {
+                    wp_send_json_error('Comments are disabled for this board');
+                    return;
+                }
+            }
+
+            // Fall back to normal permission check if feature board is not enabled or doesn't allow
+            if (!$can_comment && !$this->has_permission($checklist_id, 'interact')) {
                 wp_send_json_error('Permission denied');
                 return;
             }
-
-            global $wpdb;
             $comments_table = $wpdb->prefix . 'mcl_task_comments';
             $likes_table = $wpdb->prefix . 'mcl_comment_likes';
 
@@ -2865,5 +2924,618 @@ class MCL_Public {
         }
 
         return $threaded;
+    }
+
+    /**
+     * Get feature board settings for a checklist
+     */
+    public function get_feature_board_settings() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+
+        if (!$checklist_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'mcl_feature_board_settings';
+
+        $settings = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE checklist_id = %d",
+            $checklist_id
+        ), ARRAY_A);
+
+        // Return default settings if none exist
+        if (!$settings) {
+            $settings = array(
+                'enabled' => false,
+                'upvote_mode' => 'logged_in', // anyone, logged_in, email_verified
+                'upvote_require_email_verification' => false,
+                'upvote_anon_check_localstorage' => true,
+                'upvote_anon_check_ip' => false,
+                'comments_mode' => 'logged_in',
+                'comments_require_email_verification' => false,
+                'idea_submission_enabled' => false,
+                'idea_submission_mode' => 'logged_in',
+                'idea_submission_require_email_verification' => false,
+                'idea_default_column' => 'col_todo',
+                'idea_moderation_enabled' => true,
+                'show_upvote_count' => true,
+                'show_comment_count' => true,
+                'allow_anonymous_viewing' => true,
+                'visible_columns' => null
+            );
+        } else {
+            // Convert string values to booleans
+            $settings['enabled'] = (bool) $settings['enabled'];
+            $settings['upvote_require_email_verification'] = (bool) $settings['upvote_require_email_verification'];
+            $settings['upvote_anon_check_localstorage'] = isset($settings['upvote_anon_check_localstorage']) ? (bool) $settings['upvote_anon_check_localstorage'] : true;
+            $settings['upvote_anon_check_ip'] = isset($settings['upvote_anon_check_ip']) ? (bool) $settings['upvote_anon_check_ip'] : false;
+            $settings['comments_require_email_verification'] = (bool) $settings['comments_require_email_verification'];
+            $settings['idea_submission_enabled'] = (bool) $settings['idea_submission_enabled'];
+            $settings['idea_submission_require_email_verification'] = (bool) $settings['idea_submission_require_email_verification'];
+            $settings['idea_moderation_enabled'] = (bool) $settings['idea_moderation_enabled'];
+            $settings['show_upvote_count'] = (bool) $settings['show_upvote_count'];
+            $settings['show_comment_count'] = (bool) $settings['show_comment_count'];
+            $settings['allow_anonymous_viewing'] = (bool) $settings['allow_anonymous_viewing'];
+            $settings['visible_columns'] = $settings['visible_columns'] ? maybe_unserialize($settings['visible_columns']) : null;
+        }
+
+        wp_send_json_success(array('settings' => $settings));
+    }
+
+    /**
+     * Toggle upvote on a kanban item (feature board)
+     */
+    public function toggle_item_upvote() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+
+        if (!$checklist_id || !$item_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist or item ID'));
+            return;
+        }
+
+        // Get feature board settings
+        global $wpdb;
+        $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $settings = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $settings_table WHERE checklist_id = %d",
+            $checklist_id
+        ));
+
+        $upvote_mode = $settings ? $settings->upvote_mode : 'logged_in';
+        $require_verification = $settings ? (bool) $settings->upvote_require_email_verification : false;
+        $check_ip = $settings && isset($settings->upvote_anon_check_ip) ? (bool) $settings->upvote_anon_check_ip : false;
+
+        // Generate IP hash for anonymous upvote tracking
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip_hash = hash('sha256', $ip_address . $checklist_id . wp_salt('auth'));
+
+        // Determine user info
+        $current_user = wp_get_current_user();
+        $is_logged_in = is_user_logged_in();
+
+        if ($is_logged_in) {
+            $user_id = $current_user->ID;
+            $user_email = $current_user->user_email;
+            $user_name = $current_user->display_name;
+        } else {
+            $user_id = null;
+
+            // Check if upvotes from non-logged-in users are allowed
+            if ($upvote_mode === 'logged_in') {
+                wp_send_json_error(array('message' => 'You must be logged in to upvote', 'require_login' => true));
+                return;
+            }
+
+            // For 'email_verified' mode, email is required
+            if ($upvote_mode === 'email_verified' && !$user_email) {
+                wp_send_json_error(array('message' => 'Email is required to upvote', 'require_email' => true));
+                return;
+            }
+
+            // For 'anyone' mode without email, generate anonymous identifier based on IP
+            if ($upvote_mode === 'anyone' && !$user_email) {
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+                $user_email = 'anon_' . md5($ip_address . $checklist_id) . '@anonymous.local';
+                $user_name = 'Anonymous';
+            }
+
+            if (!$user_name) {
+                $user_name = 'Anonymous';
+            }
+        }
+
+        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+
+        // Check if user already upvoted (by email first)
+        $existing = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $upvotes_table WHERE checklist_id = %d AND item_id = %s AND user_email = %s",
+            $checklist_id, $item_id, $user_email
+        ));
+
+        // If IP check is enabled and no existing upvote found by email, also check by IP hash
+        // IP hashes are only valid for 30 days (for GDPR compliance / data minimization)
+        $existing_by_ip = null;
+        $ip_hash_expiry_days = 30;
+        if (!$existing && !$is_logged_in && $upvote_mode === 'anyone' && $check_ip) {
+            $existing_by_ip = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $upvotes_table WHERE checklist_id = %d AND item_id = %s AND ip_hash = %s AND created_at > DATE_SUB(NOW(), INTERVAL %d DAY)",
+                $checklist_id, $item_id, $ip_hash, $ip_hash_expiry_days
+            ));
+        }
+
+        if ($existing || $existing_by_ip) {
+            // Remove upvote
+            $upvote_to_remove = $existing ? $existing : $existing_by_ip;
+            $wpdb->delete(
+                $upvotes_table,
+                array('id' => $upvote_to_remove->id),
+                array('%d')
+            );
+            $action = 'removed';
+        } else {
+            // Check if email verification is required for non-logged-in users
+            $email_verified = 1; // Default to verified
+            $verification_token = null;
+
+            if (!$is_logged_in && $upvote_mode === 'email_verified' && $require_verification) {
+                // Only require verification for email_verified mode
+                $verification_token = wp_generate_password(32, false);
+                $email_verified = 0;
+
+                // Send verification email
+                $this->send_verification_email($user_email, $user_name, $verification_token, 'upvote', $checklist_id, $item_id);
+            }
+            // For "anyone" mode or logged-in users, upvote is automatically verified
+
+            // Add upvote (include IP hash for anonymous users when IP check is enabled)
+            $insert_data = array(
+                'checklist_id' => $checklist_id,
+                'item_id' => $item_id,
+                'user_id' => $user_id,
+                'user_email' => $user_email,
+                'user_name' => $user_name,
+                'ip_hash' => (!$is_logged_in && $check_ip) ? $ip_hash : null,
+                'email_verified' => $email_verified,
+                'verification_token' => $verification_token
+            );
+
+            $wpdb->insert(
+                $upvotes_table,
+                $insert_data,
+                array('%d', '%s', '%d', '%s', '%s', '%s', '%d', '%s')
+            );
+            $action = 'added';
+
+            if ($verification_token) {
+                wp_send_json_success(array(
+                    'action' => 'pending_verification',
+                    'message' => 'Please check your email to verify your upvote'
+                ));
+                return;
+            }
+        }
+
+        // Get updated upvote count
+        $upvote_count = $this->get_item_upvote_count($checklist_id, $item_id);
+
+        wp_send_json_success(array(
+            'action' => $action,
+            'upvote_count' => $upvote_count,
+            'user_upvoted' => ($action === 'added')
+        ));
+    }
+
+    /**
+     * Get upvotes for items in a checklist
+     */
+    public function get_item_upvotes() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_ids = isset($_POST['item_ids']) ? array_map('sanitize_text_field', (array) $_POST['item_ids']) : array();
+
+        if (!$checklist_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        global $wpdb;
+        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+
+        // Get current user email
+        $current_user_email = '';
+        if (is_user_logged_in()) {
+            $current_user = wp_get_current_user();
+            $current_user_email = $current_user->user_email;
+        }
+
+        $upvotes_data = array();
+
+        if (!empty($item_ids)) {
+            // Get upvote counts for specific items
+            $placeholders = implode(',', array_fill(0, count($item_ids), '%s'));
+            $args = array_merge(array($checklist_id), $item_ids);
+
+            $counts = $wpdb->get_results($wpdb->prepare(
+                "SELECT item_id, COUNT(*) as count FROM $upvotes_table
+                WHERE checklist_id = %d AND item_id IN ($placeholders) AND email_verified = 1
+                GROUP BY item_id",
+                ...$args
+            ), OBJECT_K);
+
+            // Check which items the current user has upvoted
+            $user_upvotes = array();
+            if ($current_user_email) {
+                $user_votes = $wpdb->get_results($wpdb->prepare(
+                    "SELECT item_id FROM $upvotes_table
+                    WHERE checklist_id = %d AND user_email = %s AND item_id IN ($placeholders)",
+                    array_merge(array($checklist_id, $current_user_email), $item_ids)
+                ));
+                foreach ($user_votes as $vote) {
+                    $user_upvotes[$vote->item_id] = true;
+                }
+            }
+
+            foreach ($item_ids as $item_id) {
+                $upvotes_data[$item_id] = array(
+                    'count' => isset($counts[$item_id]) ? (int) $counts[$item_id]->count : 0,
+                    'user_upvoted' => isset($user_upvotes[$item_id])
+                );
+            }
+        } else {
+            // Get all upvotes for the checklist
+            $all_counts = $wpdb->get_results($wpdb->prepare(
+                "SELECT item_id, COUNT(*) as count FROM $upvotes_table
+                WHERE checklist_id = %d AND email_verified = 1
+                GROUP BY item_id",
+                $checklist_id
+            ), OBJECT_K);
+
+            $user_upvotes = array();
+            if ($current_user_email) {
+                $user_votes = $wpdb->get_results($wpdb->prepare(
+                    "SELECT item_id FROM $upvotes_table
+                    WHERE checklist_id = %d AND user_email = %s",
+                    $checklist_id, $current_user_email
+                ));
+                foreach ($user_votes as $vote) {
+                    $user_upvotes[$vote->item_id] = true;
+                }
+            }
+
+            foreach ($all_counts as $item_id => $data) {
+                $upvotes_data[$item_id] = array(
+                    'count' => (int) $data->count,
+                    'user_upvoted' => isset($user_upvotes[$item_id])
+                );
+            }
+        }
+
+        wp_send_json_success(array('upvotes' => $upvotes_data));
+    }
+
+    /**
+     * Get upvote count for a specific item
+     */
+    private function get_item_upvote_count($checklist_id, $item_id) {
+        global $wpdb;
+        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $upvotes_table WHERE checklist_id = %d AND item_id = %s AND email_verified = 1",
+            $checklist_id, $item_id
+        ));
+    }
+
+    /**
+     * Submit a new idea to the feature board
+     */
+    public function submit_idea() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $title = isset($_POST['title']) ? sanitize_text_field($_POST['title']) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+
+        if (!$checklist_id || !$title) {
+            wp_send_json_error(array('message' => 'Checklist ID and title are required'));
+            return;
+        }
+
+        // Get feature board settings
+        global $wpdb;
+        $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $settings = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $settings_table WHERE checklist_id = %d",
+            $checklist_id
+        ));
+
+        if (!$settings || !$settings->idea_submission_enabled) {
+            wp_send_json_error(array('message' => 'Idea submission is not enabled for this board'));
+            return;
+        }
+
+        $submission_mode = $settings->idea_submission_mode;
+        $require_verification = (bool) $settings->idea_submission_require_email_verification;
+        $moderation_enabled = (bool) $settings->idea_moderation_enabled;
+        $default_column = $settings->idea_default_column ?: 'col_todo';
+
+        // Determine user info
+        $current_user = wp_get_current_user();
+        $is_logged_in = is_user_logged_in();
+
+        if ($is_logged_in) {
+            $user_id = $current_user->ID;
+            $user_email = $current_user->user_email;
+            $user_name = $current_user->display_name;
+        } else {
+            $user_id = null;
+
+            if ($submission_mode === 'logged_in') {
+                wp_send_json_error(array('message' => 'You must be logged in to submit ideas', 'require_login' => true));
+                return;
+            }
+
+            // For 'email_verified' mode, email is required
+            if ($submission_mode === 'email_verified' && !$user_email) {
+                wp_send_json_error(array('message' => 'Email is required to submit ideas', 'require_email' => true));
+                return;
+            }
+
+            // For 'anyone' mode without email, generate anonymous identifier based on IP
+            if ($submission_mode === 'anyone' && !$user_email) {
+                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+                $user_email = 'anon_' . md5($ip_address . time()) . '@anonymous.local';
+                $user_name = 'Anonymous';
+            }
+
+            if (!$user_name) {
+                $user_name = 'Anonymous';
+            }
+        }
+
+        $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        // For 'anyone' mode or logged-in users, email is automatically verified
+        // Only 'email_verified' mode for non-logged-in users needs verification
+        $email_verified = ($is_logged_in || $submission_mode === 'anyone') ? 1 : 0;
+        $verification_token = null;
+        $status = $moderation_enabled ? 'pending' : 'approved';
+
+        // If email verification is required for non-logged-in users in email_verified mode
+        if (!$is_logged_in && $require_verification && $submission_mode === 'email_verified') {
+            $verification_token = wp_generate_password(32, false);
+            $email_verified = 0;
+            $status = 'pending_verification';
+
+            // Send verification email
+            $this->send_verification_email($user_email, $user_name, $verification_token, 'idea', $checklist_id, null, $title);
+        }
+
+        $wpdb->insert(
+            $submissions_table,
+            array(
+                'checklist_id' => $checklist_id,
+                'title' => $title,
+                'description' => $description,
+                'user_id' => $user_id,
+                'user_name' => $user_name,
+                'user_email' => $user_email,
+                'email_verified' => $email_verified,
+                'verification_token' => $verification_token,
+                'status' => $status,
+                'target_column' => $default_column
+            ),
+            array('%d', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%s')
+        );
+
+        $submission_id = $wpdb->insert_id;
+
+        // If moderation is disabled and no email verification needed, add to board directly
+        if ($status === 'approved') {
+            $this->add_idea_to_board($checklist_id, $submission_id);
+        }
+
+        if ($verification_token) {
+            wp_send_json_success(array(
+                'status' => 'pending_verification',
+                'message' => 'Please check your email to verify your submission'
+            ));
+            return;
+        }
+
+        if ($moderation_enabled) {
+            wp_send_json_success(array(
+                'status' => 'pending',
+                'message' => 'Your idea has been submitted and is pending review'
+            ));
+        } else {
+            wp_send_json_success(array(
+                'status' => 'approved',
+                'message' => 'Your idea has been added to the board'
+            ));
+        }
+    }
+
+    /**
+     * Add an approved idea to the kanban board
+     */
+    private function add_idea_to_board($checklist_id, $submission_id) {
+        global $wpdb;
+        $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+
+        $submission = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $submissions_table WHERE id = %d",
+            $submission_id
+        ));
+
+        if (!$submission) {
+            return false;
+        }
+
+        // Get the current kanban board
+        $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+        if (!is_array($board)) {
+            $board = array();
+        }
+
+        // Create new item ID
+        $new_item_id = 'idea_' . $submission_id;
+
+        // Create the new item
+        $new_item = array(
+            'id' => $new_item_id,
+            'title' => $submission->title,
+            'description' => $submission->description,
+            'checked' => false,
+            'submitted_by' => array(
+                'name' => $submission->user_name,
+                'email' => $submission->user_email
+            ),
+            'submitted_at' => $submission->created_at
+        );
+
+        // Find the target column and add the item
+        $target_column = $submission->target_column ?: 'col_todo';
+        $column_found = false;
+
+        foreach ($board as &$column) {
+            if ($column['id'] === $target_column) {
+                if (!isset($column['items'])) {
+                    $column['items'] = array();
+                }
+                $column['items'][] = $new_item;
+                $column_found = true;
+                break;
+            }
+        }
+
+        // If target column not found, add to first column
+        if (!$column_found && !empty($board)) {
+            if (!isset($board[0]['items'])) {
+                $board[0]['items'] = array();
+            }
+            $board[0]['items'][] = $new_item;
+        }
+
+        // Save the updated board
+        update_post_meta($checklist_id, '_mcl_kanban_board', $board);
+
+        return true;
+    }
+
+    /**
+     * Verify email for upvote or idea submission
+     */
+    public function verify_email() {
+        $token = isset($_GET['token']) ? sanitize_text_field($_GET['token']) : '';
+        $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+
+        if (!$token || !$type) {
+            wp_send_json_error(array('message' => 'Invalid verification link'));
+            return;
+        }
+
+        global $wpdb;
+
+        if ($type === 'upvote') {
+            $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+
+            $upvote = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $upvotes_table WHERE verification_token = %s",
+                $token
+            ));
+
+            if (!$upvote) {
+                wp_send_json_error(array('message' => 'Invalid or expired verification token'));
+                return;
+            }
+
+            $wpdb->update(
+                $upvotes_table,
+                array('email_verified' => 1, 'verification_token' => null),
+                array('id' => $upvote->id),
+                array('%d', '%s'),
+                array('%d')
+            );
+
+            wp_send_json_success(array('message' => 'Your upvote has been verified!'));
+
+        } elseif ($type === 'idea') {
+            $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+
+            $submission = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $submissions_table WHERE verification_token = %s",
+                $token
+            ));
+
+            if (!$submission) {
+                wp_send_json_error(array('message' => 'Invalid or expired verification token'));
+                return;
+            }
+
+            // Get feature board settings
+            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $settings = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $settings_table WHERE checklist_id = %d",
+                $submission->checklist_id
+            ));
+
+            $moderation_enabled = $settings ? (bool) $settings->idea_moderation_enabled : true;
+            $new_status = $moderation_enabled ? 'pending' : 'approved';
+
+            $wpdb->update(
+                $submissions_table,
+                array('email_verified' => 1, 'verification_token' => null, 'status' => $new_status),
+                array('id' => $submission->id),
+                array('%d', '%s', '%s'),
+                array('%d')
+            );
+
+            // If moderation is disabled, add to board directly
+            if ($new_status === 'approved') {
+                $this->add_idea_to_board($submission->checklist_id, $submission->id);
+                wp_send_json_success(array('message' => 'Your idea has been verified and added to the board!'));
+            } else {
+                wp_send_json_success(array('message' => 'Your email has been verified. Your idea is now pending review.'));
+            }
+        } else {
+            wp_send_json_error(array('message' => 'Invalid verification type'));
+        }
+    }
+
+    /**
+     * Send email verification
+     */
+    private function send_verification_email($email, $name, $token, $type, $checklist_id, $item_id = null, $idea_title = null) {
+        $verify_url = add_query_arg(array(
+            'action' => 'mcl_verify_email',
+            'token' => $token,
+            'type' => $type
+        ), admin_url('admin-ajax.php'));
+
+        $checklist_title = get_the_title($checklist_id);
+
+        if ($type === 'upvote') {
+            $subject = sprintf(__('Verify your upvote - %s', 'magic-checklists'), $checklist_title);
+            $message = sprintf(
+                __("Hi %s,\n\nPlease click the link below to verify your upvote:\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magic-checklists'),
+                $name,
+                $verify_url
+            );
+        } else {
+            $subject = sprintf(__('Verify your idea submission - %s', 'magic-checklists'), $checklist_title);
+            $message = sprintf(
+                __("Hi %s,\n\nPlease click the link below to verify your idea submission: \"%s\"\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magic-checklists'),
+                $name,
+                $idea_title,
+                $verify_url
+            );
+        }
+
+        wp_mail($email, $subject, $message);
     }
 }

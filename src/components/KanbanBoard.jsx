@@ -266,6 +266,29 @@ const KanbanBoard = ({ adminData }) => {
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
 
+  // Feature board settings state
+  const [showFeatureBoardModal, setShowFeatureBoardModal] = useState(false)
+  const [featureBoardSettings, setFeatureBoardSettings] = useState({
+    enabled: false,
+    upvote_mode: 'logged_in',
+    upvote_require_email_verification: false,
+    upvote_anon_check_localstorage: true,
+    upvote_anon_check_ip: false,
+    comments_mode: 'logged_in',
+    idea_submission_enabled: false,
+    idea_submission_mode: 'logged_in',
+    idea_default_column: '',
+    idea_moderation_enabled: true,
+    show_upvote_count: true,
+    show_comment_count: true
+  })
+  const [savingFeatureBoardSettings, setSavingFeatureBoardSettings] = useState(false)
+
+  // Idea submissions moderation state
+  const [showIdeaSubmissionsModal, setShowIdeaSubmissionsModal] = useState(false)
+  const [ideaSubmissions, setIdeaSubmissions] = useState([])
+  const [loadingIdeaSubmissions, setLoadingIdeaSubmissions] = useState(false)
+
   const { showSuccess, showError } = useToast()
 
   // Fetch checklists on mount
@@ -273,10 +296,11 @@ const KanbanBoard = ({ adminData }) => {
     fetchChecklists()
   }, [])
 
-  // Load board when checklist changes
+  // Load board and feature board settings when checklist changes
   useEffect(() => {
     if (selectedChecklist) {
       loadKanbanBoard()
+      loadFeatureBoardSettings()
     }
   }, [selectedChecklist])
 
@@ -332,6 +356,141 @@ const KanbanBoard = ({ adminData }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Feature Board Settings functions
+  const loadFeatureBoardSettings = async () => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_feature_board_settings',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.settings) {
+        setFeatureBoardSettings(data.data.settings)
+      }
+    } catch (error) {
+      console.error('Error loading feature board settings:', error)
+    }
+  }
+
+  const saveFeatureBoardSettings = async () => {
+    setSavingFeatureBoardSettings(true)
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_save_feature_board_settings',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || '',
+          ...featureBoardSettings
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(i18n.kanbanBoard?.featureBoard?.settingsSaved || 'Feature board settings saved')
+        setShowFeatureBoardModal(false)
+      } else {
+        showError(data.data?.message || i18n.kanbanBoard?.featureBoard?.saveFailed || 'Failed to save settings')
+      }
+    } catch (error) {
+      console.error('Error saving feature board settings:', error)
+      showError(i18n.kanbanBoard?.featureBoard?.saveFailed || 'Failed to save settings')
+    } finally {
+      setSavingFeatureBoardSettings(false)
+    }
+  }
+
+  const loadIdeaSubmissions = async () => {
+    setLoadingIdeaSubmissions(true)
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_idea_submissions',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        setIdeaSubmissions(data.data.submissions || [])
+      }
+    } catch (error) {
+      console.error('Error loading idea submissions:', error)
+    } finally {
+      setLoadingIdeaSubmissions(false)
+    }
+  }
+
+  const approveIdea = async (ideaId) => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_approve_idea',
+          idea_id: ideaId,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(i18n.kanbanBoard?.featureBoard?.ideaApproved || 'Idea approved and added to board')
+        loadIdeaSubmissions()
+        loadKanbanBoard()
+      } else {
+        showError(data.data?.message || i18n.kanbanBoard?.featureBoard?.approveFailed || 'Failed to approve idea')
+      }
+    } catch (error) {
+      console.error('Error approving idea:', error)
+      showError(i18n.kanbanBoard?.featureBoard?.approveFailed || 'Failed to approve idea')
+    }
+  }
+
+  const rejectIdea = async (ideaId) => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_reject_idea',
+          idea_id: ideaId,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(i18n.kanbanBoard?.featureBoard?.ideaRejected || 'Idea rejected')
+        loadIdeaSubmissions()
+      } else {
+        showError(data.data?.message || i18n.kanbanBoard?.featureBoard?.rejectFailed || 'Failed to reject idea')
+      }
+    } catch (error) {
+      console.error('Error rejecting idea:', error)
+      showError(i18n.kanbanBoard?.featureBoard?.rejectFailed || 'Failed to reject idea')
+    }
+  }
+
+  const openFeatureBoardModal = () => {
+    setShowFeatureBoardModal(true)
+  }
+
+  const openIdeaSubmissionsModal = () => {
+    setShowIdeaSubmissionsModal(true)
+    loadIdeaSubmissions()
   }
 
   // Drag and Drop
@@ -1211,23 +1370,50 @@ const KanbanBoard = ({ adminData }) => {
             </select>
           </div>
           {selectedChecklist && (
-            <button
-              onClick={() => openColumnModal()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              {i18n.kanbanBoard?.header?.addColumnButton || 'Add Column'}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => openColumnModal()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                {i18n.kanbanBoard?.header?.addColumnButton || 'Add Column'}
+              </button>
+
+              {/* Feature Board Settings Button */}
+              <button
+                onClick={openFeatureBoardModal}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {i18n.kanbanBoard?.header?.featureBoardSettingsButton || 'Feature Board'}
+              </button>
+
+              {/* Idea Submissions Button - only show if feature board is enabled */}
+              {featureBoardSettings.enabled && featureBoardSettings.idea_submission_enabled && (
+                <button
+                  onClick={openIdeaSubmissionsModal}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  {i18n.kanbanBoard?.header?.ideaSubmissionsButton || 'Idea Submissions'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
 
       {/* Kanban Board */}
       {selectedChecklist && (
-        <div className="overflow-x-auto pb-4">
-          <div className="flex space-x-4 min-w-max">
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] pb-4">
+          <div className="flex items-start space-x-4 min-w-max">
             {board.map(column => (
               <div
                 key={column.id}
@@ -1822,6 +2008,323 @@ const KanbanBoard = ({ adminData }) => {
           </div>
         </Modal>
       )}
+
+      {/* Feature Board Settings Modal */}
+      <Modal
+        isOpen={showFeatureBoardModal}
+        onClose={() => setShowFeatureBoardModal(false)}
+        title={i18n.kanbanBoard?.featureBoard?.settingsTitle || 'Feature Board Settings'}
+        size="lg"
+        footer={
+          <>
+            <button
+              onClick={() => setShowFeatureBoardModal(false)}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+            >
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
+            </button>
+            <button
+              onClick={saveFeatureBoardSettings}
+              disabled={savingFeatureBoardSettings}
+              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {savingFeatureBoardSettings
+                ? (i18n.kanbanBoard?.featureBoard?.saving || 'Saving...')
+                : (i18n.kanbanBoard?.featureBoard?.saveButton || 'Save Settings')
+              }
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {/* Enable Feature Board */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">
+                {i18n.kanbanBoard?.featureBoard?.enableLabel || 'Enable Feature Board'}
+              </h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {i18n.kanbanBoard?.featureBoard?.enableDescription || 'Allow public visitors to interact with this board'}
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={featureBoardSettings.enabled}
+                onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, enabled: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
+
+          {featureBoardSettings.enabled && (
+            <>
+              {/* Upvote Settings */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-4">
+                  {i18n.kanbanBoard?.featureBoard?.upvoteSettings || 'Upvote Settings'}
+                </h4>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {i18n.kanbanBoard?.featureBoard?.upvoteModeLabel || 'Who can upvote?'}
+                    </label>
+                    <select
+                      value={featureBoardSettings.upvote_mode}
+                      onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, upvote_mode: e.target.value }))}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="anyone">{i18n.kanbanBoard?.featureBoard?.upvoteModeAnyone || 'Anyone (no login required)'}</option>
+                      <option value="logged_in">{i18n.kanbanBoard?.featureBoard?.upvoteModeLoggedIn || 'Logged-in users only'}</option>
+                      <option value="email_verified">{i18n.kanbanBoard?.featureBoard?.upvoteModeEmailVerified || 'Email verification required'}</option>
+                    </select>
+                  </div>
+
+                  {featureBoardSettings.upvote_mode === 'email_verified' && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="upvote_require_verification"
+                        checked={featureBoardSettings.upvote_require_email_verification}
+                        onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, upvote_require_email_verification: e.target.checked }))}
+                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <label htmlFor="upvote_require_verification" className="text-sm text-gray-700 dark:text-gray-300">
+                        {i18n.kanbanBoard?.featureBoard?.requireVerificationLabel || 'Require email verification before counting upvote'}
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show_upvote_count"
+                      checked={featureBoardSettings.show_upvote_count}
+                      onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, show_upvote_count: e.target.checked }))}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <label htmlFor="show_upvote_count" className="text-sm text-gray-700 dark:text-gray-300">
+                      {i18n.kanbanBoard?.featureBoard?.showUpvoteCountLabel || 'Show upvote count on items'}
+                    </label>
+                  </div>
+
+                  {/* Anonymous Upvote Protection - only shown when upvote_mode is 'anyone' */}
+                  {featureBoardSettings.upvote_mode === 'anyone' && (
+                    <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <h5 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-3">
+                        {i18n.kanbanBoard?.featureBoard?.anonUpvoteProtection || 'Anonymous Upvote Protection'}
+                      </h5>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
+                        {i18n.kanbanBoard?.featureBoard?.anonUpvoteProtectionDesc || 'Prevent users from upvoting multiple times without logging in.'}
+                      </p>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="upvote_anon_check_localstorage"
+                            checked={featureBoardSettings.upvote_anon_check_localstorage}
+                            onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, upvote_anon_check_localstorage: e.target.checked }))}
+                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                          />
+                          <label htmlFor="upvote_anon_check_localstorage" className="text-sm text-yellow-800 dark:text-yellow-200">
+                            {i18n.kanbanBoard?.featureBoard?.localStorageCheckLabel || 'Browser storage check (localStorage)'}
+                          </label>
+                        </div>
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 ml-6">
+                          {i18n.kanbanBoard?.featureBoard?.localStorageCheckDesc || 'Remembers upvotes in the browser. Can be bypassed by clearing browser data or using incognito mode.'}
+                        </p>
+
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="upvote_anon_check_ip"
+                            checked={featureBoardSettings.upvote_anon_check_ip}
+                            onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, upvote_anon_check_ip: e.target.checked }))}
+                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                          />
+                          <label htmlFor="upvote_anon_check_ip" className="text-sm text-yellow-800 dark:text-yellow-200">
+                            {i18n.kanbanBoard?.featureBoard?.ipCheckLabel || 'IP address check (server-side)'}
+                          </label>
+                        </div>
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 ml-6">
+                          {i18n.kanbanBoard?.featureBoard?.ipCheckDesc || 'Stores hashed IP addresses to prevent duplicate upvotes. More reliable than browser storage.'}
+                        </p>
+                        <div className="ml-6 p-2 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded text-xs text-orange-800 dark:text-orange-200">
+                          <strong>{i18n.kanbanBoard?.featureBoard?.gdprNotice || 'GDPR Notice:'}</strong>{' '}
+                          {i18n.kanbanBoard?.featureBoard?.gdprNoticeText || 'Even hashed IP addresses may be considered personal data under GDPR. Ensure you have appropriate consent mechanisms and privacy policy disclosures if enabling this option for EU visitors.'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Comment Settings */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-4">
+                  {i18n.kanbanBoard?.featureBoard?.commentSettings || 'Comment Settings'}
+                </h4>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {i18n.kanbanBoard?.featureBoard?.commentModeLabel || 'Who can comment?'}
+                    </label>
+                    <select
+                      value={featureBoardSettings.comments_mode}
+                      onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, comments_mode: e.target.value }))}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="anyone">{i18n.kanbanBoard?.featureBoard?.commentModeAnyone || 'Anyone (no login required)'}</option>
+                      <option value="logged_in">{i18n.kanbanBoard?.featureBoard?.commentModeLoggedIn || 'Logged-in users only'}</option>
+                      <option value="disabled">{i18n.kanbanBoard?.featureBoard?.commentModeDisabled || 'Comments disabled'}</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show_comment_count"
+                      checked={featureBoardSettings.show_comment_count}
+                      onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, show_comment_count: e.target.checked }))}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <label htmlFor="show_comment_count" className="text-sm text-gray-700 dark:text-gray-300">
+                      {i18n.kanbanBoard?.featureBoard?.showCommentCountLabel || 'Show comment count on items'}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Idea Submission Settings */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-4">
+                  {i18n.kanbanBoard?.featureBoard?.ideaSubmissionSettings || 'Idea Submission Settings'}
+                </h4>
+
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="idea_submission_enabled"
+                      checked={featureBoardSettings.idea_submission_enabled}
+                      onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, idea_submission_enabled: e.target.checked }))}
+                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <label htmlFor="idea_submission_enabled" className="text-sm text-gray-700 dark:text-gray-300">
+                      {i18n.kanbanBoard?.featureBoard?.enableIdeaSubmission || 'Allow visitors to submit new ideas'}
+                    </label>
+                  </div>
+
+                  {featureBoardSettings.idea_submission_enabled && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {i18n.kanbanBoard?.featureBoard?.ideaSubmissionModeLabel || 'Who can submit ideas?'}
+                        </label>
+                        <select
+                          value={featureBoardSettings.idea_submission_mode}
+                          onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, idea_submission_mode: e.target.value }))}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="anyone">{i18n.kanbanBoard?.featureBoard?.ideaModeAnyone || 'Anyone (no login required)'}</option>
+                          <option value="logged_in">{i18n.kanbanBoard?.featureBoard?.ideaModeLoggedIn || 'Logged-in users only'}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {i18n.kanbanBoard?.featureBoard?.defaultColumnLabel || 'Default column for new ideas'}
+                        </label>
+                        <select
+                          value={featureBoardSettings.idea_default_column}
+                          onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, idea_default_column: e.target.value }))}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                          <option value="">{i18n.kanbanBoard?.featureBoard?.selectColumn || 'Select a column...'}</option>
+                          {board.map(column => (
+                            <option key={column.id} value={column.id}>{column.title}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="idea_moderation_enabled"
+                          checked={featureBoardSettings.idea_moderation_enabled}
+                          onChange={(e) => setFeatureBoardSettings(prev => ({ ...prev, idea_moderation_enabled: e.target.checked }))}
+                          className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                        />
+                        <label htmlFor="idea_moderation_enabled" className="text-sm text-gray-700 dark:text-gray-300">
+                          {i18n.kanbanBoard?.featureBoard?.enableModerationLabel || 'Require admin approval before publishing ideas'}
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Idea Submissions Modal */}
+      <Modal
+        isOpen={showIdeaSubmissionsModal}
+        onClose={() => setShowIdeaSubmissionsModal(false)}
+        title={i18n.kanbanBoard?.featureBoard?.ideaSubmissionsTitle || 'Idea Submissions'}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {loadingIdeaSubmissions ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+          ) : ideaSubmissions.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              {i18n.kanbanBoard?.featureBoard?.noIdeas || 'No pending idea submissions'}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {ideaSubmissions.map(idea => (
+                <div key={idea.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-1">{idea.title}</h4>
+                      {idea.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{idea.description}</p>
+                      )}
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <span>{i18n.kanbanBoard?.featureBoard?.submittedBy || 'Submitted by'}: {idea.user_name || idea.user_email}</span>
+                        <span className="mx-2">•</span>
+                        <span>{new Date(idea.created_at).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <button
+                        onClick={() => approveIdea(idea.id)}
+                        className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                      >
+                        {i18n.kanbanBoard?.featureBoard?.approveButton || 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => rejectIdea(idea.id)}
+                        className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
+                      >
+                        {i18n.kanbanBoard?.featureBoard?.rejectButton || 'Reject'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
