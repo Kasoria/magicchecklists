@@ -4066,3 +4066,49 @@ msgstr "Idee abgelehnt"
 
 msgid "Failed to reject idea"
 msgstr "Idee konnte nicht abgelehnt werden"
+
+# Tutorial Checklist
+msgid "Getting Started with MagicChecklists"
+msgstr "Erste Schritte mit MagicChecklists"
+
+msgid "Welcome! This tutorial checklist will help you learn how to use MagicChecklists. Feel free to check off items as you explore, or delete this checklist once you're familiar with the plugin."
+msgstr "Willkommen! Diese Tutorial-Checkliste hilft dir, MagicChecklists kennenzulernen. Du kannst Elemente abhaken, während du die Funktionen erkundest, oder diese Checkliste löschen, sobald du mit dem Plugin vertraut bist."
+
+msgid "Click on any item to edit its text"
+msgstr "Klicke auf ein Element, um den Text zu bearbeiten"
+
+msgid "Check items off by clicking the checkbox"
+msgstr "Hake Elemente ab, indem du auf das Kontrollkästchen klickst"
+
+msgid "Go to Settings to configure your preferred language"
+msgstr "Gehe zu Einstellungen, um deine bevorzugte Sprache zu konfigurieren"
+
+msgid "Create a new checklist by clicking \"Add New\" on the plugin page"
+msgstr "Erstelle eine neue Checkliste, indem du auf \"Neu hinzufügen\" auf der Plugin-Seite klickst"
+
+msgid "Use keyboard shortcuts: press Enter to add new items"
+msgstr "Nutze Tastenkombinationen: Drücke Enter, um neue Elemente hinzuzufügen"
+
+msgid "Drag and drop items to reorder them"
+msgstr "Ziehe Elemente per Drag & Drop, um sie neu anzuordnen"
+
+msgid "Enable the floating button or keyboard shortcut to access checklists from any page"
+msgstr "Aktiviere den schwebenden Button oder eine Tastenkombination, um von jeder Seite aus auf Checklisten zuzugreifen"
+
+msgid "Explore the different checklist types: Classic, Publisher, and Tours"
+msgstr "Erkunde die verschiedenen Checklisten-Typen: Klassisch, Publisher und Touren"
+
+msgid "Delete this tutorial checklist when you're ready!"
+msgstr "Lösche diese Tutorial-Checkliste, wenn du bereit bist!"
+
+msgid "Tutorial"
+msgstr "Tutorial"
+
+msgid "Tutorial checklist already exists."
+msgstr "Tutorial-Checkliste existiert bereits."
+
+msgid "Tutorial checklist created successfully!"
+msgstr "Tutorial-Checkliste erfolgreich erstellt!"
+
+msgid "Failed to create tutorial checklist."
+msgstr "Tutorial-Checkliste konnte nicht erstellt werden."

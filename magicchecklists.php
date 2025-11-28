@@ -217,9 +217,40 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             MCL_DB_Manager::get_instance()->install();
             MCL_Analytics::get_instance()->activate();
 
+            // Auto-detect and set plugin language based on WordPress locale
+            $this->maybe_set_language_on_activation();
+
             // Create tutorial checklist on fresh installs
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
             MCL_Tutorial::get_instance()->maybe_create_on_activation();
+        }
+
+        /**
+         * Auto-detect WordPress language and set plugin language if translation exists
+         */
+        private function maybe_set_language_on_activation() {
+            $settings = get_option('mcl_settings', array());
+
+            // Only set if not already configured
+            if (!empty($settings['plugin_language'])) {
+                return;
+            }
+
+            // Get WordPress locale
+            $wp_locale = get_locale();
+
+            // Skip if English (default)
+            if ($wp_locale === 'en_US' || empty($wp_locale)) {
+                return;
+            }
+
+            // Check if we have a translation file for this locale
+            $mo_file = MAGIC_CHECKLISTS_PLUGIN_PATH . 'languages/magic-checklists-' . $wp_locale . '.mo';
+
+            if (file_exists($mo_file)) {
+                $settings['plugin_language'] = $wp_locale;
+                update_option('mcl_settings', $settings);
+            }
         }
         
         public function check_version() {

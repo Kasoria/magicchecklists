@@ -153,7 +153,7 @@ class MCL_Tutorial {
             ),
             array(
                 'id' => 'tutorial_' . wp_generate_uuid4(),
-                'content' => __('Create a new checklist by clicking "New Checklist"', 'magic-checklists'),
+                'content' => __('Create a new checklist by clicking "Add New" on the plugin page', 'magic-checklists'),
                 'priority' => 'none',
                 'parent_id' => '',
                 'locked' => 0
