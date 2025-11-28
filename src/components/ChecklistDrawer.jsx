@@ -1410,6 +1410,247 @@ const LinkToolbar = ({
   )
 }
 
+// Comment component for threaded display
+const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false, i18n = {} }) => {
+  const [showReplyForm, setShowReplyForm] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const replyFormRef = useRef(null)
+  const replyInputRef = useRef(null)
+
+  const handleReply = async () => {
+    if (replyText.trim()) {
+      await onReply(comment.id, replyText)
+      setReplyText('')
+      setShowReplyForm(false)
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleReply()
+    }
+  }
+
+  const handleShowReplyForm = () => {
+    setShowReplyForm(true)
+    setTimeout(() => {
+      if (replyFormRef.current) {
+        replyFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      if (replyInputRef.current) {
+        replyInputRef.current.focus()
+      }
+    }, 100)
+  }
+
+  return (
+    <div className={`${level > 0 ? 'ml-6 border-l-2 border-gray-200 pl-4' : ''} mb-4`}>
+      <div className="bg-gray-50 rounded-lg p-3">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              {comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div>
+              <span className="font-medium text-gray-900 text-sm">
+                {comment.user_name || 'Anonymous'}
+              </span>
+              <span className="text-xs text-gray-500 ml-2">
+                {new Date(comment.created_at).toLocaleString()}
+              </span>
+            </div>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(comment.id)}
+              className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+              title={i18n.checklistDrawer?.comments?.deleteTitle || "Delete comment"}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        <div className="text-gray-800 text-sm mb-3"
+             dangerouslySetInnerHTML={{ __html: comment.comment_content?.replace(/\\'/g, "'").replace(/\\"/g, '"') || '' }} />
+
+        <div className="flex items-center space-x-4 text-xs">
+          <button
+            onClick={() => onLike(comment.id)}
+            className={`flex items-center space-x-1 hover:bg-gray-200 rounded px-2 py-1 ${
+              comment.user_liked ? 'text-red-500' : 'text-gray-500'
+            }`}
+          >
+            <span>{comment.user_liked ? '❤️' : '🤍'}</span>
+            <span>{comment.like_count || 0}</span>
+          </button>
+
+          {level === 0 && (
+            <button
+              onClick={handleShowReplyForm}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              {i18n.checklistDrawer?.comments?.replyButton || 'Reply'}
+            </button>
+          )}
+        </div>
+
+        {showReplyForm && (
+          <div ref={replyFormRef} className="mt-3 pt-3 border-t border-gray-200">
+            <textarea
+              ref={replyInputRef}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder={i18n.checklistDrawer?.comments?.replyPlaceholder || "Write a reply..."}
+              className="w-full p-2 border border-gray-300 rounded text-sm bg-white text-gray-900"
+              rows={2}
+            />
+            <div className="flex items-center justify-end space-x-2 mt-2">
+              <button
+                onClick={() => setShowReplyForm(false)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                {i18n.checklistDrawer?.buttons?.cancel || 'Cancel'}
+              </button>
+              <button
+                onClick={handleReply}
+                className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              >
+                {i18n.checklistDrawer?.comments?.replySubmitButton || 'Reply'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Replies */}
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-3">
+          {comment.replies.map(reply => (
+            <Comment
+              key={reply.id}
+              comment={reply}
+              onReply={onReply}
+              onLike={onLike}
+              onDelete={onDelete}
+              isAdmin={isAdmin}
+              level={level + 1}
+              i18n={i18n}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Item Comments Modal component
+const ItemCommentsModal = ({
+  isOpen,
+  onClose,
+  itemId,
+  itemContent,
+  comments,
+  loadingComments,
+  onAddComment,
+  onAddReply,
+  onLikeComment,
+  onDeleteComment,
+  isAdmin,
+  i18n
+}) => {
+  const [newCommentText, setNewCommentText] = useState('')
+
+  const handleAddComment = async () => {
+    if (newCommentText.trim()) {
+      await onAddComment(newCommentText)
+      setNewCommentText('')
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleAddComment()
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={i18n.checklistDrawer?.comments?.modalTitle || "Comments"}
+      className="max-w-2xl"
+    >
+      {/* Item preview */}
+      {itemContent && (
+        <div className="mb-4 p-3 bg-gray-100 rounded-lg border border-gray-200">
+          <div className="text-xs text-gray-500 mb-1">{i18n.checklistDrawer?.comments?.itemLabel || 'Item:'}</div>
+          <div className="text-sm text-gray-800" dangerouslySetInnerHTML={{ __html: itemContent }} />
+        </div>
+      )}
+
+      {/* Add New Comment */}
+      <div className="mb-4">
+        <textarea
+          value={newCommentText}
+          onChange={(e) => setNewCommentText(e.target.value)}
+          placeholder={i18n.checklistDrawer?.comments?.addPlaceholder || "Add a comment..."}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 resize-none"
+          onKeyPress={handleKeyPress}
+        />
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-gray-500">
+            {i18n.checklistDrawer?.comments?.ctrlEnterToPost || 'Ctrl+Enter to post'}
+          </span>
+          <button
+            onClick={handleAddComment}
+            disabled={!newCommentText.trim()}
+            className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {i18n.checklistDrawer?.comments?.commentButton || 'Comment'}
+          </button>
+        </div>
+      </div>
+
+      {/* Comments List */}
+      <div className="max-h-80 overflow-y-auto space-y-3">
+        {loadingComments ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-500">{i18n.checklistDrawer?.comments?.loadingComments || 'Loading comments...'}</span>
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p className="text-sm">{i18n.checklistDrawer?.comments?.noComments || 'No comments yet. Be the first to comment!'}</p>
+          </div>
+        ) : (
+          comments.map(comment => (
+            <Comment
+              key={comment.id}
+              comment={comment}
+              onReply={onAddReply}
+              onLike={onLikeComment}
+              onDelete={onDeleteComment}
+              isAdmin={isAdmin}
+              level={0}
+              i18n={i18n}
+            />
+          ))
+        )}
+      </div>
+    </Modal>
+  )
+}
+
 // Add deadline modal component
 const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
   const [dateTime, setDateTime] = useState('')
@@ -1683,6 +1924,14 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Deadlines and timers
   const [itemDeadlines, setItemDeadlines] = useState({})
   const [countdownTimers, setCountdownTimers] = useState(new Map())
+
+  // Comments state
+  const [showCommentsModal, setShowCommentsModal] = useState(false)
+  const [commentsModalItem, setCommentsModalItem] = useState(null)
+  const [itemComments, setItemComments] = useState([])
+  const [newComment, setNewComment] = useState('')
+  const [loadingComments, setLoadingComments] = useState(false)
+  const [itemCommentCounts, setItemCommentCounts] = useState({})
   
   // Modal and reset state
   const [showDeadlineModal, setShowDeadlineModal] = useState(false)
@@ -2598,6 +2847,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     setItems(updated)
 
     // Call the dedicated add endpoint with notification
+    // Note: We don't dispatch mclChecklistDataChanged here because the item has no content yet.
+    // The event will be dispatched when content is actually saved in updateItemContent.
     if (currentChecklistId) {
       makeRequest('mcl_add_item', {
         checklist_id: currentChecklistId,
@@ -2633,19 +2884,29 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     setItems(prev => prev.filter(item => item.id !== itemId))
     setCheckedItems(prev => prev.filter(id => id !== itemId))
     setInProgressItems(prev => prev.filter(id => id !== itemId))
-    
+
     // Remove deadline if exists
     setItemDeadlines(prev => {
       const newDeadlines = { ...prev }
       delete newDeadlines[itemId]
       return newDeadlines
     })
-    
+
     // Call the dedicated delete endpoint with notification
     if (currentChecklistId) {
       makeRequest('mcl_delete_item', {
         checklist_id: currentChecklistId,
         item_id: itemId
+      }).then(() => {
+        // Dispatch event to notify other views that checklist data changed
+        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          detail: {
+            checklistId: currentChecklistId,
+            action: 'item_deleted',
+            itemId: itemId,
+            source: 'drawer'
+          }
+        }))
       }).catch(() => {
         // On error, restore the item
         const target = items.find(i => i.id === itemId)
@@ -2668,15 +2929,27 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       setError(`Rate limit reached. Try again in ${updateContentCheck.remaining} seconds.`)
       return
     }
- 
-    const newItems = items.map(item => 
+
+    const newItems = items.map(item =>
       item.id === itemId ? { ...item, content } : item
     )
 
     setItems(newItems)
 
     if (currentChecklistId) {
-      saveChecklistData(currentChecklistId, title, newItems).catch(() => {})
+      saveChecklistData(currentChecklistId, title, newItems)
+        .then(() => {
+          // Dispatch event to notify other views that checklist data changed
+          window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+            detail: {
+              checklistId: currentChecklistId,
+              action: 'item_updated',
+              itemId: itemId,
+              source: 'drawer'
+            }
+          }))
+        })
+        .catch(() => {})
     }
   }, [canEdit, locked, items, checklistData, currentChecklistId, title, saveChecklistData, checkRateLimit, setError])
 
@@ -3296,12 +3569,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Add save deadline function
   const saveItemDeadline = useCallback(async (itemId, timestamp) => {
     try {
-      await makeRequest('mcl_save_item_deadline', { 
-        checklist_id: currentChecklistId, 
-        item_id: itemId, 
-        deadline: timestamp || '' 
+      await makeRequest('mcl_save_item_deadline', {
+        checklist_id: currentChecklistId,
+        item_id: itemId,
+        deadline: timestamp || ''
       })
-      
+
       if (timestamp) {
         setItemDeadlines(prev => ({
           ...prev,
@@ -3318,6 +3591,229 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       console.warn('Error saving deadline:', error)
     }
   }, [makeRequest, currentChecklistId])
+
+  // -----------------------------------------------------------
+  // Comment functions for item comments
+  // -----------------------------------------------------------
+  // Helper to extract numeric ID from item ID string (e.g., "item_1732809382910" -> 1732809382910)
+  const getNumericItemId = useCallback((itemId) => {
+    if (!itemId) return 0
+    const numericId = itemId.toString().replace(/\D/g, '')
+    return parseInt(numericId, 10) || 0
+  }, [])
+
+  const loadItemComments = useCallback(async (itemId) => {
+    const numericItemId = getNumericItemId(itemId)
+    const checklistIdInt = parseInt(currentChecklistId, 10)
+
+    if (!numericItemId || !checklistIdInt || isNaN(numericItemId) || isNaN(checklistIdInt)) {
+      setItemComments([])
+      return
+    }
+
+    setLoadingComments(true)
+    try {
+      const response = await makeRequest('mcl_get_threaded_comments', {
+        checklist_id: checklistIdInt,
+        item_id: numericItemId
+      })
+
+      if (response.success) {
+        setItemComments(response.data.comments || [])
+      }
+    } catch (error) {
+      console.warn('Error loading item comments:', error)
+    } finally {
+      setLoadingComments(false)
+    }
+  }, [makeRequest, currentChecklistId, getNumericItemId])
+
+  const addItemComment = useCallback(async (commentText) => {
+    const numericItemId = getNumericItemId(commentsModalItem)
+    const checklistIdInt = parseInt(currentChecklistId, 10)
+
+    if (!numericItemId || !checklistIdInt || !commentText.trim()) return
+
+    try {
+      const response = await makeRequest('mcl_add_threaded_comment', {
+        checklist_id: checklistIdInt,
+        item_id: numericItemId,
+        comment: commentText.trim()
+      })
+
+      if (response.success) {
+        // Reload comments to get the updated list
+        await loadItemComments(commentsModalItem)
+        // Update comment count
+        setItemCommentCounts(prev => ({
+          ...prev,
+          [commentsModalItem]: (prev[commentsModalItem] || 0) + 1
+        }))
+      }
+    } catch (error) {
+      console.warn('Error adding item comment:', error)
+    }
+  }, [makeRequest, currentChecklistId, commentsModalItem, loadItemComments, getNumericItemId])
+
+  const addItemReply = useCallback(async (parentId, replyText) => {
+    const numericItemId = getNumericItemId(commentsModalItem)
+    const checklistIdInt = parseInt(currentChecklistId, 10)
+
+    if (!numericItemId || !checklistIdInt || !replyText.trim()) return
+
+    try {
+      const response = await makeRequest('mcl_add_threaded_comment', {
+        checklist_id: checklistIdInt,
+        item_id: numericItemId,
+        comment: replyText.trim(),
+        parent_id: parentId
+      })
+
+      if (response.success) {
+        // Reload comments to get the updated list with the new reply
+        await loadItemComments(commentsModalItem)
+      }
+    } catch (error) {
+      console.warn('Error adding item reply:', error)
+    }
+  }, [makeRequest, currentChecklistId, commentsModalItem, loadItemComments, getNumericItemId])
+
+  const toggleItemCommentLike = useCallback(async (commentId) => {
+    if (!currentChecklistId) return
+
+    try {
+      const response = await makeRequest('mcl_toggle_comment_like', {
+        checklist_id: currentChecklistId,
+        comment_id: commentId
+      })
+
+      if (response.success) {
+        // Update the like status locally
+        setItemComments(prevComments => {
+          const updateLikes = (comments) => {
+            return comments.map(comment => {
+              if (comment.id === commentId) {
+                return {
+                  ...comment,
+                  user_liked: response.data.liked,
+                  like_count: response.data.like_count
+                }
+              }
+              if (comment.replies && comment.replies.length > 0) {
+                return {
+                  ...comment,
+                  replies: updateLikes(comment.replies)
+                }
+              }
+              return comment
+            })
+          }
+          return updateLikes(prevComments)
+        })
+      }
+    } catch (error) {
+      console.warn('Error toggling comment like:', error)
+    }
+  }, [makeRequest, currentChecklistId])
+
+  const deleteItemComment = useCallback(async (commentId) => {
+    if (!currentChecklistId) return
+
+    try {
+      const response = await makeRequest('mcl_delete_threaded_comment', {
+        checklist_id: currentChecklistId,
+        comment_id: commentId
+      })
+
+      if (response.success) {
+        // Reload comments to get the updated list
+        await loadItemComments(commentsModalItem)
+        // Decrement comment count
+        setItemCommentCounts(prev => ({
+          ...prev,
+          [commentsModalItem]: Math.max(0, (prev[commentsModalItem] || 1) - 1)
+        }))
+      }
+    } catch (error) {
+      console.warn('Error deleting item comment:', error)
+    }
+  }, [makeRequest, currentChecklistId, commentsModalItem, loadItemComments])
+
+  const handleCommentsClick = useCallback(async (itemId) => {
+    setCommentsModalItem(itemId)
+    setShowCommentsModal(true)
+    await loadItemComments(itemId)
+  }, [loadItemComments])
+
+  // -----------------------------------------------------------
+  // Refresh current checklist data (for syncing with other views)
+  // -----------------------------------------------------------
+  const refreshCurrentChecklist = useCallback(async () => {
+    if (!currentChecklistId) return
+
+    try {
+      const data = await fetchChecklistData(currentChecklistId)
+
+      setChecklistData(data)
+      setTitle(data.title || '')
+      setItems(data.items || [])
+      setCanEdit(data.can_edit || false)
+      setCanCheck(data.can_check || false)
+      setLocked(data.locked || false)
+      setInProgressItems(data.items_in_progress || [])
+
+      // Handle checked state based on storage mode
+      let finalCheckedState = data.checked_state || []
+      const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+      const isPublic = data.is_public
+      const handlingMode = isPublic ? (data.checked_state_handling || 'per_user') : (data.checked_state_handling || 'global')
+
+      if (handlingMode === 'per_user' && !isLoggedIn) {
+        try {
+          const localKey = `mcl_checked_${currentChecklistId}`
+          const localState = localStorage.getItem(localKey)
+          if (localState) {
+            finalCheckedState = JSON.parse(localState)
+          }
+        } catch (error) {
+          console.warn('MCL Drawer: Error reading localStorage for per-user checklist:', error)
+        }
+      }
+
+      setCheckedItems(finalCheckedState)
+
+      // Refresh deadlines if present
+      if (data.items) {
+        const deadlines = {}
+        data.items.forEach(item => {
+          if (item.deadline) {
+            deadlines[item.id] = item.deadline
+          }
+        })
+        setItemDeadlines(deadlines)
+      }
+    } catch (error) {
+      console.warn('Error refreshing checklist:', error)
+    }
+  }, [currentChecklistId, fetchChecklistData])
+
+  // Listen for checklist data changes from other views (kanban, shortcode, etc.)
+  useEffect(() => {
+    const handleChecklistDataChanged = (event) => {
+      const { checklistId, action, source } = event.detail || {}
+
+      // Only refresh if this is the currently open checklist and the change came from another source
+      if (checklistId && String(checklistId) === String(currentChecklistId) && source !== 'drawer' && isVisible) {
+        refreshCurrentChecklist()
+      }
+    }
+
+    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+
+    return () => {
+      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    }
+  }, [currentChecklistId, isVisible, refreshCurrentChecklist])
 
   // -----------------------------------------------------------
   // Poll lock state so the UI reflects changes in real-time
@@ -3956,6 +4452,23 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                       </svg>
                                     </button>
 
+                                    {/* Comments Button */}
+                                    <button
+                                      type="button"
+                                      className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors duration-200"
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleCommentsClick(item.id)
+                                      }}
+                                      onMouseEnter={(e) => showTooltip(e.target, i18n.checklistDrawer?.tooltips?.comments || 'Comments')}
+                                      onMouseLeave={hideTooltip}
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                      </svg>
+                                    </button>
+
                                     {/* Tour Button - only show if this item has tour connections */}
                                     {toursEnabled && itemsWithTourConnections.has(item.id) && (
                                       <button
@@ -4069,6 +4582,26 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         }}
         itemId={deadlineModalItem}
         currentDeadline={deadlineModalItem ? itemDeadlines[deadlineModalItem] : null}
+      />
+
+      {/* Item Comments Modal */}
+      <ItemCommentsModal
+        isOpen={showCommentsModal}
+        onClose={() => {
+          setShowCommentsModal(false)
+          setCommentsModalItem(null)
+          setItemComments([])
+        }}
+        itemId={commentsModalItem}
+        itemContent={commentsModalItem ? items.find(i => i.id === commentsModalItem)?.content : null}
+        comments={itemComments}
+        loadingComments={loadingComments}
+        onAddComment={addItemComment}
+        onAddReply={addItemReply}
+        onLikeComment={toggleItemCommentLike}
+        onDeleteComment={deleteItemComment}
+        isAdmin={isAdministrator}
+        i18n={i18n}
       />
     </>
   )

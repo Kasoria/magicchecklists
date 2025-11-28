@@ -304,6 +304,24 @@ const KanbanBoard = ({ adminData }) => {
     }
   }, [selectedChecklist])
 
+  // Listen for checklist data changes from other views (drawer, shortcode, etc.)
+  useEffect(() => {
+    const handleChecklistDataChanged = (event) => {
+      const { checklistId, action, source } = event.detail || {}
+
+      // Only reload if this is the currently selected checklist and the change came from another source
+      if (checklistId && String(checklistId) === String(selectedChecklist) && source !== 'kanban') {
+        loadKanbanBoard()
+      }
+    }
+
+    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+
+    return () => {
+      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    }
+  }, [selectedChecklist])
+
   const fetchChecklists = async () => {
     try {
       const response = await fetch(adminData.ajaxurl, {
@@ -556,6 +574,15 @@ const KanbanBoard = ({ adminData }) => {
         loadKanbanBoard() // Revert
       } else {
         showSuccess(i18n.kanbanBoard?.success?.itemMoved || 'Item moved successfully')
+        // Dispatch event to notify other views that checklist data changed
+        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          detail: {
+            checklistId: selectedChecklist,
+            action: 'item_moved',
+            itemId: draggedItem.id,
+            source: 'kanban'
+          }
+        }))
       }
     } catch (error) {
       console.error('Error moving item:', error)
@@ -756,6 +783,16 @@ const KanbanBoard = ({ adminData }) => {
         // If comment is empty, we should clear it from the database
         await saveTaskComment(editingTask.id, '')
       }
+
+      // Dispatch event to notify other views that checklist data changed
+      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        detail: {
+          checklistId: selectedChecklist,
+          action: 'item_updated',
+          itemId: editingTask.id,
+          source: 'kanban'
+        }
+      }))
 
       closeTaskModal()
       showSuccess(i18n.kanbanBoard?.success?.taskUpdated || 'Task updated successfully')

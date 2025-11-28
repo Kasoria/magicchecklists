@@ -2228,8 +2228,29 @@ class MCL_Public {
                     $board[$first_column_index]['items'] = array();
                 }
                 $board[$first_column_index]['items'] = array_merge($board[$first_column_index]['items'], $new_items);
+            }
 
-                // Save the updated board
+            // Sync: Remove items from kanban board that no longer exist in checklist items
+            $checklist_item_ids = array_map(function($item) {
+                return $item['id'];
+            }, $checklist_items);
+
+            $board_changed = false;
+            foreach ($board as &$column) {
+                if (isset($column['items']) && is_array($column['items'])) {
+                    $original_count = count($column['items']);
+                    $column['items'] = array_values(array_filter($column['items'], function($item) use ($checklist_item_ids) {
+                        return in_array($item['id'], $checklist_item_ids);
+                    }));
+                    if (count($column['items']) !== $original_count) {
+                        $board_changed = true;
+                    }
+                }
+            }
+            unset($column); // Break reference
+
+            // Save the updated board if there were any changes (new items added or deleted items removed)
+            if (!empty($new_items) || $board_changed) {
                 update_post_meta($checklist_id, '_mcl_kanban_board', $board);
             }
         }

@@ -558,6 +558,24 @@ const ShortcodeKanbanView = ({
     loadFeatureBoardSettings()
   }, [checklistId])
 
+  // Listen for checklist data changes from other views (drawer, admin kanban, etc.)
+  useEffect(() => {
+    const handleChecklistDataChanged = (event) => {
+      const { checklistId: changedChecklistId, action, source } = event.detail || {}
+
+      // Only reload if this is the current checklist and the change came from another source
+      if (changedChecklistId && String(changedChecklistId) === String(checklistId) && source !== 'shortcode_kanban') {
+        loadKanbanBoard()
+      }
+    }
+
+    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+
+    return () => {
+      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    }
+  }, [checklistId])
+
   // Load upvotes when board is loaded
   useEffect(() => {
     if (board.length > 0 && featureBoardSettings.enabled) {
