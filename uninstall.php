@@ -37,4 +37,6 @@ if ($should_delete) {
     delete_option('mcl_settings');
     delete_option('mcl_db_version');
     delete_option('mcl_version');
+    delete_option('mcl_plugin_data_version');
+    delete_option('mcl_tutorial_checklist_created');
 }

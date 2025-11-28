@@ -4,7 +4,7 @@ import { Button, Label } from 'flowbite-react'
 const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
   // Get i18n data
   const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
-  
+
   const [formData, setFormData] = useState({
     enable_checklist_navigation: false,
     enable_progress_counter: false,
@@ -13,14 +13,21 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     speed_dial_icon_color: '#ffffff',
     plugin_language: ''  // Empty string means use WordPress language
   })
-  
+
   const [availableLanguages, setAvailableLanguages] = useState([
     { value: '', label: 'Use WordPress Language (Default)' },
     { value: 'en_US', label: 'English' }
   ])
-  
+
   // Track the original language to detect changes
   const [originalLanguage, setOriginalLanguage] = useState('')
+
+  // Tutorial checklist state
+  const [tutorialExists, setTutorialExists] = useState(
+    adminData?.tutorialExists || window.mclAdminData?.tutorialExists || false
+  )
+  const [creatingTutorial, setCreatingTutorial] = useState(false)
+  const [tutorialMessage, setTutorialMessage] = useState(null)
 
   useEffect(() => {
     if (settings) {
@@ -96,6 +103,36 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     }
     
     return savePromise
+  }
+
+  const handleCreateTutorial = async () => {
+    setCreatingTutorial(true)
+    setTutorialMessage(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('action', 'mcl_create_tutorial_checklist')
+      formData.append('nonce', window.mclAdminData?.nonces?.mcl_admin || '')
+
+      const response = await fetch(window.mclAdminData?.ajaxurl || '/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setTutorialExists(true)
+        setTutorialMessage({ type: 'success', text: result.data.message })
+      } else {
+        setTutorialMessage({ type: 'error', text: result.data?.message || i18n.generalSettings?.errors?.tutorialFailed || 'Failed to create tutorial checklist.' })
+      }
+    } catch (error) {
+      console.error('Error creating tutorial checklist:', error)
+      setTutorialMessage({ type: 'error', text: i18n.generalSettings?.errors?.tutorialFailed || 'Failed to create tutorial checklist.' })
+    } finally {
+      setCreatingTutorial(false)
+    }
   }
 
   return (
@@ -276,7 +313,52 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
           </Button>
         </div>
       </form>
-      
+
+      {/* Tutorial Checklist Section - Outside the form */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-6 space-y-4">
+        <div>
+          <Label className="text-brand-dark dark:text-white font-medium">
+            {i18n.generalSettings?.labels?.tutorialChecklist || 'Tutorial Checklist'}
+          </Label>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+            {i18n.generalSettings?.descriptions?.tutorialChecklist || 'Create a tutorial checklist with helpful tips to get started with MagicChecklists. The tutorial is only visible to administrators.'}
+          </p>
+        </div>
+
+        {tutorialMessage && (
+          <div className={`p-3 rounded-md ${tutorialMessage.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
+            {tutorialMessage.text}
+          </div>
+        )}
+
+        <div>
+          {tutorialExists ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+              {i18n.generalSettings?.messages?.tutorialExists || 'Tutorial checklist already exists. You can find it in your checklists list.'}
+            </p>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleCreateTutorial}
+              disabled={creatingTutorial}
+              className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white font-medium"
+            >
+              {creatingTutorial ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {i18n.generalSettings?.buttons?.creatingTutorial || 'Creating...'}
+                </>
+              ) : (
+                i18n.generalSettings?.buttons?.createTutorial || 'Create Tutorial Checklist'
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+
       <style>{`
         input[type="color"] {
           width: 48px;

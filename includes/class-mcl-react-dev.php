@@ -701,7 +701,20 @@ class MCL_React_Dev {
             'pageParams' => $page_params,
             'analytics' => $analytics_data,
             'i18n' => $this->get_localization_data(),
+            'tutorialExists' => $this->check_tutorial_exists(),
         ));
+    }
+
+    /**
+     * Check if tutorial checklist exists
+     *
+     * @return bool
+     */
+    private function check_tutorial_exists() {
+        if (!class_exists('MCL_Tutorial')) {
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
+        }
+        return MCL_Tutorial::get_instance()->tutorial_exists();
     }
     
     /**

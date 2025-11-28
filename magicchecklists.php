@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           2.1.2.2
+ * Version:           2.1.3
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://magicplugins.io
@@ -39,7 +39,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '2.1.2.2');
+            define('MAGIC_CHECKLISTS_VERSION', '2.1.3');
             define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -191,6 +191,10 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             // Load i18n class
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-i18n.php';
 
+            // Initialize tutorial checklist handler (for AJAX)
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
+            MCL_Tutorial::get_instance();
+
             if (is_admin()) {
                 new MCL_Admin();
                 new MCL_Tour_Admin();
@@ -212,6 +216,10 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
         public function activate() {
             MCL_DB_Manager::get_instance()->install();
             MCL_Analytics::get_instance()->activate();
+
+            // Create tutorial checklist on fresh installs
+            require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
+            MCL_Tutorial::get_instance()->maybe_create_on_activation();
         }
         
         public function check_version() {
