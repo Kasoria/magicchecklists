@@ -228,10 +228,24 @@ class MCL_Permissions {
         }
 
         $user = wp_get_current_user();
+        $user_roles = (array) $user->roles;
+
+        // First check new granular permission rules
+        $role_permission_rules = get_post_meta($checklist_id, '_mcl_role_permission_rules', true);
+
+        if (!empty($role_permission_rules) && is_array($role_permission_rules)) {
+            // Find the highest permission level granted to the user
+            $highest_permission = $this->get_highest_role_permission($role_permission_rules, $user_roles);
+
+            if ($highest_permission && $this->permission_sufficient($highest_permission, $required_permission)) {
+                return true;
+            }
+        }
+
+        // Fallback to legacy format for backward compatibility
         $allowed_roles = get_post_meta($checklist_id, '_mcl_access_roles', true) ?: array();
         $roles_permission_setting = get_post_meta($checklist_id, '_mcl_access_roles_permission', true) ?: 'interact';
 
-        $user_roles = (array) $user->roles;
         $has_allowed_role = !empty(array_intersect($allowed_roles, $user_roles));
 
         if (!$has_allowed_role) {
@@ -242,12 +256,52 @@ class MCL_Permissions {
         return $permission_check;
     }
 
+    /**
+     * Get the highest permission level from role permission rules for the given user roles.
+     */
+    private function get_highest_role_permission($rules, $user_roles) {
+        $permissions_hierarchy = ['view' => 0, 'interact' => 1, 'edit' => 2];
+        $highest_level = -1;
+        $highest_permission = null;
+
+        foreach ($rules as $rule) {
+            if (!isset($rule['permission']) || !isset($rule['roles']) || !is_array($rule['roles'])) {
+                continue;
+            }
+
+            // Check if user has any of the roles in this rule
+            if (!empty(array_intersect($rule['roles'], $user_roles))) {
+                $level = $permissions_hierarchy[$rule['permission']] ?? -1;
+                if ($level > $highest_level) {
+                    $highest_level = $level;
+                    $highest_permission = $rule['permission'];
+                }
+            }
+        }
+
+        return $highest_permission;
+    }
+
     private function has_user_access($checklist_id, $required_permission = 'view') {
         if (!is_user_logged_in()) {
             return false;
         }
 
         $user_id = get_current_user_id();
+
+        // First check new granular permission rules
+        $user_permission_rules = get_post_meta($checklist_id, '_mcl_user_permission_rules', true);
+
+        if (!empty($user_permission_rules) && is_array($user_permission_rules)) {
+            // Find the highest permission level granted to the user
+            $highest_permission = $this->get_highest_user_permission($user_permission_rules, $user_id);
+
+            if ($highest_permission && $this->permission_sufficient($highest_permission, $required_permission)) {
+                return true;
+            }
+        }
+
+        // Fallback to legacy format for backward compatibility
         $allowed_users = get_post_meta($checklist_id, '_mcl_access_users', true) ?: array();
         $users_permission_setting = get_post_meta($checklist_id, '_mcl_access_users_permission', true) ?: 'interact';
 
@@ -259,6 +313,32 @@ class MCL_Permissions {
 
         $permission_check = $this->permission_sufficient($users_permission_setting, $required_permission);
         return $permission_check;
+    }
+
+    /**
+     * Get the highest permission level from user permission rules for the given user ID.
+     */
+    private function get_highest_user_permission($rules, $user_id) {
+        $permissions_hierarchy = ['view' => 0, 'interact' => 1, 'edit' => 2];
+        $highest_level = -1;
+        $highest_permission = null;
+
+        foreach ($rules as $rule) {
+            if (!isset($rule['permission']) || !isset($rule['users']) || !is_array($rule['users'])) {
+                continue;
+            }
+
+            // Check if user is in this rule's user list
+            if (in_array($user_id, $rule['users'])) {
+                $level = $permissions_hierarchy[$rule['permission']] ?? -1;
+                if ($level > $highest_level) {
+                    $highest_level = $level;
+                    $highest_permission = $rule['permission'];
+                }
+            }
+        }
+
+        return $highest_permission;
     }
 
     /**

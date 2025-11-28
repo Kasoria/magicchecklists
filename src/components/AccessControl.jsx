@@ -401,6 +401,40 @@ const AccessControl = ({ formData, onChange, adminData }) => {
     return 'mcl_invite_links_nonce';
   }
 
+  // Role Permission Rules handlers
+  const addRolePermissionRule = () => {
+    const newRules = [...(formData.role_permission_rules || []), { permission: 'interact', roles: [] }]
+    onChange('role_permission_rules', newRules)
+  }
+
+  const updateRolePermissionRule = (index, field, value) => {
+    const newRules = [...(formData.role_permission_rules || [])]
+    newRules[index] = { ...newRules[index], [field]: value }
+    onChange('role_permission_rules', newRules)
+  }
+
+  const removeRolePermissionRule = (index) => {
+    const newRules = (formData.role_permission_rules || []).filter((_, i) => i !== index)
+    onChange('role_permission_rules', newRules)
+  }
+
+  // User Permission Rules handlers
+  const addUserPermissionRule = () => {
+    const newRules = [...(formData.user_permission_rules || []), { permission: 'interact', users: [] }]
+    onChange('user_permission_rules', newRules)
+  }
+
+  const updateUserPermissionRule = (index, field, value) => {
+    const newRules = [...(formData.user_permission_rules || [])]
+    newRules[index] = { ...newRules[index], [field]: value }
+    onChange('user_permission_rules', newRules)
+  }
+
+  const removeUserPermissionRule = (index) => {
+    const newRules = (formData.user_permission_rules || []).filter((_, i) => i !== index)
+    onChange('user_permission_rules', newRules)
+  }
+
   return (
     <div className="space-y-6">
       {/* Public Access */}
@@ -480,72 +514,152 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       {/* User Roles Access */}
       <Card>
         <div className="space-y-4">
-          <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.userRoles?.title || 'Allowed User Roles'}</label>
-          
-          <ReactSelect
-            isMulti
-            options={roles}
-            value={roles.filter(role => (formData.access_roles || []).includes(role.value))}
-            onChange={(selectedRoles) => {
-              onChange('access_roles', selectedRoles.map(role => role.value))
-            }}
-            placeholder={i18n.accessControl?.userRoles?.placeholder || 'Select user roles'}
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-
           <div>
-            <label htmlFor="access_roles_permission" className="text-brand-dark dark:text-white">{i18n.accessControl?.userRoles?.permissionLevel || 'Permission Level'}</label>
-            <ReactSelect
-              inputId="access_roles_permission"
-              value={permissionOptions.find(option => option.value === (formData.access_roles_permission || 'interact'))}
-              onChange={(selectedOption) => onChange('access_roles_permission', selectedOption.value)}
-              options={permissionOptions}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              placeholder={i18n.accessControl?.userRoles?.permissionPlaceholder || 'Select permission level...'}
-            />
+            <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.userRoles?.title || 'Role Permission Rules'}</label>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {i18n.accessControl?.userRoles?.description || 'Create permission rules for user roles. Each rule grants a permission level to one or more roles.'}
+            </p>
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {i18n.accessControl?.userRoles?.description || 'Select the user roles that are allowed to access this checklist and their permission level.'}
-          </p>
+          {/* Permission Rules List */}
+          <div className="space-y-3">
+            {(formData.role_permission_rules || []).map((rule, index) => (
+              <div key={index} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-brand-dark dark:text-white">{i18n.accessControl?.userRoles?.permissionLevel || 'Permission Level'}</label>
+                        <ReactSelect
+                          value={permissionOptions.find(option => option.value === (rule.permission || 'interact'))}
+                          onChange={(selectedOption) => updateRolePermissionRule(index, 'permission', selectedOption.value)}
+                          options={permissionOptions}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder={i18n.accessControl?.userRoles?.permissionPlaceholder || 'Select permission...'}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm text-brand-dark dark:text-white">
+                          {i18n.accessControl?.userRoles?.rolesLabel || 'Roles'}
+                          <span className="text-xs text-gray-500 ml-1">({i18n.accessControl?.userRoles?.orLogic || 'any of these roles'})</span>
+                        </label>
+                        <ReactSelect
+                          isMulti
+                          options={roles}
+                          value={roles.filter(role => (rule.roles || []).includes(role.value))}
+                          onChange={(selectedRoles) => updateRolePermissionRule(index, 'roles', selectedRoles.map(r => r.value))}
+                          placeholder={i18n.accessControl?.userRoles?.placeholder || 'Select roles...'}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    color="failure"
+                    outline
+                    onClick={() => removeRolePermissionRule(index)}
+                    className="mt-6"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            size="sm"
+            color="blue"
+            outline
+            onClick={addRolePermissionRule}
+          >
+            {i18n.accessControl?.userRoles?.addRuleButton || '+ Add Role Permission Rule'}
+          </Button>
+
+          {(formData.role_permission_rules || []).length > 1 && (
+            <Alert color="info" className="mt-2">
+              <span className="font-medium">{i18n.accessControl?.userRoles?.multipleRulesNote || 'Note:'}</span> {i18n.accessControl?.userRoles?.multipleRulesDescription || 'When a user matches multiple rules, they receive the highest permission level granted.'}
+            </Alert>
+          )}
         </div>
       </Card>
 
       {/* Individual Users Access */}
       <Card>
         <div className="space-y-4">
-          <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.individualUsers?.title || 'Allowed Users'}</label>
-          
-          <ReactSelect
-            isMulti
-            options={users}
-            value={users.filter(user => (formData.access_users || []).includes(user.value))}
-            onChange={(selectedUsers) => {
-              onChange('access_users', selectedUsers.map(user => user.value))
-            }}
-            placeholder={i18n.accessControl?.individualUsers?.placeholder || 'Select individual users'}
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-
           <div>
-            <label htmlFor="access_users_permission" className="text-brand-dark dark:text-white">{i18n.accessControl?.individualUsers?.permissionLevel || 'Permission Level'}</label>
-            <ReactSelect
-              inputId="access_users_permission"
-              value={permissionOptions.find(option => option.value === (formData.access_users_permission || 'interact'))}
-              onChange={(selectedOption) => onChange('access_users_permission', selectedOption.value)}
-              options={permissionOptions}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              placeholder={i18n.accessControl?.individualUsers?.permissionPlaceholder || 'Select permission level...'}
-            />
+            <label className="text-brand-dark dark:text-white font-semibold">{i18n.accessControl?.individualUsers?.title || 'User Permission Rules'}</label>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {i18n.accessControl?.individualUsers?.description || 'Create permission rules for specific users. Each rule grants a permission level to one or more users.'}
+            </p>
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {i18n.accessControl?.individualUsers?.description || 'Select individual users who are allowed to access this checklist and their permission level.'}
-          </p>
+          {/* Permission Rules List */}
+          <div className="space-y-3">
+            {(formData.user_permission_rules || []).map((rule, index) => (
+              <div key={index} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-brand-dark dark:text-white">{i18n.accessControl?.individualUsers?.permissionLevel || 'Permission Level'}</label>
+                        <ReactSelect
+                          value={permissionOptions.find(option => option.value === (rule.permission || 'interact'))}
+                          onChange={(selectedOption) => updateUserPermissionRule(index, 'permission', selectedOption.value)}
+                          options={permissionOptions}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder={i18n.accessControl?.individualUsers?.permissionPlaceholder || 'Select permission...'}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm text-brand-dark dark:text-white">
+                          {i18n.accessControl?.individualUsers?.usersLabel || 'Users'}
+                          <span className="text-xs text-gray-500 ml-1">({i18n.accessControl?.individualUsers?.orLogic || 'any of these users'})</span>
+                        </label>
+                        <ReactSelect
+                          isMulti
+                          options={users}
+                          value={users.filter(user => (rule.users || []).includes(user.value))}
+                          onChange={(selectedUsers) => updateUserPermissionRule(index, 'users', selectedUsers.map(u => u.value))}
+                          placeholder={i18n.accessControl?.individualUsers?.placeholder || 'Select users...'}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    color="failure"
+                    outline
+                    onClick={() => removeUserPermissionRule(index)}
+                    className="mt-6"
+                  >
+                    ×
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            size="sm"
+            color="blue"
+            outline
+            onClick={addUserPermissionRule}
+          >
+            {i18n.accessControl?.individualUsers?.addRuleButton || '+ Add User Permission Rule'}
+          </Button>
+
+          {(formData.user_permission_rules || []).length > 1 && (
+            <Alert color="info" className="mt-2">
+              <span className="font-medium">{i18n.accessControl?.individualUsers?.multipleRulesNote || 'Note:'}</span> {i18n.accessControl?.individualUsers?.multipleRulesDescription || 'When a user matches multiple rules, they receive the highest permission level granted.'}
+            </Alert>
+          )}
         </div>
       </Card>
 

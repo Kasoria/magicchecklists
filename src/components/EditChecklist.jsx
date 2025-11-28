@@ -125,6 +125,8 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     access_roles_permission: 'interact',
     access_users: [],
     access_users_permission: 'interact',
+    role_permission_rules: [],
+    user_permission_rules: [],
     load_everywhere: false,
     allowed_pages: [],
     allowed_urls: [],
@@ -648,19 +650,42 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         submitData.append(`mcl_tag_colors[${index}]`, tag.color)
       })
 
-      // Add array data
+      // Add array data (legacy format - kept for backwards compatibility)
       formData.access_roles.forEach((role, index) => {
         submitData.append(`access_roles[${index}]`, role)
       })
-      
+
       formData.access_users.forEach((user, index) => {
         submitData.append(`access_users[${index}]`, user)
       })
-      
+
+      // Add new granular permission rules
+      if (formData.role_permission_rules && formData.role_permission_rules.length > 0) {
+        formData.role_permission_rules.forEach((rule, ruleIndex) => {
+          submitData.append(`role_permission_rules[${ruleIndex}][permission]`, rule.permission || 'interact')
+          if (rule.roles && rule.roles.length > 0) {
+            rule.roles.forEach((role, roleIndex) => {
+              submitData.append(`role_permission_rules[${ruleIndex}][roles][${roleIndex}]`, role)
+            })
+          }
+        })
+      }
+
+      if (formData.user_permission_rules && formData.user_permission_rules.length > 0) {
+        formData.user_permission_rules.forEach((rule, ruleIndex) => {
+          submitData.append(`user_permission_rules[${ruleIndex}][permission]`, rule.permission || 'interact')
+          if (rule.users && rule.users.length > 0) {
+            rule.users.forEach((user, userIndex) => {
+              submitData.append(`user_permission_rules[${ruleIndex}][users][${userIndex}]`, user)
+            })
+          }
+        })
+      }
+
       formData.allowed_pages.forEach((page, index) => {
         submitData.append(`allowed_pages[${index}]`, page)
       })
-      
+
       formData.allowed_urls.forEach((url, index) => {
         submitData.append(`allowed_urls[${index}]`, url)
       })

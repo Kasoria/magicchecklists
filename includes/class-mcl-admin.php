@@ -831,11 +831,35 @@ class MCL_Admin {
         $public_checked_state_handling = sanitize_text_field($_POST['public_checked_state']);
         $public_description = isset($_POST['public_description']) ? sanitize_textarea_field($_POST['public_description']) : '';
 
-        // Allowed User Roles
+        // Role Permission Rules (new granular structure)
+        $role_permission_rules = array();
+        if (isset($_POST['role_permission_rules']) && is_array($_POST['role_permission_rules'])) {
+            foreach ($_POST['role_permission_rules'] as $rule) {
+                if (isset($rule['permission']) && isset($rule['roles']) && is_array($rule['roles'])) {
+                    $role_permission_rules[] = array(
+                        'permission' => sanitize_text_field($rule['permission']),
+                        'roles' => array_map('sanitize_text_field', $rule['roles'])
+                    );
+                }
+            }
+        }
+
+        // User Permission Rules (new granular structure)
+        $user_permission_rules = array();
+        if (isset($_POST['user_permission_rules']) && is_array($_POST['user_permission_rules'])) {
+            foreach ($_POST['user_permission_rules'] as $rule) {
+                if (isset($rule['permission']) && isset($rule['users']) && is_array($rule['users'])) {
+                    $user_permission_rules[] = array(
+                        'permission' => sanitize_text_field($rule['permission']),
+                        'users' => array_map('intval', $rule['users'])
+                    );
+                }
+            }
+        }
+
+        // Legacy fields (kept for backwards compatibility, but will be deprecated)
         $access_roles = isset($_POST['access_roles']) && is_array($_POST['access_roles']) ? array_map('sanitize_text_field', $_POST['access_roles']) : array();
         $access_roles_permission = isset($_POST['access_roles_permission']) ? sanitize_text_field($_POST['access_roles_permission']) : 'interact';
-
-        // Allowed Users
         $access_users = isset($_POST['access_users']) && is_array($_POST['access_users']) ? array_map('intval', $_POST['access_users']) : array();
         $access_users_permission = isset($_POST['access_users_permission']) ? sanitize_text_field($_POST['access_users_permission']) : 'interact';
 
@@ -995,6 +1019,10 @@ class MCL_Admin {
             update_post_meta( $checklist_id, '_mcl_public_description', $public_description);
             update_post_meta( $checklist_id, '_mcl_priority_display_type', $priority_display_type );
             update_post_meta( $checklist_id, '_mcl_enable_rate_limit', $enable_rate_limit);
+            // New granular permission rules
+            update_post_meta( $checklist_id, '_mcl_role_permission_rules', $role_permission_rules );
+            update_post_meta( $checklist_id, '_mcl_user_permission_rules', $user_permission_rules );
+            // Legacy fields (kept for backwards compatibility)
             update_post_meta( $checklist_id, '_mcl_access_roles', $access_roles );
             update_post_meta( $checklist_id, '_mcl_access_roles_permission', $access_roles_permission );
             update_post_meta( $checklist_id, '_mcl_access_users', $access_users );
@@ -1022,6 +1050,62 @@ class MCL_Admin {
     
         wp_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
         exit;
+    }
+
+    /**
+     * Get role permission rules with backward compatibility.
+     * If new rules exist, use them. Otherwise, convert legacy format to new format.
+     */
+    private function get_role_permission_rules($checklist_id, $get_meta_array) {
+        $new_rules = get_post_meta($checklist_id, '_mcl_role_permission_rules', true);
+
+        // If we have new-format rules, return them
+        if (!empty($new_rules) && is_array($new_rules)) {
+            return $new_rules;
+        }
+
+        // Backward compatibility: convert legacy format to new format
+        $legacy_roles = $get_meta_array('_mcl_access_roles');
+        $legacy_permission = get_post_meta($checklist_id, '_mcl_access_roles_permission', true) ?: 'interact';
+
+        if (!empty($legacy_roles)) {
+            return array(
+                array(
+                    'permission' => $legacy_permission,
+                    'roles' => $legacy_roles
+                )
+            );
+        }
+
+        return array();
+    }
+
+    /**
+     * Get user permission rules with backward compatibility.
+     * If new rules exist, use them. Otherwise, convert legacy format to new format.
+     */
+    private function get_user_permission_rules($checklist_id, $get_meta_array) {
+        $new_rules = get_post_meta($checklist_id, '_mcl_user_permission_rules', true);
+
+        // If we have new-format rules, return them
+        if (!empty($new_rules) && is_array($new_rules)) {
+            return $new_rules;
+        }
+
+        // Backward compatibility: convert legacy format to new format
+        $legacy_users = $get_meta_array('_mcl_access_users');
+        $legacy_permission = get_post_meta($checklist_id, '_mcl_access_users_permission', true) ?: 'interact';
+
+        if (!empty($legacy_users)) {
+            return array(
+                array(
+                    'permission' => $legacy_permission,
+                    'users' => $legacy_users
+                )
+            );
+        }
+
+        return array();
     }
 
     private function save_reset_schedule($checklist_id, $auto_reset) {
@@ -2302,6 +2386,10 @@ class MCL_Admin {
             'public_description' => $get_meta('_mcl_public_description', ''),
             'priority_display_type' => $get_meta('_mcl_priority_display_type', 'color'),
             'enable_rate_limit' => $get_meta_boolean('_mcl_enable_rate_limit', false),
+            // New granular permission rules (with backward compatibility)
+            'role_permission_rules' => $this->get_role_permission_rules($checklist->ID, $get_meta_array),
+            'user_permission_rules' => $this->get_user_permission_rules($checklist->ID, $get_meta_array),
+            // Legacy fields (kept for backward compatibility)
             'access_roles' => $get_meta_array('_mcl_access_roles'),
             'access_roles_permission' => $get_meta('_mcl_access_roles_permission', 'interact'),
             'access_users' => $get_meta_array('_mcl_access_users'),
