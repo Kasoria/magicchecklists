@@ -65,6 +65,8 @@ class MCL_Public {
         add_action('admin_footer', array($this, 'render_floating_buttons'));
         add_action('wp_ajax_nopriv_mcl_get_checklist', array($this, 'get_checklist'));
         add_action('wp_ajax_nopriv_mcl_save_checked_state', array($this, 'save_checked_state'));
+        add_action('wp_ajax_mcl_get_checked_state', array($this, 'ajax_get_checked_state'));
+        add_action('wp_ajax_nopriv_mcl_get_checked_state', array($this, 'ajax_get_checked_state'));
         add_action('wp_ajax_mcl_add_item', array($this, 'add_item'));
         add_action('wp_ajax_nopriv_mcl_add_item', array($this, 'add_item'));
         add_action('wp_ajax_mcl_delete_item', array($this, 'delete_item'));
@@ -74,6 +76,8 @@ class MCL_Public {
         add_action('wp_ajax_nopriv_mcl_release_lock', array($this, 'release_checklist_lock'));
         add_action('wp_ajax_mcl_save_in_progress', array($this, 'save_in_progress_state'));
         add_action('wp_ajax_nopriv_mcl_save_in_progress', array($this, 'save_in_progress_state'));
+        add_action('wp_ajax_mcl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
+        add_action('wp_ajax_nopriv_mcl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
         add_action('wp_ajax_mcl_save_item_deadline', array($this, 'save_item_deadline'));
         add_action('wp_ajax_nopriv_mcl_save_item_deadline', array($this, 'save_item_deadline'));
         add_action('wp_ajax_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
@@ -106,6 +110,8 @@ class MCL_Public {
         add_action('wp_ajax_nopriv_mcl_verify_email', array($this, 'verify_email'), 5);
         add_action('wp_ajax_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
         add_action('wp_ajax_nopriv_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
+        add_action('wp_ajax_mcl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
+        add_action('wp_ajax_nopriv_mcl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
 
         // Schedule daily cleanup of expired IP hashes (for GDPR compliance)
         if (!wp_next_scheduled('mcl_cleanup_expired_ip_hashes')) {
@@ -709,7 +715,7 @@ class MCL_Public {
             'public_description' => get_post_meta($checklist_id, '_mcl_public_description', true),
             'time_date' => $meta['_mcl_time_date'],
             'items' => $meta['_mcl_items'],
-            'items_in_progress' => $meta['_mcl_items_in_progress'] ?: array(),
+            'items_in_progress' => $this->get_in_progress_state($checklist_id),
             'checked_state' => $checked_state,
             'theme' => $meta['_mcl_theme'] ?: 'light',
             'priority' => $meta['_mcl_priority'] ?: 'none',
@@ -1548,21 +1554,45 @@ class MCL_Public {
 
     private function get_checked_state($checklist_id, $context = 'drawer') {
         $handling = $this->get_checked_state_handling($checklist_id, $context);
-        
+
         if ($handling === 'per_user') {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                return get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true) ?: array();
+                $result = get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true) ?: array();
+                error_log('[MCL DEBUG] get_checked_state: per_user mode, user_id=' . $user_id . ', checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
+                return $result;
             } else {
-                // Per-user checklists with logged-out users should use localStorage on client side
-                // Return empty array as server has no state for anonymous users in per-user mode
+                error_log('[MCL DEBUG] get_checked_state: per_user mode, not logged in, returning empty');
                 return array();
             }
         }
-        
+
+        // Global handling mode - use same key for all contexts to ensure sync
+        $meta_key = '_mcl_checked_state';
+        $result = get_post_meta($checklist_id, $meta_key, true) ?: array();
+        error_log('[MCL DEBUG] get_checked_state: global mode, checklist_id=' . $checklist_id . ', context=' . $context . ', meta_key=' . $meta_key . ', result=' . print_r($result, true));
+        return $result;
+    }
+
+    private function get_in_progress_state($checklist_id, $context = 'drawer') {
+        $handling = $this->get_checked_state_handling($checklist_id, $context);
+
+        if ($handling === 'per_user') {
+            if (is_user_logged_in()) {
+                $user_id = get_current_user_id();
+                $result = get_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, true) ?: array();
+                error_log('[MCL DEBUG] get_in_progress_state: per_user mode, user_id=' . $user_id . ', checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
+                return $result;
+            } else {
+                error_log('[MCL DEBUG] get_in_progress_state: per_user mode, not logged in, returning empty');
+                return array();
+            }
+        }
+
         // Global handling mode
-        $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
-        return get_post_meta($checklist_id, $meta_key, true) ?: array();
+        $result = get_post_meta($checklist_id, '_mcl_items_in_progress', true) ?: array();
+        error_log('[MCL DEBUG] get_in_progress_state: global mode, checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
+        return $result;
     }
 
     public function save_checked_state() {
@@ -1594,12 +1624,17 @@ class MCL_Public {
         
         $old_checked_items = $this->get_checked_state($checklist_id, $context);
         $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
-    
+
+        error_log('[MCL DEBUG] save_checked_state: checklist_id=' . $checklist_id . ', context=' . $context . ', handling=' . $checked_state_handling . ', items=' . print_r($checked_items, true));
+
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
+            error_log('[MCL DEBUG] save_checked_state: Saving to user_meta, user_id=' . $user_id . ', meta_key=_mcl_' . $context . '_checked_state_' . $checklist_id);
             update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
         } else if ($checked_state_handling === 'global') {
-            $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
+            // Use same key for all contexts to ensure sync across views
+            $meta_key = '_mcl_checked_state';
+            error_log('[MCL DEBUG] save_checked_state: Saving to post_meta, meta_key=' . $meta_key);
             update_post_meta($checklist_id, $meta_key, $checked_items);
         } else if ($checked_state_handling === 'per_user' && !is_user_logged_in()) {
             // Per-user checklists with logged-out users should use localStorage on client side
@@ -1622,6 +1657,45 @@ class MCL_Public {
         }
     
         wp_send_json_success();
+    }
+
+    /**
+     * Get checked state via AJAX
+     */
+    public function ajax_get_checked_state() {
+        $checklist_id = intval($_POST['checklist_id']);
+        $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+
+        if (!$checklist_id) {
+            wp_send_json_error('Invalid checklist ID');
+            return;
+        }
+
+        if (!$this->has_permission($checklist_id, 'view')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+
+        $checked_state = $this->get_checked_state($checklist_id, $context);
+        wp_send_json_success($checked_state);
+    }
+
+    public function ajax_get_in_progress_state() {
+        $checklist_id = intval($_POST['checklist_id']);
+        $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+
+        if (!$checklist_id) {
+            wp_send_json_error('Invalid checklist ID');
+            return;
+        }
+
+        if (!$this->has_permission($checklist_id, 'view')) {
+            wp_send_json_error('Permission denied');
+            return;
+        }
+
+        $in_progress_state = $this->get_in_progress_state($checklist_id, $context);
+        wp_send_json_success($in_progress_state);
     }
 
     private function validate_invite_token($token, $increment_usage = true) {
@@ -1887,26 +1961,41 @@ class MCL_Public {
                 wp_send_json_error('Missing checklist ID');
                 return;
             }
-    
+
             $checklist_id = intval($_POST['checklist_id']);
-    
+            $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+
             if (!$this->has_permission($checklist_id, 'interact')) {
                 wp_send_json_error('Permission denied');
                 return;
             }
-    
-            $items_in_progress = isset($_POST['items_in_progress']) ? 
+
+            $items_in_progress = isset($_POST['items_in_progress']) ?
                 json_decode(stripslashes($_POST['items_in_progress']), true) : array();
-    
+
             if (!is_array($items_in_progress)) {
                 $items_in_progress = array();
             }
-    
+
             $items_in_progress = array_map('sanitize_text_field', $items_in_progress);
-            update_post_meta($checklist_id, '_mcl_items_in_progress', $items_in_progress);
-    
+
+            // Respect per-user mode like checked state handling
+            $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
+
+            error_log('[MCL DEBUG] save_in_progress_state: checklist_id=' . $checklist_id . ', context=' . $context . ', handling=' . $checked_state_handling . ', items=' . print_r($items_in_progress, true));
+
+            if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
+                $user_id = get_current_user_id();
+                error_log('[MCL DEBUG] save_in_progress_state: Saving to user_meta, user_id=' . $user_id . ', meta_key=_mcl_' . $context . '_in_progress_' . $checklist_id);
+                update_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, $items_in_progress);
+            } else if ($checked_state_handling === 'global') {
+                error_log('[MCL DEBUG] save_in_progress_state: Saving to post_meta');
+                update_post_meta($checklist_id, '_mcl_items_in_progress', $items_in_progress);
+            }
+            // For per-user mode with logged-out users, client handles via localStorage
+
             wp_send_json_success();
-    
+
         } catch (Exception $e) {
             wp_send_json_error($e->getMessage());
         }
@@ -2150,6 +2239,7 @@ class MCL_Public {
         // Get checklist items for syncing
         $checklist_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
         $checked_state = $this->get_checked_state($checklist_id, $context);
+        $in_progress_state = $this->get_in_progress_state($checklist_id, $context);
 
         // If no board exists, create a default structure from checklist items
         if (!$board || !is_array($board) || empty($board)) {
@@ -2160,6 +2250,7 @@ class MCL_Public {
                     'id' => $item['id'],
                     'title' => $item['content'],
                     'checked' => in_array($item['id'], $checked_state),
+                    'inProgress' => in_array($item['id'], $in_progress_state),
                     'comment_count' => 0,
                     'assigned_user' => null
                 );
@@ -2206,6 +2297,7 @@ class MCL_Public {
                         'id' => $item['id'],
                         'title' => $item['content'],
                         'checked' => in_array($item['id'], $checked_state),
+                        'inProgress' => in_array($item['id'], $in_progress_state),
                         'comment_count' => 0,
                         'assigned_user' => null
                     );
@@ -2248,6 +2340,28 @@ class MCL_Public {
                 }
             }
             unset($column); // Break reference
+
+            // Sync: Update checked and inProgress state of all existing items
+            foreach ($board as &$column) {
+                if (isset($column['items']) && is_array($column['items'])) {
+                    foreach ($column['items'] as &$item) {
+                        // Sync checked state
+                        $should_be_checked = in_array($item['id'], $checked_state);
+                        if ($item['checked'] !== $should_be_checked) {
+                            $item['checked'] = $should_be_checked;
+                            $board_changed = true;
+                        }
+                        // Sync inProgress state
+                        $should_be_in_progress = in_array($item['id'], $in_progress_state);
+                        $current_in_progress = isset($item['inProgress']) ? $item['inProgress'] : false;
+                        if ($current_in_progress !== $should_be_in_progress) {
+                            $item['inProgress'] = $should_be_in_progress;
+                            $board_changed = true;
+                        }
+                    }
+                }
+            }
+            unset($column, $item); // Break references
 
             // Save the updated board if there were any changes (new items added or deleted items removed)
             if (!empty($new_items) || $board_changed) {
@@ -2422,7 +2536,8 @@ class MCL_Public {
             $user_id = get_current_user_id();
             update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
         } else if ($checked_state_handling === 'global') {
-            $meta_key = $context === 'shortcode' ? '_mcl_shortcode_checked_state' : '_mcl_checked_state';
+            // Use same key for all contexts to ensure sync across views
+            $meta_key = '_mcl_checked_state';
             update_post_meta($checklist_id, $meta_key, $checked_items);
         }
 
@@ -3000,6 +3115,38 @@ class MCL_Public {
             $settings['show_comment_count'] = (bool) $settings['show_comment_count'];
             $settings['allow_anonymous_viewing'] = (bool) $settings['allow_anonymous_viewing'];
             $settings['visible_columns'] = $settings['visible_columns'] ? maybe_unserialize($settings['visible_columns']) : null;
+        }
+
+        wp_send_json_success(array('settings' => $settings));
+    }
+
+    /**
+     * Get column sync settings for shortcode kanban (public handler)
+     */
+    public function get_column_sync_settings_public() {
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+
+        if (!$checklist_id) {
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        // Check if user has at least view permission
+        if (!$this->has_permission($checklist_id, 'view')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+        // Get column sync settings from post meta
+        $settings = get_post_meta($checklist_id, '_mcl_column_sync_settings', true);
+
+        if (!$settings || !is_array($settings)) {
+            $settings = array(
+                'enabled' => false,
+                'done_column' => '',
+                'in_progress_column' => '',
+                'todo_column' => ''
+            );
         }
 
         wp_send_json_success(array('settings' => $settings));

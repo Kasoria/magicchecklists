@@ -70,6 +70,10 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_get_idea_submissions', array($this, 'get_idea_submissions'));
         add_action('wp_ajax_mcl_approve_idea', array($this, 'approve_idea'));
         add_action('wp_ajax_mcl_reject_idea', array($this, 'reject_idea'));
+
+        // Column sync settings
+        add_action('wp_ajax_mcl_get_column_sync_settings', array($this, 'get_column_sync_settings'));
+        add_action('wp_ajax_mcl_save_column_sync_settings', array($this, 'save_column_sync_settings'));
     }
 
     public function add_admin_menu() {
@@ -4350,6 +4354,116 @@ class MCL_Admin {
         }
 
         wp_send_json_success(array('message' => 'Settings saved successfully'));
+    }
+
+    /**
+     * Get column sync settings for a checklist
+     */
+    public function get_column_sync_settings() {
+        error_log('[ColumnSync PHP] get_column_sync_settings called');
+        error_log('[ColumnSync PHP] POST data: ' . print_r($_POST, true));
+
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            error_log('[ColumnSync PHP] Nonce verification FAILED');
+            error_log('[ColumnSync PHP] Expected action: mcl_admin_nonce');
+            error_log('[ColumnSync PHP] Received nonce: ' . (isset($_POST['nonce']) ? $_POST['nonce'] : 'NOT SET'));
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+        error_log('[ColumnSync PHP] Nonce verification PASSED');
+
+        if (!current_user_can('manage_options')) {
+            error_log('[ColumnSync PHP] User capability check FAILED');
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        error_log('[ColumnSync PHP] User capability check PASSED');
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        error_log('[ColumnSync PHP] Checklist ID: ' . $checklist_id);
+
+        if (!$checklist_id) {
+            error_log('[ColumnSync PHP] Invalid checklist ID');
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        // Get settings from post meta
+        $settings = get_post_meta($checklist_id, '_mcl_column_sync_settings', true);
+        error_log('[ColumnSync PHP] Raw settings from DB: ' . print_r($settings, true));
+
+        // Return default settings if none exist
+        if (!$settings || !is_array($settings)) {
+            error_log('[ColumnSync PHP] No settings found, returning defaults');
+            $settings = array(
+                'enabled' => false,
+                'done_column' => '',
+                'in_progress_column' => '',
+                'todo_column' => ''
+            );
+        } else {
+            // Ensure boolean for enabled field
+            $settings['enabled'] = !empty($settings['enabled']);
+            error_log('[ColumnSync PHP] Settings found, enabled = ' . ($settings['enabled'] ? 'true' : 'false'));
+        }
+
+        error_log('[ColumnSync PHP] Returning settings: ' . print_r($settings, true));
+        wp_send_json_success(array('settings' => $settings));
+    }
+
+    /**
+     * Save column sync settings for a checklist
+     */
+    public function save_column_sync_settings() {
+        error_log('[ColumnSync PHP] save_column_sync_settings called');
+        error_log('[ColumnSync PHP] POST data: ' . print_r($_POST, true));
+
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            error_log('[ColumnSync PHP] SAVE - Nonce verification FAILED');
+            error_log('[ColumnSync PHP] SAVE - Expected action: mcl_admin_nonce');
+            error_log('[ColumnSync PHP] SAVE - Received nonce: ' . (isset($_POST['nonce']) ? $_POST['nonce'] : 'NOT SET'));
+            wp_send_json_error(array('message' => 'Invalid nonce'));
+            return;
+        }
+        error_log('[ColumnSync PHP] SAVE - Nonce verification PASSED');
+
+        if (!current_user_can('manage_options')) {
+            error_log('[ColumnSync PHP] SAVE - User capability check FAILED');
+            wp_send_json_error(array('message' => 'Unauthorized'));
+            return;
+        }
+        error_log('[ColumnSync PHP] SAVE - User capability check PASSED');
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        error_log('[ColumnSync PHP] SAVE - Checklist ID: ' . $checklist_id);
+
+        if (!$checklist_id) {
+            error_log('[ColumnSync PHP] SAVE - Invalid checklist ID');
+            wp_send_json_error(array('message' => 'Invalid checklist ID'));
+            return;
+        }
+
+        error_log('[ColumnSync PHP] SAVE - enabled POST value: ' . (isset($_POST['enabled']) ? $_POST['enabled'] : 'NOT SET'));
+        error_log('[ColumnSync PHP] SAVE - done_column POST value: ' . (isset($_POST['done_column']) ? $_POST['done_column'] : 'NOT SET'));
+        error_log('[ColumnSync PHP] SAVE - todo_column POST value: ' . (isset($_POST['todo_column']) ? $_POST['todo_column'] : 'NOT SET'));
+
+        $settings = array(
+            'enabled' => isset($_POST['enabled']) && ($_POST['enabled'] === 'true' || $_POST['enabled'] === '1'),
+            'done_column' => isset($_POST['done_column']) ? sanitize_text_field($_POST['done_column']) : '',
+            'in_progress_column' => isset($_POST['in_progress_column']) ? sanitize_text_field($_POST['in_progress_column']) : '',
+            'todo_column' => isset($_POST['todo_column']) ? sanitize_text_field($_POST['todo_column']) : ''
+        );
+        error_log('[ColumnSync PHP] SAVE - Parsed settings: ' . print_r($settings, true));
+
+        // Save to post meta
+        $result = update_post_meta($checklist_id, '_mcl_column_sync_settings', $settings);
+        error_log('[ColumnSync PHP] SAVE - update_post_meta result: ' . ($result ? 'success/updated' : 'no change or failed'));
+
+        // Verify it was saved
+        $saved = get_post_meta($checklist_id, '_mcl_column_sync_settings', true);
+        error_log('[ColumnSync PHP] SAVE - Verification read: ' . print_r($saved, true));
+
+        wp_send_json_success(array('message' => 'Column sync settings saved successfully'));
     }
 
     /**

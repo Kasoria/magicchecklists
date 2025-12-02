@@ -532,6 +532,15 @@ const ShortcodeKanbanView = ({
     show_upvote_count: true,
     show_comment_count: true
   })
+
+  // Column sync settings state
+  const [columnSyncSettings, setColumnSyncSettings] = useState({
+    enabled: false,
+    done_column: '',
+    in_progress_column: '',
+    todo_column: ''
+  })
+
   const [localUpvotes, setLocalUpvotes] = useState({}) // Track upvotes in localStorage
   const [itemUpvotes, setItemUpvotes] = useState({})
   const [showIdeaModal, setShowIdeaModal] = useState(false)
@@ -556,6 +565,7 @@ const ShortcodeKanbanView = ({
   useEffect(() => {
     loadKanbanBoard()
     loadFeatureBoardSettings()
+    loadColumnSyncSettings()
   }, [checklistId])
 
   // Listen for checklist data changes from other views (drawer, admin kanban, etc.)
@@ -563,8 +573,17 @@ const ShortcodeKanbanView = ({
     const handleChecklistDataChanged = (event) => {
       const { checklistId: changedChecklistId, action, source } = event.detail || {}
 
+      console.log('[MCL DEBUG] ShortcodeKanbanView received event:', {
+        eventChecklistId: changedChecklistId,
+        thisChecklistId: checklistId,
+        action,
+        source,
+        willRefresh: changedChecklistId && String(changedChecklistId) === String(checklistId) && source !== 'shortcode_kanban'
+      })
+
       // Only reload if this is the current checklist and the change came from another source
       if (changedChecklistId && String(changedChecklistId) === String(checklistId) && source !== 'shortcode_kanban') {
+        console.log('[MCL DEBUG] ShortcodeKanbanView: Calling loadKanbanBoard()')
         loadKanbanBoard()
       }
     }
@@ -583,10 +602,87 @@ const ShortcodeKanbanView = ({
     }
   }, [board, featureBoardSettings.enabled])
 
+  // Apply column sync to reorganize items based on their checked/in-progress state
+  const applyColumnSyncToBoard = (boardData, syncSettings) => {
+    const isEnabled = syncSettings.enabled === true || syncSettings.enabled === 'true' || syncSettings.enabled === '1'
+    if (!isEnabled || !syncSettings.done_column || !syncSettings.todo_column) {
+      return boardData
+    }
+
+    // Collect all items from all columns
+    const allItems = []
+    boardData.forEach(column => {
+      column.items.forEach(item => {
+        allItems.push({ ...item, originalColumnId: column.id })
+      })
+    })
+
+    // Determine which columns are managed by sync
+    const managedColumns = [syncSettings.done_column, syncSettings.todo_column]
+    if (syncSettings.in_progress_column) {
+      managedColumns.push(syncSettings.in_progress_column)
+    }
+
+    // Create new board with items in correct columns based on state
+    const newBoard = boardData.map(column => ({
+      ...column,
+      items: allItems.filter(item => {
+        // Checked items go to done column
+        if (item.checked && column.id === syncSettings.done_column) {
+          return true
+        }
+        // In-progress items (not checked) go to in_progress column if configured
+        if (!item.checked && item.inProgress && syncSettings.in_progress_column && column.id === syncSettings.in_progress_column) {
+          return true
+        }
+        // Unchecked, non-in-progress items go to todo column
+        if (!item.checked && !item.inProgress && column.id === syncSettings.todo_column) {
+          return true
+        }
+        // If no in_progress_column configured, unchecked items (even if in-progress) go to todo
+        if (!item.checked && !syncSettings.in_progress_column && column.id === syncSettings.todo_column) {
+          return true
+        }
+        // Keep items in their original column if it's not a managed column
+        if (item.originalColumnId === column.id && !managedColumns.includes(column.id)) {
+          return true
+        }
+        return false
+      }).map(({ originalColumnId, ...item }) => item)
+    }))
+
+    console.log('[MCL DEBUG] ShortcodeKanbanView: Applied column sync to board')
+    return newBoard
+  }
+
   const loadKanbanBoard = async () => {
     try {
       const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
       const nonce = window.mcl_checklists?.nonce || ''
+
+      // Fetch column sync settings first to ensure we have the latest
+      let syncSettings = columnSyncSettings
+      try {
+        const syncResponse = await fetch(ajaxUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'mcl_get_column_sync_settings',
+            checklist_id: checklistId,
+            nonce: nonce
+          })
+        })
+        const syncData = await syncResponse.json()
+        console.log('[MCL DEBUG] ShortcodeKanbanView syncData:', syncData)
+        if (syncData.success && syncData.data.settings) {
+          syncSettings = syncData.data.settings
+          setColumnSyncSettings(syncSettings)
+        }
+      } catch (syncError) {
+        console.error('Error loading column sync settings:', syncError)
+      }
+
+      console.log('[MCL DEBUG] ShortcodeKanbanView syncSettings before board load:', syncSettings)
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
@@ -600,8 +696,13 @@ const ShortcodeKanbanView = ({
       })
 
       const data = await response.json()
+      console.log('[MCL DEBUG] ShortcodeKanbanView board data:', data)
       if (data.success && data.data.board) {
-        setBoard(data.data.board)
+        console.log('[MCL DEBUG] ShortcodeKanbanView items before sync:', data.data.board.map(col => ({ id: col.id, items: col.items.map(i => ({ id: i.id, checked: i.checked, inProgress: i.inProgress })) })))
+        // Apply column sync if enabled to ensure items are in correct columns
+        const syncedBoard = applyColumnSyncToBoard(data.data.board, syncSettings)
+        console.log('[MCL DEBUG] ShortcodeKanbanView items after sync:', syncedBoard.map(col => ({ id: col.id, itemCount: col.items.length })))
+        setBoard(syncedBoard)
         setUsers(data.data.users || [])
       } else {
         // If no board structure exists, create a default one
@@ -623,7 +724,8 @@ const ShortcodeKanbanView = ({
         items: items.map(item => ({
           id: item.id,
           title: item.content,
-          checked: item.checked || false
+          checked: item.checked || false,
+          inProgress: item.inProgress || false
         }))
       },
       {
@@ -639,7 +741,9 @@ const ShortcodeKanbanView = ({
         items: []
       }
     ]
-    setBoard(defaultBoard)
+    // Apply column sync if enabled
+    const syncedBoard = applyColumnSyncToBoard(defaultBoard, columnSyncSettings)
+    setBoard(syncedBoard)
   }
 
   // Feature board functions
@@ -664,6 +768,31 @@ const ShortcodeKanbanView = ({
       }
     } catch (error) {
       console.error('Error loading feature board settings:', error)
+    }
+  }
+
+  // Column sync settings functions
+  const loadColumnSyncSettings = async () => {
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_column_sync_settings',
+          checklist_id: checklistId,
+          nonce: nonce
+        })
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.settings) {
+        setColumnSyncSettings(data.data.settings)
+      }
+    } catch (error) {
+      console.error('Error loading column sync settings:', error)
     }
   }
 
@@ -1004,8 +1133,20 @@ const ShortcodeKanbanView = ({
     setBoard(newBoard)
 
     // Save to server
+    console.log('[MCL DEBUG] ShortcodeKanbanView: Saving kanban board after handleDrop', { checklistId, itemId: draggedItem.id })
     await saveKanbanBoard(newBoard)
     setDraggedItem(null)
+
+    // Dispatch event to notify other views that item was moved
+    console.log('[MCL DEBUG] ShortcodeKanbanView: Dispatching item_moved event', { checklistId, itemId: draggedItem.id })
+    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      detail: {
+        checklistId: checklistId,
+        action: 'item_moved',
+        itemId: draggedItem.id,
+        source: 'shortcode_kanban'
+      }
+    }))
   }
 
   // Column management
@@ -1098,6 +1239,16 @@ const ShortcodeKanbanView = ({
     setBoard(newBoard)
     await saveKanbanBoard(newBoard)
 
+    // Dispatch event to notify other views that item content changed
+    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      detail: {
+        checklistId: checklistId,
+        action: 'item_updated',
+        itemId: editingTask.id,
+        source: 'shortcode_kanban'
+      }
+    }))
+
     closeTaskModal()
   }
 
@@ -1105,22 +1256,82 @@ const ShortcodeKanbanView = ({
     if (!permissions.can_interact) return
 
     const newCheckedState = !item.checked
-    const newBoard = board.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          items: column.items.map(boardItem =>
-            boardItem.id === item.id
-              ? { ...boardItem, checked: newCheckedState }
-              : boardItem
-          )
-        }
+
+    // Determine target column for auto-move if column sync is enabled
+    let targetColumnId = columnId
+    let shouldMoveColumn = false
+
+    // Convert enabled to boolean explicitly (in case it's a string "true"/"false")
+    const isEnabled = columnSyncSettings.enabled === true || columnSyncSettings.enabled === 'true' || columnSyncSettings.enabled === '1'
+
+    if (isEnabled) {
+      if (newCheckedState && columnSyncSettings.done_column) {
+        // Item is being checked - move to Done column
+        targetColumnId = columnSyncSettings.done_column
+        // Use string comparison to avoid type mismatch
+        shouldMoveColumn = String(columnId) !== String(targetColumnId)
+      } else if (!newCheckedState && columnSyncSettings.todo_column) {
+        // Item is being unchecked - move to To Do column
+        targetColumnId = columnSyncSettings.todo_column
+        // Use string comparison to avoid type mismatch
+        shouldMoveColumn = String(columnId) !== String(targetColumnId)
       }
-      return column
-    })
+    }
+
+    // Update board - update checked state and move if needed
+    let newBoard
+    if (shouldMoveColumn) {
+      // Remove from current column and add to target column
+      const updatedItem = { ...item, checked: newCheckedState }
+      newBoard = board.map(column => {
+        // Use string comparison to handle type mismatches
+        if (String(column.id) === String(columnId)) {
+          // Remove from source column
+          return {
+            ...column,
+            items: column.items.filter(boardItem => boardItem.id !== item.id)
+          }
+        }
+        if (String(column.id) === String(targetColumnId)) {
+          // Add to target column
+          return {
+            ...column,
+            items: [...column.items, updatedItem]
+          }
+        }
+        return column
+      })
+    } else {
+      // Just update the checked state in place
+      newBoard = board.map(column => {
+        if (column.id === columnId) {
+          return {
+            ...column,
+            items: column.items.map(boardItem =>
+              boardItem.id === item.id
+                ? { ...boardItem, checked: newCheckedState }
+                : boardItem
+            )
+          }
+        }
+        return column
+      })
+    }
 
     setBoard(newBoard)
+    console.log('[MCL DEBUG] ShortcodeKanbanView: Saving kanban board after toggleItemCheck', { checklistId, itemId: item.id })
     await saveKanbanBoard(newBoard)
+
+    // Dispatch event to notify other views
+    console.log('[MCL DEBUG] ShortcodeKanbanView: Dispatching item_checked event', { checklistId, itemId: item.id })
+    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      detail: {
+        checklistId: checklistId,
+        action: shouldMoveColumn ? 'item_checked_and_moved' : 'item_checked',
+        itemId: item.id,
+        source: 'shortcode_kanban'
+      }
+    }))
   }
 
   const saveKanbanBoard = async (boardData) => {

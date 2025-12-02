@@ -127,10 +127,14 @@ class MCL_Shortcode {
         
         // Get checked state
         $checked_state = $this->get_checked_state($checklist_id);
-        
-        // Add checked state to items
+
+        // Get in-progress state
+        $in_progress_state = $this->get_in_progress_state($checklist_id);
+
+        // Add checked and in-progress state to items
         foreach ($items as &$item) {
             $item['checked'] = in_array($item['id'], $checked_state);
+            $item['inProgress'] = in_array($item['id'], $in_progress_state);
         }
 
         // Track checklist view for analytics
@@ -179,7 +183,23 @@ class MCL_Shortcode {
 
         // Only global state is handled server-side
         if ($handling === 'global') {
-            return get_post_meta($checklist_id, '_mcl_shortcode_checked_state', true) ?: array();
+            // Use same key as drawer/admin for cross-view sync
+            return get_post_meta($checklist_id, '_mcl_checked_state', true) ?: array();
+        }
+
+        // Local and session storage are handled client-side
+        return array();
+    }
+
+    private function get_in_progress_state($checklist_id) {
+        // Get checklist settings
+        $settings = MCL_Admin::get_shortcode_settings($checklist_id);
+        $handling = $settings['check_state'] ?? 'session';
+
+        // Only global state is handled server-side
+        if ($handling === 'global') {
+            // Use same key as drawer/admin for cross-view sync
+            return get_post_meta($checklist_id, '_mcl_items_in_progress', true) ?: array();
         }
 
         // Local and session storage are handled client-side

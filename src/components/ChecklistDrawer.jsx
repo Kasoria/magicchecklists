@@ -2647,14 +2647,25 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (locked || !canEdit) return
 
     setInProgressItems(prev => {
-      const newItems = prev.includes(itemId) 
+      const newItems = prev.includes(itemId)
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
-      
-      saveInProgressState(newItems)
+
+      console.log('[MCL DEBUG] ChecklistDrawer: Saving in-progress state', { checklistId: currentChecklistId, newItems })
+      saveInProgressState(newItems).then(() => {
+        // Dispatch event to notify other views that in-progress state changed
+        console.log('[MCL DEBUG] ChecklistDrawer: Dispatching in_progress_changed event', { checklistId: currentChecklistId })
+        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          detail: {
+            checklistId: currentChecklistId,
+            action: 'in_progress_changed',
+            source: 'drawer'
+          }
+        }))
+      })
       return newItems
     })
-  }, [canEdit, locked, saveInProgressState, checklistData, items])
+  }, [canEdit, locked, saveInProgressState, checklistData, items, currentChecklistId])
 
   // Confetti animation for congratulations
   const createConfetti = useCallback(() => {
@@ -2793,7 +2804,18 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
     
     if (currentChecklistId) {
+      console.log('[MCL DEBUG] ChecklistDrawer: Saving checked state', { checklistId: currentChecklistId, newCheckedItems })
       await saveCheckedState(currentChecklistId, newCheckedItems, 'drawer', checklistData)
+
+      // Dispatch event to notify other views that checked state changed
+      console.log('[MCL DEBUG] ChecklistDrawer: Dispatching checked_state_changed event', { checklistId: currentChecklistId })
+      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        detail: {
+          checklistId: currentChecklistId,
+          action: 'checked_state_changed',
+          source: 'drawer'
+        }
+      }))
     }
 
     // Check if all items are completed
@@ -2986,12 +3008,21 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }))
   }, [canEdit, locked])
 
-  const uncheckAllItems = useCallback(() => {
+  const uncheckAllItems = useCallback(async () => {
     if ((!canEdit && !canCheck) || locked) return
 
     setCheckedItems([])
     if (currentChecklistId) {
-      saveCheckedState(currentChecklistId, [], 'drawer', checklistData)
+      await saveCheckedState(currentChecklistId, [], 'drawer', checklistData)
+
+      // Dispatch event to notify other views that checked state changed
+      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        detail: {
+          checklistId: currentChecklistId,
+          action: 'checked_state_changed',
+          source: 'drawer'
+        }
+      }))
     }
   }, [canEdit, canCheck, locked, currentChecklistId, saveCheckedState, checklistData])
 
@@ -3802,8 +3833,18 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     const handleChecklistDataChanged = (event) => {
       const { checklistId, action, source } = event.detail || {}
 
+      console.log('[MCL DEBUG] ChecklistDrawer received event:', {
+        eventChecklistId: checklistId,
+        currentChecklistId,
+        action,
+        source,
+        isVisible,
+        willRefresh: checklistId && String(checklistId) === String(currentChecklistId) && source !== 'drawer' && isVisible
+      })
+
       // Only refresh if this is the currently open checklist and the change came from another source
       if (checklistId && String(checklistId) === String(currentChecklistId) && source !== 'drawer' && isVisible) {
+        console.log('[MCL DEBUG] ChecklistDrawer: Calling refreshCurrentChecklist()')
         refreshCurrentChecklist()
       }
     }

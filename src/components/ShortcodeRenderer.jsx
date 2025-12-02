@@ -540,6 +540,49 @@ const ShortcodeRenderer = ({
     }
   }, [items])
 
+  // Log shortcode settings on mount
+  useEffect(() => {
+    console.log('[MCL DEBUG] ShortcodeRenderer mounted:', {
+      checklistId,
+      checkStateMode: settings.check_state || 'session',
+      note: settings.check_state !== 'global' ? 'WARNING: Not in global mode - will not sync with server!' : 'OK - global mode'
+    })
+  }, [checklistId, settings.check_state])
+
+  // Listen for checked state changes from other views (kanban, etc.)
+  useEffect(() => {
+    const handleChecklistDataChanged = (event) => {
+      const { checklistId: eventChecklistId, source, action } = event.detail || {}
+      const stateHandling = settings.check_state || 'session'
+
+      console.log('[MCL DEBUG] ShortcodeRenderer received event:', {
+        eventChecklistId,
+        thisChecklistId: checklistId,
+        action,
+        source,
+        stateHandling,
+        willRefresh: eventChecklistId && String(eventChecklistId) === String(checklistId) && source !== 'shortcode_list' && (stateHandling === 'global' || stateHandling === 'per_user')
+      })
+
+      // Only refresh if this is the same checklist and change came from another source
+      if (eventChecklistId && String(eventChecklistId) === String(checklistId) && source !== 'shortcode_list') {
+        // Reload checked state from server for global and per_user modes
+        // Session/local modes use localStorage which is local-only
+        if (stateHandling === 'global' || stateHandling === 'per_user') {
+          console.log('[MCL DEBUG] ShortcodeRenderer: Refreshing from server...')
+          refreshCheckedStateFromServer()
+          refreshInProgressStateFromServer()
+        }
+      }
+    }
+
+    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+
+    return () => {
+      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    }
+  }, [checklistId, settings.check_state])
+
   // Initialize items with proper structure
   const initializeItems = () => {
     const initializedItems = items.map(item => ({
@@ -599,6 +642,62 @@ const ShortcodeRenderer = ({
       }
     } catch (error) {
       console.warn('Error loading from local storage:', error)
+    }
+  }
+
+  const refreshCheckedStateFromServer = async () => {
+    console.log('[MCL DEBUG] ShortcodeRenderer: refreshCheckedStateFromServer called', { checklistId })
+    try {
+      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.mclShortcode?.nonce || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_checked_state')
+      formData.append('nonce', nonce)
+      formData.append('checklist_id', checklistId)
+      formData.append('context', 'shortcode')
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      const data = await response.json()
+      console.log('[MCL DEBUG] ShortcodeRenderer: refreshCheckedStateFromServer response', { success: data.success, data: data.data })
+      if (data.success && Array.isArray(data.data)) {
+        setCheckedItems(new Set(data.data))
+      }
+    } catch (error) {
+      console.warn('Error refreshing checked state from server:', error)
+    }
+  }
+
+  const refreshInProgressStateFromServer = async () => {
+    console.log('[MCL DEBUG] ShortcodeRenderer: refreshInProgressStateFromServer called', { checklistId })
+    try {
+      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.mclShortcode?.nonce || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_in_progress_state')
+      formData.append('nonce', nonce)
+      formData.append('checklist_id', checklistId)
+      formData.append('context', 'shortcode')
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      const data = await response.json()
+      console.log('[MCL DEBUG] ShortcodeRenderer: refreshInProgressStateFromServer response', { success: data.success, data: data.data })
+      if (data.success && Array.isArray(data.data)) {
+        setInProgressItems(new Set(data.data))
+      }
+    } catch (error) {
+      console.warn('Error refreshing in-progress state from server:', error)
     }
   }
 
@@ -814,26 +913,35 @@ const ShortcodeRenderer = ({
   }
 
   // Toggle in-progress state
-  const toggleInProgress = (itemId) => {
+  const toggleInProgress = async (itemId) => {
     if (!permissions.can_edit) return
-    
-    setInProgressItems(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId)
-      } else {
-        newSet.add(itemId)
+
+    const newSet = new Set(inProgressItems)
+    if (newSet.has(itemId)) {
+      newSet.delete(itemId)
+    } else {
+      newSet.add(itemId)
+    }
+
+    setInProgressItems(newSet)
+
+    // Update item
+    const newItems = shortcodeItems.map(item =>
+      item.id === itemId ? { ...item, inProgress: newSet.has(itemId) } : item
+    )
+    setShortcodeItems(newItems)
+    console.log('[MCL DEBUG] ShortcodeRenderer: Saving in-progress via saveItemsToServer', { checklistId, itemId, inProgress: newSet.has(itemId) })
+    await saveItemsToServer(newItems)
+
+    // Dispatch event to notify other views that in-progress state changed
+    console.log('[MCL DEBUG] ShortcodeRenderer: Dispatching in_progress_changed event', { checklistId })
+    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      detail: {
+        checklistId: checklistId,
+        action: 'in_progress_changed',
+        source: 'shortcode_list'
       }
-      
-      // Update item
-      const newItems = shortcodeItems.map(item => 
-        item.id === itemId ? { ...item, inProgress: newSet.has(itemId) } : item
-      )
-      setShortcodeItems(newItems)
-      saveItemsToServer(newItems)
-      
-      return newSet
-    })
+    }))
   }
 
   // Handle deadline click - open modal
@@ -1341,6 +1449,7 @@ const ShortcodeRenderer = ({
   }
 
   const saveToServer = async (checkedItems) => {
+    console.log('[MCL DEBUG] ShortcodeRenderer: saveToServer called', { checklistId, checkedItems: Array.from(checkedItems) })
     try {
       const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
       const nonce = window.mclShortcode?.nonce || ''
@@ -1360,8 +1469,19 @@ const ShortcodeRenderer = ({
       })
 
       const data = await response.json()
+      console.log('[MCL DEBUG] ShortcodeRenderer: saveToServer response', { success: data.success })
       if (!data.success) {
         console.warn('Error saving state to server:', data)
+      } else {
+        // Dispatch event to notify other views (kanban, etc.)
+        console.log('[MCL DEBUG] ShortcodeRenderer: Dispatching checked_state_changed event', { checklistId })
+        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          detail: {
+            checklistId: checklistId,
+            action: 'checked_state_changed',
+            source: 'shortcode_list'
+          }
+        }))
       }
     } catch (error) {
       console.error('Failed to save state:', error)

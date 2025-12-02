@@ -289,6 +289,16 @@ const KanbanBoard = ({ adminData }) => {
   const [ideaSubmissions, setIdeaSubmissions] = useState([])
   const [loadingIdeaSubmissions, setLoadingIdeaSubmissions] = useState(false)
 
+  // Column sync settings state
+  const [showColumnSyncModal, setShowColumnSyncModal] = useState(false)
+  const [columnSyncSettings, setColumnSyncSettings] = useState({
+    enabled: false,
+    done_column: '',
+    in_progress_column: '',
+    todo_column: ''
+  })
+  const [savingColumnSyncSettings, setSavingColumnSyncSettings] = useState(false)
+
   const { showSuccess, showError } = useToast()
 
   // Fetch checklists on mount
@@ -301,6 +311,7 @@ const KanbanBoard = ({ adminData }) => {
     if (selectedChecklist) {
       loadKanbanBoard()
       loadFeatureBoardSettings()
+      loadColumnSyncSettings()
     }
   }, [selectedChecklist])
 
@@ -348,9 +359,83 @@ const KanbanBoard = ({ adminData }) => {
     }
   }
 
+  // Apply column sync to reorganize items based on their checked/in-progress state
+  const applyColumnSyncToBoard = (boardData, syncSettings) => {
+    const isEnabled = syncSettings.enabled === true || syncSettings.enabled === 'true' || syncSettings.enabled === '1'
+    if (!isEnabled || !syncSettings.done_column || !syncSettings.todo_column) {
+      return boardData
+    }
+
+    // Collect all items from all columns
+    const allItems = []
+    boardData.forEach(column => {
+      column.items.forEach(item => {
+        allItems.push({ ...item, originalColumnId: column.id })
+      })
+    })
+
+    // Determine which columns are managed by sync
+    const managedColumns = [syncSettings.done_column, syncSettings.todo_column]
+    if (syncSettings.in_progress_column) {
+      managedColumns.push(syncSettings.in_progress_column)
+    }
+
+    // Create new board with items in correct columns based on state
+    const newBoard = boardData.map(column => ({
+      ...column,
+      items: allItems.filter(item => {
+        // Checked items go to done column
+        if (item.checked && column.id === syncSettings.done_column) {
+          return true
+        }
+        // In-progress items (not checked) go to in_progress column if configured
+        if (!item.checked && item.inProgress && syncSettings.in_progress_column && column.id === syncSettings.in_progress_column) {
+          return true
+        }
+        // Unchecked, non-in-progress items go to todo column
+        if (!item.checked && !item.inProgress && column.id === syncSettings.todo_column) {
+          return true
+        }
+        // If no in_progress_column configured, unchecked items (even if in-progress) go to todo
+        if (!item.checked && !syncSettings.in_progress_column && column.id === syncSettings.todo_column) {
+          return true
+        }
+        // Keep items in their original column if it's not a managed column
+        if (item.originalColumnId === column.id && !managedColumns.includes(column.id)) {
+          return true
+        }
+        return false
+      }).map(({ originalColumnId, ...item }) => item)
+    }))
+
+    console.log('[MCL DEBUG] KanbanBoard: Applied column sync to board')
+    return newBoard
+  }
+
   const loadKanbanBoard = async () => {
     setLoading(true)
     try {
+      // Fetch column sync settings first to ensure we have the latest
+      let syncSettings = columnSyncSettings
+      try {
+        const syncResponse = await fetch(adminData.ajaxurl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'mcl_get_column_sync_settings',
+            checklist_id: selectedChecklist,
+            nonce: adminData.nonces?.mcl_admin || ''
+          })
+        })
+        const syncData = await syncResponse.json()
+        if (syncData.success && syncData.data.settings) {
+          syncSettings = syncData.data.settings
+          setColumnSyncSettings(syncSettings)
+        }
+      } catch (syncError) {
+        console.error('Error loading column sync settings:', syncError)
+      }
+
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -363,7 +448,9 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        setBoard(data.data.board || [])
+        // Apply column sync if enabled to ensure items are in correct columns
+        const syncedBoard = applyColumnSyncToBoard(data.data.board || [], syncSettings)
+        setBoard(syncedBoard)
         setUsers(data.data.users || [])
       } else {
         showError(data.data || i18n.kanbanBoard?.errors?.loadBoardFailed || 'Failed to load Kanban board')
@@ -425,6 +512,61 @@ const KanbanBoard = ({ adminData }) => {
     } finally {
       setSavingFeatureBoardSettings(false)
     }
+  }
+
+  // Column Sync Settings functions
+  const loadColumnSyncSettings = async () => {
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_get_column_sync_settings',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || ''
+        })
+      })
+
+      const data = await response.json()
+      if (data.success && data.data.settings) {
+        setColumnSyncSettings(data.data.settings)
+      }
+    } catch (error) {
+      console.error('Error loading column sync settings:', error)
+    }
+  }
+
+  const saveColumnSyncSettings = async () => {
+    setSavingColumnSyncSettings(true)
+    try {
+      const response = await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_save_column_sync_settings',
+          checklist_id: selectedChecklist,
+          nonce: adminData.nonces?.mcl_admin || '',
+          ...columnSyncSettings
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(i18n.kanbanBoard?.columnSync?.settingsSaved || 'Column sync settings saved')
+        setShowColumnSyncModal(false)
+      } else {
+        showError(data.data?.message || i18n.kanbanBoard?.columnSync?.saveFailed || 'Failed to save settings')
+      }
+    } catch (error) {
+      console.error('Error saving column sync settings:', error)
+      showError(i18n.kanbanBoard?.columnSync?.saveFailed || 'Failed to save settings')
+    } finally {
+      setSavingColumnSyncSettings(false)
+    }
+  }
+
+  const openColumnSyncModal = () => {
+    setShowColumnSyncModal(true)
   }
 
   const loadIdeaSubmissions = async () => {
@@ -553,18 +695,17 @@ const KanbanBoard = ({ adminData }) => {
     })
     setBoard(newBoard)
 
-    // Update server
+    // Update server - save entire board structure to post meta
     try {
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_update_kanban_item',
+          action: 'mcl_save_kanban_board',
           checklist_id: selectedChecklist,
-          item_id: draggedItem.id,
-          column_id: targetColumnId,
-          position: newBoard.find(c => c.id === targetColumnId).items.length - 1,
-          nonce: adminData.nonces?.mcl_admin || ''
+          board: JSON.stringify(newBoard),
+          nonce: adminData.nonces?.mcl_admin || '',
+          context: 'admin'
         })
       })
 
@@ -1306,22 +1447,68 @@ const KanbanBoard = ({ adminData }) => {
 
   const toggleItemCheck = async (item, columnId) => {
     const newCheckedState = !item.checked
-    
-    // Update board optimistically
-    const newBoard = board.map(column => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          items: column.items.map(boardItem => {
-            if (boardItem.id === item.id) {
-              return { ...boardItem, checked: newCheckedState }
-            }
-            return boardItem
-          })
-        }
+
+    // Determine target column for auto-move if column sync is enabled
+    let targetColumnId = columnId
+    let shouldMoveColumn = false
+
+    // Convert enabled to boolean explicitly (in case it's a string "true"/"false")
+    const isEnabled = columnSyncSettings.enabled === true || columnSyncSettings.enabled === 'true' || columnSyncSettings.enabled === '1'
+
+    if (isEnabled) {
+      if (newCheckedState && columnSyncSettings.done_column) {
+        // Item is being checked - move to Done column
+        targetColumnId = columnSyncSettings.done_column
+        // Use string comparison to avoid type mismatch
+        shouldMoveColumn = String(columnId) !== String(targetColumnId)
+      } else if (!newCheckedState && columnSyncSettings.todo_column) {
+        // Item is being unchecked - move to To Do column
+        targetColumnId = columnSyncSettings.todo_column
+        // Use string comparison to avoid type mismatch
+        shouldMoveColumn = String(columnId) !== String(targetColumnId)
       }
-      return column
-    })
+    }
+
+    // Update board optimistically - update checked state and move if needed
+    let newBoard
+    if (shouldMoveColumn) {
+      // Remove from current column and add to target column
+      const updatedItem = { ...item, checked: newCheckedState }
+      newBoard = board.map(column => {
+        // Use string comparison to handle type mismatches
+        if (String(column.id) === String(columnId)) {
+          // Remove from source column
+          return {
+            ...column,
+            items: column.items.filter(boardItem => boardItem.id !== item.id)
+          }
+        }
+        if (String(column.id) === String(targetColumnId)) {
+          // Add to target column
+          return {
+            ...column,
+            items: [...column.items, updatedItem]
+          }
+        }
+        return column
+      })
+    } else {
+      // Just update the checked state in place
+      newBoard = board.map(column => {
+        if (column.id === columnId) {
+          return {
+            ...column,
+            items: column.items.map(boardItem => {
+              if (boardItem.id === item.id) {
+                return { ...boardItem, checked: newCheckedState }
+              }
+              return boardItem
+            })
+          }
+        }
+        return column
+      })
+    }
     setBoard(newBoard)
 
     // Get all checked items
@@ -1340,7 +1527,7 @@ const KanbanBoard = ({ adminData }) => {
       formData.append('checklist_id', selectedChecklist)
       formData.append('checked_items', JSON.stringify(checkedItems))
       formData.append('context', 'kanban')
-      
+
       // Use the correct nonce from window.mcl_checklists (same as ChecklistDrawer)
       const nonce = window.mcl_checklists?.nonce || ''
       if (nonce) {
@@ -1364,7 +1551,33 @@ const KanbanBoard = ({ adminData }) => {
 
       const data = await response.json()
       if (data.success) {
-        showSuccess(newCheckedState ? (i18n.kanbanBoard?.success?.itemChecked || 'Item checked') : (i18n.kanbanBoard?.success?.itemUnchecked || 'Item unchecked'))
+        // If we moved the item, also save the board structure
+        if (shouldMoveColumn) {
+          await fetch(adminData.ajaxurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              action: 'mcl_save_kanban_board',
+              checklist_id: selectedChecklist,
+              board: JSON.stringify(newBoard),
+              nonce: adminData.nonces?.mcl_admin || '',
+              context: 'admin'
+            })
+          })
+          showSuccess(i18n.kanbanBoard?.success?.itemCheckedAndMoved || (newCheckedState ? 'Item checked and moved' : 'Item unchecked and moved'))
+        } else {
+          showSuccess(newCheckedState ? (i18n.kanbanBoard?.success?.itemChecked || 'Item checked') : (i18n.kanbanBoard?.success?.itemUnchecked || 'Item unchecked'))
+        }
+
+        // Dispatch event to notify other views
+        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          detail: {
+            checklistId: selectedChecklist,
+            action: shouldMoveColumn ? 'item_checked_and_moved' : 'item_checked',
+            itemId: item.id,
+            source: 'kanban'
+          }
+        }))
       } else {
         showError(i18n.kanbanBoard?.errors?.updateItemStateFailed || 'Failed to update item state')
         loadKanbanBoard()
@@ -1428,6 +1641,17 @@ const KanbanBoard = ({ adminData }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 {i18n.kanbanBoard?.header?.featureBoardSettingsButton || 'Feature Board'}
+              </button>
+
+              {/* Column Sync Settings Button */}
+              <button
+                onClick={openColumnSyncModal}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {i18n.kanbanBoard?.header?.columnSyncSettingsButton || 'Column Sync'}
               </button>
 
               {/* Idea Submissions Button - only show if feature board is enabled */}
@@ -2359,6 +2583,143 @@ const KanbanBoard = ({ adminData }) => {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Column Sync Settings Modal */}
+      <Modal
+        isOpen={showColumnSyncModal}
+        onClose={() => setShowColumnSyncModal(false)}
+        title={i18n.kanbanBoard?.columnSync?.settingsTitle || 'Column Sync Settings'}
+        size="md"
+        footer={
+          <>
+            <button
+              onClick={() => setShowColumnSyncModal(false)}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+            >
+              {i18n.kanbanBoard?.modals?.cancelButton || 'Cancel'}
+            </button>
+            <button
+              onClick={saveColumnSyncSettings}
+              disabled={savingColumnSyncSettings}
+              className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {savingColumnSyncSettings
+                ? (i18n.kanbanBoard?.columnSync?.saving || 'Saving...')
+                : (i18n.kanbanBoard?.columnSync?.saveButton || 'Save Settings')
+              }
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {/* Enable Column Sync */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">
+                {i18n.kanbanBoard?.columnSync?.enableLabel || 'Enable Column Sync'}
+              </h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {i18n.kanbanBoard?.columnSync?.enableDescription || 'Automatically move items between columns based on their state'}
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={columnSyncSettings.enabled}
+                onChange={(e) => setColumnSyncSettings(prev => ({ ...prev, enabled: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 dark:peer-focus:ring-teal-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-teal-600"></div>
+            </label>
+          </div>
+
+          {columnSyncSettings.enabled && (
+            <>
+              {/* Info message */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  {i18n.kanbanBoard?.columnSync?.infoMessage || 'When enabled, checking/unchecking items will automatically move them to the configured columns.'}
+                </p>
+              </div>
+
+              {/* Done Column */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    {i18n.kanbanBoard?.columnSync?.doneColumnLabel || 'Done Column'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  {i18n.kanbanBoard?.columnSync?.doneColumnDescription || 'Items will move to this column when checked off'}
+                </p>
+                <select
+                  value={columnSyncSettings.done_column}
+                  onChange={(e) => setColumnSyncSettings(prev => ({ ...prev, done_column: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">{i18n.kanbanBoard?.columnSync?.selectColumn || 'Select a column...'}</option>
+                  {board.map(column => (
+                    <option key={column.id} value={column.id}>{column.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* To Do Column */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    {i18n.kanbanBoard?.columnSync?.todoColumnLabel || 'To Do Column'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  {i18n.kanbanBoard?.columnSync?.todoColumnDescription || 'Items will move to this column when unchecked'}
+                </p>
+                <select
+                  value={columnSyncSettings.todo_column}
+                  onChange={(e) => setColumnSyncSettings(prev => ({ ...prev, todo_column: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">{i18n.kanbanBoard?.columnSync?.selectColumn || 'Select a column...'}</option>
+                  {board.map(column => (
+                    <option key={column.id} value={column.id}>{column.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* In Progress Column (for future use) */}
+              <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    {i18n.kanbanBoard?.columnSync?.inProgressColumnLabel || 'In Progress Column'}
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                  {i18n.kanbanBoard?.columnSync?.inProgressColumnDescription || 'Items will move to this column when marked as in progress'}
+                </p>
+                <select
+                  value={columnSyncSettings.in_progress_column}
+                  onChange={(e) => setColumnSyncSettings(prev => ({ ...prev, in_progress_column: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">{i18n.kanbanBoard?.columnSync?.selectColumn || 'Select a column...'}</option>
+                  {board.map(column => (
+                    <option key={column.id} value={column.id}>{column.title}</option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
         </div>
       </Modal>
