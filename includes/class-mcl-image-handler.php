@@ -39,6 +39,8 @@ class MCL_Image_Handler {
         add_action('wp_ajax_nopriv_mcl_upload_image', array($this, 'handle_upload'));
         add_action('wp_ajax_mcl_get_uploaded_images', array($this, 'get_uploaded_images'));
         add_action('wp_ajax_nopriv_mcl_get_uploaded_images', array($this, 'get_uploaded_images'));
+        add_action('wp_ajax_mcl_get_account_images', array($this, 'get_account_images'));
+        add_action('wp_ajax_nopriv_mcl_get_account_images', array($this, 'get_account_images'));
 
         add_action('init', array($this, 'add_rewrite_rules'));
         add_filter('query_vars', array($this, 'add_query_vars'));
@@ -307,13 +309,94 @@ class MCL_Image_Handler {
             'eval(',
             'base64_decode('
         );
-    
+
         foreach ($suspicious_patterns as $pattern) {
             if (stripos($content, $pattern) !== false) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Get images from MagicDash account storage
+     *
+     * Fetches images uploaded to the user's MagicDash account.
+     * These images can be used across all connected WordPress sites.
+     */
+    public function get_account_images() {
+        try {
+            // Verify checklist access
+            $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+            if (!$checklist_id) {
+                wp_send_json_error(array('message' => 'Invalid checklist ID'));
+                return;
+            }
+
+            // Initialize Public class for permission check
+            $public = new MCL_Public();
+
+            // Handle stored token for invite users
+            if (isset($_POST['stored_token'])) {
+                $public->set_stored_token($_POST['stored_token']);
+            }
+
+            // Check if user has edit permission
+            if (!$public->has_permission($checklist_id, 'edit')) {
+                wp_send_json_error(array('message' => 'Permission denied'));
+                return;
+            }
+
+            // Get MagicProxy to make authenticated request to MagicDash
+            $proxy = new MCL_MagicProxy();
+
+            // Check if site is connected to MagicDash
+            if (!$proxy->is_connected()) {
+                wp_send_json_error(array(
+                    'message' => 'Site not connected to MagicDash',
+                    'not_connected' => true
+                ));
+                return;
+            }
+
+            // Fetch images from MagicDash API
+            $response = $proxy->request('GET', '/api/images?limit=50');
+
+            if (is_wp_error($response)) {
+                wp_send_json_error(array('message' => $response->get_error_message()));
+                return;
+            }
+
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+
+            if (!$data || !isset($data['success']) || !$data['success']) {
+                $error_msg = isset($data['error']) ? $data['error'] : 'Failed to fetch images from MagicDash';
+                wp_send_json_error(array('message' => $error_msg));
+                return;
+            }
+
+            // Transform the data to match expected format
+            $images = array();
+            if (isset($data['data']) && is_array($data['data'])) {
+                foreach ($data['data'] as $image) {
+                    $images[] = array(
+                        'url' => $image['url'],
+                        'filename' => $image['originalFilename'] ?? $image['filename'],
+                        'width' => $image['width'] ?? 200,
+                        'height' => $image['height'] ?? 200,
+                        'alt' => $image['alt'] ?? '',
+                        'source' => 'magicdash'
+                    );
+                }
+            }
+
+            wp_send_json_success($images);
+
+        } catch (Exception $e) {
+            error_log('MCL: Error getting MagicDash images: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Failed to get images from MagicDash'));
+        }
     }
 }
 

@@ -2340,25 +2340,40 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       
       // Handle checked state based on storage mode
       let finalCheckedState = data.checked_state || []
-      
+
       // For per-user checklists with logged-out users, check localStorage since server won't have state
       const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
       const isPublic = data.is_public
       const handlingMode = isPublic ? (data.checked_state_handling || 'per_user') : (data.checked_state_handling || 'global')
-      
+
+      // Check if a reset just happened - if so, clear localStorage and skip reading from it
+      const wasJustReset = data.reset_info?.enabled && data.reset_info?.was_reset
+
       if (handlingMode === 'per_user' && !isLoggedIn) {
-        // For per-user + logged-out, use localStorage as the primary source
-        try {
-          const localKey = `mcl_checked_${checklistId}`
-          const localState = localStorage.getItem(localKey)
-          if (localState) {
-            finalCheckedState = JSON.parse(localState)
+        const localKey = `mcl_checked_${checklistId}`
+
+        if (wasJustReset) {
+          // Reset happened - clear localStorage immediately and use empty state
+          try {
+            localStorage.removeItem(localKey)
+            console.log('MCL: Cleared localStorage during load due to reset for checklist', checklistId)
+          } catch (error) {
+            console.warn('MCL: Error clearing localStorage on reset:', error)
           }
-        } catch (error) {
-          console.warn('MCL Drawer: Error reading localStorage for per-user checklist:', error)
+          finalCheckedState = []
+        } else {
+          // No reset - use localStorage as the primary source
+          try {
+            const localState = localStorage.getItem(localKey)
+            if (localState) {
+              finalCheckedState = JSON.parse(localState)
+            }
+          } catch (error) {
+            console.warn('MCL Drawer: Error reading localStorage for per-user checklist:', error)
+          }
         }
       }
-      
+
       setCheckedItems(finalCheckedState)
 
       // Initialize deadlines if present
@@ -2598,6 +2613,36 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       const { reset_info } = checklistData
       
       if (reset_info.enabled && reset_info.was_reset) {
+        // Get the checklist ID from the data (more reliable than state variable)
+        const resetChecklistId = checklistData.id || checklistData.checklist_id || currentChecklistId
+
+        // Clear localStorage for logged-out users (per-user mode stores state in localStorage)
+        try {
+          // Drawer localStorage key
+          const drawerKey = `mcl_checked_${resetChecklistId}`
+          localStorage.removeItem(drawerKey)
+
+          // Also clear any shortcode localStorage keys for this checklist
+          // Shortcode keys follow pattern: mcl_shortcode_${checklistId}_${instanceId}_checked
+          const shortcodePrefix = `mcl_shortcode_${resetChecklistId}_`
+          const keysToRemove = []
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (key && key.startsWith(shortcodePrefix)) {
+              keysToRemove.push(key)
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key))
+
+          console.log('MCL: Cleared localStorage for checklist', resetChecklistId, '(removed', keysToRemove.length, 'shortcode keys)')
+        } catch (error) {
+          console.warn('MCL: Error clearing localStorage on reset:', error)
+        }
+
+        // Also clear the in-memory checked state
+        setCheckedItems([])
+        setInProgressItems([])
+
         // Show reset notification
         const notification = document.createElement('div')
         notification.className = 'fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded shadow-lg z-50'
@@ -2651,10 +2696,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
 
-      console.log('[MCL DEBUG] ChecklistDrawer: Saving in-progress state', { checklistId: currentChecklistId, newItems })
       saveInProgressState(newItems).then(() => {
         // Dispatch event to notify other views that in-progress state changed
-        console.log('[MCL DEBUG] ChecklistDrawer: Dispatching in_progress_changed event', { checklistId: currentChecklistId })
         window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
           detail: {
             checklistId: currentChecklistId,
@@ -2804,11 +2847,9 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
     
     if (currentChecklistId) {
-      console.log('[MCL DEBUG] ChecklistDrawer: Saving checked state', { checklistId: currentChecklistId, newCheckedItems })
       await saveCheckedState(currentChecklistId, newCheckedItems, 'drawer', checklistData)
 
       // Dispatch event to notify other views that checked state changed
-      console.log('[MCL DEBUG] ChecklistDrawer: Dispatching checked_state_changed event', { checklistId: currentChecklistId })
       window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
         detail: {
           checklistId: currentChecklistId,
@@ -3833,18 +3874,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     const handleChecklistDataChanged = (event) => {
       const { checklistId, action, source } = event.detail || {}
 
-      console.log('[MCL DEBUG] ChecklistDrawer received event:', {
-        eventChecklistId: checklistId,
-        currentChecklistId,
-        action,
-        source,
-        isVisible,
-        willRefresh: checklistId && String(checklistId) === String(currentChecklistId) && source !== 'drawer' && isVisible
-      })
-
       // Only refresh if this is the currently open checklist and the change came from another source
       if (checklistId && String(checklistId) === String(currentChecklistId) && source !== 'drawer' && isVisible) {
-        console.log('[MCL DEBUG] ChecklistDrawer: Calling refreshCurrentChecklist()')
         refreshCurrentChecklist()
       }
     }

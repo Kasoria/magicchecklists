@@ -63,16 +63,71 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   const [tooltip, setTooltip] = useState(null)
   const [tooltipTimer, setTooltipTimer] = useState(null)
   
+  // Deadline modal state
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false)
+  const [deadlineModalItemId, setDeadlineModalItemId] = useState(null)
+  const [deadlineModalValue, setDeadlineModalValue] = useState('')
+
+  // Effect to set deadline modal value when modal opens (matching drawer behavior)
+  useEffect(() => {
+    console.log('[DeadlineModal] useEffect triggered:', {
+      showDeadlineModal,
+      deadlineModalItemId,
+      itemDeadlinesKeys: Object.keys(itemDeadlines),
+      itemDeadlines: itemDeadlines,
+      itemsCount: items.length
+    })
+
+    if (showDeadlineModal && deadlineModalItemId) {
+      const deadlineFromState = itemDeadlines[deadlineModalItemId]
+      const itemWithDeadline = items.find(item => item.id === deadlineModalItemId)
+      const deadlineFromItem = itemWithDeadline?.deadline
+      const currentDeadline = deadlineFromState || deadlineFromItem
+
+      console.log('[DeadlineModal] Looking for deadline:', {
+        deadlineModalItemId,
+        deadlineFromState,
+        deadlineFromItem,
+        currentDeadline,
+        itemFound: !!itemWithDeadline,
+        itemData: itemWithDeadline
+      })
+
+      if (currentDeadline) {
+        // Convert UTC timestamp to local browser time for datetime-local input
+        const date = new Date(currentDeadline * 1000)
+
+        // Format for datetime-local input (uses local timezone)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+
+        const formattedValue = `${year}-${month}-${day}T${hours}:${minutes}`
+        console.log('[DeadlineModal] Setting value:', formattedValue)
+        setDeadlineModalValue(formattedValue)
+      } else {
+        console.log('[DeadlineModal] No deadline found, clearing value')
+        setDeadlineModalValue('')
+      }
+    }
+  }, [showDeadlineModal, deadlineModalItemId, itemDeadlines, items])
+
   // Image management state
   const [showImageModal, setShowImageModal] = useState(null) // 'choice', 'upload', or null
   const [currentImageItem, setCurrentImageItem] = useState(null)
   const [existingImages, setExistingImages] = useState([])
+  const [accountImages, setAccountImages] = useState([])
+  const [accountImagesError, setAccountImagesError] = useState(null)
   const [loadingImages, setLoadingImages] = useState(false)
+  const [loadingAccountImages, setLoadingAccountImages] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
+  const [imageTab, setImageTab] = useState('upload') // 'upload', 'local', 'account'
 
   // Tour connections state (optimized batch fetching)
   const [tourConnections, setTourConnections] = useState({})
@@ -159,15 +214,22 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     const deadlines = {}
     const inProgress = []
 
+    console.log('[DeadlineModal] Loading deadlines from items:', {
+      itemsCount: items.length,
+      items: items.map(item => ({ id: item.id, deadline: item.deadline, content: item.content?.substring(0, 30) }))
+    })
+
     items.forEach(item => {
       if (item.deadline) {
         deadlines[item.id] = item.deadline
+        console.log('[DeadlineModal] Found deadline for item:', item.id, item.deadline)
       }
       if (item.in_progress) {
         inProgress.push(item.id)
       }
     })
 
+    console.log('[DeadlineModal] Setting itemDeadlines:', deadlines)
     setItemDeadlines(deadlines)
     setInProgressItems(inProgress)
   }, [items])
@@ -361,47 +423,61 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     }
   }
 
-  // Handle deadline click
+  // Handle deadline click - opens modal
   const handleDeadlineClick = (itemId) => {
-    // Find current deadline
-    const currentItem = items.find(item => item.id === itemId)
-    const existingDeadline = currentItem?.deadline
+    console.log('[DeadlineModal] handleDeadlineClick called:', {
+      itemId,
+      currentItemDeadlines: itemDeadlines,
+      deadlineForItem: itemDeadlines[itemId]
+    })
+    setDeadlineModalItemId(itemId)
+    setShowDeadlineModal(true)
+    // Note: useEffect handles setting deadlineModalValue when modal opens
+  }
 
-    // Create simple prompt for now (can be enhanced with modal later)
-    const newDeadline = prompt(
-      t.modals?.deadlinePrompt?.enterDeadline || 'Enter deadline (YYYY-MM-DD HH:MM):', 
-      existingDeadline ? new Date(existingDeadline * 1000).toISOString().slice(0, 16) : ''
-    )
-    
-    if (newDeadline !== null) {
-      if (newDeadline === '') {
-        // Remove deadline
-        setItemDeadlines(prev => {
-          const newDeadlines = { ...prev }
-          delete newDeadlines[itemId]
-          return newDeadlines
-        })
-        // Update item
-        updateItemField(itemId, 'deadline', null)
-        // Save to server immediately
-        if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
-          saveDeadlineToServer(itemId, '')
-        }
-      } else {
-        // Set new deadline
-        const timestamp = Math.floor(new Date(newDeadline).getTime() / 1000)
-        setItemDeadlines(prev => ({
-          ...prev,
-          [itemId]: timestamp
-        }))
-        // Update item
-        updateItemField(itemId, 'deadline', timestamp)
-        // Save to server immediately
-        if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
-          saveDeadlineToServer(itemId, timestamp)
-        }
+  // Handle deadline modal save
+  const handleDeadlineModalSave = (newDeadline) => {
+    const itemId = deadlineModalItemId
+
+    if (newDeadline === null || newDeadline === '') {
+      // Remove deadline
+      setItemDeadlines(prev => {
+        const newDeadlines = { ...prev }
+        delete newDeadlines[itemId]
+        return newDeadlines
+      })
+      // Update item
+      updateItemField(itemId, 'deadline', null)
+      // Save to server immediately
+      if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
+        saveDeadlineToServer(itemId, '')
+      }
+    } else {
+      // Set new deadline
+      const timestamp = Math.floor(new Date(newDeadline).getTime() / 1000)
+      setItemDeadlines(prev => ({
+        ...prev,
+        [itemId]: timestamp
+      }))
+      // Update item
+      updateItemField(itemId, 'deadline', timestamp)
+      // Save to server immediately
+      if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
+        saveDeadlineToServer(itemId, timestamp)
       }
     }
+
+    // Close modal
+    setShowDeadlineModal(false)
+    setDeadlineModalItemId(null)
+    setDeadlineModalValue('')
+  }
+
+  // Close deadline modal without saving
+  const closeDeadlineModal = () => {
+    setShowDeadlineModal(false)
+    setDeadlineModalItemId(null)
+    setDeadlineModalValue('')
   }
 
   // Save deadline to server
@@ -517,7 +593,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     return (
       <button
         type="button"
-        className="p-2 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+        className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors duration-200"
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
@@ -621,6 +697,35 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   }
 
   const handleKeyDown = (e, index) => {
+    // Handle Shift+Enter for line break within the item
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault()
+
+      // Insert a <br> element at the cursor position for line break
+      const selection = window.getSelection()
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0)
+        range.deleteContents()
+
+        // Create and insert <br> element
+        const br = document.createElement('br')
+        range.insertNode(br)
+
+        // Move cursor after the <br>
+        range.setStartAfter(br)
+        range.setEndAfter(br)
+        selection.removeAllRanges()
+        selection.addRange(range)
+
+        // Update the item content
+        const contentDiv = itemRefs.current[items[index].id]
+        if (contentDiv) {
+          handleContentEdit(index, contentDiv.innerHTML)
+        }
+      }
+      return
+    }
+
     // Handle Enter key to add new items
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -629,7 +734,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       const newItems = [...items]
       newItems.splice(index + 1, 0, newItem)
       onChange(newItems)
-      
+
       // Focus the new item
       setTimeout(() => {
         const newItemElement = itemRefs.current[newItem.id]
@@ -638,7 +743,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         }
       }, 100)
     }
-    
+
     if ((e.metaKey || e.ctrlKey) && (e.key === 'a' || e.key === 'A')) {
       setTimeout(() => {
         const selection = window.getSelection();
@@ -855,10 +960,59 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     setShowImageModal(null)
     setCurrentImageItem(null)
     setExistingImages([])
+    setAccountImages([])
+    setAccountImagesError(null)
     setSelectedImageFile(null)
     setImagePreview(null)
     setSelectedExistingImage(null)
     setImageError(null)
+    setImageTab('upload')
+  }
+
+  const loadAccountImages = async () => {
+    if (!checklistId) return
+    setLoadingAccountImages(true)
+    setAccountImagesError(null)
+    try {
+      const formData = new FormData()
+      formData.append('action', 'mcl_get_account_images')
+      formData.append('checklist_id', checklistId)
+
+      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      if (nonce) {
+        formData.append('nonce', nonce)
+      }
+
+      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success) {
+        setAccountImages(result.data || [])
+      } else {
+        if (result.data?.not_connected) {
+          setAccountImagesError(t.alerts?.notConnectedToMagicDash || 'Site not connected to MagicDash. Connect your site to access account images.')
+        } else {
+          setAccountImagesError(result.data?.message || 'Failed to load account images')
+        }
+        setAccountImages([])
+      }
+    } catch (error) {
+      console.error('Error loading account images:', error)
+      setAccountImagesError(t.alerts?.failedToLoadAccountImages || 'Failed to load account images')
+      setAccountImages([])
+    } finally {
+      setLoadingAccountImages(false)
+    }
   }
 
   const openMediaLibrary = () => {
@@ -1549,15 +1703,15 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
           </div>
 
           {/* Action Buttons - Show on hover */}
-          <div className="absolute right-2 top-2 flex flex-col items-center space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-[50%] translate-y-[-50%] right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 grid grid-cols-2 gap-1 bg-white rounded-md shadow-sm border p-1 z-10">
             {/* In Progress Button */}
             <button
               type="button"
               onClick={() => toggleInProgress(item.id)}
-              className={`p-2 rounded transition-colors ${
-                isInProgress 
-                  ? 'text-emerald-600 bg-emerald-100 hover:bg-emerald-200' 
-                  : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+              className={`w-7 h-7 flex items-center justify-center rounded transition-colors duration-200 ${
+                isInProgress
+                  ? 'text-emerald-600 hover:bg-emerald-100'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-gray-100'
               }`}
               onMouseEnter={(e) => showTooltip(e.target, isInProgress ? (t.tooltips?.removeFromInProgress || 'Remove from in progress') : (t.tooltips?.markAsInProgress || 'Mark as in progress'))}
               onMouseLeave={hideTooltip}
@@ -1578,7 +1732,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             <button
               type="button"
               onClick={() => handleDeadlineClick(item.id)}
-              className="p-2 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded transition-colors duration-200"
               onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.setDeadline || 'Set deadline')}
               onMouseLeave={hideTooltip}
               title={t.tooltips?.setDeadline || 'Set deadline'}
@@ -1599,7 +1753,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             <button
               type="button"
               onClick={() => handleAddImage(index)}
-              className="p-2 rounded text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+              className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-purple-600 hover:bg-gray-100 rounded transition-colors duration-200"
               onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.addImage || 'Add image')}
               onMouseLeave={hideTooltip}
               title={t.tooltips?.addImage || 'Add image'}
@@ -1619,10 +1773,10 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               <button
                 type="button"
                 onClick={() => updateItem(index, 'locked', !item.locked)}
-                className={`p-2 rounded transition-colors ${
-                  item.locked 
-                    ? 'text-orange-600 bg-orange-100 hover:bg-orange-200' 
-                    : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
+                className={`w-7 h-7 flex items-center justify-center rounded transition-colors duration-200 ${
+                  item.locked
+                    ? 'text-orange-600 hover:bg-orange-100'
+                    : 'text-gray-600 hover:text-orange-600 hover:bg-gray-100'
                 }`}
                 onMouseEnter={(e) => showTooltip(e.target, item.locked ? (t.tooltips?.unlockItem || 'Unlock item') : (t.tooltips?.lockItem || 'Lock item'))}
                 onMouseLeave={hideTooltip}
@@ -1643,7 +1797,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="p-2 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded transition-colors duration-200"
                 onMouseEnter={(e) => showTooltip(e.target, t.tooltips?.removeItem || 'Remove item')}
                 onMouseLeave={hideTooltip}
                 title={t.tooltips?.removeItem || 'Remove item'}
@@ -1696,6 +1850,58 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
         </div>
       )}
 
+      {/* Deadline Modal */}
+      <Modal
+        isOpen={showDeadlineModal}
+        onClose={closeDeadlineModal}
+        title={t.modals?.deadlineModal?.setDeadlineTitle || 'Set Item Deadline'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t.modals?.deadlineModal?.deadlineDateTimeLabel || 'Deadline Date & Time'}
+            </label>
+            <input
+              type="datetime-local"
+              value={deadlineModalValue}
+              onChange={(e) => setDeadlineModalValue(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {t.modals?.deadlineModal?.leaveEmptyHint || 'Leave empty to remove deadline'}
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-between items-center mt-6">
+          <button
+            type="button"
+            className="px-4 py-2 text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors"
+            onClick={() => {
+              handleDeadlineModalSave(null)
+            }}
+            disabled={!deadlineModalValue}
+          >
+            {t.modals?.deadlineModal?.clearDeadline || 'Clear Deadline'}
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              onClick={closeDeadlineModal}
+            >
+              {t.modals?.buttons?.cancel || 'Cancel'}
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => handleDeadlineModalSave(deadlineModalValue)}
+            >
+              {t.modals?.deadlineModal?.saveDeadline || 'Save Deadline'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Image Choice Modal */}
       {showImageModal === 'choice' && (
         <Modal isOpen={true} onClose={closeImageModal} title={t.modals?.imageModal?.insertImage || 'Insert Image'}>
@@ -1728,21 +1934,21 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
       {/* Image Upload Modal */}
       {showImageModal === 'upload' && (
-        <Modal 
-          isOpen={true} 
-          onClose={closeImageModal} 
-          title={t.modals?.imageModal?.uploadOrSelect || 'Upload or Select Image'} 
+        <Modal
+          isOpen={true}
+          onClose={closeImageModal}
+          title={t.modals?.imageModal?.uploadOrSelect || 'Upload or Select Image'}
           className="max-w-2xl"
           actions={
             <div className="flex justify-between w-full">
-              <button 
+              <button
                 type="button"
                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
                 onClick={closeImageModal}
               >
                 {t.modals?.imageModal?.cancel || 'Cancel'}
               </button>
-              <button 
+              <button
                 type="button"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
                 onClick={() => {
@@ -1763,37 +1969,61 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
           <div>
             {/* Tabs */}
             <div className="flex border-b border-gray-200 mb-4">
-              <button 
+              <button
                 type="button"
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  !existingImages.length || existingImages.length === 0
+                  imageTab === 'upload'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={() => setExistingImages([])}
+                onClick={() => {
+                  setImageTab('upload')
+                  setSelectedExistingImage(null)
+                }}
               >
-{t.modals?.imageModal?.uploadNew || 'Upload New'}
+                {t.modals?.imageModal?.uploadNew || 'Upload New'}
               </button>
-              <button 
+              <button
                 type="button"
                 className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  existingImages.length > 0
+                  imageTab === 'local'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
-                onClick={loadExistingImages}
+                onClick={() => {
+                  setImageTab('local')
+                  setSelectedImageFile(null)
+                  setImagePreview(null)
+                  loadExistingImages()
+                }}
               >
-{t.modals?.imageModal?.selectExisting || 'Select Existing'}
+                {t.modals?.imageModal?.siteImages || 'Site Images'}
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                  imageTab === 'account'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => {
+                  setImageTab('account')
+                  setSelectedImageFile(null)
+                  setImagePreview(null)
+                  loadAccountImages()
+                }}
+              >
+                {t.modals?.imageModal?.accountImages || 'Account Images'}
               </button>
             </div>
 
             {/* Upload Tab */}
-            {(!existingImages.length || existingImages.length === 0) && (
+            {imageTab === 'upload' && (
               <div>
-                <div 
+                <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
                   onDragOver={e => { e.preventDefault() }}
-                  onDrop={e => { 
+                  onDrop={e => {
                     e.preventDefault()
                     if (e.dataTransfer.files[0]) {
                       handleFileSelect(e.dataTransfer.files[0])
@@ -1820,7 +2050,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                   ) : (
                     <div className="relative">
                       <img src={imagePreview} alt="Preview" className="max-w-full h-auto rounded-md" />
-                      <button 
+                      <button
                         className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-opacity-70 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation()
@@ -1843,19 +2073,19 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               </div>
             )}
 
-            {/* Select Tab */}
-            {existingImages.length > 0 && (
+            {/* Site Images Tab (Local) */}
+            {imageTab === 'local' && (
               <div>
                 {loadingImages ? (
                   <div className="text-center py-8 text-gray-500">{t.modals?.imageModal?.loadingImages || 'Loading images...'}</div>
-                ) : (
+                ) : existingImages.length > 0 ? (
                   <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
                     {existingImages.map((image) => (
                       <div
                         key={image.url}
                         className={`border-2 rounded-lg cursor-pointer transition-colors ${
-                          selectedExistingImage === image 
-                            ? 'border-blue-500 bg-blue-50' 
+                          selectedExistingImage === image
+                            ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => setSelectedExistingImage(image)}
@@ -1867,6 +2097,53 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    {t.modals?.imageModal?.noSiteImages || 'No images uploaded to this site yet'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Account Images Tab (MagicDash) */}
+            {imageTab === 'account' && (
+              <div>
+                {loadingAccountImages ? (
+                  <div className="text-center py-8 text-gray-500">{t.modals?.imageModal?.loadingImages || 'Loading images...'}</div>
+                ) : accountImagesError ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 mb-4">{accountImagesError}</div>
+                    <p className="text-sm text-gray-400">
+                      {t.modals?.imageModal?.accountImagesDescription || 'Account images are stored in your MagicDash account and can be used across all your connected sites.'}
+                    </p>
+                  </div>
+                ) : accountImages.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                    {accountImages.map((image) => (
+                      <div
+                        key={image.url}
+                        className={`border-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedExistingImage === image
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => setSelectedExistingImage(image)}
+                      >
+                        <img src={image.url} alt={image.filename} className="w-full h-24 object-cover rounded-t-md" />
+                        <div className="p-2">
+                          <p className="text-xs font-medium text-gray-800 truncate">{image.filename}</p>
+                          <p className="text-xs text-gray-500">{image.width}×{image.height}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 mb-2">{t.modals?.imageModal?.noAccountImages || 'No images in your account yet'}</div>
+                    <p className="text-sm text-gray-400">
+                      {t.modals?.imageModal?.uploadToAccount || 'Upload images to your MagicDash account to use them across all your sites.'}
+                    </p>
                   </div>
                 )}
               </div>

@@ -1558,20 +1558,24 @@ class MCL_Public {
         if ($handling === 'per_user') {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                $result = get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true) ?: array();
-                error_log('[MCL DEBUG] get_checked_state: per_user mode, user_id=' . $user_id . ', checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
-                return $result;
+                $user_state = get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true);
+                // If user has their own state, use it; otherwise fall back to global state
+                // This allows API-pushed state to serve as a baseline for new users
+                if ($user_state !== '' && $user_state !== false) {
+                    return $user_state ?: array();
+                }
+                // Fall back to global checked state (pushed from API/admin)
+                return get_post_meta($checklist_id, '_mcl_checked_state', true) ?: array();
             } else {
-                error_log('[MCL DEBUG] get_checked_state: per_user mode, not logged in, returning empty');
-                return array();
+                // For non-logged-in users in per_user mode, return global state as baseline
+                // (they can't save their own state anyway without being logged in)
+                return get_post_meta($checklist_id, '_mcl_public_global_checked_state', true) ?: array();
             }
         }
 
         // Global handling mode - use same key for all contexts to ensure sync
         $meta_key = '_mcl_checked_state';
-        $result = get_post_meta($checklist_id, $meta_key, true) ?: array();
-        error_log('[MCL DEBUG] get_checked_state: global mode, checklist_id=' . $checklist_id . ', context=' . $context . ', meta_key=' . $meta_key . ', result=' . print_r($result, true));
-        return $result;
+        return get_post_meta($checklist_id, $meta_key, true) ?: array();
     }
 
     private function get_in_progress_state($checklist_id, $context = 'drawer') {
@@ -1580,19 +1584,14 @@ class MCL_Public {
         if ($handling === 'per_user') {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                $result = get_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, true) ?: array();
-                error_log('[MCL DEBUG] get_in_progress_state: per_user mode, user_id=' . $user_id . ', checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
-                return $result;
+                return get_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, true) ?: array();
             } else {
-                error_log('[MCL DEBUG] get_in_progress_state: per_user mode, not logged in, returning empty');
                 return array();
             }
         }
 
         // Global handling mode
-        $result = get_post_meta($checklist_id, '_mcl_items_in_progress', true) ?: array();
-        error_log('[MCL DEBUG] get_in_progress_state: global mode, checklist_id=' . $checklist_id . ', context=' . $context . ', result=' . print_r($result, true));
-        return $result;
+        return get_post_meta($checklist_id, '_mcl_items_in_progress', true) ?: array();
     }
 
     public function save_checked_state() {
@@ -1621,20 +1620,16 @@ class MCL_Public {
         
         // Sanitize the items
         $checked_items = array_map('sanitize_text_field', $checked_items);
-        
+
         $old_checked_items = $this->get_checked_state($checklist_id, $context);
         $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
 
-        error_log('[MCL DEBUG] save_checked_state: checklist_id=' . $checklist_id . ', context=' . $context . ', handling=' . $checked_state_handling . ', items=' . print_r($checked_items, true));
-
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            error_log('[MCL DEBUG] save_checked_state: Saving to user_meta, user_id=' . $user_id . ', meta_key=_mcl_' . $context . '_checked_state_' . $checklist_id);
             update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
         } else if ($checked_state_handling === 'global') {
             // Use same key for all contexts to ensure sync across views
             $meta_key = '_mcl_checked_state';
-            error_log('[MCL DEBUG] save_checked_state: Saving to post_meta, meta_key=' . $meta_key);
             update_post_meta($checklist_id, $meta_key, $checked_items);
         } else if ($checked_state_handling === 'per_user' && !is_user_logged_in()) {
             // Per-user checklists with logged-out users should use localStorage on client side
@@ -1738,24 +1733,31 @@ class MCL_Public {
 
     // Token handling methods now handled by MCL_Permissions class
 
-    private function check_and_handle_reset($checklist_id) {
+    public function check_and_handle_reset($checklist_id) {
         try {
             $auto_reset = get_post_meta($checklist_id, '_mcl_auto_reset', true);
             if (!$auto_reset) {
                 return false;
             }
-    
+
             $next_reset = get_post_meta($checklist_id, '_mcl_reset_next', true);
             if (!$next_reset) {
                 return false;
             }
-    
-            $now = current_time('timestamp');
-    
+
+            // Use time() instead of current_time('timestamp') because:
+            // - DateTime::getTimestamp() in calculate_next_reset_time() returns true UTC timestamp
+            // - current_time('timestamp') returns WordPress local time as a pseudo-timestamp
+            // - Using time() ensures both are in true UTC for correct comparison
+            $now = time();
+
+            error_log("MCL RESET DEBUG: check_and_handle_reset for checklist {$checklist_id}: now={$now}, next_reset={$next_reset}, diff=" . ($next_reset - $now) . "s");
+
             if ($now >= $next_reset) {
+                error_log("MCL RESET DEBUG: Time condition met! Triggering reset...");
                 return $this->perform_checklist_reset($checklist_id);
             }
-    
+
             return false;
         } catch (Exception $e) {
             error_log('Error in check_and_handle_reset: ' . $e->getMessage());
@@ -1765,6 +1767,8 @@ class MCL_Public {
     
     private function perform_checklist_reset($checklist_id) {
         try {
+            error_log("MCL RESET DEBUG: ========== Starting reset for checklist {$checklist_id} ==========");
+
             $reset_interval = get_post_meta($checklist_id, '_mcl_reset_interval', true) ?: 'daily';
             $reset_time = get_post_meta($checklist_id, '_mcl_reset_time', true) ?: '00:00';
     
@@ -1827,17 +1831,82 @@ class MCL_Public {
             $reset_counter = intval(get_post_meta($checklist_id, '_mcl_reset_counter', true)) ?: 1;
             update_post_meta($checklist_id, '_mcl_reset_counter', $reset_counter + 1);
     
-            $checked_state_handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true);
-            if ($checked_state_handling === 'global') {
-                update_post_meta($checklist_id, '_mcl_checked_state', array());
+            // Check if public access is enabled - if so, use public checked state handling setting
+            $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+            error_log("MCL RESET DEBUG: is_public = " . ($is_public ? 'true' : 'false'));
+
+            if ($is_public) {
+                // Public access enabled - use public checked state handling setting (defaults to per_user)
+                $checked_state_handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
             } else {
-                global $wpdb;
-                $meta_key_pattern = $wpdb->esc_like('_mcl_checked_state_' . $checklist_id) . '%';
-                $wpdb->delete(
-                    $wpdb->usermeta,
-                    array('meta_key' => $meta_key_pattern)
-                );
+                // Not public - use regular checked state handling setting (defaults to global)
+                $checked_state_handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
             }
+            error_log("MCL RESET DEBUG: checked_state_handling = '{$checked_state_handling}'");
+
+            if ($checked_state_handling === 'global') {
+                error_log("MCL RESET DEBUG: Using GLOBAL mode - clearing post meta");
+                // Clear both regular and public global checked state
+                update_post_meta($checklist_id, '_mcl_checked_state', array());
+                update_post_meta($checklist_id, '_mcl_public_global_checked_state', array());
+                update_post_meta($checklist_id, '_mcl_items_in_progress', array());
+            } else {
+                error_log("MCL RESET DEBUG: Using PER-USER mode - deleting user meta");
+                global $wpdb;
+
+                // First, let's see what user meta exists for this checklist
+                $existing_meta = $wpdb->get_results($wpdb->prepare(
+                    "SELECT umeta_id, user_id, meta_key, meta_value FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+                    '%_' . $checklist_id
+                ));
+                error_log("MCL RESET DEBUG: Found " . count($existing_meta) . " existing user meta entries for checklist {$checklist_id}");
+                foreach ($existing_meta as $meta) {
+                    error_log("MCL RESET DEBUG:   - umeta_id={$meta->umeta_id}, user_id={$meta->user_id}, meta_key={$meta->meta_key}");
+                }
+
+                // Delete all per-user checked states and in-progress states for all contexts
+                // Using explicit context list to avoid LIKE pattern escaping issues with $wpdb->prepare()
+                $contexts = array('drawer', 'shortcode', 'kanban');
+
+                foreach ($contexts as $context) {
+                    // Delete checked state for this context
+                    $checked_meta_key = '_mcl_' . $context . '_checked_state_' . $checklist_id;
+                    error_log("MCL RESET DEBUG: Deleting meta_key = '{$checked_meta_key}'");
+                    $deleted_checked = $wpdb->query($wpdb->prepare(
+                        "DELETE FROM {$wpdb->usermeta} WHERE meta_key = %s",
+                        $checked_meta_key
+                    ));
+                    error_log("MCL RESET DEBUG:   -> Deleted {$deleted_checked} rows");
+
+                    // Delete in-progress state for this context
+                    $in_progress_meta_key = '_mcl_' . $context . '_in_progress_' . $checklist_id;
+                    error_log("MCL RESET DEBUG: Deleting meta_key = '{$in_progress_meta_key}'");
+                    $deleted_progress = $wpdb->query($wpdb->prepare(
+                        "DELETE FROM {$wpdb->usermeta} WHERE meta_key = %s",
+                        $in_progress_meta_key
+                    ));
+                    error_log("MCL RESET DEBUG:   -> Deleted {$deleted_progress} rows");
+                }
+
+                // Verify deletion worked
+                $remaining_meta = $wpdb->get_results($wpdb->prepare(
+                    "SELECT umeta_id, user_id, meta_key FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+                    '%_' . $checklist_id
+                ));
+                error_log("MCL RESET DEBUG: After deletion, " . count($remaining_meta) . " user meta entries remain");
+                foreach ($remaining_meta as $meta) {
+                    error_log("MCL RESET DEBUG:   - REMAINING: umeta_id={$meta->umeta_id}, meta_key={$meta->meta_key}");
+                }
+
+                // Also clear the fallback post meta to prevent get_checked_state() from returning old data
+                // (get_checked_state falls back to these when user meta doesn't exist)
+                error_log("MCL RESET DEBUG: Clearing fallback post meta");
+                update_post_meta($checklist_id, '_mcl_checked_state', array());
+                update_post_meta($checklist_id, '_mcl_public_global_checked_state', array());
+                update_post_meta($checklist_id, '_mcl_items_in_progress', array());
+            }
+
+            error_log("MCL RESET DEBUG: ========== Reset complete for checklist {$checklist_id} ==========");
     
             return true;
         } catch (Exception $e) {
@@ -1982,14 +2051,10 @@ class MCL_Public {
             // Respect per-user mode like checked state handling
             $checked_state_handling = $this->get_checked_state_handling($checklist_id, $context);
 
-            error_log('[MCL DEBUG] save_in_progress_state: checklist_id=' . $checklist_id . ', context=' . $context . ', handling=' . $checked_state_handling . ', items=' . print_r($items_in_progress, true));
-
             if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                error_log('[MCL DEBUG] save_in_progress_state: Saving to user_meta, user_id=' . $user_id . ', meta_key=_mcl_' . $context . '_in_progress_' . $checklist_id);
                 update_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, $items_in_progress);
             } else if ($checked_state_handling === 'global') {
-                error_log('[MCL DEBUG] save_in_progress_state: Saving to post_meta');
                 update_post_meta($checklist_id, '_mcl_items_in_progress', $items_in_progress);
             }
             // For per-user mode with logged-out users, client handles via localStorage
@@ -2241,6 +2306,17 @@ class MCL_Public {
         $checked_state = $this->get_checked_state($checklist_id, $context);
         $in_progress_state = $this->get_in_progress_state($checklist_id, $context);
 
+        // Get deadlines for items
+        $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+
+        // Create priority map from checklist items
+        $priority_map = array();
+        foreach ($checklist_items as $item) {
+            if (isset($item['priority'])) {
+                $priority_map[$item['id']] = $item['priority'];
+            }
+        }
+
         // If no board exists, create a default structure from checklist items
         if (!$board || !is_array($board) || empty($board)) {
             // Map items to board structure
@@ -2252,7 +2328,9 @@ class MCL_Public {
                     'checked' => in_array($item['id'], $checked_state),
                     'inProgress' => in_array($item['id'], $in_progress_state),
                     'comment_count' => 0,
-                    'assigned_user' => null
+                    'assigned_user' => null,
+                    'priority' => isset($item['priority']) ? $item['priority'] : 'none',
+                    'deadline' => isset($deadlines[$item['id']]) ? $deadlines[$item['id']] : null
                 );
             }
 
@@ -2299,7 +2377,9 @@ class MCL_Public {
                         'checked' => in_array($item['id'], $checked_state),
                         'inProgress' => in_array($item['id'], $in_progress_state),
                         'comment_count' => 0,
-                        'assigned_user' => null
+                        'assigned_user' => null,
+                        'priority' => isset($item['priority']) ? $item['priority'] : 'none',
+                        'deadline' => isset($deadlines[$item['id']]) ? $deadlines[$item['id']] : null
                     );
                 }
             }
@@ -2398,6 +2478,20 @@ class MCL_Public {
                     if (!isset($item['assigned_user'])) {
                         $item['assigned_user'] = null;
                     }
+
+                    // Add priority from checklist items
+                    if (!isset($item['priority']) && isset($priority_map[$item['id']])) {
+                        $item['priority'] = $priority_map[$item['id']];
+                    } elseif (!isset($item['priority'])) {
+                        $item['priority'] = 'none';
+                    }
+
+                    // Add deadline from deadlines meta
+                    if (!isset($item['deadline']) && isset($deadlines[$item['id']])) {
+                        $item['deadline'] = $deadlines[$item['id']];
+                    } elseif (!isset($item['deadline'])) {
+                        $item['deadline'] = null;
+                    }
                 }
             }
         }
@@ -2416,9 +2510,13 @@ class MCL_Public {
             }
         }
 
+        // Get checklist settings for priority display
+        $enable_item_priority = (bool)get_post_meta($checklist_id, '_mcl_enable_item_priority', true);
+
         wp_send_json_success(array(
             'board' => $board,
-            'users' => $users
+            'users' => $users,
+            'enable_item_priority' => $enable_item_priority
         ));
     }
 

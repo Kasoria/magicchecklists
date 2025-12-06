@@ -1,6 +1,104 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useToast } from './Toast.jsx'
 import ConfirmationModal from './ConfirmationModal.jsx'
+import { formatDate } from '../utils/dateUtils'
+
+// Helper function to get priority color
+const getPriorityColor = (priority) => {
+  switch (priority) {
+    case 'critical': return '#7c3aed' // purple
+    case 'high': return '#ef4444' // red
+    case 'medium': return '#f59e0b' // amber
+    case 'low': return '#22c55e' // green
+    default: return '#6b7280' // gray
+  }
+}
+
+// Deadline Modal Component
+const DeadlineModal = ({ isOpen, onClose, onSave, currentDeadline }) => {
+  const [dateTime, setDateTime] = useState('')
+
+  useEffect(() => {
+    if (isOpen && currentDeadline) {
+      // Convert UTC timestamp to local browser time for datetime-local input
+      const date = new Date(currentDeadline * 1000)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      setDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
+    } else if (isOpen) {
+      setDateTime('')
+    }
+  }, [isOpen, currentDeadline])
+
+  const handleSave = () => {
+    if (dateTime) {
+      const date = new Date(dateTime)
+      const timestamp = Math.floor(date.getTime() / 1000)
+      onSave(timestamp)
+    } else {
+      onSave(null)
+    }
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Set Item Deadline
+        </h3>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Deadline Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            value={dateTime}
+            onChange={(e) => setDateTime(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Leave empty to remove deadline
+          </p>
+        </div>
+
+        <div className="flex justify-between">
+          <button
+            onClick={() => { onSave(null); onClose() }}
+            disabled={!currentDeadline}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              currentDeadline
+                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Clear Deadline
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Comment component for threaded display
 const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false, i18n = {} }) => {
@@ -223,10 +321,15 @@ const KanbanBoard = ({ adminData }) => {
   const [board, setBoard] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
+  const [enableItemPriority, setEnableItemPriority] = useState(false)
 
   // Drag state
   const [draggedItem, setDraggedItem] = useState(null)
   const [dragOverColumn, setDragOverColumn] = useState(null)
+
+  // Column menu state
+  const [openMenuColumnId, setOpenMenuColumnId] = useState(null)
+  const columnMenuRef = useRef(null)
 
   // Modal state
   const [showColumnModal, setShowColumnModal] = useState(false)
@@ -299,6 +402,11 @@ const KanbanBoard = ({ adminData }) => {
   })
   const [savingColumnSyncSettings, setSavingColumnSyncSettings] = useState(false)
 
+  // Deadline modal state
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false)
+  const [deadlineModalItem, setDeadlineModalItem] = useState(null)
+  const [deadlineModalColumnId, setDeadlineModalColumnId] = useState(null)
+
   const { showSuccess, showError } = useToast()
 
   // Fetch checklists on mount
@@ -332,6 +440,23 @@ const KanbanBoard = ({ adminData }) => {
       window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
     }
   }, [selectedChecklist])
+
+  // Click outside to close column menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuColumnId && columnMenuRef.current && !columnMenuRef.current.contains(event.target)) {
+        setOpenMenuColumnId(null)
+      }
+    }
+
+    if (openMenuColumnId) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [openMenuColumnId])
 
   const fetchChecklists = async () => {
     try {
@@ -408,7 +533,6 @@ const KanbanBoard = ({ adminData }) => {
       }).map(({ originalColumnId, ...item }) => item)
     }))
 
-    console.log('[MCL DEBUG] KanbanBoard: Applied column sync to board')
     return newBoard
   }
 
@@ -452,6 +576,7 @@ const KanbanBoard = ({ adminData }) => {
         const syncedBoard = applyColumnSyncToBoard(data.data.board || [], syncSettings)
         setBoard(syncedBoard)
         setUsers(data.data.users || [])
+        setEnableItemPriority(data.data.enable_item_priority || false)
       } else {
         showError(data.data || i18n.kanbanBoard?.errors?.loadBoardFailed || 'Failed to load Kanban board')
       }
@@ -1589,6 +1714,110 @@ const KanbanBoard = ({ adminData }) => {
     }
   }
 
+  // Cycle through priority levels
+  const cyclePriority = async (item, columnId) => {
+    const priorities = ['none', 'low', 'medium', 'high', 'critical']
+    const currentIndex = priorities.indexOf(item.priority || 'none')
+    const nextPriority = priorities[(currentIndex + 1) % priorities.length]
+
+    // Update board state optimistically
+    const newBoard = board.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          items: column.items.map(boardItem =>
+            boardItem.id === item.id ? { ...boardItem, priority: nextPriority } : boardItem
+          )
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+
+    // Save to backend
+    try {
+      await fetch(adminData.ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'mcl_save_kanban_board',
+          checklist_id: selectedChecklist,
+          board: JSON.stringify(newBoard),
+          nonce: adminData.nonces?.mcl_admin || '',
+          context: 'admin'
+        })
+      })
+    } catch (error) {
+      console.error('Error saving priority:', error)
+      loadKanbanBoard() // Revert on error
+    }
+  }
+
+  // Handle deadline click - open modal
+  const handleDeadlineClick = (item, columnId) => {
+    setDeadlineModalItem(item)
+    setDeadlineModalColumnId(columnId)
+    setShowDeadlineModal(true)
+  }
+
+  // Save item deadline
+  const saveItemDeadline = async (timestamp) => {
+    if (!deadlineModalItem) return
+
+    const itemId = deadlineModalItem.id
+    const columnId = deadlineModalColumnId
+
+    // Update board state optimistically
+    const newBoard = board.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          items: column.items.map(boardItem =>
+            boardItem.id === itemId ? { ...boardItem, deadline: timestamp } : boardItem
+          )
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+
+    // Save to backend
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || adminData.nonces?.mcl_admin || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_save_item_deadline')
+      formData.append('checklist_id', selectedChecklist)
+      formData.append('item_id', itemId)
+      formData.append('deadline', timestamp || '')
+      formData.append('nonce', nonce)
+
+      const response = await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        showSuccess(timestamp ? (i18n.kanbanBoard?.success?.deadlineSet || 'Deadline set') : (i18n.kanbanBoard?.success?.deadlineCleared || 'Deadline cleared'))
+      } else {
+        showError(i18n.kanbanBoard?.errors?.deadlineSaveFailed || 'Failed to save deadline')
+        loadKanbanBoard() // Revert on error
+      }
+    } catch (error) {
+      console.error('Error saving deadline:', error)
+      showError(i18n.kanbanBoard?.errors?.deadlineSaveFailed || 'Failed to save deadline')
+      loadKanbanBoard()
+    }
+
+    // Close modal
+    setShowDeadlineModal(false)
+    setDeadlineModalItem(null)
+    setDeadlineModalColumnId(null)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1698,42 +1927,38 @@ const KanbanBoard = ({ adminData }) => {
                         {column.items.length}
                       </span>
                     </div>
-                    <div className="relative">
+                    <div className="relative" ref={openMenuColumnId === column.id ? columnMenuRef : null}>
                       <button
-                        onClick={() => {
-                          const menu = document.getElementById(`menu-${column.id}`)
-                          menu.classList.toggle('hidden')
-                        }}
+                        onClick={() => setOpenMenuColumnId(openMenuColumnId === column.id ? null : column.id)}
                         className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                       >
                         <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                         </svg>
                       </button>
-                      <div
-                        id={`menu-${column.id}`}
-                        className="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
-                      >
-                        <button
-                          onClick={() => {
-                            openColumnModal(column)
-                            document.getElementById(`menu-${column.id}`).classList.add('hidden')
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        >
-                          {i18n.kanbanBoard?.column?.editButton || 'Edit Column'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setColumnToDelete(column)
-                            setShowDeleteConfirm(true)
-                            document.getElementById(`menu-${column.id}`).classList.add('hidden')
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
-                        >
-                          {i18n.kanbanBoard?.column?.deleteButton || 'Delete Column'}
-                        </button>
-                      </div>
+                      {openMenuColumnId === column.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600">
+                          <button
+                            onClick={() => {
+                              openColumnModal(column)
+                              setOpenMenuColumnId(null)
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          >
+                            {i18n.kanbanBoard?.column?.editButton || 'Edit Column'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setColumnToDelete(column)
+                              setShowDeleteConfirm(true)
+                              setOpenMenuColumnId(null)
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+                          >
+                            {i18n.kanbanBoard?.column?.deleteButton || 'Delete Column'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1765,6 +1990,22 @@ const KanbanBoard = ({ adminData }) => {
                                 </svg>
                               )}
                             </button>
+                            {/* Priority Indicator - Clickable to cycle (only if item priority is enabled) */}
+                            {enableItemPriority && (
+                              <div
+                                onClick={(e) => { e.stopPropagation(); cyclePriority(item, column.id) }}
+                                style={{
+                                  width: '12px',
+                                  height: '12px',
+                                  borderRadius: '50%',
+                                  backgroundColor: getPriorityColor(item.priority || 'none'),
+                                  flexShrink: 0,
+                                  marginTop: '2px',
+                                  cursor: 'pointer'
+                                }}
+                                title={item.priority && item.priority !== 'none' ? `Priority: ${item.priority} (click to change)` : 'Click to set priority'}
+                              />
+                            )}
                             <div
                               className={`font-medium text-sm flex-1 ${
                                 item.checked
@@ -1799,6 +2040,17 @@ const KanbanBoard = ({ adminData }) => {
 
                         {/* Item Footer */}
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                          {/* Deadline Badge - Clickable to edit */}
+                          <div
+                            onClick={() => handleDeadlineClick(item, column.id)}
+                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
+                            title={item.deadline ? 'Click to edit deadline' : 'Click to set deadline'}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{item.deadline ? formatDate(item.deadline, 'datetime') : 'Set deadline'}</span>
+                          </div>
                           <button
                             onClick={() => openAssignModal(item, column.id)}
                             className="flex items-center space-x-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5"
@@ -2723,6 +2975,18 @@ const KanbanBoard = ({ adminData }) => {
           )}
         </div>
       </Modal>
+
+      {/* Deadline Modal */}
+      <DeadlineModal
+        isOpen={showDeadlineModal}
+        onClose={() => {
+          setShowDeadlineModal(false)
+          setDeadlineModalItem(null)
+          setDeadlineModalColumnId(null)
+        }}
+        onSave={saveItemDeadline}
+        currentDeadline={deadlineModalItem?.deadline}
+      />
     </div>
   )
 }

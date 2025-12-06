@@ -2366,6 +2366,20 @@ class MCL_Admin {
             $time_date = '';
         }
 
+        // Get items and merge deadlines into them
+        $items = $get_meta_array('_mcl_items');
+        $item_deadlines = $get_meta_array('_mcl_item_deadlines');
+
+        // Merge deadlines into items (matching REST controller behavior)
+        if (!empty($item_deadlines) && !empty($items)) {
+            foreach ($items as &$item) {
+                if (isset($item['id']) && isset($item_deadlines[$item['id']])) {
+                    $item['deadline'] = intval($item_deadlines[$item['id']]);
+                }
+            }
+            unset($item); // Break reference
+        }
+
         // Prepare response
         $response = array(
             'id' => $checklist->ID,
@@ -2373,7 +2387,7 @@ class MCL_Admin {
             'description' => $checklist->post_content,
             'type' => $get_meta('_mcl_checklist_type', 'classic'),
             'priority' => $get_meta('_mcl_priority', 'none'),
-            'items' => $get_meta_array('_mcl_items'),
+            'items' => $items,
             'tags' => $get_meta_array('_mcl_tags'),
             'active' => $get_meta_boolean('_mcl_active', false),
             'keyboard_shortcut' => $get_meta('_mcl_keyboard_shortcut', ''),
@@ -2398,7 +2412,7 @@ class MCL_Admin {
             'access_roles_permission' => $get_meta('_mcl_access_roles_permission', 'interact'),
             'access_users' => $get_meta_array('_mcl_access_users'),
             'access_users_permission' => $get_meta('_mcl_access_users_permission', 'interact'),
-            'load_everywhere' => $get_meta_boolean('_mcl_load_everywhere', false), // Changed from true to false
+            'load_everywhere' => $get_meta_boolean('_mcl_load_everywhere', true),
             'allowed_pages' => $get_meta_array('_mcl_allowed_pages'),
             'allowed_urls' => $get_meta_array('_mcl_allowed_urls'),
             'disable_in_builders' => $get_meta_boolean('_mcl_disable_in_builders', false),

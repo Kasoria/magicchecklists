@@ -220,7 +220,7 @@ class MCL_Tutorial {
 
         // Set default theme and other settings
         update_post_meta($checklist_id, '_mcl_theme', 'default');
-        update_post_meta($checklist_id, '_mcl_checked_state_handling', 'database');
+        update_post_meta($checklist_id, '_mcl_checked_state_handling', 'global');
         update_post_meta($checklist_id, '_mcl_keyboard_shortcut', '');
         update_post_meta($checklist_id, '_mcl_trigger_shortcut', '0');
         update_post_meta($checklist_id, '_mcl_priority', 'none');

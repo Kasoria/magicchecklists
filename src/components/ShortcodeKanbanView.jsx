@@ -1,5 +1,165 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { formatDate } from '../utils/dateUtils'
+
+// Helper function to get priority color
+const getPriorityColor = (priority) => {
+  switch (priority) {
+    case 'critical': return '#7c3aed' // purple
+    case 'high': return '#ef4444' // red
+    case 'medium': return '#f59e0b' // amber
+    case 'low': return '#22c55e' // green
+    default: return '#6b7280' // gray
+  }
+}
+
+// Deadline Modal Component with inline styles
+const DeadlineModal = ({ isOpen, onClose, onSave, currentDeadline }) => {
+  const [dateTime, setDateTime] = useState('')
+
+  useEffect(() => {
+    if (isOpen && currentDeadline) {
+      const date = new Date(currentDeadline * 1000)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      setDateTime(`${year}-${month}-${day}T${hours}:${minutes}`)
+    } else if (isOpen) {
+      setDateTime('')
+    }
+  }, [isOpen, currentDeadline])
+
+  const handleSave = () => {
+    if (dateTime) {
+      const date = new Date(dateTime)
+      const timestamp = Math.floor(date.getTime() / 1000)
+      onSave(timestamp)
+    } else {
+      onSave(null)
+    }
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+        padding: '24px',
+        width: '100%',
+        maxWidth: '400px'
+      }}>
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#1f2937',
+          marginBottom: '16px'
+        }}>
+          Set Item Deadline
+        </h3>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#374151',
+            marginBottom: '8px'
+          }}>
+            Deadline Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            value={dateTime}
+            onChange={(e) => setDateTime(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+          <p style={{
+            marginTop: '4px',
+            fontSize: '12px',
+            color: '#6b7280'
+          }}>
+            Leave empty to remove deadline
+          </p>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}>
+          <button
+            onClick={() => { onSave(null); onClose() }}
+            disabled={!currentDeadline}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: currentDeadline ? '#fef2f2' : '#f3f4f6',
+              color: currentDeadline ? '#dc2626' : '#9ca3af',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: currentDeadline ? 'pointer' : 'not-allowed',
+              opacity: currentDeadline ? 1 : 0.5
+            }}
+          >
+            Clear Deadline
+          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Comment component for threaded display with inline styles
 const Comment = ({ comment, onReply, onLike, onDelete, level = 0, isAdmin = false, i18n = {} }) => {
@@ -517,6 +677,11 @@ const ShortcodeKanbanView = ({
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
 
+  // Deadline modal state
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false)
+  const [deadlineModalItem, setDeadlineModalItem] = useState(null)
+  const [deadlineModalColumnId, setDeadlineModalColumnId] = useState(null)
+
   // Feature board state
   const [featureBoardSettings, setFeatureBoardSettings] = useState({
     enabled: false,
@@ -573,17 +738,8 @@ const ShortcodeKanbanView = ({
     const handleChecklistDataChanged = (event) => {
       const { checklistId: changedChecklistId, action, source } = event.detail || {}
 
-      console.log('[MCL DEBUG] ShortcodeKanbanView received event:', {
-        eventChecklistId: changedChecklistId,
-        thisChecklistId: checklistId,
-        action,
-        source,
-        willRefresh: changedChecklistId && String(changedChecklistId) === String(checklistId) && source !== 'shortcode_kanban'
-      })
-
       // Only reload if this is the current checklist and the change came from another source
       if (changedChecklistId && String(changedChecklistId) === String(checklistId) && source !== 'shortcode_kanban') {
-        console.log('[MCL DEBUG] ShortcodeKanbanView: Calling loadKanbanBoard()')
         loadKanbanBoard()
       }
     }
@@ -651,7 +807,6 @@ const ShortcodeKanbanView = ({
       }).map(({ originalColumnId, ...item }) => item)
     }))
 
-    console.log('[MCL DEBUG] ShortcodeKanbanView: Applied column sync to board')
     return newBoard
   }
 
@@ -673,7 +828,6 @@ const ShortcodeKanbanView = ({
           })
         })
         const syncData = await syncResponse.json()
-        console.log('[MCL DEBUG] ShortcodeKanbanView syncData:', syncData)
         if (syncData.success && syncData.data.settings) {
           syncSettings = syncData.data.settings
           setColumnSyncSettings(syncSettings)
@@ -681,8 +835,6 @@ const ShortcodeKanbanView = ({
       } catch (syncError) {
         console.error('Error loading column sync settings:', syncError)
       }
-
-      console.log('[MCL DEBUG] ShortcodeKanbanView syncSettings before board load:', syncSettings)
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
@@ -696,12 +848,9 @@ const ShortcodeKanbanView = ({
       })
 
       const data = await response.json()
-      console.log('[MCL DEBUG] ShortcodeKanbanView board data:', data)
       if (data.success && data.data.board) {
-        console.log('[MCL DEBUG] ShortcodeKanbanView items before sync:', data.data.board.map(col => ({ id: col.id, items: col.items.map(i => ({ id: i.id, checked: i.checked, inProgress: i.inProgress })) })))
         // Apply column sync if enabled to ensure items are in correct columns
         const syncedBoard = applyColumnSyncToBoard(data.data.board, syncSettings)
-        console.log('[MCL DEBUG] ShortcodeKanbanView items after sync:', syncedBoard.map(col => ({ id: col.id, itemCount: col.items.length })))
         setBoard(syncedBoard)
         setUsers(data.data.users || [])
       } else {
@@ -1133,12 +1282,10 @@ const ShortcodeKanbanView = ({
     setBoard(newBoard)
 
     // Save to server
-    console.log('[MCL DEBUG] ShortcodeKanbanView: Saving kanban board after handleDrop', { checklistId, itemId: draggedItem.id })
     await saveKanbanBoard(newBoard)
     setDraggedItem(null)
 
     // Dispatch event to notify other views that item was moved
-    console.log('[MCL DEBUG] ShortcodeKanbanView: Dispatching item_moved event', { checklistId, itemId: draggedItem.id })
     window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
@@ -1319,11 +1466,9 @@ const ShortcodeKanbanView = ({
     }
 
     setBoard(newBoard)
-    console.log('[MCL DEBUG] ShortcodeKanbanView: Saving kanban board after toggleItemCheck', { checklistId, itemId: item.id })
     await saveKanbanBoard(newBoard)
 
     // Dispatch event to notify other views
-    console.log('[MCL DEBUG] ShortcodeKanbanView: Dispatching item_checked event', { checklistId, itemId: item.id })
     window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
@@ -1358,6 +1503,86 @@ const ShortcodeKanbanView = ({
     } catch (error) {
       console.error('Failed to save kanban board:', error)
     }
+  }
+
+  // Cycle through priority levels
+  const cyclePriority = async (item, columnId) => {
+    if (!permissions.can_edit) return
+
+    const priorities = ['none', 'low', 'medium', 'high', 'critical']
+    const currentIndex = priorities.indexOf(item.priority || 'none')
+    const nextPriority = priorities[(currentIndex + 1) % priorities.length]
+
+    // Update board state
+    const newBoard = board.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          items: column.items.map(boardItem =>
+            boardItem.id === item.id ? { ...boardItem, priority: nextPriority } : boardItem
+          )
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+    await saveKanbanBoard(newBoard)
+  }
+
+  // Handle deadline click - open modal
+  const handleDeadlineClick = (item, columnId) => {
+    if (!permissions.can_edit) return
+    setDeadlineModalItem(item)
+    setDeadlineModalColumnId(columnId)
+    setShowDeadlineModal(true)
+  }
+
+  // Save item deadline
+  const saveItemDeadline = async (timestamp) => {
+    if (!deadlineModalItem) return
+
+    const itemId = deadlineModalItem.id
+    const columnId = deadlineModalColumnId
+
+    // Update board state
+    const newBoard = board.map(column => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          items: column.items.map(boardItem =>
+            boardItem.id === itemId ? { ...boardItem, deadline: timestamp } : boardItem
+          )
+        }
+      }
+      return column
+    })
+    setBoard(newBoard)
+
+    // Save to backend
+    try {
+      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.mcl_checklists?.nonce || ''
+
+      const formData = new FormData()
+      formData.append('action', 'mcl_save_item_deadline')
+      formData.append('checklist_id', checklistId)
+      formData.append('item_id', itemId)
+      formData.append('deadline', timestamp || '')
+      formData.append('nonce', nonce)
+
+      await fetch(ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+    } catch (error) {
+      console.error('Error saving deadline:', error)
+    }
+
+    // Close modal
+    setShowDeadlineModal(false)
+    setDeadlineModalItem(null)
+    setDeadlineModalColumnId(null)
   }
 
   const handlePaste = (e) => {
@@ -2067,6 +2292,24 @@ const ShortcodeKanbanView = ({
                         {item.checked ? '✅' : '⭕'}
                       </button>
                     )}
+                    {/* Priority Indicator - Clickable to cycle (only if item priority is enabled) */}
+                    {checklist.enable_item_priority && (
+                      <div
+                        onClick={permissions.can_edit ? (e) => { e.stopPropagation(); cyclePriority(item, column.id) } : undefined}
+                        style={{
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          backgroundColor: getPriorityColor(item.priority || 'none'),
+                          flexShrink: 0,
+                          marginTop: '2px',
+                          cursor: permissions.can_edit ? 'pointer' : 'default'
+                        }}
+                        title={permissions.can_edit
+                          ? (item.priority && item.priority !== 'none' ? `Priority: ${item.priority} (click to change)` : 'Click to set priority')
+                          : (item.priority && item.priority !== 'none' ? `Priority: ${item.priority}` : '')}
+                      />
+                    )}
                     <div
                       className="mcl-kanban-item-content"
                       style={{
@@ -2098,7 +2341,7 @@ const ShortcodeKanbanView = ({
                     </div>
                   )}
 
-                  {/* Item Footer - Upvote and User Assignment */}
+                  {/* Item Footer - Deadline, Upvote and User Assignment */}
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -2107,6 +2350,24 @@ const ShortcodeKanbanView = ({
                     borderTop: '1px solid #f3f4f6',
                     gap: '8px'
                   }}>
+                    {/* Deadline Badge - Clickable to edit (if has edit permission) */}
+                    <div
+                      onClick={permissions.can_edit ? () => handleDeadlineClick(item, column.id) : undefined}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        color: '#6b7280',
+                        cursor: permissions.can_edit ? 'pointer' : 'default'
+                      }}
+                      title={permissions.can_edit ? (item.deadline ? 'Click to edit deadline' : 'Click to set deadline') : ''}
+                    >
+                      <svg style={{ width: '12px', height: '12px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{item.deadline ? formatDate(item.deadline, 'datetime') : (permissions.can_edit ? 'Set deadline' : '')}</span>
+                    </div>
                     {/* Upvote Button - Feature Board */}
                     {featureBoardSettings.enabled && featureBoardSettings.show_upvote_count && (
                       <button
@@ -3363,6 +3624,18 @@ const ShortcodeKanbanView = ({
           {ideaMessage.text}
         </div>
       )}
+
+      {/* Deadline Modal */}
+      <DeadlineModal
+        isOpen={showDeadlineModal}
+        onClose={() => {
+          setShowDeadlineModal(false)
+          setDeadlineModalItem(null)
+          setDeadlineModalColumnId(null)
+        }}
+        onSave={saveItemDeadline}
+        currentDeadline={deadlineModalItem?.deadline}
+      />
     </div>
   )
 }

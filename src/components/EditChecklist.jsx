@@ -127,7 +127,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
     access_users_permission: 'interact',
     role_permission_rules: [],
     user_permission_rules: [],
-    load_everywhere: false,
+    load_everywhere: true,
     allowed_pages: [],
     allowed_urls: [],
     // Notifications

@@ -143,6 +143,14 @@ class MCL_Shortcode {
         // Generate unique instance ID
         $instance_id = 'mcl-shortcode-' . $checklist_id . '-' . $this->shortcode_counter;
         
+        // Check for auto-reset
+        $reset_enabled = get_post_meta($checklist_id, '_mcl_enable_auto_reset', true) === '1';
+        $was_reset = false;
+        if ($reset_enabled) {
+            $mcl_public = MCL_Public::get_instance();
+            $was_reset = $mcl_public->check_and_handle_reset($checklist_id);
+        }
+
         // Prepare data for React component
         $shortcode_data = array(
             'checklistId' => $checklist_id,
@@ -159,6 +167,11 @@ class MCL_Shortcode {
                 'title' => $checklist->post_title,
                 'content' => $checklist->post_content,
                 'deadline' => get_post_meta($checklist_id, '_mcl_deadline', true)
+            ),
+            'reset_info' => array(
+                'enabled' => $reset_enabled,
+                'was_reset' => $was_reset,
+                'reset_counter' => get_post_meta($checklist_id, '_mcl_reset_counter', true) ?: 1
             )
         );
 

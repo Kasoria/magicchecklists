@@ -471,15 +471,16 @@ const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => 
   )
 }
 
-const ShortcodeRenderer = ({ 
-  checklistId, 
-  instanceId, 
-  settings = {}, 
-  items = [], 
+const ShortcodeRenderer = ({
+  checklistId,
+  instanceId,
+  settings = {},
+  items = [],
   permissions = {},
   priorityEnabled = false,
   priorityDisplayType = 'color',
-  checklist = {}
+  checklist = {},
+  reset_info = {}
 }) => {
   const [i18n, setI18n] = useState({})
   const [checkedItems, setCheckedItems] = useState(new Set())
@@ -524,10 +525,69 @@ const ShortcodeRenderer = ({
     }
   }, [])
 
+  // Handle auto-reset - clear localStorage when reset happened
+  useEffect(() => {
+    if (reset_info?.enabled && reset_info?.was_reset) {
+      // Clear localStorage for ALL shortcode instances AND the drawer (user might use both)
+      try {
+        // Drawer localStorage key
+        const drawerKey = `mcl_checked_${checklistId}`
+        localStorage.removeItem(drawerKey)
+
+        // Clear ALL shortcode localStorage keys for this checklist (any instance)
+        const shortcodePrefix = `mcl_shortcode_${checklistId}_`
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && key.startsWith(shortcodePrefix)) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+
+        console.log('MCL Shortcode: Cleared localStorage due to reset for checklist', checklistId, '(removed', keysToRemove.length, 'shortcode keys)')
+      } catch (error) {
+        console.warn('MCL Shortcode: Error clearing localStorage on reset:', error)
+      }
+
+      // Clear checked items state
+      setCheckedItems(new Set())
+      setInProgressItems(new Set())
+
+      // Show reset notification
+      const notification = document.createElement('div')
+      notification.className = 'fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded shadow-lg z-50'
+      notification.style.cssText = 'position: fixed; bottom: 1rem; right: 1rem; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 0.75rem 1rem; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 9999;'
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span>${i18n.checklistReset || 'This checklist has been automatically reset.'}</span>
+          <button type="button" style="color: #b45309; font-weight: bold; background: none; border: none; cursor: pointer; font-size: 1.25rem; line-height: 1;">×</button>
+        </div>
+      `
+
+      document.body.appendChild(notification)
+
+      // Add close functionality
+      notification.querySelector('button').addEventListener('click', () => {
+        notification.remove()
+      })
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          notification.remove()
+        }
+      }, 5000)
+    }
+  }, [reset_info, checklistId, instanceId, i18n])
+
   // Initialize state
   useEffect(() => {
     initializeItems()
-    loadCheckedState()
+    // Only load checked state if not just reset
+    if (!(reset_info?.enabled && reset_info?.was_reset)) {
+      loadCheckedState()
+    }
     initCountdown()
 
     return () => {
@@ -540,36 +600,17 @@ const ShortcodeRenderer = ({
     }
   }, [items])
 
-  // Log shortcode settings on mount
-  useEffect(() => {
-    console.log('[MCL DEBUG] ShortcodeRenderer mounted:', {
-      checklistId,
-      checkStateMode: settings.check_state || 'session',
-      note: settings.check_state !== 'global' ? 'WARNING: Not in global mode - will not sync with server!' : 'OK - global mode'
-    })
-  }, [checklistId, settings.check_state])
-
   // Listen for checked state changes from other views (kanban, etc.)
   useEffect(() => {
     const handleChecklistDataChanged = (event) => {
       const { checklistId: eventChecklistId, source, action } = event.detail || {}
       const stateHandling = settings.check_state || 'session'
 
-      console.log('[MCL DEBUG] ShortcodeRenderer received event:', {
-        eventChecklistId,
-        thisChecklistId: checklistId,
-        action,
-        source,
-        stateHandling,
-        willRefresh: eventChecklistId && String(eventChecklistId) === String(checklistId) && source !== 'shortcode_list' && (stateHandling === 'global' || stateHandling === 'per_user')
-      })
-
       // Only refresh if this is the same checklist and change came from another source
       if (eventChecklistId && String(eventChecklistId) === String(checklistId) && source !== 'shortcode_list') {
         // Reload checked state from server for global and per_user modes
         // Session/local modes use localStorage which is local-only
         if (stateHandling === 'global' || stateHandling === 'per_user') {
-          console.log('[MCL DEBUG] ShortcodeRenderer: Refreshing from server...')
           refreshCheckedStateFromServer()
           refreshInProgressStateFromServer()
         }
@@ -646,7 +687,6 @@ const ShortcodeRenderer = ({
   }
 
   const refreshCheckedStateFromServer = async () => {
-    console.log('[MCL DEBUG] ShortcodeRenderer: refreshCheckedStateFromServer called', { checklistId })
     try {
       const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
       const nonce = window.mclShortcode?.nonce || ''
@@ -664,7 +704,6 @@ const ShortcodeRenderer = ({
       })
 
       const data = await response.json()
-      console.log('[MCL DEBUG] ShortcodeRenderer: refreshCheckedStateFromServer response', { success: data.success, data: data.data })
       if (data.success && Array.isArray(data.data)) {
         setCheckedItems(new Set(data.data))
       }
@@ -674,7 +713,6 @@ const ShortcodeRenderer = ({
   }
 
   const refreshInProgressStateFromServer = async () => {
-    console.log('[MCL DEBUG] ShortcodeRenderer: refreshInProgressStateFromServer called', { checklistId })
     try {
       const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
       const nonce = window.mclShortcode?.nonce || ''
@@ -692,7 +730,6 @@ const ShortcodeRenderer = ({
       })
 
       const data = await response.json()
-      console.log('[MCL DEBUG] ShortcodeRenderer: refreshInProgressStateFromServer response', { success: data.success, data: data.data })
       if (data.success && Array.isArray(data.data)) {
         setInProgressItems(new Set(data.data))
       }
@@ -930,11 +967,9 @@ const ShortcodeRenderer = ({
       item.id === itemId ? { ...item, inProgress: newSet.has(itemId) } : item
     )
     setShortcodeItems(newItems)
-    console.log('[MCL DEBUG] ShortcodeRenderer: Saving in-progress via saveItemsToServer', { checklistId, itemId, inProgress: newSet.has(itemId) })
     await saveItemsToServer(newItems)
 
     // Dispatch event to notify other views that in-progress state changed
-    console.log('[MCL DEBUG] ShortcodeRenderer: Dispatching in_progress_changed event', { checklistId })
     window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
@@ -1449,7 +1484,6 @@ const ShortcodeRenderer = ({
   }
 
   const saveToServer = async (checkedItems) => {
-    console.log('[MCL DEBUG] ShortcodeRenderer: saveToServer called', { checklistId, checkedItems: Array.from(checkedItems) })
     try {
       const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
       const nonce = window.mclShortcode?.nonce || ''
@@ -1469,12 +1503,10 @@ const ShortcodeRenderer = ({
       })
 
       const data = await response.json()
-      console.log('[MCL DEBUG] ShortcodeRenderer: saveToServer response', { success: data.success })
       if (!data.success) {
         console.warn('Error saving state to server:', data)
       } else {
         // Dispatch event to notify other views (kanban, etc.)
-        console.log('[MCL DEBUG] ShortcodeRenderer: Dispatching checked_state_changed event', { checklistId })
         window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
           detail: {
             checklistId: checklistId,
