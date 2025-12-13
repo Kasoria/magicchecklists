@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           2.2
+ * Version:           2.2.1
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://magicplugins.io
@@ -39,7 +39,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Define plugin constants
          */
         private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '2.2');
+            define('MAGIC_CHECKLISTS_VERSION', '2.2.1');
             define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
             define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
             define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -71,15 +71,14 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                 }
             });
             
-            // Include SureCart Licensing (third-party, not using our autoloader)
-            if (!class_exists('SureCart\Licensing\Client')) {
-                // Include the autoloader if SureCart uses Composer
-                if (file_exists(MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php')) {
-                    require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/vendor/autoload.php';
-                } else {
-                    // Fallback to direct inclusion if autoloader is not present
-                    require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'licensing/src/Client.php';
-                }
+            // Include Composer autoloader for Plugin Update Checker
+            if (file_exists(MAGIC_CHECKLISTS_PLUGIN_PATH . 'vendor/autoload.php')) {
+                require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'vendor/autoload.php';
+            }
+
+            // Include MagicPlugins Core (unified licensing + connection)
+            if (!class_exists('MagicPlugins_Core')) {
+                require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-magicplugins-core.php';
             }
 
             register_activation_hook(__FILE__, array($this, 'activate'));
@@ -206,7 +205,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                 MCL_Dashboard_Widget::get_instance();
             }
 
-            // Initialize SureCart Licensing
+            // Initialize MagicPlugins Core (unified licensing + connection)
             $this->init_licensing();
 
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
@@ -303,24 +302,56 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
         }
 
         /**
-         * Initialize SureCart Licensing
+         * Initialize MagicPlugins Core (unified licensing + connection)
          */
         private function init_licensing() {
-            // Replace 'YOUR_PUBLIC_TOKEN' with your actual public token from SureCart
-            $client = new \SureCart\Licensing\Client('MagicChecklists', 'pt_cBheuHynZ9Ft9mhGLuoWM1LA', MAGIC_CHECKLISTS_PLUGIN_FILE);
-
-            // Set your text domain
-            $client->set_textdomain(MAGIC_CHECKLISTS_TEXT_DOMAIN);
-
-            // Store the client globally for access by other classes
-            global $mcl_licensing_client;
-            $mcl_licensing_client = $client;
-
-            // License management is now handled per plugin individually
-            // No global license page needed in the menu
+            MagicPlugins_Core::init(array(
+                'plugin_name' => 'MagicChecklists',
+                'plugin_slug' => 'magicchecklists',
+                'plugin_version' => MAGIC_CHECKLISTS_VERSION,
+                'plugin_file' => MAGIC_CHECKLISTS_PLUGIN_FILE,
+                'settings_prefix' => 'magicchecklists_license',
+                'text_domain' => 'magic-checklists',
+            ));
         }
     }
 
     new MagicChecklists();
     new MCL_API_Integration();
+}
+
+/**
+ * Check if MagicChecklists license is active
+ *
+ * @return bool
+ */
+function mcl_is_license_active() {
+    if (!class_exists('MagicPlugins_Core')) {
+        return false;
+    }
+    return MagicPlugins_Core::is_license_active('magicchecklists');
+}
+
+/**
+ * Get MagicChecklists license key
+ *
+ * @return string
+ */
+function mcl_get_license_key() {
+    if (!class_exists('MagicPlugins_Core')) {
+        return '';
+    }
+    return MagicPlugins_Core::get_license_key('magicchecklists');
+}
+
+/**
+ * Get MagicChecklists license tier
+ *
+ * @return string
+ */
+function mcl_get_license_tier() {
+    if (!class_exists('MagicPlugins_Core')) {
+        return '';
+    }
+    return MagicPlugins_Core::get_license_tier('magicchecklists');
 }

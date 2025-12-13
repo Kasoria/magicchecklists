@@ -56,13 +56,21 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 if (strpos($auth_header, 'Bearer ') === 0) {
                     $api_key = str_replace('Bearer ', '', $auth_header);
                     $settings = get_option('mcl_integration_settings', []);
-                    
-                    // Get and decrypt both API keys
+
+                    // Get and decrypt API keys from integration settings
                     $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
                     $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
 
-                    if ((!empty($mainwp_key) && $api_key === $mainwp_key) || 
-                        (!empty($mcl_key) && $api_key === $mcl_key)) {
+                    // Also check MagicDash connection (magicplugins_connection option)
+                    $magicdash_key = '';
+                    $magicdash_connection = get_option('magicplugins_connection', []);
+                    if (!empty($magicdash_connection['api_key'])) {
+                        $magicdash_key = $this->decrypt_api_key($magicdash_connection['api_key']);
+                    }
+
+                    if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
+                        (!empty($mcl_key) && $api_key === $mcl_key) ||
+                        (!empty($magicdash_key) && $api_key === $magicdash_key)) {
                         return true;
                     }
                 }
@@ -72,7 +80,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     array('status' => 401)
                 );
             } else {
-                // V1: Use WordPress application passwords
+                // V1 endpoints
+
+                // Allow remote-deactivate endpoint without login (uses HMAC signature auth)
+                if (strpos($request_uri, '/license/remote-deactivate') !== false) {
+                    return $result; // Let it through - auth handled via HMAC in handler
+                }
+
+                // All other V1 endpoints: Use WordPress application passwords
                 if (!is_user_logged_in()) {
                     return new WP_Error(
                         'rest_not_logged_in',
@@ -283,6 +298,33 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     ]);
                 },
                 'permission_callback' => '__return_true'
+            ]
+        ]);
+
+        // License remote deactivation endpoint (V1 - no auth required, uses HMAC signature)
+        register_rest_route($this->namespace_v1, '/license/remote-deactivate', [
+            [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => [$this, 'handle_remote_deactivate'],
+                'permission_callback' => '__return_true', // Auth is handled via HMAC signature
+                'args' => [
+                    'licenseKey' => [
+                        'required' => true,
+                        'type' => 'string',
+                    ],
+                    'timestamp' => [
+                        'required' => true,
+                        'type' => 'string',
+                    ],
+                    'signature' => [
+                        'required' => true,
+                        'type' => 'string',
+                    ],
+                    'siteUrl' => [
+                        'required' => false,
+                        'type' => 'string',
+                    ],
+                ],
             ]
         ]);
 
@@ -715,7 +757,13 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $id = (int) $request['id'];
         $post = get_post($id);
 
+        // DEBUG: Log incoming request data
+        error_log('=== MCL REST API: update_item called ===');
+        error_log('MCL DEBUG: Checklist ID: ' . $id);
+        error_log('MCL DEBUG: Request params: ' . print_r($request->get_params(), true));
+
         if (empty($post) || $post->post_type !== 'mcl_checklist') {
+            error_log('MCL DEBUG: Checklist not found');
             return new WP_Error(
                 'mcl_rest_not_found',
                 __('Checklist not found', 'magic-checklists'),
@@ -725,23 +773,31 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
         $prepared_post = $this->prepare_item_for_database($request);
         if (is_wp_error($prepared_post)) {
+            error_log('MCL DEBUG: Error preparing post: ' . $prepared_post->get_error_message());
             return $prepared_post;
         }
 
         $prepared_post['ID'] = $id;
         $post_id = wp_update_post($prepared_post, true);
         if (is_wp_error($post_id)) {
+            error_log('MCL DEBUG: Error updating post: ' . $post_id->get_error_message());
             return $post_id;
         }
 
+        error_log('MCL DEBUG: Post updated successfully, now saving meta...');
+
         // Save checklist meta including item deadlines
         $this->save_checklist_meta($post_id, $request);
+
+        error_log('MCL DEBUG: Meta saved successfully');
 
         // Dispatch webhook for checklist update
         do_action('mcl_webhook_checklist_updated', $post_id);
 
         $post = get_post($post_id);
         $response = rest_ensure_response($this->prepare_item_for_response($post, $request));
+
+        error_log('=== MCL REST API: update_item completed ===');
 
         return $this->wrap_response($response);
     }
@@ -942,6 +998,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
      * Save checklist meta data
      */
     protected function save_checklist_meta($post_id, $request) {
+        error_log('MCL DEBUG: save_checklist_meta started for post_id: ' . $post_id);
+
         $meta_keys = [
             // Basic settings
             'time_date' => '_mcl_time_date',
@@ -956,7 +1014,16 @@ class MCL_REST_Controller extends WP_REST_Controller {
             'trigger_button' => '_mcl_trigger_button',
             'short_title' => '_mcl_short_title',
             'button_position' => '_mcl_button_position',
-            
+            'disable_in_builders' => '_mcl_disable_in_builders',
+
+            // Icon settings
+            'checklist_icon_type' => '_mcl_checklist_icon_type',
+            'checklist_icon_preset' => '_mcl_checklist_icon_preset',
+            'checklist_icon_custom' => '_mcl_checklist_icon_custom',
+
+            // Shortcode settings
+            'enable_shortcode' => '_mcl_enable_shortcode',
+
             // Access settings
             'public_access' => '_mcl_public_access',
             'public_permission' => '_mcl_public_permission',
@@ -966,14 +1033,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
             'access_roles_permission' => '_mcl_access_roles_permission',
             'access_users' => '_mcl_access_users',
             'access_users_permission' => '_mcl_access_users_permission',
-            
+
             // Display settings
             'priority_display_type' => '_mcl_priority_display_type',
             'enable_rate_limit' => '_mcl_enable_rate_limit',
             'load_everywhere' => '_mcl_load_everywhere',
             'allowed_pages' => '_mcl_allowed_pages',
             'allowed_urls' => '_mcl_allowed_urls',
-            
+
             // Auto-reset settings
             'auto_reset' => '_mcl_auto_reset',
             'reset_interval' => '_mcl_reset_interval',
@@ -985,22 +1052,66 @@ class MCL_REST_Controller extends WP_REST_Controller {
             'month_day' => '_mcl_month_day',
             'reset_next' => '_mcl_reset_next',
             'reset_counter' => '_mcl_reset_counter',
+
+            // Custom theme settings (individual fields)
+            'drawer_bg_color' => '_mcl_drawer_bg_color',
+            'list_item_bg_color' => '_mcl_list_item_bg_color',
+            'text_color' => '_mcl_text_color',
+            'heading_font_size' => '_mcl_heading_font_size',
+            'description_text_color' => '_mcl_description_text_color',
+            'description_font_size' => '_mcl_description_font_size',
+            'list_item_font_size' => '_mcl_list_item_font_size',
+            'primary_button_bg' => '_mcl_primary_button_bg',
+            'primary_button_text_color' => '_mcl_primary_button_text_color',
+            'secondary_button_bg' => '_mcl_secondary_button_bg',
+            'secondary_button_text_color' => '_mcl_secondary_button_text_color',
+            'drawer_width' => '_mcl_drawer_width',
+            'drawer_height' => '_mcl_drawer_height',
+            'float_button_bg' => '_mcl_float_button_bg',
+            'float_button_text_color' => '_mcl_float_button_text_color',
+            'float_button_font_size' => '_mcl_float_button_font_size',
+            'show_float_button_icon' => '_mcl_show_float_button_icon',
+            'drawer_border_radius' => '_mcl_drawer_border_radius',
+            'checkbox_bg_color' => '_mcl_checkbox_bg_color',
+            'checkbox_border_radius' => '_mcl_checkbox_border_radius',
+            'checkbox_style' => '_mcl_checkbox_style',
+            'checkbox_custom_icon' => '_mcl_checkbox_custom_icon',
+            'checkbox_checkmark_color' => '_mcl_checkbox_checkmark_color',
         ];
+
+        error_log('MCL DEBUG: Processing meta keys...');
+        $processed_count = 0;
+        $skipped_keys = [];
 
         foreach ($meta_keys as $request_key => $meta_key) {
             if (isset($request[$request_key])) {
                 $value = $request[$request_key];
-                
+                error_log("MCL DEBUG: Processing '$request_key' => '$meta_key', value type: " . gettype($value) . ", value: " . (is_array($value) ? json_encode($value) : $value));
+                $processed_count++;
+
+                // Special handling for timestamp values (time_date is sent in milliseconds from JS)
+                if ($meta_key === '_mcl_time_date' && is_numeric($value)) {
+                    $timestamp = intval($value);
+                    // If timestamp is > 9999999999, it's in milliseconds - convert to seconds
+                    if ($timestamp > 9999999999) {
+                        $value = intval($timestamp / 1000);
+                        error_log("MCL DEBUG: Converted time_date from milliseconds ($timestamp) to seconds ($value)");
+                    }
+                }
+
                 // Special handling for boolean values
                 if (in_array($meta_key, [
-                    '_mcl_active', 
+                    '_mcl_active',
                     '_mcl_enable_item_priority',
                     '_mcl_trigger_shortcut',
                     '_mcl_trigger_button',
                     '_mcl_public_access',
                     '_mcl_enable_rate_limit',
                     '_mcl_load_everywhere',
-                    '_mcl_auto_reset'
+                    '_mcl_auto_reset',
+                    '_mcl_disable_in_builders',
+                    '_mcl_enable_shortcode',
+                    '_mcl_show_float_button_icon'
                 ])) {
                     $value = rest_sanitize_boolean($value) ? '1' : '0';
                 }
@@ -1093,40 +1204,148 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     if ($value > 31) $value = 31;
                 }
 
-                update_post_meta($post_id, $meta_key, $value);
+                // Add validation for icon type
+                if ($meta_key === '_mcl_checklist_icon_type') {
+                    if (!in_array($value, ['preset', 'custom'])) {
+                        $value = 'preset';
+                    }
+                }
+
+                $old_value = get_post_meta($post_id, $meta_key, true);
+                $result = update_post_meta($post_id, $meta_key, $value);
+                $status = $result ? 'UPDATED' : ($old_value === $value ? 'unchanged' : 'FAILED');
+                error_log("MCL DEBUG: '$meta_key' = " . (is_array($value) ? json_encode($value) : $value) . " [$status]");
+            } else {
+                $skipped_keys[] = $request_key;
             }
+        }
+
+        error_log("MCL DEBUG: Processed $processed_count meta keys");
+        if (!empty($skipped_keys)) {
+            error_log("MCL DEBUG: Skipped keys (not in request): " . implode(', ', array_slice($skipped_keys, 0, 20)) . (count($skipped_keys) > 20 ? '...' : ''));
         }
 
         // Handle items separately as they need special processing
         if (isset($request['items'])) {
+            error_log('MCL DEBUG: Processing items array with ' . count($request['items']) . ' items');
             $processed_items = array();
+            $item_deadlines = array();
+
             foreach ($request['items'] as $item) {
                 if (isset($item['id'], $item['content'])) {
-                    $processed_items[] = array(
+                    $processed_item = array(
                         'id' => sanitize_text_field($item['id']),
                         'content' => MCL_Sanitization::sanitize_item_content($item['content']),
-                        'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none'
+                        'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
+                        // Always include checked state (default to false)
+                        'checked' => isset($item['checked']) && rest_sanitize_boolean($item['checked']) ? true : false,
+                        // Always include locked state (default to false)
+                        'locked' => isset($item['locked']) && rest_sanitize_boolean($item['locked']) ? true : false,
                     );
+
+                    // Preserve parent_id for nested items
+                    if (isset($item['parent_id']) && !empty($item['parent_id'])) {
+                        $processed_item['parent_id'] = sanitize_text_field($item['parent_id']);
+                    }
+
+                    // Handle item deadline - can be ISO string or timestamp
+                    if (isset($item['deadline']) && !empty($item['deadline'])) {
+                        $deadline = $item['deadline'];
+
+                        // If it's a string like "2025-12-06T13:33", convert to timestamp
+                        if (is_string($deadline) && !is_numeric($deadline)) {
+                            $deadline_timestamp = strtotime($deadline);
+                            if ($deadline_timestamp !== false) {
+                                $processed_item['deadline'] = $deadline;
+                                $item_deadlines[$item['id']] = $deadline_timestamp;
+                            }
+                        } elseif (is_numeric($deadline)) {
+                            // If it's already a timestamp (milliseconds from JS), convert to seconds
+                            $timestamp = intval($deadline);
+                            if ($timestamp > 9999999999) {
+                                // Likely milliseconds, convert to seconds
+                                $timestamp = intval($timestamp / 1000);
+                            }
+                            $processed_item['deadline'] = date('Y-m-d\TH:i', $timestamp);
+                            $item_deadlines[$item['id']] = $timestamp;
+                        }
+                    }
+
+                    $processed_items[] = $processed_item;
                 }
             }
+
             update_post_meta($post_id, '_mcl_items', $processed_items);
+            error_log('MCL DEBUG: Saved ' . count($processed_items) . ' items');
+
+            // Also update item_deadlines meta if any deadlines were found
+            if (!empty($item_deadlines)) {
+                update_post_meta($post_id, '_mcl_item_deadlines', $item_deadlines);
+                error_log('MCL DEBUG: Saved ' . count($item_deadlines) . ' item deadlines');
+            }
+
+            // Extract checked item IDs and update the checked state meta
+            $checked_item_ids = array();
+            foreach ($processed_items as $item) {
+                if (!empty($item['checked'])) {
+                    $checked_item_ids[] = $item['id'];
+                }
+            }
+
+            // Get current settings (use request values if available, otherwise get from meta)
+            $checked_state_handling = isset($request['checked_state_handling'])
+                ? $request['checked_state_handling']
+                : get_post_meta($post_id, '_mcl_checked_state_handling', true);
+            $is_public = isset($request['public_access'])
+                ? rest_sanitize_boolean($request['public_access'])
+                : get_post_meta($post_id, '_mcl_public_access', true) == '1';
+            $public_checked_state_handling = isset($request['public_checked_state_handling'])
+                ? $request['public_checked_state_handling']
+                : get_post_meta($post_id, '_mcl_public_checked_state_handling', true);
+
+            // Always update the main checked state (post meta - used as base/global state)
+            update_post_meta($post_id, '_mcl_checked_state', $checked_item_ids);
+            error_log('MCL DEBUG: Updated _mcl_checked_state with ' . count($checked_item_ids) . ' checked items');
+
+            // Also update public global checked state if public access is enabled
+            if ($is_public) {
+                update_post_meta($post_id, '_mcl_public_global_checked_state', $checked_item_ids);
+                error_log('MCL DEBUG: Updated _mcl_public_global_checked_state with ' . count($checked_item_ids) . ' checked items');
+            }
+
+            // For per_user modes, also update the current user's checked state (if logged in via API)
+            // This ensures the admin/API user sees the pushed state
+            if (is_user_logged_in()) {
+                $user_id = get_current_user_id();
+                // Update for drawer context (most common)
+                update_user_meta($user_id, '_mcl_drawer_checked_state_' . $post_id, $checked_item_ids);
+                error_log('MCL DEBUG: Updated user meta _mcl_drawer_checked_state_' . $post_id . ' for user ' . $user_id);
+            }
+        } else {
+            error_log('MCL DEBUG: No items in request');
         }
 
-        // Handle item deadlines separately
+        // Handle item deadlines separately (if sent as a separate object)
         if (isset($request['item_deadlines'])) {
             $processed_deadlines = array();
             foreach ($request['item_deadlines'] as $item_id => $timestamp) {
                 $item_id = sanitize_text_field($item_id);
                 $timestamp = intval($timestamp);
+                // Convert milliseconds to seconds if needed
+                if ($timestamp > 9999999999) {
+                    $timestamp = intval($timestamp / 1000);
+                }
                 if ($timestamp > 0) {
                     $processed_deadlines[$item_id] = $timestamp;
                 }
             }
             update_post_meta($post_id, '_mcl_item_deadlines', $processed_deadlines);
+            error_log('MCL DEBUG: Saved ' . count($processed_deadlines) . ' item deadlines from separate object');
         }
 
         // Handle tags
         if (isset($request['tags'])) {
+            error_log('MCL DEBUG: Processing tags array with ' . count($request['tags']) . ' tags');
             $processed_tags = array();
             foreach ($request['tags'] as $tag) {
                 if (isset($tag['name'], $tag['color'])) {
@@ -1137,13 +1356,66 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 }
             }
             update_post_meta($post_id, '_mcl_tags', $processed_tags);
+            error_log('MCL DEBUG: Saved ' . count($processed_tags) . ' tags');
         }
 
+        // Handle shortcode settings (JSON object)
+        if (isset($request['shortcode_settings'])) {
+            error_log('MCL DEBUG: Processing shortcode_settings: ' . json_encode($request['shortcode_settings']));
+            $shortcode_settings = $request['shortcode_settings'];
+            if (is_array($shortcode_settings)) {
+                update_post_meta($post_id, '_mcl_shortcode_settings', $shortcode_settings);
+                error_log('MCL DEBUG: Saved shortcode_settings');
+            }
+        } else {
+            error_log('MCL DEBUG: No shortcode_settings in request');
+        }
+
+        // Handle role permission rules
+        if (isset($request['role_permission_rules'])) {
+            error_log('MCL DEBUG: Processing role_permission_rules: ' . json_encode($request['role_permission_rules']));
+            $processed_rules = array();
+            foreach ((array) $request['role_permission_rules'] as $rule) {
+                if (isset($rule['permission'], $rule['roles']) && is_array($rule['roles'])) {
+                    $permission = sanitize_text_field($rule['permission']);
+                    if (in_array($permission, ['view', 'interact', 'edit'])) {
+                        $processed_rules[] = array(
+                            'permission' => $permission,
+                            'roles' => array_map('sanitize_text_field', $rule['roles'])
+                        );
+                    }
+                }
+            }
+            update_post_meta($post_id, '_mcl_role_permission_rules', $processed_rules);
+            error_log('MCL DEBUG: Saved ' . count($processed_rules) . ' role permission rules');
+        }
+
+        // Handle user permission rules
+        if (isset($request['user_permission_rules'])) {
+            error_log('MCL DEBUG: Processing user_permission_rules: ' . json_encode($request['user_permission_rules']));
+            $processed_rules = array();
+            foreach ((array) $request['user_permission_rules'] as $rule) {
+                if (isset($rule['permission'], $rule['users']) && is_array($rule['users'])) {
+                    $permission = sanitize_text_field($rule['permission']);
+                    if (in_array($permission, ['view', 'interact', 'edit'])) {
+                        $processed_rules[] = array(
+                            'permission' => $permission,
+                            'users' => array_map('sanitize_text_field', $rule['users'])
+                        );
+                    }
+                }
+            }
+            update_post_meta($post_id, '_mcl_user_permission_rules', $processed_rules);
+            error_log('MCL DEBUG: Saved ' . count($processed_rules) . ' user permission rules');
+        }
+
+        error_log('MCL DEBUG: save_checklist_meta completed');
+
         // If auto-reset settings have changed, recalculate next reset time
-        if (isset($request['reset_interval']) || 
-            isset($request['reset_time']) || 
-            isset($request['custom_days']) || 
-            isset($request['custom_weeks']) || 
+        if (isset($request['reset_interval']) ||
+            isset($request['reset_time']) ||
+            isset($request['custom_days']) ||
+            isset($request['custom_weeks']) ||
             isset($request['custom_months'])) {
             $this->calculate_next_custom_reset($post_id, $request);
         }
@@ -1193,7 +1465,16 @@ class MCL_REST_Controller extends WP_REST_Controller {
         '_mcl_trigger_button' => 'trigger_button',
         '_mcl_short_title' => 'short_title',
         '_mcl_button_position' => 'button_position',
-        
+        '_mcl_disable_in_builders' => 'disable_in_builders',
+
+        // Icon settings
+        '_mcl_checklist_icon_type' => 'checklist_icon_type',
+        '_mcl_checklist_icon_preset' => 'checklist_icon_preset',
+        '_mcl_checklist_icon_custom' => 'checklist_icon_custom',
+
+        // Shortcode settings
+        '_mcl_enable_shortcode' => 'enable_shortcode',
+
         // Access settings
         '_mcl_public_access' => 'public_access',
         '_mcl_public_permission' => 'public_permission',
@@ -1203,7 +1484,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         '_mcl_access_roles_permission' => 'access_roles_permission',
         '_mcl_access_users' => 'access_users',
         '_mcl_access_users_permission' => 'access_users_permission',
-        
+
         // Display settings
         '_mcl_priority_display_type' => 'priority_display_type',
         '_mcl_enable_rate_limit' => 'enable_rate_limit',
@@ -1211,7 +1492,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         '_mcl_load_everywhere' => 'load_everywhere',
         '_mcl_allowed_pages' => 'allowed_pages',
         '_mcl_allowed_urls' => 'allowed_urls',
-        
+
         // Auto-reset settings
         '_mcl_auto_reset' => 'auto_reset',
         '_mcl_reset_interval' => 'reset_interval',
@@ -1257,17 +1538,70 @@ class MCL_REST_Controller extends WP_REST_Controller {
         ];
     }
 
-    // Add checked state based on handling method
-    $checked_state_handling = get_post_meta($post->ID, '_mcl_checked_state_handling', true);
-    $is_public = get_post_meta($post->ID, '_mcl_public_access', true) == '1';
-
-    if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
-        $user_id = get_current_user_id();
-        $data['checked_state'] = get_user_meta($user_id, '_mcl_checked_state_' . $post->ID, true) ?: [];
-    } else {
-        $meta_key = $is_public ? '_mcl_public_global_checked_state' : '_mcl_checked_state';
-        $data['checked_state'] = get_post_meta($post->ID, $meta_key, true) ?: [];
+    // Add shortcode settings
+    $shortcode_settings = get_post_meta($post->ID, '_mcl_shortcode_settings', true);
+    if (!empty($shortcode_settings)) {
+        $data['shortcode_settings'] = $shortcode_settings;
     }
+
+    // Add custom theme settings (individual meta keys)
+    $custom_theme_keys = [
+        'drawer_bg_color',
+        'list_item_bg_color',
+        'text_color',
+        'heading_font_size',
+        'description_text_color',
+        'description_font_size',
+        'list_item_font_size',
+        'primary_button_bg',
+        'primary_button_text_color',
+        'secondary_button_bg',
+        'secondary_button_text_color',
+        'drawer_width',
+        'drawer_height',
+        'float_button_bg',
+        'float_button_text_color',
+        'float_button_font_size',
+        'show_float_button_icon',
+        'drawer_border_radius',
+        'checkbox_bg_color',
+        'checkbox_border_radius',
+        'checkbox_style',
+        'checkbox_custom_icon',
+        'checkbox_checkmark_color'
+    ];
+    $custom_theme = [];
+    foreach ($custom_theme_keys as $key) {
+        $value = get_post_meta($post->ID, '_mcl_' . $key, true);
+        if ($value !== '') {
+            $custom_theme[$key] = $value;
+        }
+    }
+    if (!empty($custom_theme)) {
+        $data['custom_theme'] = $custom_theme;
+    }
+
+    // Add permission rules
+    $role_permission_rules = get_post_meta($post->ID, '_mcl_role_permission_rules', true);
+    if (!empty($role_permission_rules) && is_array($role_permission_rules)) {
+        $data['role_permission_rules'] = $role_permission_rules;
+    }
+
+    $user_permission_rules = get_post_meta($post->ID, '_mcl_user_permission_rules', true);
+    if (!empty($user_permission_rules) && is_array($user_permission_rules)) {
+        $data['user_permission_rules'] = $user_permission_rules;
+    }
+
+    // Add checked state - for REST API, always use _mcl_checked_state as primary source
+    // This ensures MagicDash sync gets the correct checked state regardless of public access settings
+    $checked_state = get_post_meta($post->ID, '_mcl_checked_state', true);
+
+    // Fall back to public global checked state if main checked state is empty
+    if (empty($checked_state)) {
+        $checked_state = get_post_meta($post->ID, '_mcl_public_global_checked_state', true);
+    }
+
+    $data['checked_state'] = $checked_state ?: [];
 
     // Add links
     $data['_links'] = array(
@@ -1766,13 +2100,21 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
         $api_key = str_replace('Bearer ', '', $auth_header);
         $settings = get_option('mcl_integration_settings', []);
-        
-        // Get and decrypt both API keys
+
+        // Get and decrypt API keys from integration settings
         $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
         $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
 
-        if ((!empty($mainwp_key) && $api_key === $mainwp_key) || 
-            (!empty($mcl_key) && $api_key === $mcl_key)) {
+        // Also check MagicDash connection (magicplugins_connection option)
+        $magicdash_key = '';
+        $magicdash_connection = get_option('magicplugins_connection', []);
+        if (!empty($magicdash_connection['api_key'])) {
+            $magicdash_key = $this->decrypt_api_key($magicdash_connection['api_key']);
+        }
+
+        if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
+            (!empty($mcl_key) && $api_key === $mcl_key) ||
+            (!empty($magicdash_key) && $api_key === $magicdash_key)) {
             return true;
         }
 
@@ -1813,6 +2155,111 @@ class MCL_REST_Controller extends WP_REST_Controller {
             }
         }
         return $users;
+    }
+
+    /**
+     * Handle remote license deactivation from MagicDash
+     * This endpoint is called when a license is deactivated from the MagicDash dashboard
+     */
+    public function handle_remote_deactivate($request) {
+        $license_key = sanitize_text_field($request['licenseKey']);
+        $timestamp = sanitize_text_field($request['timestamp']);
+        $signature = sanitize_text_field($request['signature']);
+
+        error_log('[MagicChecklists] Remote deactivate called with licenseKey: ' . substr($license_key, 0, 10) . '...');
+
+        // Verify timestamp is within 5 minutes
+        $current_time = time();
+        $request_time = intval($timestamp);
+        if (abs($current_time - $request_time) > 300) {
+            error_log('[MagicChecklists] Remote deactivate failed: timestamp expired');
+            return new WP_Error(
+                'invalid_timestamp',
+                __('Request timestamp expired.', 'magic-checklists'),
+                ['status' => 401]
+            );
+        }
+
+        // Verify HMAC signature
+        // Signature should be: HMAC-SHA256(licenseKey + timestamp + siteUrl, licenseKey)
+        // If siteUrl is provided in request, use it (after validating it matches this site)
+        $provided_url = isset($request['siteUrl']) ? sanitize_text_field($request['siteUrl']) : null;
+        $home_url = home_url();
+        $normalized_home = rtrim(strtolower($home_url), '/');
+
+        // Use provided URL if it matches our home_url (to handle www vs non-www, etc.)
+        if ($provided_url) {
+            $normalized_provided = rtrim(strtolower($provided_url), '/');
+            // Extract just the host from both URLs for comparison
+            $home_host = wp_parse_url($normalized_home, PHP_URL_HOST);
+            $provided_host = wp_parse_url($normalized_provided, PHP_URL_HOST);
+
+            // Allow match if hosts are same or differ only by www prefix
+            $home_host_clean = preg_replace('/^www\./', '', $home_host);
+            $provided_host_clean = preg_replace('/^www\./', '', $provided_host);
+
+            if ($home_host_clean === $provided_host_clean) {
+                $normalized_url = $normalized_provided;
+                error_log('[MagicChecklists] Using provided siteUrl: ' . $normalized_url);
+            } else {
+                error_log('[MagicChecklists] Provided siteUrl host mismatch - home: ' . $home_host . ', provided: ' . $provided_host);
+                $normalized_url = $normalized_home;
+            }
+        } else {
+            $normalized_url = $normalized_home;
+        }
+
+        $data_to_hash = $license_key . $timestamp . $normalized_url;
+        $expected_signature = hash_hmac('sha256', $data_to_hash, $license_key);
+
+        error_log('[MagicChecklists] Remote deactivate signature check:');
+        error_log('[MagicChecklists]   home_url() raw: ' . $home_url);
+        error_log('[MagicChecklists]   provided siteUrl: ' . ($provided_url ?: 'not provided'));
+        error_log('[MagicChecklists]   url used for sig: ' . $normalized_url);
+        error_log('[MagicChecklists]   timestamp: ' . $timestamp);
+        error_log('[MagicChecklists]   license_key prefix: ' . substr($license_key, 0, 10) . '...');
+        error_log('[MagicChecklists]   data_to_hash: ' . substr($license_key, 0, 10) . '...' . $timestamp . $normalized_url);
+        error_log('[MagicChecklists]   expected sig: ' . substr($expected_signature, 0, 20) . '...');
+        error_log('[MagicChecklists]   received sig: ' . substr($signature, 0, 20) . '...');
+
+        if (!hash_equals($expected_signature, $signature)) {
+            error_log('[MagicChecklists] Remote deactivate FAILED: signatures do not match');
+            return new WP_Error(
+                'invalid_signature',
+                __('Invalid request signature.', 'magic-checklists'),
+                ['status' => 401]
+            );
+        }
+
+        // Verify the license key matches our stored license
+        // Note: License key is stored at 'magicchecklists_license_key' by the licensing class
+        $stored_license_key = get_option('magicchecklists_license_key');
+        if ($stored_license_key !== $license_key) {
+            error_log('[MagicChecklists] Remote deactivate failed: license key mismatch');
+            error_log('[MagicChecklists]   stored: ' . substr($stored_license_key ?: '(empty)', 0, 15) . '...');
+            error_log('[MagicChecklists]   received: ' . substr($license_key, 0, 15) . '...');
+            return new WP_Error(
+                'license_mismatch',
+                __('License key does not match.', 'magic-checklists'),
+                ['status' => 400]
+            );
+        }
+
+        // Clear license data (using correct option names from licensing class)
+        delete_option('magicchecklists_license_key');
+        delete_option('magicchecklists_license_status');
+        delete_option('magicchecklists_license_last_validated');
+        delete_option('magicchecklists_license_tier');
+
+        // Also clear MagicDash connection
+        delete_option('magicplugins_connection');
+
+        error_log('[MagicChecklists] Remote deactivate successful - license and connection data cleared');
+
+        return rest_ensure_response([
+            'success' => true,
+            'message' => __('License deactivated successfully.', 'magic-checklists'),
+        ]);
     }
 
     /**

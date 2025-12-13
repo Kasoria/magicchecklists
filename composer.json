@@ -1,0 +1,11 @@
+{
+    "name": "magicplugins/magicchecklists",
+    "description": "MagicChecklists WordPress Plugin",
+    "type": "wordpress-plugin",
+    "require": {
+        "yahnis-elsts/plugin-update-checker": "^5.4"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}

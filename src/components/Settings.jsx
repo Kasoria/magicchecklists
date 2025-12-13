@@ -3,6 +3,7 @@ import { Card, Button, Tabs, TabItem } from 'flowbite-react'
 import GeneralSettings from './settings/GeneralSettings.jsx'
 import DashboardSettings from './settings/DashboardSettings.jsx'
 import IntegrationSettings from './settings/IntegrationSettings.jsx'
+import MagicDashSettings from './settings/MagicDashSettings.jsx'
 import { useToast } from './Toast.jsx'
 
 const Settings = ({ adminData }) => {
@@ -136,7 +137,7 @@ const Settings = ({ adminData }) => {
         <Tabs
           aria-label={i18n.settings?.tabs?.ariaLabel || 'Settings tabs'}
           variant="underline"
-          onActiveTabChange={(tab) => setActiveTab(['general', 'dashboard', 'integrations'][tab])}
+          onActiveTabChange={(tab) => setActiveTab(['general', 'dashboard', 'integrations', 'magicdash'][tab])}
         >
           <TabItem 
             active={activeTab === 'general'} 
@@ -186,6 +187,20 @@ const Settings = ({ adminData }) => {
               settings={settings.integration}
               onSave={(integrationSettings) => saveSettings('integration', integrationSettings)}
               loading={loading}
+              adminData={adminData}
+            />
+          </TabItem>
+
+          <TabItem
+            active={activeTab === 'magicdash'}
+            title={i18n.settings?.tabs?.magicdash || 'MagicDash'}
+            icon={() => (
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+            )}
+          >
+            <MagicDashSettings
               adminData={adminData}
             />
           </TabItem>

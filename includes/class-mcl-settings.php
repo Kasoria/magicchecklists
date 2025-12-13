@@ -38,6 +38,12 @@ class MCL_Settings {
         // Add public AJAX handler for getting general settings (for frontend styling)
         add_action('wp_ajax_mcl_get_general_settings', array($this, 'ajax_get_general_settings'));
         add_action('wp_ajax_nopriv_mcl_get_general_settings', array($this, 'ajax_get_general_settings'));
+
+        // Add AJAX handlers for MagicDash connection
+        add_action('wp_ajax_mcl_get_magicdash_connection', array($this, 'ajax_get_magicdash_connection'));
+        add_action('wp_ajax_mcl_connect_magicdash', array($this, 'ajax_connect_magicdash'));
+        add_action('wp_ajax_mcl_disconnect_magicdash', array($this, 'ajax_disconnect_magicdash'));
+        add_action('wp_ajax_mcl_test_magicdash_connection', array($this, 'ajax_test_magicdash_connection'));
     }
 
     public function enqueue_settings_scripts($hook) {
@@ -1453,6 +1459,134 @@ class MCL_Settings {
         );
         
         return isset($language_names[$locale]) ? $language_names[$locale] : $locale;
+    }
+
+    /**
+     * AJAX: Get MagicDash connection status
+     */
+    public function ajax_get_magicdash_connection() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => __('Invalid security token', 'magic-checklists')));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'magic-checklists')));
+            return;
+        }
+
+        if (!class_exists('MagicPlugins_Core')) {
+            wp_send_json_error(array('message' => __('Connection system not available', 'magic-checklists')));
+            return;
+        }
+
+        $details = MagicPlugins_Core::get_connection_details();
+
+        wp_send_json_success(array(
+            'isConnected' => $details['is_connected'],
+            'magicdashUrl' => $details['magicdash_url'],
+            'siteId' => $details['site_id'],
+            'connectedAt' => $details['connected_at'],
+            'connectedPlugins' => $details['connected_plugins'],
+        ));
+    }
+
+    /**
+     * AJAX: Connect to MagicDash
+     */
+    public function ajax_connect_magicdash() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => __('Invalid security token', 'magic-checklists')));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'magic-checklists')));
+            return;
+        }
+
+        $magicdash_url = isset($_POST['magicdash_url']) ? esc_url_raw($_POST['magicdash_url']) : '';
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+
+        if (empty($magicdash_url) || empty($api_key)) {
+            wp_send_json_error(array('message' => __('MagicDash URL and API key are required', 'magic-checklists')));
+            return;
+        }
+
+        if (!class_exists('MagicPlugins_Core')) {
+            wp_send_json_error(array('message' => __('Connection system not available', 'magic-checklists')));
+            return;
+        }
+
+        // Set current plugin context
+        MagicPlugins_Core::set_current_plugin('magicchecklists');
+
+        $result = MagicPlugins_Core::connect($api_key);
+
+        if ($result['success']) {
+            wp_send_json_success(array(
+                'message' => $result['message'],
+                'siteId' => $result['site_id'] ?? '',
+            ));
+        } else {
+            wp_send_json_error(array('message' => $result['message']));
+        }
+    }
+
+    /**
+     * AJAX: Disconnect from MagicDash
+     */
+    public function ajax_disconnect_magicdash() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => __('Invalid security token', 'magic-checklists')));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'magic-checklists')));
+            return;
+        }
+
+        if (!class_exists('MagicPlugins_Core')) {
+            wp_send_json_error(array('message' => __('Connection system not available', 'magic-checklists')));
+            return;
+        }
+
+        $result = MagicPlugins_Core::disconnect();
+
+        if ($result['success']) {
+            wp_send_json_success(array('message' => $result['message']));
+        } else {
+            wp_send_json_error(array('message' => $result['message']));
+        }
+    }
+
+    /**
+     * AJAX: Test MagicDash connection
+     */
+    public function ajax_test_magicdash_connection() {
+        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => __('Invalid security token', 'magic-checklists')));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'magic-checklists')));
+            return;
+        }
+
+        if (!class_exists('MagicPlugins_Core')) {
+            wp_send_json_error(array('message' => __('Connection system not available', 'magic-checklists')));
+            return;
+        }
+
+        $result = MagicPlugins_Core::test_connection();
+
+        if ($result['success']) {
+            wp_send_json_success(array('message' => $result['message']));
+        } else {
+            wp_send_json_error(array('message' => $result['message']));
+        }
     }
 
 }
