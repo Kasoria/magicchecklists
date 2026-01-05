@@ -11,7 +11,7 @@
  * Plugin Name:       MagicChecklists
  * Plugin URI:        https://magicplugins.io
  * Description:       Allows the creation of custom checklists in the WordPress backend.
- * Version:           2.2.1
+ * Version:           2.2.1.2
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://magicplugins.io
@@ -25,29 +25,32 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Define plugin constants
+define('MAGIC_CHECKLISTS_VERSION', '2.2.1.2');
+define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
+define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
+define('MAGIC_CHECKLISTS_ADMIN_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'admin/');
+define('MAGIC_CHECKLISTS_PUBLIC_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/');
+define('MAGIC_CHECKLISTS_PUBLIC_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'public/');
+define('MAGIC_CHECKLISTS_TEXT_DOMAIN', 'magic-checklists');
+
+// Load Composer autoloader
+require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'vendor/autoload.php';
+
+// Load MagicPlugins Core (unified licensing + connection)
+if (!class_exists('MagicPlugins_Core')) {
+    require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-magicplugins-core.php';
+}
+
 if ( ! class_exists( 'MagicChecklists' ) ) {
 
     class MagicChecklists {
 
         public function __construct() {
-            $this->define_constants();
             $this->setup_autoloader();
             $this->init_hooks();
-        }
-
-        /**
-         * Define plugin constants
-         */
-        private function define_constants() {
-            define('MAGIC_CHECKLISTS_VERSION', '2.2.1');
-            define('MAGIC_CHECKLISTS_PLUGIN_FILE', __FILE__);
-            define('MAGIC_CHECKLISTS_PLUGIN_PATH', plugin_dir_path(__FILE__));
-            define('MAGIC_CHECKLISTS_PLUGIN_URL', plugin_dir_url(__FILE__));
-            define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
-            define('MAGIC_CHECKLISTS_ADMIN_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'admin/');
-            define('MAGIC_CHECKLISTS_PUBLIC_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/');
-            define('MAGIC_CHECKLISTS_PUBLIC_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'public/');
-            define('MAGIC_CHECKLISTS_TEXT_DOMAIN', 'magic-checklists');
         }
 
         /**
@@ -59,29 +62,19 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                 if (strpos($class_name, 'MCL_') !== 0) {
                     return;
                 }
-                
+
                 // Convert class name to file path
                 $class_name = str_replace('MCL_', '', $class_name);
                 $file_name = 'class-mcl-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
                 $file_path = MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/' . $file_name;
-                
+
                 // Check if file exists and load it
                 if (file_exists($file_path)) {
                     require_once $file_path;
                 }
             });
-            
-            // Include Composer autoloader for Plugin Update Checker
-            if (file_exists(MAGIC_CHECKLISTS_PLUGIN_PATH . 'vendor/autoload.php')) {
-                require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'vendor/autoload.php';
-            }
 
-            // Include MagicPlugins Core (unified licensing + connection)
-            if (!class_exists('MagicPlugins_Core')) {
-                require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-magicplugins-core.php';
-            }
-
-            register_activation_hook(__FILE__, array($this, 'activate'));
+            register_activation_hook(MAGIC_CHECKLISTS_PLUGIN_FILE, array($this, 'activate'));
         }
 
         /**

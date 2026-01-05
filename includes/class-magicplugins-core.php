@@ -19,6 +19,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Use statement must be at namespace/file level
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
 if (!class_exists('MagicPlugins_Core')) {
 
     class MagicPlugins_Core {
@@ -621,15 +624,10 @@ if (!class_exists('MagicPlugins_Core')) {
          * @param array $config Plugin configuration
          */
         private static function init_update_checker($config) {
-            // Check if Plugin Update Checker is available
-            if (!class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
-                return;
-            }
-
             $slug = $config['plugin_slug'];
             $update_check_url = self::get_proxy_url() . '/api/proxy/plugins/update-check?slug=' . $slug;
 
-            $update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+            $update_checker = PucFactory::buildUpdateChecker(
                 $update_check_url,
                 $config['plugin_file'],
                 $slug

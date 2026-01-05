@@ -32,7 +32,8 @@ const includeFiles = [
   'licensing',
   'uninstall.php',
   'release.json',
-  'dist' // Built React assets
+  'dist', // Built React assets
+  'vendor' // Composer dependencies (Plugin Update Checker)
 ];
 
 // Files and directories to exclude from the build
