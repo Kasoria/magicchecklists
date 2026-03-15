@@ -197,4 +197,4 @@ Yes. MagicChecklists provides REST API endpoints (v1 and v2) for managing checkl
 == Upgrade Notice ==
 
 = 2.3 =
-All features are now free and open source. No license required.
+All features are now free and open source. No commercial license required.

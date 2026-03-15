@@ -428,16 +428,16 @@ class MCL_DB_Manager {
             ];
             
             foreach ($columns_to_add as $column => $query) {
-                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $task_comments_table LIKE '$column'");
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $task_comments_table LIKE '$column'"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 if (empty($column_exists)) {
-                    $wpdb->query($query);
+                    $wpdb->query($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 }
             }
             
             // Add indexes if they don't exist
-            $index_exists = $wpdb->get_results("SHOW INDEX FROM $task_comments_table WHERE Key_name = 'parent_id'");
+            $index_exists = $wpdb->get_results("SHOW INDEX FROM $task_comments_table WHERE Key_name = 'parent_id'"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             if (empty($index_exists)) {
-                $wpdb->query("ALTER TABLE $task_comments_table ADD KEY parent_id (parent_id)");
+                $wpdb->query("ALTER TABLE $task_comments_table ADD KEY parent_id (parent_id)"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             }
             
             // Create comment likes table
@@ -459,9 +459,9 @@ class MCL_DB_Manager {
             // Add notify_on_comments column to notification settings table
             $notification_settings_table = $wpdb->prefix . 'mcl_notification_settings';
 
-            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $notification_settings_table LIKE 'notify_on_comments'");
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $notification_settings_table LIKE 'notify_on_comments'"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE $notification_settings_table ADD COLUMN notify_on_comments tinyint(1) NOT NULL DEFAULT 0 AFTER notify_on_deadline");
+                $wpdb->query("ALTER TABLE $notification_settings_table ADD COLUMN notify_on_comments tinyint(1) NOT NULL DEFAULT 0 AFTER notify_on_deadline"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             }
 
             // Log successful upgrade
@@ -488,17 +488,17 @@ class MCL_DB_Manager {
             ];
 
             foreach ($columns_to_add as $column => $sql) {
-                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $feature_board_settings_table LIKE '$column'");
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $feature_board_settings_table LIKE '$column'"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 if (empty($column_exists)) {
-                    $wpdb->query($sql);
+                    $wpdb->query($sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
                 }
             }
 
             // Add ip_hash column to item upvotes table
-            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $item_upvotes_table LIKE 'ip_hash'");
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $item_upvotes_table LIKE 'ip_hash'"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE $item_upvotes_table ADD COLUMN ip_hash varchar(64) DEFAULT NULL AFTER user_name");
-                $wpdb->query("ALTER TABLE $item_upvotes_table ADD INDEX ip_hash (ip_hash)");
+                $wpdb->query("ALTER TABLE $item_upvotes_table ADD COLUMN ip_hash varchar(64) DEFAULT NULL AFTER user_name"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+                $wpdb->query("ALTER TABLE $item_upvotes_table ADD INDEX ip_hash (ip_hash)"); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             }
 
             // Log successful upgrade

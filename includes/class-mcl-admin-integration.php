@@ -27,12 +27,12 @@ class MCL_Admin_Integration {
     public function handle_save_publisher_checklist() {
         // Verify nonce
         if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_save_publisher_checklist')) {
-            wp_die(__('Security check failed', 'magic-checklists'));
+            wp_die(esc_html__('Security check failed', 'magic-checklists'));
         }
-        
+
         // Check permissions
         if (!current_user_can('manage_options')) {
-            wp_die(__('Insufficient permissions', 'magic-checklists'));
+            wp_die(esc_html__('Insufficient permissions', 'magic-checklists'));
         }
         
         $checklist_id = intval($_POST['checklist_id']);
@@ -154,7 +154,7 @@ class MCL_Admin_Integration {
         
         // Redirect with success
         $redirect_url = admin_url('admin.php?page=mcl_add_new&type=publisher&checklist_id=' . $checklist_id . '&message=saved');
-        wp_redirect($redirect_url);
+        wp_safe_redirect($redirect_url);
         exit;
     }
     
@@ -164,7 +164,7 @@ class MCL_Admin_Integration {
             $redirect_url = add_query_arg('checklist_id', $checklist_id, $redirect_url);
         }
         $redirect_url = add_query_arg('error', urlencode($message), $redirect_url);
-        wp_redirect($redirect_url);
+        wp_safe_redirect($redirect_url);
         exit;
     }
     
@@ -242,18 +242,19 @@ class MCL_Admin_Integration {
                     }));
                     
                     if ($count > 0) {
-                        echo sprintf(
+                        echo esc_html( sprintf(
+                            /* translators: 1: total count, 2: required count */
                             __('%d total (%d required)', 'magic-checklists'),
                             $count,
                             $required_count
-                        );
+                        ) );
                     } else {
                         echo '<span class="mcl-none">—</span>';
                     }
                 } else {
                     $items = get_post_meta($post_id, '_mcl_items', true) ?: array();
                     $count = count($items);
-                    echo $count > 0 ? sprintf(__('%d items', 'magic-checklists'), $count) : '<span class="mcl-none">—</span>';
+                    echo $count > 0 ? esc_html( sprintf( /* translators: %d: item count */ __('%d items', 'magic-checklists'), $count ) ) : '<span class="mcl-none">—</span>';
                 }
                 break;
         }

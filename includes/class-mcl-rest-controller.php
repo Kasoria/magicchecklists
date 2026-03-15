@@ -1226,7 +1226,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                                 // Likely milliseconds, convert to seconds
                                 $timestamp = intval($timestamp / 1000);
                             }
-                            $processed_item['deadline'] = date('Y-m-d\TH:i', $timestamp);
+                            $processed_item['deadline'] = wp_date('Y-m-d\TH:i', $timestamp);
                             $item_deadlines[$item['id']] = $timestamp;
                         }
                     }
@@ -1401,7 +1401,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     foreach ($items as &$item) {
         if (isset($item_deadlines[$item['id']])) {
             $deadline_timestamp = intval($item_deadlines[$item['id']]);
-            $item['deadline'] = date('Y-m-d H:i:s', $deadline_timestamp);
+            $item['deadline'] = wp_date('Y-m-d H:i:s', $deadline_timestamp);
             $item['deadline_timestamp'] = $deadline_timestamp;
                                 $item['deadline_formatted'] = MCL_Admin::format_date($deadline_timestamp, false);
         }
@@ -1950,7 +1950,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $minutes = intval($time_parts[1]);
 
         $now = current_time('timestamp');
-        $today = strtotime(date('Y-m-d', $now) . " {$hours}:{$minutes}:00");
+        $today = strtotime(wp_date('Y-m-d', $now) . " {$hours}:{$minutes}:00");
         $next = $today;
 
         // Get custom interval values

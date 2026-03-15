@@ -96,7 +96,7 @@ class MCL_API_Integration {
     }
 
     private function validate_webhook_url($url) {
-        $parsed = parse_url($url);
+        $parsed = wp_parse_url($url);
         
         // Prevent internal network access
         $internal_patterns = array(

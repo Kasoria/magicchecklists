@@ -919,8 +919,8 @@ class MCL_Settings {
                         esc_html_e('No checklists selected. All checklists will be displayed.', 'magic-checklists');
                     } else {
                         echo sprintf(
-                            esc_html(_n('%d checklist selected.', '%d checklists selected.', $selected_count, 'magic-checklists')), 
-                            $selected_count
+                            esc_html(_n('%d checklist selected.', '%d checklists selected.', $selected_count, 'magic-checklists')),
+                            intval($selected_count)
                         );
                     }
                     ?>
@@ -1146,7 +1146,7 @@ class MCL_Settings {
      */
     public function ajax_get_settings() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');
@@ -1175,7 +1175,7 @@ class MCL_Settings {
      */
     public function ajax_save_settings() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');
@@ -1227,7 +1227,7 @@ class MCL_Settings {
      */
     public function ajax_get_webhook_logs() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');
@@ -1241,7 +1241,7 @@ class MCL_Settings {
      */
     public function ajax_test_webhook() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');
@@ -1288,7 +1288,7 @@ class MCL_Settings {
      */
     public function ajax_clear_webhook_logs() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');
@@ -1362,7 +1362,7 @@ class MCL_Settings {
      */
     public function ajax_get_available_languages() {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'magic-checklists'));
         }
 
         check_ajax_referer('mcl_admin_nonce', 'nonce');

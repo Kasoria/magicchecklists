@@ -120,7 +120,7 @@ class MCL_CPT {
     public function add_color_field() {
         ?>
         <div class="form-field">
-            <label for="tag_color"><?php _e('Tag Color', 'magic-checklists'); ?></label>
+            <label for="tag_color"><?php esc_html_e('Tag Color', 'magic-checklists'); ?></label>
             <select name="tag_color" id="tag_color" class="mcl-color-select">
                 <?php foreach (self::TAG_COLORS as $name => $color): ?>
                     <option value="<?php echo esc_attr($color); ?>" style="background-color: <?php echo esc_attr($color); ?>">
@@ -129,7 +129,7 @@ class MCL_CPT {
                 <?php endforeach; ?>
             </select>
             <p class="description">
-                <?php _e('Select a color for this tag.', 'magic-checklists'); ?>
+                <?php esc_html_e('Select a color for this tag.', 'magic-checklists'); ?>
             </p>
         </div>
         <?php
@@ -141,12 +141,12 @@ class MCL_CPT {
         ?>
         <tr class="form-field">
             <th scope="row">
-                <label for="tag_color"><?php _e('Tag Color', 'magic-checklists'); ?></label>
+                <label for="tag_color"><?php esc_html_e('Tag Color', 'magic-checklists'); ?></label>
             </th>
             <td>
                 <select name="tag_color" id="tag_color" class="mcl-color-select">
                     <?php foreach (self::TAG_COLORS as $name => $value): ?>
-                        <option value="<?php echo esc_attr($value); ?>" 
+                        <option value="<?php echo esc_attr($value); ?>"
                                 <?php selected($color, $value); ?>
                                 style="background-color: <?php echo esc_attr($value); ?>">
                             <?php echo esc_html(ucfirst($name)); ?>
@@ -154,7 +154,7 @@ class MCL_CPT {
                     <?php endforeach; ?>
                 </select>
                 <p class="description">
-                    <?php _e('Select a color for this tag.', 'magic-checklists'); ?>
+                    <?php esc_html_e('Select a color for this tag.', 'magic-checklists'); ?>
                 </p>
             </td>
         </tr>

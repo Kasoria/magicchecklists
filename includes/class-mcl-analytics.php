@@ -570,8 +570,8 @@ class MCL_Analytics {
     public function get_trends_data($days = 30) {
         global $wpdb;
         
-        $start_date = date('Y-m-d', strtotime("-{$days} days"));
-        $end_date = date('Y-m-d');
+        $start_date = wp_date('Y-m-d', strtotime("-{$days} days"));
+        $end_date = wp_date('Y-m-d');
         
         // Generate date range
         $dates = array();
@@ -621,7 +621,7 @@ class MCL_Analytics {
         
         // Build chart data for each date
         foreach ($dates as $date) {
-            $chart_dates[] = date('M j', strtotime($date));
+            $chart_dates[] = wp_date('M j', strtotime($date));
             $chart_views[] = isset($view_data[$date]) ? $view_data[$date] : 0;
             $chart_checks[] = isset($check_data[$date]) ? $check_data[$date] : 0;
         }

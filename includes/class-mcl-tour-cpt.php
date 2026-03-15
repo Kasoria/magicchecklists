@@ -323,13 +323,13 @@ class MCL_Tour_CPT {
         }
 
         // Extract path from current URL if it's a full URL
-        $current_path = parse_url($current_url, PHP_URL_PATH);
+        $current_path = wp_parse_url($current_url, PHP_URL_PATH);
         if ($current_path === null) {
             $current_path = $current_url;
         }
         
         // Add query string if it exists
-        $current_query = parse_url($current_url, PHP_URL_QUERY);
+        $current_query = wp_parse_url($current_url, PHP_URL_QUERY);
         if ($current_query) {
             $current_path .= '?' . $current_query;
         }

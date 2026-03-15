@@ -26,24 +26,24 @@ class MCL_Export_Handler {
     public function handle_txt_export() {
       // Verify nonce first
       if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_txt')) {
-          wp_die(__('Security check failed', 'magic-checklists'));
+          wp_die(esc_html__('Security check failed', 'magic-checklists'));
       }
 
       // Check permissions
       if (!current_user_can('manage_options')) {
-          wp_die(__('You do not have permission to perform this action', 'magic-checklists'));
+          wp_die(esc_html__('You do not have permission to perform this action', 'magic-checklists'));
       }
 
       // Get and validate checklist ID
       $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
       if (!$checklist_id) {
-          wp_die(__('No checklist selected', 'magic-checklists'));
+          wp_die(esc_html__('No checklist selected', 'magic-checklists'));
       }
 
       // Get checklist data
       $checklist = get_post($checklist_id);
       if (!$checklist || $checklist->post_type !== 'mcl_checklist') {
-          wp_die(__('Invalid checklist', 'magic-checklists'));
+          wp_die(esc_html__('Invalid checklist', 'magic-checklists'));
       }
 
       $items = get_post_meta($checklist_id, '_mcl_items', true);
@@ -71,23 +71,24 @@ class MCL_Export_Handler {
       header('Content-Disposition: attachment; filename="' . sanitize_file_name($checklist->post_title . '.txt') . '"');
       header('Pragma: public');
       
-      // Output content
+      // Output content - plain text file download, no HTML context
+      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain text file download, not HTML context.
       echo $content;
       exit;
   }
 
   public function handle_json_export() {
       if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_json')) {
-          wp_die(__('Security check failed', 'magic-checklists'));
+          wp_die(esc_html__('Security check failed', 'magic-checklists'));
       }
 
       if (!current_user_can('manage_options')) {
-          wp_die(__('You do not have permission to perform this action', 'magic-checklists'));
+          wp_die(esc_html__('You do not have permission to perform this action', 'magic-checklists'));
       }
 
       $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
       if (!$checklist_id) {
-          wp_die(__('No checklist selected', 'magic-checklists'));
+          wp_die(esc_html__('No checklist selected', 'magic-checklists'));
       }
 
       // Get all checklist data
@@ -105,6 +106,7 @@ class MCL_Export_Handler {
       header('Pragma: public');
 
       // Output JSON
+      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode returns safe JSON for file download.
       echo wp_json_encode($export_data, JSON_PRETTY_PRINT);
       exit;
   }
@@ -112,13 +114,13 @@ class MCL_Export_Handler {
   public function handle_pdf_export() {
     
     if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_pdf')) {
-        wp_die(__('Security check failed', 'magic-checklists'));
+        wp_die(esc_html__('Security check failed', 'magic-checklists'));
     }
 
     $export_id = isset($_POST['export_id']) ? sanitize_text_field($_POST['export_id']) : '';
 
     if (!$export_id) {
-        wp_die(__('Export ID missing', 'magic-checklists'));
+        wp_die(esc_html__('Export ID missing', 'magic-checklists'));
     }
 
     // Try to get the transient
@@ -130,7 +132,7 @@ class MCL_Export_Handler {
         set_transient($test_transient, 'test', 60);
         $test_result = get_transient($test_transient);
         
-        wp_die(__('Export settings have expired or are invalid. Please try again.', 'magic-checklists'));
+        wp_die(esc_html__('Export settings have expired or are invalid. Please try again.', 'magic-checklists'));
     }
 
     // Continue with export...
@@ -147,6 +149,7 @@ class MCL_Export_Handler {
     header('Content-Type: text/html; charset=utf-8');
     header('Content-Disposition: inline; filename="' . sanitize_file_name($checklist->post_title . '.html') . '"');
     
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- generate_pdf_html escapes all dynamic content internally.
     echo $this->generate_pdf_html($checklist, $items, $settings);
     
     exit;

@@ -89,7 +89,7 @@ class MCL_Permissions {
             $current_time
         );
 
-        $link = $wpdb->get_row($query);
+        $link = $wpdb->get_row($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $query is built via $wpdb->prepare() above
 
         if (!$link) {
             // error_log('MCL: Invalid or expired token: ' . $token); // Be cautious about logging tokens

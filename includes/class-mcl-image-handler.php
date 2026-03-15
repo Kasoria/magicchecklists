@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 class MCL_Image_Handler {
     private $upload_dir;
     private $upload_url;
@@ -80,6 +84,7 @@ class MCL_Image_Handler {
         header('Cache-Control: public, max-age=31536000');
 
         // Output file
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streaming binary image data to browser; WP_Filesystem not suitable for direct output.
         readfile($file_path);
         exit;
     }
@@ -138,7 +143,7 @@ class MCL_Image_Handler {
               }
           }
 
-          if (!is_writable($this->upload_dir)) {
+          if (!wp_is_writable($this->upload_dir)) {
               wp_send_json_error(array('message' => 'Upload directory is not writable'));
               return;
           }
@@ -150,6 +155,7 @@ class MCL_Image_Handler {
           error_log('MCL: Attempting to move file to: ' . $filepath);
 
           // Move uploaded file
+          // phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() is required for security; it validates the file was a genuine HTTP upload.
           if (!move_uploaded_file($file['tmp_name'], $filepath)) {
               wp_send_json_error(array(
                   'message' => 'Failed to save file',
@@ -165,7 +171,7 @@ class MCL_Image_Handler {
           // Get image dimensions
           $dimensions = getimagesize($filepath);
           if ($dimensions === false) {
-              unlink($filepath);
+              wp_delete_file($filepath);
               wp_send_json_error(array('message' => 'Invalid image file'));
               return;
           }
@@ -199,7 +205,7 @@ class MCL_Image_Handler {
           '%s-%s-%s.%s',
           $filename,
           uniqid(),
-          substr(md5(rand()), 0, 6),
+          substr(md5(wp_rand()), 0, 6),
           $ext
       );
   }
@@ -233,7 +239,7 @@ class MCL_Image_Handler {
 
             // Delete file if not in use
             if (!in_array($file, $active_images)) {
-                @unlink($this->upload_dir . '/' . $file);
+                wp_delete_file($this->upload_dir . '/' . $file);
             }
         }
     }

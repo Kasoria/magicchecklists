@@ -48,7 +48,7 @@ class MCL_Global_Notification_Manager {
         // Delete all processed notifications older than 30 days
         $result = $wpdb->query($wpdb->prepare(
             "DELETE FROM $table_name WHERE processed = 1 AND processed_at < %s",
-            date('Y-m-d H:i:s', strtotime('-30 days'))
+            wp_date('Y-m-d H:i:s', strtotime('-30 days'))
         ));
     
         if ($result === false) {
@@ -152,13 +152,13 @@ class MCL_Global_Notification_Manager {
         
         switch ($batch_interval) {
             case 'hourly':
-                return date('Y-m-d H:00:00', strtotime('+1 hour', strtotime($now)));
+                return wp_date('Y-m-d H:00:00', strtotime('+1 hour', strtotime($now)));
             case 'daily':
-                return date('Y-m-d 00:00:00', strtotime('+1 day', strtotime($now)));
+                return wp_date('Y-m-d 00:00:00', strtotime('+1 day', strtotime($now)));
             case 'immediate':
                 return $now;
             default:
-                return date('Y-m-d H:i:00', strtotime('+15 minutes', strtotime($now)));
+                return wp_date('Y-m-d H:i:00', strtotime('+15 minutes', strtotime($now)));
         }
     }
     
@@ -201,11 +201,12 @@ class MCL_Global_Notification_Manager {
             $notification_ids = wp_list_pluck($group_notifications, 'id');
             $placeholders = array_fill(0, count($notification_ids), '%d');
             
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated safely via array_fill with %d
             $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}mcl_global_notifications 
-                SET processed = 1, 
-                    processed_at = %s 
-                WHERE id IN (" . implode(',', $placeholders) . ")",
+                "UPDATE {$wpdb->prefix}mcl_global_notifications
+                SET processed = 1,
+                    processed_at = %s
+                WHERE id IN (" . implode(',', $placeholders) . ")", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders generated via array_fill
                 array_merge([current_time('mysql')], $notification_ids)
             ));
         }
@@ -353,11 +354,11 @@ class MCL_Global_Notification_Manager {
 
     private function format_comment_notification_message($event, $data) {
         $user = isset($data['user_name']) ? $data['user_name'] : __('Someone', 'magic-checklists');
-        $item_context = isset($data['item_content']) ? ' on "' . strip_tags($data['item_content']) . '"' : '';
+        $item_context = isset($data['item_content']) ? ' on "' . wp_strip_all_tags($data['item_content']) . '"' : '';
         
         switch ($event) {
             case 'comment-added':
-                $content = isset($data['comment_content']) ? strip_tags($data['comment_content']) : '';
+                $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : '';
                 $preview = strlen($content) > 100 ? substr($content, 0, 100) . '...' : $content;
                 return sprintf(
                     __('💬 %s added a comment%s: "%s"', 'magic-checklists'),
@@ -421,20 +422,20 @@ class MCL_Global_Notification_Manager {
             foreach ($search_patterns as $pattern) {
                 // Direct match
                 if ($current_id == $pattern || $current_id === $pattern) {
-                    return strip_tags($item['content'] ?? 'Untitled item');
+                    return wp_strip_all_tags($item['content'] ?? 'Untitled item');
                 }
                 
                 // Check if current_id starts with the pattern (for cases like "item_1234_1" matching "1234")
                 if (is_string($current_id) && is_string($pattern)) {
                     if (strpos($current_id, $pattern) !== false) {
-                        return strip_tags($item['content'] ?? 'Untitled item');
+                        return wp_strip_all_tags($item['content'] ?? 'Untitled item');
                     }
                 }
                 
                 // Also check if pattern starts with current_id (for reverse matches)
                 if (is_string($current_id) && is_string($pattern)) {
                     if (strpos($pattern, $current_id) !== false) {
-                        return strip_tags($item['content'] ?? 'Untitled item');
+                        return wp_strip_all_tags($item['content'] ?? 'Untitled item');
                     }
                 }
             }

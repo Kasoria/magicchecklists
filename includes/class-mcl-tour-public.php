@@ -694,6 +694,6 @@ class MCL_Tour_Public {
     public function get_tour_creator_ui() {
         // This method is deprecated as tour creator is now fully handled by React components
         // The React components are loaded automatically by MCL_React_Dev class
-        wp_die(__('Tour creator is now handled by React components', 'magic-checklists'));
+        wp_die(esc_html__('Tour creator is now handled by React components', 'magic-checklists'));
     }
 }

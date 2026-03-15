@@ -715,7 +715,7 @@ class MCL_Tour_Admin {
                         'tour_title' => $tour->post_title,
                         'step_index' => $step_index,
                         'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
-                        'step_content' => !empty($step['content']) ? wp_trim_words(strip_tags($step['content']), 10) : ''
+                        'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                     );
                 }
             }
@@ -865,7 +865,7 @@ class MCL_Tour_Admin {
                             'tour_title' => $tour->post_title,
                             'step_index' => $step_index,
                             'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
-                            'step_content' => !empty($step['content']) ? wp_trim_words(strip_tags($step['content']), 10) : ''
+                            'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                         );
                     }
                 }

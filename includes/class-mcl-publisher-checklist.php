@@ -373,7 +373,7 @@ class MCL_Publisher_Checklist {
     
     private function check_word_count($content, $config) {
         $min_words = intval($config['min_words'] ?? 300);
-        $word_count = str_word_count(strip_tags($content));
+        $word_count = str_word_count(wp_strip_all_tags($content));
         
         if ($word_count >= $min_words) {
             return array(
@@ -714,7 +714,7 @@ class MCL_Publisher_Checklist {
             set_transient('mcl_publish_blocked_' . $post->ID, $blocking_issues, 300);
             
             // Redirect with error message
-            wp_redirect(add_query_arg(array(
+            wp_safe_redirect(add_query_arg(array(
                 'post' => $post->ID,
                 'action' => 'edit',
                 'mcl_publish_blocked' => '1'
@@ -1128,13 +1128,13 @@ class MCL_Publisher_Checklist {
             FROM {$wpdb->postmeta} pm 
             INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID 
             WHERE p.post_type IN ($post_types_placeholders)
-            AND pm.meta_key NOT LIKE '\_%'
-            AND pm.meta_key NOT LIKE 'field_%'
+            AND pm.meta_key NOT LIKE %s
+            AND pm.meta_key NOT LIKE %s
             AND pm.meta_key != ''
             AND pm.meta_key NOT IN ('footnotes')
             ORDER BY pm.meta_key ASC
             LIMIT 200
-        ", $post_types));
+        ", array_merge($post_types, [$wpdb->esc_like('_') . '%', $wpdb->esc_like('field_') . '%'])));
         
         // Add database fields
         foreach ($meta_keys as $key) {

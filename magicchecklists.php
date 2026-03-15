@@ -269,13 +269,14 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                         $placeholders[] = '(%d, %s, %s)';
                     }
 
+                    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated safely via array_fill with %d/%s
                     $query = $wpdb->prepare(
-                        "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " . 
-                        implode(', ', $placeholders),
+                        "INSERT INTO {$wpdb->postmeta} (post_id, meta_key, meta_value) VALUES " .
+                        implode(', ', $placeholders), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders generated safely via array_fill
                         $values
                     );
-                    
-                    $wpdb->query($query);
+
+                    $wpdb->query($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $query is built via $wpdb->prepare() above
                 }
                 
                 // Update the plugin data version

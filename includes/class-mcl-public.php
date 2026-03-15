@@ -499,12 +499,13 @@ class MCL_Public {
             return null;
         }
 
-        $meta_list = $wpdb->get_results($wpdb->prepare("
-            SELECT meta_key, meta_value 
-            FROM $wpdb->postmeta 
-            WHERE post_id = %d 
-            AND meta_key IN ('" . implode("','", $this->meta_keys) . "')",
-            $checklist_id
+        $meta_key_placeholders = implode(',', array_fill(0, count($this->meta_keys), '%s'));
+        $meta_list = $wpdb->get_results($wpdb->prepare(
+            "SELECT meta_key, meta_value
+            FROM $wpdb->postmeta
+            WHERE post_id = %d
+            AND meta_key IN ($meta_key_placeholders)",
+            array_merge([$checklist_id], $this->meta_keys)
         ), OBJECT_K);
 
         $metadata = array_fill_keys($this->meta_keys, '');
@@ -1208,11 +1209,11 @@ class MCL_Public {
                     AND meta_value = '1'
                 )
             )
-            AND pm.meta_key IN ('" . implode("','", array_map('esc_sql', $meta_keys_to_fetch)) . "')",
-            'mcl_checklist'
+            AND pm.meta_key IN (" . implode(',', array_fill(0, count($meta_keys_to_fetch), '%s')) . ")",
+            array_merge(['mcl_checklist'], $meta_keys_to_fetch)
         );
 
-        $results = $wpdb->get_results($query);
+        $results = $wpdb->get_results($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $query is built via $wpdb->prepare() above
 
         $shortcuts = [];
         $checklist_meta_organized = [];

@@ -229,7 +229,7 @@ class MCL_Dashboard_Widget {
                         echo '<span class="mcl-widget-status-indicator ' . ($is_checked ? 'checked' : 'unchecked') . '"></span>';
                     }
                     
-                    echo '<span class="mcl-widget-item-content">' . $this->format_item_content_for_widget($item['content']) . '</span>';
+                    echo '<span class="mcl-widget-item-content">' . wp_kses_post($this->format_item_content_for_widget($item['content'])) . '</span>';
                     echo '</li>';
                 }
                 echo '</ul>';

@@ -176,7 +176,7 @@ class MCL_Sanitization {
         
         // Ensure URL uses a safe protocol
         $allowed_protocols = ['http', 'https'];
-        $protocol = parse_url($url, PHP_URL_SCHEME);
+        $protocol = wp_parse_url($url, PHP_URL_SCHEME);
         
         if (!in_array(strtolower($protocol), $allowed_protocols)) {
             return false;

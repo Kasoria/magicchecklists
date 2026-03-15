@@ -218,7 +218,7 @@ class MCL_Notification_Manager {
             AND pm1.meta_value != ''
         ";
         
-        $checklists = $wpdb->get_results($query);
+        $checklists = $wpdb->get_results($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static query with no user input
         
         foreach ($checklists as $checklist) {
             
@@ -416,13 +416,13 @@ class MCL_Notification_Manager {
         
         switch ($batch_interval) {
             case 'hourly':
-                return date('Y-m-d H:00:00', strtotime('+1 hour', strtotime($now)));
+                return wp_date('Y-m-d H:00:00', strtotime('+1 hour', strtotime($now)));
             case 'daily':
-                return date('Y-m-d 00:00:00', strtotime('+1 day', strtotime($now)));
+                return wp_date('Y-m-d 00:00:00', strtotime('+1 day', strtotime($now)));
             case 'immediate':
                 return $now;
             default:
-                return date('Y-m-d H:i:00', strtotime('+15 minutes', strtotime($now)));
+                return wp_date('Y-m-d H:i:00', strtotime('+15 minutes', strtotime($now)));
         }
     }
     
@@ -478,11 +478,12 @@ class MCL_Notification_Manager {
             $notification_ids = wp_list_pluck($checklist_notifications, 'id');
             $placeholders = array_fill(0, count($notification_ids), '%d');
             
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated safely via array_fill with %d
             $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}mcl_notification_queue 
-                SET processed = 1, 
-                    processed_at = %s 
-                WHERE id IN (" . implode(',', $placeholders) . ")",
+                "UPDATE {$wpdb->prefix}mcl_notification_queue
+                SET processed = 1,
+                    processed_at = %s
+                WHERE id IN (" . implode(',', $placeholders) . ")", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders generated via array_fill
                 array_merge([current_time('mysql')], $notification_ids)
             ));
         }
@@ -720,7 +721,7 @@ class MCL_Notification_Manager {
                 );
                 
             case 'comments':
-                $item_context = isset($data['item_content']) ? ' on "' . strip_tags($data['item_content']) . '"' : '';
+                $item_context = isset($data['item_content']) ? ' on "' . wp_strip_all_tags($data['item_content']) . '"' : '';
                 if (isset($data['reply_comment_id'])) {
                     return sprintf(
                         __('💬 %s replied to a comment%s', 'magic-checklists'),
@@ -728,7 +729,7 @@ class MCL_Notification_Manager {
                         $item_context
                     );
                 } else {
-                    $content = isset($data['comment_content']) ? strip_tags($data['comment_content']) : 'a comment';
+                    $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : 'a comment';
                     $preview = strlen($content) > 50 ? substr($content, 0, 50) . '...' : $content;
                     return sprintf(
                         __('💬 %s added a comment%s: "%s"', 'magic-checklists'),

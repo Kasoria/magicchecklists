@@ -238,7 +238,7 @@ class MCL_Admin {
         // Handle form submission
         if (isset($_POST['submit']) && check_admin_referer('magic_plugins_settings', 'magic_plugins_nonce')) {
             $this->save_shared_settings($_POST);
-            echo '<div class="notice notice-success"><p>' . __('Settings saved successfully!', 'magic-checklists') . '</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved successfully!', 'magic-checklists') . '</p></div>';
         }
 
         $settings = $this->get_shared_settings();
@@ -329,7 +329,7 @@ class MCL_Admin {
         if (is_array($menu)) {
             foreach ($menu as $item) {
                 if (!empty($item[0]) && !empty($item[2])) {
-                    $title = strip_tags($item[0]);
+                    $title = wp_strip_all_tags($item[0]);
                     $menu_items[$item[2]] = $title;
                 }
             }
@@ -426,7 +426,7 @@ class MCL_Admin {
                 foreach ($ordered_items as $slug => $title): ?>
                     <li style="background: #f1f1f1; padding: 10px; margin: 5px 0; cursor: move; border: 1px solid #ddd;">
                         <input type="hidden" name="submenu_order[]" value="<?php echo esc_attr($slug); ?>">
-                        <?php echo esc_html(strip_tags($title)); ?>
+                        <?php echo esc_html(wp_strip_all_tags($title)); ?>
                     </li>
                 <?php endforeach; ?>
                 </ul>
@@ -612,7 +612,7 @@ class MCL_Admin {
                 // Clean the slug
                 $clean_slug = $this->clean_page_slug($menu_slug);
                 if (!isset($seen[$clean_slug])) {
-                    $pages[$clean_slug] = strip_tags($menu_item[0]); // Clean menu title
+                    $pages[$clean_slug] = wp_strip_all_tags($menu_item[0]); // Clean menu title
                     $seen[$clean_slug] = true;
                 }
         
@@ -625,7 +625,7 @@ class MCL_Admin {
                         $clean_sub_slug = $this->clean_page_slug($sub_slug);
                         
                         if (!isset($seen[$clean_sub_slug])) {
-                            $pages[$clean_sub_slug] = strip_tags($sub_item[0]) . ' (' . strip_tags($menu_item[0]) . ')';
+                            $pages[$clean_sub_slug] = wp_strip_all_tags($sub_item[0]) . ' (' . wp_strip_all_tags($menu_item[0]) . ')';
                             $seen[$clean_sub_slug] = true;
                         }
                     }
@@ -689,7 +689,7 @@ class MCL_Admin {
         
         // Handle query string style slugs
         if (strpos($slug, '?') !== false) {
-            parse_str(parse_url($slug, PHP_URL_QUERY), $params);
+            parse_str(wp_parse_url($slug, PHP_URL_QUERY), $params);
             if (isset($params['page'])) {
                 return $params['page'];
             }
@@ -774,13 +774,13 @@ class MCL_Admin {
 
     public function save_checklist() {
         if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_save_checklist')) {
-            wp_die(__('Nonce verification failed', 'magic-checklists'));
+            wp_die(esc_html__('Nonce verification failed', 'magic-checklists'));
         }
 
         if (!current_user_can('manage_options')) {
-            wp_die(__('You are not allowed to perform this action', 'magic-checklists'));
+            wp_die(esc_html__('You are not allowed to perform this action', 'magic-checklists'));
         }
-    
+
         $checklist_id = isset( $_POST['checklist_id'] ) ? intval( $_POST['checklist_id'] ) : 0;
         $checklist_type = isset( $_POST['checklist_type'] ) ? sanitize_text_field( $_POST['checklist_type'] ) : 'classic';
         $title = sanitize_text_field( $_POST['title'] );
@@ -1048,7 +1048,7 @@ class MCL_Admin {
             update_post_meta($checklist_id, '_mcl_checklist_icon_custom', $checklist_icon_custom);
         }
     
-        wp_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
         exit;
     }
 
@@ -1322,11 +1322,11 @@ class MCL_Admin {
 
     public function delete_checklist() {
         if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'mcl_delete_checklist' ) ) {
-            wp_die( __( 'Nonce verification failed', 'magic-checklists' ) );
+            wp_die( esc_html__( 'Nonce verification failed', 'magic-checklists' ) );
         }
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You are not allowed to perform this action', 'magic-checklists' ) );
+            wp_die( esc_html__( 'You are not allowed to perform this action', 'magic-checklists' ) );
         }
 
         $checklist_id = isset( $_GET['checklist_id'] ) ? intval( $_GET['checklist_id'] ) : 0;
@@ -1335,17 +1335,17 @@ class MCL_Admin {
             wp_delete_post( $checklist_id, true );
         }
 
-        wp_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
         exit;
     }
 
     public function clone_checklist() {
         if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'mcl_clone_checklist' ) ) {
-            wp_die( __( 'Nonce verification failed', 'magic-checklists' ) );
+            wp_die( esc_html__( 'Nonce verification failed', 'magic-checklists' ) );
         }
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You are not allowed to perform this action', 'magic-checklists' ) );
+            wp_die( esc_html__( 'You are not allowed to perform this action', 'magic-checklists' ) );
         }
 
         $checklist_id = isset( $_GET['checklist_id'] ) ? intval( $_GET['checklist_id'] ) : 0;
@@ -1384,10 +1384,10 @@ class MCL_Admin {
             }
         }
 
-        wp_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=mcl_checklists' ) );
         exit;
     }
-    
+
     public function check_shortcut() {
         check_ajax_referer( 'mcl_check_shortcut_nonce', '_ajax_nonce' );
 
@@ -1448,11 +1448,11 @@ class MCL_Admin {
     
     public function import_checklist() {
         if ( ! isset( $_POST['mcl_nonce'] ) || ! wp_verify_nonce( $_POST['mcl_nonce'], 'mcl_import_checklist' ) ) {
-            wp_die( __( 'Nonce verification failed', 'magic-checklists' ) );
+            wp_die( esc_html__( 'Nonce verification failed', 'magic-checklists' ) );
         }
-    
+
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You are not allowed to perform this action', 'magic-checklists' ) );
+            wp_die( esc_html__( 'You are not allowed to perform this action', 'magic-checklists' ) );
         }
     
         $checklist_items = isset( $_POST['checklist_items'] ) ? $_POST['checklist_items'] : '';
@@ -1481,7 +1481,7 @@ class MCL_Admin {
         set_transient( $transient_key, $prefilled_items, 60 * 15 ); // Store for 15 minutes
     
         // Create a new checklist directly from the imported items
-        $checklist_title = 'Imported Checklist ' . date('Y-m-d H:i:s');
+        $checklist_title = 'Imported Checklist ' . wp_date('Y-m-d H:i:s');
         
         $checklist_post = array(
             'post_title'   => $checklist_title,
@@ -1498,10 +1498,10 @@ class MCL_Admin {
             update_post_meta($checklist_id, '_mcl_active', '1');
             
             // Redirect back to import page with success message
-            wp_redirect( admin_url( 'admin.php?page=mcl_import&imported=1&checklist_id=' . $checklist_id ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=mcl_import&imported=1&checklist_id=' . $checklist_id ) );
         } else {
             // Redirect back to import page with error message
-            wp_redirect( admin_url( 'admin.php?page=mcl_import&error=1' ) );
+            wp_safe_redirect( admin_url( 'admin.php?page=mcl_import&error=1' ) );
         }
         exit;
     }
@@ -1542,7 +1542,7 @@ class MCL_Admin {
         $table_name = $wpdb->prefix . 'mcl_invite_links';
         
         // Calculate expiry date
-        $expiry_date = date('Y-m-d H:i:s', strtotime("+$expiry_days days"));
+        $expiry_date = wp_date('Y-m-d H:i:s', strtotime("+$expiry_days days"));
         
         $result = $wpdb->insert(
             $table_name,
@@ -1818,30 +1818,30 @@ class MCL_Admin {
 
     public function import_json_checklist() {
         if (!isset($_POST['mcl_json_nonce']) || !wp_verify_nonce($_POST['mcl_json_nonce'], 'mcl_import_json_checklist')) {
-            wp_die(__('Security check failed', 'magic-checklists'));
+            wp_die(esc_html__('Security check failed', 'magic-checklists'));
         }
-    
+
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have permission to perform this action', 'magic-checklists'));
+            wp_die(esc_html__('You do not have permission to perform this action', 'magic-checklists'));
         }
-    
+
         // Check if file was uploaded
         if (!isset($_FILES['json_file']) || $_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
-            wp_die(__('No file uploaded or upload failed', 'magic-checklists'));
+            wp_die(esc_html__('No file uploaded or upload failed', 'magic-checklists'));
         }
-    
+
         // Verify file type
         $file_type = wp_check_filetype($_FILES['json_file']['name'], array('json' => 'application/json'));
         if ($file_type['ext'] !== 'json') {
-            wp_die(__('Invalid file type. Please upload a JSON file.', 'magic-checklists'));
+            wp_die(esc_html__('Invalid file type. Please upload a JSON file.', 'magic-checklists'));
         }
-    
+
         // Read and decode JSON
         $json_content = file_get_contents($_FILES['json_file']['tmp_name']);
         $checklist_data = json_decode($json_content, true);
-    
+
         if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_die(__('Invalid JSON format', 'magic-checklists'));
+            wp_die(esc_html__('Invalid JSON format', 'magic-checklists'));
         }
     
         // Create new checklist
@@ -1855,7 +1855,7 @@ class MCL_Admin {
         $checklist_id = wp_insert_post($checklist_post);
     
         if (is_wp_error($checklist_id)) {
-            wp_die(__('Failed to create checklist', 'magic-checklists'));
+            wp_die(esc_html__('Failed to create checklist', 'magic-checklists'));
         }
     
         // Import meta data
@@ -1878,7 +1878,7 @@ class MCL_Admin {
             }
         }
     
-        wp_redirect(add_query_arg(
+        wp_safe_redirect(add_query_arg(
             array(
                 'page' => 'mcl_import',
                 'checklist_id' => $checklist_id,
@@ -2356,7 +2356,7 @@ class MCL_Admin {
                 $time_date = $datetime->format('Y-m-d\TH:i');
             } catch (Exception $e) {
                 // Fallback to original behavior
-                $time_date = date('Y-m-d\TH:i', intval($time_date));
+                $time_date = wp_date('Y-m-d\TH:i', intval($time_date));
             }
         } else {
             $time_date = '';
@@ -2686,7 +2686,7 @@ class MCL_Admin {
         );
         
         $date_format = isset($formats[$format]) ? $formats[$format] : $formats['us'];
-        return date($date_format, $timestamp);
+        return wp_date($date_format, $timestamp);
     }
 
     /**
