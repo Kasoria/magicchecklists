@@ -14,7 +14,7 @@
  * Version:           2.3
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
- * Author URI:        https://magicplugins.io
+ * Author URI:        https://chrispump.me
  * Text Domain:       magic-checklists
  * Domain Path:       /languages
  * License:           GPL v2 or later
