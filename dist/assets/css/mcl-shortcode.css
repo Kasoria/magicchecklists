@@ -1,0 +1,479 @@
+/* Base Variables */
+:root {
+  /* Dynamic Variables - These will be set via PHP */
+  --mcl-shortcode-title-text-color: #000000;
+  --mcl-shortcode-description-text-color: #333333;
+  --mcl-shortcode-deadline-text-color: #ff0000;
+  --mcl-shortcode-list-item-text-color: #1a1a1a;
+  --mcl-shortcode-border-color: #e2e8f0;
+  --mcl-shortcode-checkbox-border-color: #cccccc;
+  --mcl-shortcode-checkbox-color-filled: #0ea5e9;
+  --mcl-shortcode-checkbox-color-unfilled: #ffffff;
+  --mcl-shortcode-checkmark-color: #ffffff;
+  --mcl-shortcode-bg: #ffffff;
+
+  /* Dimensions */
+  --mcl-shortcode-checkbox-dimensions: 20px;
+  --mcl-shortcode-checkbox-border-radius: 4px;
+  --mcl-shortcode-checkbox-border-thickness: 2px;
+  --mcl-shortcode-border-radius: 6px;
+  --mcl-shortcode-border-thickness: 1px;
+
+  /* Typography */
+  --mcl-shortcode-title-font-size: 18px;
+  --mcl-shortcode-description-font-size: 14px;
+  --mcl-shortcode-list-item-font-size: 16px;
+  --mcl-shortcode-deadline-font-size: 14px;
+
+  /* Static Variables */
+  --mcl-shortcode-spacing-xs: 4px;
+  --mcl-shortcode-spacing-sm: 8px;
+  --mcl-shortcode-spacing-md: 12px;
+  --mcl-shortcode-spacing-lg: 24px;
+  --mcl-shortcode-spacing-xl: 32px;
+}
+
+/* Container Base */
+.mcl-shortcode-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mcl-shortcode-container-gap);
+  width: 100%;
+  padding-block: var(--mcl-shortcode-padding-block);
+  padding-inline: var(--mcl-shortcode-padding-inline);
+  background-color: var(--mcl-shortcode-bg);
+  color: var(--mcl-shortcode-list-item-text-color);
+  border: var(--mcl-shortcode-border-thickness) solid var(--mcl-shortcode-border-color);
+  border-radius: var(--mcl-shortcode-border-radius);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Width Variants */
+.mcl-width-narrow {
+  max-width: 600px;
+}
+
+.mcl-width-custom {
+  max-width: var(--mcl-shortcode-custom-width, 800px);
+}
+
+/* Font Family Variants */
+.mcl-font-system {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+               Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+.mcl-font-serif {
+  font-family: serif;
+}
+
+.mcl-font-sans-serif {
+  font-family: sans-serif;
+}
+
+.mcl-font-monospace {
+  font-family: monospace;
+}
+
+/* Border Style Variants */
+.mcl-border-none {
+  border: none;
+}
+
+.mcl-border-solid {
+  border-style: solid;
+}
+
+.mcl-border-dashed {
+  border-style: dashed;
+}
+
+.mcl-border-dotted {
+  border-style: dotted;
+}
+
+/* Title */
+.mcl-shortcode-title {
+  font-size: var(--mcl-shortcode-title-font-size);
+  font-weight: 600;
+  color: var(--mcl-shortcode-title-text-color);
+  line-height: 1.4;
+  margin: 0 0 var(--mcl-shortcode-spacing-lg) 0;
+}
+
+/* Description */
+.mcl-shortcode-description {
+  color: var(--mcl-shortcode-description-text-color);
+  font-size: var(--mcl-shortcode-description-font-size);
+  line-height: 1.6;
+  margin-bottom: var(--mcl-shortcode-spacing-lg);
+}
+
+/* Deadline */
+.mcl-shortcode-deadline {
+  color: var(--mcl-shortcode-deadline-text-color);
+  font-size: var(--mcl-shortcode-deadline-font-size);
+  margin-bottom: var(--mcl-shortcode-spacing-xl);
+}
+
+/* Items List */
+.mcl-shortcode-items {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--mcl-shortcode-list-item-font-size);
+}
+
+/* Item Spacing Variants */
+.mcl-spacing-compact .mcl-shortcode-items {
+  gap: var(--mcl-shortcode-spacing-sm);
+}
+
+.mcl-spacing-comfortable .mcl-shortcode-items {
+  gap: var(--mcl-shortcode-spacing-md);
+}
+
+.mcl-spacing-spacious .mcl-shortcode-items {
+  gap: var(--mcl-shortcode-spacing-lg);
+}
+
+/* List Items */
+.mcl-shortcode-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  padding: var(--mcl-shortcode-spacing-sm);
+  border-radius: var(--mcl-shortcode-border-radius);
+  transition: all 0.2s ease;
+  background-color: transparent;
+}
+
+.mcl-shortcode-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Show action buttons on hover */
+.mcl-shortcode-item:hover .mcl-item-actions {
+  opacity: 1 !important;
+}
+
+.mcl-shortcode-item.mcl-in-progress {
+  background-color: rgba(16, 185, 129, 0.05);
+  border-left: 3px solid #10b981;
+}
+
+/* Drag feedback */
+.mcl-shortcode-items.mcl-dragging-over {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-radius: var(--mcl-shortcode-border-radius);
+  padding: var(--mcl-shortcode-spacing-sm);
+}
+
+.mcl-shortcode-item.mcl-dragging {
+  background-color: var(--mcl-shortcode-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--mcl-shortcode-border-radius);
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
+/* Item Main Container */
+.mcl-item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  flex: 1;
+  position: relative;
+}
+
+/* Item Label */
+.mcl-item-label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mcl-shortcode-spacing-sm);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Content Container */
+.mcl-content-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Drag Handle */
+.mcl-item-drag-handle {
+  cursor: grab;
+  opacity: 0.6;
+  padding: var(--mcl-shortcode-spacing-xs);
+  margin-right: var(--mcl-shortcode-spacing-sm);
+  transition: opacity 0.2s ease;
+  user-select: none;
+  color: var(--mcl-shortcode-list-item-text-color);
+  display: none; /* Hidden by default */
+}
+
+.mcl-item-drag-handle:hover {
+  opacity: 1;
+}
+
+.mcl-item-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Show drag handle when reordering is enabled */
+.mcl-shortcode-container[data-enable-reorder="true"] .mcl-item-drag-handle {
+  display: inline-block;
+}
+
+/* Checkbox Base */
+.mcl-item-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  width: var(--mcl-shortcode-checkbox-dimensions);
+  height: var(--mcl-shortcode-checkbox-dimensions);
+  border: var(--mcl-shortcode-checkbox-border-thickness) solid var(--mcl-shortcode-checkbox-border-color);
+  border-radius: var(--mcl-shortcode-checkbox-border-radius);
+  background-color: var(--mcl-shortcode-checkbox-color-unfilled);
+  position: relative;
+  cursor: pointer;
+  margin: 0;
+  margin-top: 2px; /* Align with text baseline */
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mcl-item-checkbox:checked {
+  background-color: var(--mcl-shortcode-checkbox-color-filled);
+  border-color: var(--mcl-shortcode-checkbox-color-filled);
+}
+
+.mcl-item-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.mcl-item-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+/* Item Content */
+.mcl-shortcode-item-content {
+  flex: 1;
+  min-width: 0;
+  color: var(--mcl-shortcode-list-item-text-color);
+  font-size: var(--mcl-shortcode-list-item-font-size);
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.mcl-shortcode-item-content:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.mcl-shortcode-item-content[contenteditable="true"]:hover {
+  border-color: #d1d5db !important;
+}
+
+/* Item content links */
+.mcl-shortcode-item-content a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  background-color: transparent !important;
+  transition: color 0.2s;
+}
+
+.mcl-shortcode-item-content a:hover {
+  color: #0369a1;
+  text-decoration: none;
+}
+
+/* Images in content */
+.mcl-shortcode-item-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+/* Item Numbers */
+.mcl-item-number {
+  margin-right: var(--mcl-shortcode-spacing-sm);
+  opacity: 0.7;
+  color: var(--mcl-shortcode-list-item-text-color);
+  font-weight: 500;
+  display: none; /* Hidden by default */
+  flex-shrink: 0;
+}
+
+/* Show numbers when enabled */
+.mcl-shortcode-container[data-show-numbers="true"] .mcl-item-number {
+  display: inline;
+}
+
+/* Priority Indicators */
+.mcl-priority-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: none; /* Hidden by default */
+  margin-top: 6px; /* Align with text */
+}
+
+/* Number-based priority indicators */
+.mcl-priority-indicator.mcl-priority-number {
+  width: auto;
+  height: auto;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: bold;
+  text-align: center;
+  color: #ffffff;
+  padding: 0 4px;
+  min-width: 14px;
+  display: none; /* Hidden by default */
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px; /* Better alignment */
+}
+
+/* Show priority indicators when enabled */
+.mcl-shortcode-container[data-priority-enabled="1"] .mcl-priority-indicator {
+  display: inline-block;
+}
+
+.mcl-shortcode-container[data-priority-enabled="1"] .mcl-priority-indicator.mcl-priority-number {
+  display: inline-flex;
+}
+
+/* Priority colors */
+.mcl-priority-low {
+  background-color: #22c55e;
+}
+
+.mcl-priority-medium {
+  background-color: #f59e0b;
+}
+
+.mcl-priority-high {
+  background-color: #ef4444;
+}
+
+.mcl-priority-critical {
+  background-color: #7c3aed;
+}
+
+/* Deadline Badge */
+.mcl-deadline-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-radius: 12px;
+  margin-top: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.mcl-deadline-badge:hover {
+  background-color: #fecaca;
+}
+
+/* Action Buttons */
+.mcl-item-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.mcl-item-actions button {
+  transition: all 0.2s ease;
+}
+
+.mcl-item-actions button:hover {
+  background-color: #f3f4f6 !important;
+  transform: scale(1.05);
+}
+
+/* Checked State */
+.mcl-shortcode-item.mcl-shortcode-checked .mcl-shortcode-item-content {
+  opacity: 0.8;
+  text-decoration: line-through;
+}
+
+.mcl-shortcode-item.mcl-shortcode-checked {
+  opacity: 0.7;
+}
+
+/* Focus within for action buttons */
+.mcl-shortcode-item:focus-within .mcl-item-actions {
+  opacity: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mcl-shortcode-container {
+    padding-block: var(--mcl-shortcode-padding-block-mobile);
+    padding-inline: var(--mcl-shortcode-padding-inline-mobile);
+  }
+
+  .mcl-item-drag-handle {
+    opacity: 0.8; /* More visible on mobile */
+  }
+
+  .mcl-shortcode-item {
+    gap: var(--mcl-shortcode-spacing-xs);
+    padding: var(--mcl-shortcode-spacing-xs);
+  }
+
+  /* Hide action buttons on mobile by default, show on focus */
+  .mcl-item-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mcl-shortcode-item:focus-within .mcl-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mcl-item-actions button {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 12px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .mcl-shortcode-container {
+    border: none !important;
+    padding: 0;
+  }
+
+  .mcl-item-drag-handle,
+  .mcl-item-actions {
+    display: none !important;
+  }
+
+  .mcl-shortcode-item.mcl-dragging {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .mcl-deadline-badge {
+    background-color: #e5e7eb !important;
+    color: #000 !important;
+  }
+}

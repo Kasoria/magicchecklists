@@ -8,7 +8,6 @@ import Settings from './components/Settings.jsx'
 import ImportExport from './components/ImportExport.jsx'
 import Tours from './components/Tours.jsx'
 import TourEditor from './components/TourEditor.jsx'
-import License from './components/License.jsx'
 import KanbanBoard from './components/KanbanBoard.jsx'
 import { ToastProvider } from './components/Toast.jsx'
 
@@ -231,8 +230,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
         return <Analytics adminData={adminData} />
       case 'settings':
         return <Settings adminData={adminData} />
-      case 'license':
-        return <License adminData={adminData} />
       default:
         return (
           <ChecklistsTable
@@ -487,36 +484,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {!sidebarCollapsed && (i18n.adminApp?.help || 'Help')}
                   </a>
                 </li>
-                <li>
-                  <button
-                    onClick={() => {
-                      setActiveTab('license')
-                      if (window.innerWidth < 1024) {
-                        setSidebarOpen(false)
-                      }
-                      const url = new URL(window.location)
-                      url.searchParams.set('page', 'mcl_checklists')
-                      url.searchParams.set('view', 'license')
-                      window.history.pushState({}, '', url)
-                    }}
-                    className={`flex items-center w-full ${sidebarCollapsed ? 'justify-center p-2' : 'p-3'} text-sm font-medium rounded-lg transition-colors duration-150 ${
-                      activeTab === 'license'
-                        ? 'bg-brand-accent text-brand-dark dark:bg-brand-accent dark:text-brand-dark font-bold'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                    title={sidebarCollapsed ? (i18n.adminApp?.license || 'License') : undefined}
-                  >
-                    <svg
-                      className={`w-6 h-6 ${sidebarCollapsed ? '' : 'mr-3'} text-gray-500 dark:text-gray-400`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 13v3h3v3h3v2l2 2h5v-4L12.74 8.74C12.91 8.19 13 7.6 13 7c0-3.31-2.69-6-6-6S1 3.69 1 7a6.005 6.005 0 0 0 8.47 5.47L10 13ZM6 7a1 1 0 1 1 0-2a1 1 0 0 1 0 2Z" />
-                    </svg>
-                    {!sidebarCollapsed && (i18n.adminApp?.license || 'License')}
-                  </button>
-                </li>
               </ul>
             </div>
           </nav>
@@ -543,7 +510,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {activeTab === 'import' && (i18n.adminApp?.importExport || 'Import / Export')}
                     {activeTab === 'analytics' && (i18n.adminApp?.analytics || 'Analytics')}
                     {activeTab === 'settings' && (i18n.adminApp?.settings || 'Settings')}
-                    {activeTab === 'license' && (i18n.adminApp?.license || 'License')}
                   </h1>
                   <p className="text-sm font-normal text-gray-600 dark:text-gray-300">
                     {activeTab === 'checklists' && (i18n.adminApp?.checklistsDescription || 'Create and manage interactive checklists that can be accessed from anywhere on your site.')}
@@ -557,7 +523,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                     {activeTab === 'import' && (i18n.adminApp?.importExportDescription || 'Import and export classic checklists in various formats.')}
                     {activeTab === 'analytics' && (i18n.adminApp?.analyticsDescription || 'View performance metrics and usage statistics for your checklists.')}
                     {activeTab === 'settings' && (i18n.adminApp?.settingsDescription || 'Configure your MagicChecklists plugin settings.')}
-                    {activeTab === 'license' && (i18n.adminApp?.licenseDescription || 'Manage your MagicChecklists license activation.')}
                   </p>
                 </div>
               </div>
@@ -643,8 +608,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       {activeTab === 'import' && (i18n.adminApp?.importExport || 'Import / Export')}
                       {activeTab === 'analytics' && (i18n.adminApp?.analytics || 'Analytics')}
                       {activeTab === 'settings' && (i18n.adminApp?.settings || 'Settings')}
-                      {activeTab === 'license' && (i18n.adminApp?.license || 'License')}
-                    </h1>
+                      </h1>
                   </div>
                 </div>
 
@@ -706,7 +670,6 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                   {activeTab === 'import' && (i18n.adminApp?.importExportDescriptionShort || 'Import and export classic checklists in various formats.')}
                   {activeTab === 'analytics' && (i18n.adminApp?.analyticsDescriptionShort || 'View performance metrics and usage statistics.')}
                   {activeTab === 'settings' && (i18n.adminApp?.settingsDescriptionShort || 'Configure your plugin settings.')}
-                  {activeTab === 'license' && (i18n.adminApp?.licenseDescriptionShort || 'Manage your license activation.')}
                 </p>
               </div>
 

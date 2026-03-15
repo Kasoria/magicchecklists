@@ -61,16 +61,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
                     $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
 
-                    // Also check MagicDash connection (magicplugins_connection option)
-                    $magicdash_key = '';
-                    $magicdash_connection = get_option('magicplugins_connection', []);
-                    if (!empty($magicdash_connection['api_key'])) {
-                        $magicdash_key = $this->decrypt_api_key($magicdash_connection['api_key']);
-                    }
-
                     if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
-                        (!empty($mcl_key) && $api_key === $mcl_key) ||
-                        (!empty($magicdash_key) && $api_key === $magicdash_key)) {
+                        (!empty($mcl_key) && $api_key === $mcl_key)) {
                         return true;
                     }
                 }
@@ -82,12 +74,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             } else {
                 // V1 endpoints
 
-                // Allow remote-deactivate endpoint without login (uses HMAC signature auth)
-                if (strpos($request_uri, '/license/remote-deactivate') !== false) {
-                    return $result; // Let it through - auth handled via HMAC in handler
-                }
-
-                // All other V1 endpoints: Use WordPress application passwords
+                // All V1 endpoints: Use WordPress application passwords
                 if (!is_user_logged_in()) {
                     return new WP_Error(
                         'rest_not_logged_in',
@@ -298,33 +285,6 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     ]);
                 },
                 'permission_callback' => '__return_true'
-            ]
-        ]);
-
-        // License remote deactivation endpoint (V1 - no auth required, uses HMAC signature)
-        register_rest_route($this->namespace_v1, '/license/remote-deactivate', [
-            [
-                'methods' => WP_REST_Server::CREATABLE,
-                'callback' => [$this, 'handle_remote_deactivate'],
-                'permission_callback' => '__return_true', // Auth is handled via HMAC signature
-                'args' => [
-                    'licenseKey' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'timestamp' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'signature' => [
-                        'required' => true,
-                        'type' => 'string',
-                    ],
-                    'siteUrl' => [
-                        'required' => false,
-                        'type' => 'string',
-                    ],
-                ],
             ]
         ]);
 
@@ -2105,16 +2065,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
         $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
 
-        // Also check MagicDash connection (magicplugins_connection option)
-        $magicdash_key = '';
-        $magicdash_connection = get_option('magicplugins_connection', []);
-        if (!empty($magicdash_connection['api_key'])) {
-            $magicdash_key = $this->decrypt_api_key($magicdash_connection['api_key']);
-        }
-
         if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
-            (!empty($mcl_key) && $api_key === $mcl_key) ||
-            (!empty($magicdash_key) && $api_key === $magicdash_key)) {
+            (!empty($mcl_key) && $api_key === $mcl_key)) {
             return true;
         }
 
@@ -2155,111 +2107,6 @@ class MCL_REST_Controller extends WP_REST_Controller {
             }
         }
         return $users;
-    }
-
-    /**
-     * Handle remote license deactivation from MagicDash
-     * This endpoint is called when a license is deactivated from the MagicDash dashboard
-     */
-    public function handle_remote_deactivate($request) {
-        $license_key = sanitize_text_field($request['licenseKey']);
-        $timestamp = sanitize_text_field($request['timestamp']);
-        $signature = sanitize_text_field($request['signature']);
-
-        error_log('[MagicChecklists] Remote deactivate called with licenseKey: ' . substr($license_key, 0, 10) . '...');
-
-        // Verify timestamp is within 5 minutes
-        $current_time = time();
-        $request_time = intval($timestamp);
-        if (abs($current_time - $request_time) > 300) {
-            error_log('[MagicChecklists] Remote deactivate failed: timestamp expired');
-            return new WP_Error(
-                'invalid_timestamp',
-                __('Request timestamp expired.', 'magic-checklists'),
-                ['status' => 401]
-            );
-        }
-
-        // Verify HMAC signature
-        // Signature should be: HMAC-SHA256(licenseKey + timestamp + siteUrl, licenseKey)
-        // If siteUrl is provided in request, use it (after validating it matches this site)
-        $provided_url = isset($request['siteUrl']) ? sanitize_text_field($request['siteUrl']) : null;
-        $home_url = home_url();
-        $normalized_home = rtrim(strtolower($home_url), '/');
-
-        // Use provided URL if it matches our home_url (to handle www vs non-www, etc.)
-        if ($provided_url) {
-            $normalized_provided = rtrim(strtolower($provided_url), '/');
-            // Extract just the host from both URLs for comparison
-            $home_host = wp_parse_url($normalized_home, PHP_URL_HOST);
-            $provided_host = wp_parse_url($normalized_provided, PHP_URL_HOST);
-
-            // Allow match if hosts are same or differ only by www prefix
-            $home_host_clean = preg_replace('/^www\./', '', $home_host);
-            $provided_host_clean = preg_replace('/^www\./', '', $provided_host);
-
-            if ($home_host_clean === $provided_host_clean) {
-                $normalized_url = $normalized_provided;
-                error_log('[MagicChecklists] Using provided siteUrl: ' . $normalized_url);
-            } else {
-                error_log('[MagicChecklists] Provided siteUrl host mismatch - home: ' . $home_host . ', provided: ' . $provided_host);
-                $normalized_url = $normalized_home;
-            }
-        } else {
-            $normalized_url = $normalized_home;
-        }
-
-        $data_to_hash = $license_key . $timestamp . $normalized_url;
-        $expected_signature = hash_hmac('sha256', $data_to_hash, $license_key);
-
-        error_log('[MagicChecklists] Remote deactivate signature check:');
-        error_log('[MagicChecklists]   home_url() raw: ' . $home_url);
-        error_log('[MagicChecklists]   provided siteUrl: ' . ($provided_url ?: 'not provided'));
-        error_log('[MagicChecklists]   url used for sig: ' . $normalized_url);
-        error_log('[MagicChecklists]   timestamp: ' . $timestamp);
-        error_log('[MagicChecklists]   license_key prefix: ' . substr($license_key, 0, 10) . '...');
-        error_log('[MagicChecklists]   data_to_hash: ' . substr($license_key, 0, 10) . '...' . $timestamp . $normalized_url);
-        error_log('[MagicChecklists]   expected sig: ' . substr($expected_signature, 0, 20) . '...');
-        error_log('[MagicChecklists]   received sig: ' . substr($signature, 0, 20) . '...');
-
-        if (!hash_equals($expected_signature, $signature)) {
-            error_log('[MagicChecklists] Remote deactivate FAILED: signatures do not match');
-            return new WP_Error(
-                'invalid_signature',
-                __('Invalid request signature.', 'magic-checklists'),
-                ['status' => 401]
-            );
-        }
-
-        // Verify the license key matches our stored license
-        // Note: License key is stored at 'magicchecklists_license_key' by the licensing class
-        $stored_license_key = get_option('magicchecklists_license_key');
-        if ($stored_license_key !== $license_key) {
-            error_log('[MagicChecklists] Remote deactivate failed: license key mismatch');
-            error_log('[MagicChecklists]   stored: ' . substr($stored_license_key ?: '(empty)', 0, 15) . '...');
-            error_log('[MagicChecklists]   received: ' . substr($license_key, 0, 15) . '...');
-            return new WP_Error(
-                'license_mismatch',
-                __('License key does not match.', 'magic-checklists'),
-                ['status' => 400]
-            );
-        }
-
-        // Clear license data (using correct option names from licensing class)
-        delete_option('magicchecklists_license_key');
-        delete_option('magicchecklists_license_status');
-        delete_option('magicchecklists_license_last_validated');
-        delete_option('magicchecklists_license_tier');
-
-        // Also clear MagicDash connection
-        delete_option('magicplugins_connection');
-
-        error_log('[MagicChecklists] Remote deactivate successful - license and connection data cleared');
-
-        return rest_ensure_response([
-            'success' => true,
-            'message' => __('License deactivated successfully.', 'magic-checklists'),
-        ]);
     }
 
     /**

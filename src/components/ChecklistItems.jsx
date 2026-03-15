@@ -127,7 +127,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [selectedExistingImage, setSelectedExistingImage] = useState(null)
-  const [imageTab, setImageTab] = useState('upload') // 'upload', 'local', 'account'
+  const [imageTab, setImageTab] = useState('upload') // 'upload', 'local'
 
   // Tour connections state (optimized batch fetching)
   const [tourConnections, setTourConnections] = useState({})
@@ -1999,22 +1999,6 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               >
                 {t.modals?.imageModal?.siteImages || 'Site Images'}
               </button>
-              <button
-                type="button"
-                className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                  imageTab === 'account'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-                onClick={() => {
-                  setImageTab('account')
-                  setSelectedImageFile(null)
-                  setImagePreview(null)
-                  loadAccountImages()
-                }}
-              >
-                {t.modals?.imageModal?.accountImages || 'Account Images'}
-              </button>
             </div>
 
             {/* Upload Tab */}
@@ -2106,48 +2090,6 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
               </div>
             )}
 
-            {/* Account Images Tab (MagicDash) */}
-            {imageTab === 'account' && (
-              <div>
-                {loadingAccountImages ? (
-                  <div className="text-center py-8 text-gray-500">{t.modals?.imageModal?.loadingImages || 'Loading images...'}</div>
-                ) : accountImagesError ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-500 mb-4">{accountImagesError}</div>
-                    <p className="text-sm text-gray-400">
-                      {t.modals?.imageModal?.accountImagesDescription || 'Account images are stored in your MagicDash account and can be used across all your connected sites.'}
-                    </p>
-                  </div>
-                ) : accountImages.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
-                    {accountImages.map((image) => (
-                      <div
-                        key={image.url}
-                        className={`border-2 rounded-lg cursor-pointer transition-colors ${
-                          selectedExistingImage === image
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setSelectedExistingImage(image)}
-                      >
-                        <img src={image.url} alt={image.filename} className="w-full h-24 object-cover rounded-t-md" />
-                        <div className="p-2">
-                          <p className="text-xs font-medium text-gray-800 truncate">{image.filename}</p>
-                          <p className="text-xs text-gray-500">{image.width}×{image.height}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="text-gray-500 mb-2">{t.modals?.imageModal?.noAccountImages || 'No images in your account yet'}</div>
-                    <p className="text-sm text-gray-400">
-                      {t.modals?.imageModal?.uploadToAccount || 'Upload images to your MagicDash account to use them across all your sites.'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </Modal>
       )}

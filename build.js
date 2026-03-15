@@ -29,11 +29,10 @@ const includeFiles = [
   'public',
   'assets', // Root-level assets (fonts, images, etc.)
   'languages',
-  'licensing',
   'uninstall.php',
-  'release.json',
-  'dist', // Built React assets
-  'vendor' // Composer dependencies (Plugin Update Checker)
+  'readme.txt',
+  'LICENSE',
+  'dist' // Built React assets
 ];
 
 // Files and directories to exclude from the build

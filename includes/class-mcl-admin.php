@@ -36,10 +36,6 @@ class MCL_Admin {
         add_action('wp_ajax_mcl_get_users', array($this, 'get_users'), 10);
         add_action('wp_ajax_mcl_get_roles', array($this, 'get_roles'), 10);
         add_action('wp_ajax_mcl_get_admin_pages', array($this, 'get_admin_pages'), 10);
-        add_action('wp_ajax_mcl_get_license_status', array($this, 'get_license_status'), 10);
-        add_action('wp_ajax_mcl_activate_license', array($this, 'handle_license_activation'), 10);
-        add_action('wp_ajax_mcl_deactivate_license', array($this, 'handle_license_deactivation'), 10);
-
         // Kanban board AJAX handlers
         add_action('wp_ajax_mcl_get_kanban_board', array($this, 'get_kanban_board'));
         add_action('wp_ajax_mcl_update_kanban_item', array($this, 'update_kanban_item'));
@@ -2613,49 +2609,6 @@ class MCL_Admin {
         }
     }
 
-    public function get_license_status() {
-        // Verify nonce
-        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
-            wp_send_json_error(array('message' => 'Invalid security token'));
-            return;
-        }
-
-        // Check permissions
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Insufficient permissions'));
-            return;
-        }
-
-        try {
-            if (!class_exists('MagicPlugins_Core')) {
-                wp_send_json_error(array('message' => 'Licensing system not available'));
-                return;
-            }
-
-            $status = array(
-                'isActive' => MagicPlugins_Core::is_license_active('magicchecklists'),
-                'licenseKey' => $this->mask_license_key(MagicPlugins_Core::get_license_key('magicchecklists')),
-                'tier' => MagicPlugins_Core::get_license_tier('magicchecklists'),
-                'siteName' => get_bloginfo('name'),
-                'siteUrl' => get_site_url(),
-                'productName' => 'MagicChecklists'
-            );
-
-            $last_validated = get_option('magicchecklists_license_last_validated');
-            if (!empty($last_validated)) {
-                $timestamp = strtotime($last_validated);
-                $status['activatedAt'] = MCL_Admin::format_date($timestamp, true);
-            }
-
-            wp_send_json_success($status);
-        } catch (Exception $e) {
-            error_log('MagicChecklists license status error: ' . $e->getMessage());
-            wp_send_json_error(array(
-                'message' => 'Error retrieving license status',
-                'debug' => WP_DEBUG ? $e->getMessage() : null
-            ));
-        }
-    }
 
     // Apply custom submenu ordering after all plugins have added their items
     public function apply_submenu_ordering() {
@@ -2802,134 +2755,6 @@ class MCL_Admin {
 
         // Mark migration as complete
         update_option('mcl_settings_migrated_to_shared', true);
-    }
-
-    public function handle_license_activation() {
-        // Verify nonce
-        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
-            wp_send_json_error(array('message' => 'Invalid security token'));
-            return;
-        }
-
-        // Check permissions
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Insufficient permissions'));
-            return;
-        }
-
-        $license_key = isset($_POST['license_key']) ? sanitize_text_field($_POST['license_key']) : '';
-
-        if (empty($license_key)) {
-            wp_send_json_error(array('message' => 'License key is required'));
-            return;
-        }
-
-        try {
-            if (!class_exists('MagicPlugins_Core')) {
-                wp_send_json_error(array('message' => 'Licensing system not available'));
-                return;
-            }
-
-            // Set current plugin context for activation
-            MagicPlugins_Core::set_current_plugin('magicchecklists');
-
-            // Activate with auto-connect enabled
-            $result = MagicPlugins_Core::activate_license($license_key, true);
-
-            if ($result === true) {
-                $last_validated = get_option('magicchecklists_license_last_validated');
-                $timestamp = strtotime($last_validated);
-
-                wp_send_json_success(array(
-                    'message' => 'License activated successfully',
-                    'data' => array(
-                        'isActive' => true,
-                        'licenseKey' => $this->mask_license_key(MagicPlugins_Core::get_license_key('magicchecklists')),
-                        'tier' => MagicPlugins_Core::get_license_tier('magicchecklists'),
-                        'activatedAt' => MCL_Admin::format_date($timestamp, true)
-                    )
-                ));
-            } else {
-                $error_message = is_wp_error($result) ? $result->get_error_message() : 'Failed to activate license';
-                wp_send_json_error(array('message' => $error_message));
-            }
-        } catch (Exception $e) {
-            error_log('MagicChecklists license activation error: ' . $e->getMessage());
-            wp_send_json_error(array('message' => 'Error activating license: ' . $e->getMessage()));
-        }
-    }
-
-    public function handle_license_deactivation() {
-        // Verify nonce
-        if (!check_ajax_referer('mcl_admin_nonce', 'nonce', false)) {
-            wp_send_json_error(array('message' => 'Invalid security token'));
-            return;
-        }
-
-        // Check permissions
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Insufficient permissions'));
-            return;
-        }
-
-        try {
-            if (!class_exists('MagicPlugins_Core')) {
-                wp_send_json_error(array('message' => 'Licensing system not available'));
-                return;
-            }
-
-            // Set current plugin context for deactivation
-            MagicPlugins_Core::set_current_plugin('magicchecklists');
-
-            $result = MagicPlugins_Core::deactivate_license();
-
-            if ($result === true) {
-                wp_send_json_success(array('message' => 'License deactivated successfully'));
-            } else {
-                $error_message = is_wp_error($result) ? $result->get_error_message() : 'Failed to deactivate license';
-                wp_send_json_error(array('message' => $error_message));
-            }
-        } catch (Exception $e) {
-            error_log('MagicChecklists license deactivation error: ' . $e->getMessage());
-            wp_send_json_error(array('message' => 'Error deactivating license: ' . $e->getMessage()));
-        }
-    }
-
-    /**
-     * Get licensing info via MagicPlugins_Core
-     *
-     * @return array License info array with is_active, license_key, and tier
-     */
-    private function get_licensing_info() {
-        if (!class_exists('MagicPlugins_Core')) {
-            return array(
-                'is_active' => false,
-                'license_key' => '',
-                'tier' => '',
-            );
-        }
-
-        return array(
-            'is_active' => MagicPlugins_Core::is_license_active('magicchecklists'),
-            'license_key' => MagicPlugins_Core::get_license_key('magicchecklists'),
-            'tier' => MagicPlugins_Core::get_license_tier('magicchecklists'),
-        );
-    }
-
-    /**
-     * Mask a license key for display
-     */
-    private function mask_license_key($license_key) {
-        if (empty($license_key)) {
-            return '';
-        }
-        
-        $length = strlen($license_key);
-        if ($length <= 10) {
-            return str_repeat('X', $length);
-        }
-        
-        return substr($license_key, 0, 5) . str_repeat('X', $length - 10) . substr($license_key, -5);
     }
 
     /**
