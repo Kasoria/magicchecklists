@@ -1,182 +1,63 @@
-# MagicChecklists React Development
+# MagicChecklists
 
-This directory contains the React-based frontend for the MagicChecklists WordPress plugin, built with Vite, React, Flowbite, and TailwindCSS.
+Create interactive checklists, kanban boards and guided tours in WordPress.
 
-## 🚀 Quick Start
+## Features
+
+- **Classic Checklists** - Drag-and-drop items, priorities, deadlines, multi-level nesting
+- **Publisher Checklists** - Enforce publishing requirements for selected post types
+- **Kanban Board** - Visualize tasks with drag-and-drop columns, user assignment, due dates
+- **Guided Tours** - Build step-by-step interactive tours for onboarding (frontend + backend)
+- **Shortcodes** - Embed checklists anywhere, in list or kanban mode
+- **Floating Buttons** - Trigger checklists via floating buttons or keyboard shortcuts
+- **Access Control** - Granular permissions per role, user or public access
+- **Analytics** - Track completion rates and engagement
+- **API & Webhooks** - REST API with Slack, Discord and custom webhook integrations
+- **Import / Export** - JSON, PDF and TXT formats
+- **Dashboard Widget** - Checklist status on the WordPress dashboard
+- **Dark Mode** - Full dark/light theme support
+- **i18n** - German and French translations included
+
+## Installation
+
+1. Download the latest release zip
+2. Upload via **Plugins > Add New > Upload Plugin** in WordPress
+3. Activate and go to **MagicPlugins > MagicChecklists**
+
+Or install directly from [WordPress.org](https://wordpress.org/plugins/) (pending approval).
+
+## Development
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- WordPress development environment with the MagicChecklists plugin installed
+- Node.js 18+
+- WordPress development environment
 
-### Development Setup
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Start the Vite development server:**
-   ```bash
-   npm run dev
-   ```
-   This will start the development server at `http://localhost:3000` with Hot Module Replacement (HMR).
-
-3. **Enable WordPress integration:**
-   - Ensure `WP_DEBUG` is set to `true` in your WordPress config
-   - The plugin will automatically detect the running Vite dev server and load scripts from it
-   - If the dev server is not running, it will fall back to built files in the `dist/` directory
-
-### Building for Production
+### Setup
 
 ```bash
-npm run build
+npm install
+npm run dev
 ```
 
-This creates optimized production files in the `dist/` directory that WordPress will use when the dev server is not running.
+Vite dev server runs at `http://localhost:3000` with HMR. WordPress auto-detects it when `WP_DEBUG` is enabled.
 
-## 📁 Project Structure
+### Production Build
 
-```
-├── src/
-│   ├── main.jsx          # Public-facing React app entry point
-│   ├── admin.jsx         # WordPress admin React app entry point
-│   ├── App.jsx           # Main public app component
-│   ├── AdminApp.jsx      # Main admin app component
-│   ├── index.css         # Global styles with TailwindCSS
-│   └── components/       # React components
-│       ├── ChecklistsTable.jsx
-│       └── ChecklistForm.jsx
-├── dist/                 # Production build output
-├── package.json          # Dependencies and scripts
-├── vite.config.js        # Vite configuration
-├── tailwind.config.js    # TailwindCSS configuration
-├── postcss.config.js     # PostCSS configuration
-└── index.html           # Development HTML file
+```bash
+npm run build        # Compile React assets
+node build.js        # Create distribution zip
 ```
 
-## 🛠 Technology Stack
+### Tech Stack
 
-- **React 18** - UI framework
-- **Vite** - Build tool and dev server
-- **TailwindCSS** - Utility-first CSS framework
-- **Flowbite** - Component library built on Tailwind
-- **Flowbite React** - React components for Flowbite
+- React 18, Vite, TailwindCSS, Flowbite React
+- PHP 7.4+, WordPress REST API
 
-## 🔧 Development Features
+## Contributing
 
-### Hot Module Replacement (HMR)
-- Changes to React components are reflected instantly without page refresh
-- State is preserved during updates when possible
+Contributions are welcome! Please open an issue first to discuss what you'd like to change.
 
-### WordPress Integration
-- Automatic detection of development vs production mode
-- WordPress data (nonces, AJAX URLs, etc.) is available via `window.mclAdmin`
-- Scripts are properly enqueued only on plugin pages
+## License
 
-### Development vs Production
-- **Development**: Scripts loaded from Vite dev server with HMR
-- **Production**: Optimized, built files served from `dist/` directory
-
-## 📝 Component Development
-
-### Creating New Components
-1. Create components in `src/components/`
-2. Use Flowbite React components for UI consistency
-3. Follow the existing patterns for WordPress AJAX integration
-
-### Example Component Structure
-```jsx
-import { useState } from 'react'
-import { Button, Card } from 'flowbite-react'
-
-function MyComponent({ adminData }) {
-  const [loading, setLoading] = useState(false)
-
-  const handleAction = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(adminData.ajaxurl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          'action': 'my_action',
-          'nonce': adminData.nonces?.my_nonce || ''
-        })
-      })
-      // Handle response
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Card>
-      <Button onClick={handleAction} disabled={loading}>
-        {loading ? 'Loading...' : 'Action'}
-      </Button>
-    </Card>
-  )
-}
-
-export default MyComponent
-```
-
-## 🎨 Styling Guidelines
-
-### TailwindCSS Classes
-- Use Tailwind utility classes for styling
-- Custom components are defined in `src/index.css`
-- Follow the existing patterns for WordPress admin integration
-
-### Flowbite Components
-- Use Flowbite React components for consistent UI
-- Available components: Button, Card, Table, Modal, Form inputs, etc.
-- See [Flowbite React documentation](https://flowbite-react.com/) for component usage
-
-## 🔄 Migration from PHP to React
-
-### Current Migration Status
-- ✅ Development environment setup
-- ✅ Basic admin interface structure
-- ✅ Checklist table component
-- ✅ Checklist form component
-- 🚧 Individual checklist editing
-- 🚧 Analytics dashboard
-- 🚧 Settings management
-- 🚧 Public checklist display
-
-### Next Steps
-1. Migrate existing admin views to React components
-2. Integrate with existing WordPress REST API endpoints
-3. Add state management (Context API or Redux if needed)
-4. Implement public checklist functionality
-5. Add comprehensive error handling and loading states
-
-## 🐛 Troubleshooting
-
-### Dev Server Not Detected
-- Ensure `WP_DEBUG` is `true` in WordPress
-- Check that Vite dev server is running on port 3000
-- Verify no firewall is blocking localhost:3000
-
-### Scripts Not Loading
-- Check browser console for errors
-- Verify admin page hooks contain 'mcl_' in the name
-- Ensure React root elements are being added to the DOM
-
-### CORS Issues
-- Vite dev server is configured to allow CORS
-- If issues persist, check WordPress site URL configuration
-
-## 📚 Additional Resources
-
-- [Vite Documentation](https://vitejs.dev/)
-- [React Documentation](https://react.dev/)
-- [TailwindCSS Documentation](https://tailwindcss.com/)
-- [Flowbite React Documentation](https://flowbite-react.com/)
-- [WordPress Plugin Development](https://developer.wordpress.org/plugins/) 
+[GPL-2.0-or-later](LICENSE)
