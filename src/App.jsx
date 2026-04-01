@@ -26,7 +26,7 @@ const App = () => {
       return {}
     }
 
-    return window.mclPublicData?.context || window.mclAdminData?.context || {}
+    return window.magicclPublicData?.context || window.magicclAdminData?.context || {}
   }, [])
 
   const isInIframe = useMemo(() => {
@@ -57,7 +57,7 @@ const App = () => {
     return i18n?.app?.[key] || fallback
   }
 
-  // Utility function to wait for DOM elements (moved from mcl-boot.js)
+  // Utility function to wait for DOM elements (moved from magiccl-boot.js)
   const waitForElement = useCallback((selector, timeout = 5000) => {
     return new Promise((resolve, reject) => {
       // Check if element already exists
@@ -90,23 +90,23 @@ const App = () => {
     });
   }, [])
 
-  // Initialize MagicChecklist bridge functionality (moved from mcl-boot.js)
+  // Initialize MagicChecklist bridge functionality (moved from magiccl-boot.js)
   const initializeMagicChecklist = useCallback(async () => {
     // Clean up old initialization if needed
-    if (window.mcl_cleanup) {
-      window.mcl_cleanup();
+    if (window.magiccl_cleanup) {
+      window.magiccl_cleanup();
     }
 
     try {
       // Wait for the essential DOM elements that React provides
-      await waitForElement('#mcl-drawer');
-      await waitForElement('#mcl-items');
+      await waitForElement('#magiccl-drawer');
+      await waitForElement('#magiccl-items');
       
       // Wait for React component to set up the global bridge
       let attempts = 0;
       const maxAttempts = 100; // 10 seconds with 100ms intervals
       
-      while (!window.mclDrawer && attempts < maxAttempts) {
+      while (!window.magicclDrawer && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
         if (attempts % 10 === 0) {
@@ -114,16 +114,16 @@ const App = () => {
         }
       }
       
-      if (window.mclDrawer) {
+      if (window.magicclDrawer) {
         // Set up global reference for compatibility
-        window.MagicChecklist = window.mclDrawer;
+        window.MagicChecklist = window.magicclDrawer;
         
         // Trigger floating button binding
-        if (window.mclDrawer.bindFloatingButtons) {
-          window.mclDrawer.bindFloatingButtons();
+        if (window.magicclDrawer.bindFloatingButtons) {
+          window.magicclDrawer.bindFloatingButtons();
         }
         
-        return window.mclDrawer;
+        return window.magicclDrawer;
       } else {
         throw new Error(__('reactBridgeNotFound', 'React component bridge not found after waiting'));
       }
@@ -137,11 +137,11 @@ const App = () => {
   // Check for tour mode from URL params or cookies
   const checkTourMode = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    const tourModeParam = urlParams.get('mcl_tour_mode')
-    const continueTourParam = urlParams.get('mcl_continue_tour')
+    const tourModeParam = urlParams.get('magiccl_tour_mode')
+    const continueTourParam = urlParams.get('magiccl_continue_tour')
     const tourIdParam = urlParams.get('tour_id')
     const tourModeCookie = document.cookie.split(';').find(cookie => 
-      cookie.trim().startsWith('mcl_tour_mode=')
+      cookie.trim().startsWith('magiccl_tour_mode=')
     )?.split('=')[1]
 
     return (tourModeParam === '1' || continueTourParam || tourIdParam || tourModeCookie === '1')
@@ -149,18 +149,18 @@ const App = () => {
 
   useEffect(() => {
     // Set up i18n data
-    if (window.mclPublicData?.i18n || window.mclAdminData?.i18n) {
-      setI18n(window.mclPublicData?.i18n || window.mclAdminData?.i18n)
+    if (window.magicclPublicData?.i18n || window.magicclAdminData?.i18n) {
+      setI18n(window.magicclPublicData?.i18n || window.magicclAdminData?.i18n)
     }
 
     // Check tour mode first
     const tourModeDetected = checkTourMode()
     setIsTourMode(tourModeDetected)
 
-    if (window.mclTourPlaybackData) {
-      setTourData(window.mclTourPlaybackData)
-    } else if (window.mclTourData) {
-      setTourData(window.mclTourData)
+    if (window.magicclTourPlaybackData) {
+      setTourData(window.magicclTourPlaybackData)
+    } else if (window.magicclTourData) {
+      setTourData(window.magicclTourData)
     }
 
     if (!shouldRenderFloatingUI) {
@@ -172,8 +172,8 @@ const App = () => {
     const initializeApp = async () => {
       try {
         // Get the active checklists data that would normally be passed to the PHP templates
-        const ajaxUrl = window.mclPublicData?.ajaxurl || window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-        const nonce = window.mclPublicData?.nonces?.mcl_admin || window.mcl_checklists?.nonce || ''
+        const ajaxUrl = window.magicclPublicData?.ajaxurl || window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+        const nonce = window.magicclPublicData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce || ''
         
         const checklistResponse = await fetch(ajaxUrl, {
           method: 'POST',
@@ -181,7 +181,7 @@ const App = () => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
-            action: 'mcl_get_active_checklists_data',
+            action: 'magiccl_get_active_checklists_data',
             nonce: nonce
           })
         })
@@ -214,7 +214,7 @@ const App = () => {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              action: 'mcl_get_general_settings'
+              action: 'magiccl_get_general_settings'
             })
           })
 
@@ -231,16 +231,16 @@ const App = () => {
           console.warn(__('failedToLoadGeneralSettings', 'MCL: Failed to load general settings:'), settingsError)
         }
         
-        if (window.mclTourPlaybackData) {
-          setTourData(window.mclTourPlaybackData)
-        } else if (window.mclTourData) {
-          setTourData(window.mclTourData)
+        if (window.magicclTourPlaybackData) {
+          setTourData(window.magicclTourPlaybackData)
+        } else if (window.magicclTourData) {
+          setTourData(window.magicclTourData)
         }
       } catch (error) {
         console.error(__('errorLoadingChecklistData', 'Error loading checklist data:'), error)
         // If we can't load data, try to use any existing data from the global object
-        if (window.mcl_checklists?.active_checklists) {
-          const legacyChecklists = window.mcl_checklists.active_checklists.map((checklist) => {
+        if (window.magiccl_checklists?.active_checklists) {
+          const legacyChecklists = window.magiccl_checklists.active_checklists.map((checklist) => {
             const disableValue = checklist.disableInBuilders ?? checklist.disable_in_builders
 
             return {
@@ -251,9 +251,9 @@ const App = () => {
           setActiveChecklists(legacyChecklists)
         }
         
-        // Make mcl_checklists data available globally for backward compatibility
-        if (window.mcl_checklists) {
-          console.log(__('legacyDataAvailable', 'MCL: Legacy mcl_checklists data available:'), Object.keys(window.mcl_checklists))
+        // Make magiccl_checklists data available globally for backward compatibility
+        if (window.magiccl_checklists) {
+          console.log(__('legacyDataAvailable', 'MCL: Legacy magiccl_checklists data available:'), Object.keys(window.magiccl_checklists))
         }
       } finally {
         setLoading(false)
@@ -279,22 +279,22 @@ const App = () => {
       return
     }
 
-    // Make the initialization function globally available (replacing mcl-boot.js functionality)
+    // Make the initialization function globally available (replacing magiccl-boot.js functionality)
     window.initializeMagicChecklist = initializeMagicChecklist
 
     // Set up shortcode renderer function
-    window.mclRenderShortcode = (container, props) => {
+    window.magicclRenderShortcode = (container, props) => {
       const root = ReactDOM.createRoot(container)
       root.render(<ShortcodeRenderer {...props} />)
     }
 
     // Initialize any existing shortcodes on the page
     const initializeShortcodes = () => {
-      const shortcodeContainers = document.querySelectorAll('[data-mcl-shortcode="true"]')
+      const shortcodeContainers = document.querySelectorAll('[data-magiccl-shortcode="true"]')
       shortcodeContainers.forEach(container => {
         try {
           const props = JSON.parse(container.dataset.shortcodeProps)
-          window.mclRenderShortcode(container, props)
+          window.magicclRenderShortcode(container, props)
         } catch (error) {
           console.error(__('errorInitializingShortcode', 'MCL: Error initializing shortcode:'), error)
         }
@@ -310,21 +310,21 @@ const App = () => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             // Check if the added node is a shortcode container
-            if (node.matches && node.matches('[data-mcl-shortcode="true"]')) {
+            if (node.matches && node.matches('[data-magiccl-shortcode="true"]')) {
               try {
                 const props = JSON.parse(node.dataset.shortcodeProps)
-                window.mclRenderShortcode(node, props)
+                window.magicclRenderShortcode(node, props)
               } catch (error) {
                 console.error(__('errorInitializingDynamicShortcode', 'MCL: Error initializing dynamic shortcode:'), error)
               }
             }
             // Check for shortcode containers within the added node
-            const shortcodes = node.querySelectorAll && node.querySelectorAll('[data-mcl-shortcode="true"]')
+            const shortcodes = node.querySelectorAll && node.querySelectorAll('[data-magiccl-shortcode="true"]')
             if (shortcodes) {
               shortcodes.forEach(container => {
                 try {
                   const props = JSON.parse(container.dataset.shortcodeProps)
-                  window.mclRenderShortcode(container, props)
+                  window.magicclRenderShortcode(container, props)
                 } catch (error) {
                   console.error(__('errorInitializingNestedShortcode', 'MCL: Error initializing nested shortcode:'), error)
                 }
@@ -362,8 +362,8 @@ const App = () => {
 
     // Cleanup function to handle the existing JavaScript cleanup
     return () => {
-      if (window.mcl_cleanup) {
-        window.mcl_cleanup()
+      if (window.magiccl_cleanup) {
+        window.magiccl_cleanup()
       }
     }
   }, [shouldRenderFloatingUI, componentsReady, loading, initializeMagicChecklist, activeChecklists.length])
@@ -380,13 +380,13 @@ const App = () => {
     const reinitializeButtons = () => {
       setTimeout(() => {
         // Re-bind floating button events specifically
-        if (window.mclDrawer && window.mclDrawer.bindFloatingButtons) {
+        if (window.magicclDrawer && window.magicclDrawer.bindFloatingButtons) {
           try {
-            window.mclDrawer.bindFloatingButtons()
+            window.magicclDrawer.bindFloatingButtons()
             
             // Also reinitialize draggable if it exists
-            if (window.mclDrawer.draggable && window.mclDrawer.draggable.init) {
-              window.mclDrawer.draggable.init()
+            if (window.magicclDrawer.draggable && window.magicclDrawer.draggable.init) {
+              window.magicclDrawer.draggable.init()
             }
           } catch (error) {
             console.warn(__('failedToReinitializeButtons', 'MCL: Failed to reinitialize buttons:'), error)
@@ -408,8 +408,8 @@ const App = () => {
   let tourWrapperComponent = null
   if (isTourMode) {
     const urlParams = new URLSearchParams(window.location.search)
-    const tourModeParam = urlParams.get('mcl_tour_mode')
-    const continueTourParam = urlParams.get('mcl_continue_tour')
+    const tourModeParam = urlParams.get('magiccl_tour_mode')
+    const continueTourParam = urlParams.get('magiccl_continue_tour')
     const tourIdParam = urlParams.get('tour_id')
     
     const tourWrapperData = {
@@ -422,7 +422,7 @@ const App = () => {
     tourWrapperComponent = (
       <ToastProvider position="top-right" maxToasts={3}>
         <TourWrapper
-          adminData={window.mclPublicData || window.mclAdminData || {}}
+          adminData={window.magicclPublicData || window.magicclAdminData || {}}
           tourData={tourWrapperData}
         />
       </ToastProvider>
@@ -430,7 +430,7 @@ const App = () => {
   }
 
   return (
-    <div className={`mcl-react-app ${isTourMode ? 'mcl-tour-mode' : ''}`}>
+    <div className={`magiccl-react-app ${isTourMode ? 'magiccl-tour-mode' : ''}`}>
       {/* Render checklist UI only when at least one checklist is active */}
       {shouldRenderFloatingUI && activeChecklists.length > 0 && (
         <ChecklistDrawer theme={drawerTheme} />
@@ -445,13 +445,13 @@ const App = () => {
       {/* Tour playback component for regular tour playback (always mounted) */}
       {!isTourMode && (() => {
         const urlParams = new URLSearchParams(window.location.search)
-        const continueTourId = parseInt(urlParams.get('mcl_continue_tour')) || 0
-        const continueStep = parseInt(urlParams.get('mcl_tour_step')) || 0
+        const continueTourId = parseInt(urlParams.get('magiccl_continue_tour')) || 0
+        const continueStep = parseInt(urlParams.get('magiccl_tour_step')) || 0
         const tours = tourData?.tours || []
         
         return (
           <TourPlayback
-            adminData={window.mclPublicData || window.mclAdminData || {}}
+            adminData={window.magicclPublicData || window.magicclAdminData || {}}
             activeTours={tours}
             continueTourId={continueTourId}
             continueStep={continueStep}

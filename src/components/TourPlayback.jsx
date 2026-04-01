@@ -63,7 +63,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
   const initTourPlayback = () => {
     // Store reference for global access - only if not already set
-    if (!window.mclTourPlayback) {
+    if (!window.magicclTourPlayback) {
       playbackRef.current = {
         startTour,
         continueTour,
@@ -71,21 +71,21 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         getCurrentPageUrl,
         markTourCompleted
       }
-      window.mclTourPlayback = playbackRef.current
+      window.magicclTourPlayback = playbackRef.current
     } else {
-      playbackRef.current = window.mclTourPlayback
+      playbackRef.current = window.magicclTourPlayback
     }
 
     // Check for tours from PHP data if available
-    // Try both new format (mclTourPlaybackData) and legacy format (mclTour)
+    // Try both new format (magicclTourPlaybackData) and legacy format (mclTour)
     let tourData = null
     let dataSource = 'none'
     
-    if (window.mclTourPlaybackData?.tours) {
-      tourData = window.mclTourPlaybackData.tours
-      dataSource = 'mclTourPlaybackData'
-    } else if (window.mclTour?.tours) {
-      tourData = window.mclTour.tours
+    if (window.magicclTourPlaybackData?.tours) {
+      tourData = window.magicclTourPlaybackData.tours
+      dataSource = 'magicclTourPlaybackData'
+    } else if (window.magicclTour?.tours) {
+      tourData = window.magicclTour.tours
       dataSource = 'mclTour (legacy)'
     }
     
@@ -112,8 +112,8 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
     }
     
     // Add tours from PHP data (if not already included)
-    if (window.mclTourPlaybackData?.tours) {
-      window.mclTourPlaybackData.tours.forEach(phpTour => {
+    if (window.magicclTourPlaybackData?.tours) {
+      window.magicclTourPlaybackData.tours.forEach(phpTour => {
         // Check if this tour is already in our list (avoid duplicates)
         const existingTour = allTours.find(tour => tour.id === phpTour.id)
         if (!existingTour) {
@@ -276,11 +276,11 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       
       // Add query parameters (excluding tour-specific ones)
       const params = new URLSearchParams(window.location.search)
-      params.delete('mcl_tour_mode')
+      params.delete('magiccl_tour_mode')
       params.delete('tour_id') 
-      params.delete('mcl_continue_tour')
-      params.delete('mcl_tour_step')
-      params.delete('mcl_preview_step')
+      params.delete('magiccl_continue_tour')
+      params.delete('magiccl_tour_step')
+      params.delete('magiccl_preview_step')
       
       if (params.toString()) {
         path += '?' + params.toString()
@@ -291,11 +291,11 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
     
     // Frontend URL - remove tour parameters but keep the rest
     const url = new URL(window.location.href)
-    url.searchParams.delete('mcl_tour_mode')
+    url.searchParams.delete('magiccl_tour_mode')
     url.searchParams.delete('tour_id')
-    url.searchParams.delete('mcl_continue_tour')
-    url.searchParams.delete('mcl_tour_step')
-    url.searchParams.delete('mcl_preview_step')
+    url.searchParams.delete('magiccl_continue_tour')
+    url.searchParams.delete('magiccl_tour_step')
+    url.searchParams.delete('magiccl_preview_step')
     
     let cleanUrl = url.pathname
     if (url.searchParams.toString()) {
@@ -385,7 +385,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         const isCurrentPage = normalizedStepUrl === normalizedCurrentUrl
         
         // Only log step comparisons if there's a continuation or if debugging is explicitly enabled
-        if (tourData.continue_from_step !== undefined || window.mclTourDebug) {
+        if (tourData.continue_from_step !== undefined || window.magicclTourDebug) {
           console.log(`MCL Tour: Step ${i} page comparison:`, {
             stepPageUrl,
             currentPageUrl,
@@ -529,10 +529,10 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         },
         onCloseClick: async (element, step, options) => {
           // Prevent multiple simultaneous calls
-          if (driverInstance._mclCloseInProgress) {
+          if (driverInstance._magicclCloseInProgress) {
             return false
           }
-          driverInstance._mclCloseInProgress = true
+          driverInstance._magicclCloseInProgress = true
           
           // Handle confirmation for the close button specifically
           // For preview mode, always show confirmation unless explicitly disabled
@@ -562,12 +562,12 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                 setCurrentDriverInstance(null)
                 return true
               } else {
-                driverInstance._mclCloseInProgress = false
+                driverInstance._magicclCloseInProgress = false
                 return false // Prevent closing
               }
             } catch (error) {
               console.error(adminData?.i18n?.tourPlayback?.errorCloseConfirmation || 'MCL Tour: Error in close confirmation:', error)
-              driverInstance._mclCloseInProgress = false
+              driverInstance._magicclCloseInProgress = false
               return false
             }
           }
@@ -579,10 +579,10 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
         },
         onDestroyStarted: () => {
           // Prevent multiple simultaneous calls
-          if (driverInstance._mclDestroyInProgress) {
+          if (driverInstance._magicclDestroyInProgress) {
             return false
           }
-          driverInstance._mclDestroyInProgress = true
+          driverInstance._magicclDestroyInProgress = true
           
           // Handle exit confirmation for ESC key, overlay click, etc. (but not close button)
           // Note: onCloseClick handles the close button specifically
@@ -611,12 +611,12 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
                 setCurrentDriverInstance(null)
               } else {
                 // Reset the flag so user can try to exit again
-                driverInstance._mclDestroyInProgress = false
+                driverInstance._magicclDestroyInProgress = false
               }
               // If user cancels, the modal closes but driver stays open
             }).catch(() => {
               // Reset the flag on error
-              driverInstance._mclDestroyInProgress = false
+              driverInstance._magicclDestroyInProgress = false
             })
             
             return false // Always prevent automatic closing - we'll handle it manually
@@ -686,11 +686,11 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
   const continueTour = async (tourId, stepIndex = 0) => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_tour_data')
+      formData.append('action', 'magiccl_get_tour_data')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces?.mcl_tour_public || window.mclTourPlaybackData?.nonce)
+      formData.append('nonce', adminData.nonces?.magiccl_tour_public || window.magicclTourPlaybackData?.nonce)
 
-      const response = await fetch(adminData.ajaxurl || window.mclTourPlaybackData?.ajax_url, {
+      const response = await fetch(adminData.ajaxurl || window.magicclTourPlaybackData?.ajax_url, {
         method: 'POST',
         body: formData
       })
@@ -727,8 +727,8 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
     try {
       const url = new URL(step.page_url, window.location.href)
-      url.searchParams.set('mcl_continue_tour', String(tourId))
-      url.searchParams.set('mcl_tour_step', String(step.originalIndex))
+      url.searchParams.set('magiccl_continue_tour', String(tourId))
+      url.searchParams.set('magiccl_tour_step', String(step.originalIndex))
       
       setTimeout(() => {
         window.location.href = url.toString()
@@ -739,14 +739,14 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
   }
 
   const showNavigationLoading = () => {
-    const existing = document.querySelector('.mcl-tour-navigation-loading')
+    const existing = document.querySelector('.magiccl-tour-navigation-loading')
     if (existing) existing.remove()
 
     const loadingHtml = `
-      <div class="mcl-tour-navigation-loading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000200; display: flex; align-items: center; justify-content: center;">
-        <div class="mcl-tour-loading-content" style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-          <div class="mcl-tour-spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #2271b1; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-          <div class="mcl-tour-loading-text">${adminData?.i18n?.tourPlayback?.loadingNextPage || 'Loading next page...'}</div>
+      <div class="magiccl-tour-navigation-loading" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000200; display: flex; align-items: center; justify-content: center;">
+        <div class="magiccl-tour-loading-content" style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+          <div class="magiccl-tour-spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #2271b1; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+          <div class="magiccl-tour-loading-text">${adminData?.i18n?.tourPlayback?.loadingNextPage || 'Loading next page...'}</div>
         </div>
       </div>
       <style>
@@ -760,7 +760,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
   }
 
   const hideNavigationLoading = () => {
-    const loading = document.querySelector('.mcl-tour-navigation-loading')
+    const loading = document.querySelector('.magiccl-tour-navigation-loading')
     if (loading) loading.remove()
   }
 
@@ -769,11 +769,11 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
     startedTours.delete(tourId)
     
     const formData = new FormData()
-    formData.append('action', 'mcl_mark_tour_complete')
+    formData.append('action', 'magiccl_mark_tour_complete')
     formData.append('tour_id', tourId)
-    formData.append('nonce', adminData.nonces?.mcl_tour_public || window.mclTourPlaybackData?.nonce)
+    formData.append('nonce', adminData.nonces?.magiccl_tour_public || window.magicclTourPlaybackData?.nonce)
 
-    await fetch(adminData.ajaxurl || window.mclTourPlaybackData?.ajax_url, {
+    await fetch(adminData.ajaxurl || window.magicclTourPlaybackData?.ajax_url, {
       method: 'POST',
       body: formData
     })
@@ -881,13 +881,13 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_tour_step_check_item')
+      formData.append('action', 'magiccl_tour_step_check_item')
       formData.append('checklist_id', checklistId)
       formData.append('item_id', itemId)
       formData.append('checked', true)
-      formData.append('nonce', adminData.nonces?.mcl_tour_public || window.mclTourPlaybackData?.nonce)
+      formData.append('nonce', adminData.nonces?.magiccl_tour_public || window.magicclTourPlaybackData?.nonce)
 
-      const response = await fetch(adminData.ajaxurl || window.mclTourPlaybackData?.ajax_url, {
+      const response = await fetch(adminData.ajaxurl || window.magicclTourPlaybackData?.ajax_url, {
         method: 'POST',
         body: formData
       })
@@ -896,7 +896,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       
       if (result.success) {
         // Trigger a custom event to notify any listening checklist components
-        window.dispatchEvent(new CustomEvent('mclChecklistItemChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistItemChanged', {
           detail: { checklistId, itemId, checked: true, source: 'tour' }
         }))
       } else {
@@ -915,13 +915,13 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_tour_step_check_item')
+      formData.append('action', 'magiccl_tour_step_check_item')
       formData.append('checklist_id', checklistId)
       formData.append('item_id', itemId)
       formData.append('checked', false)
-      formData.append('nonce', adminData.nonces?.mcl_tour_public || window.mclTourPlaybackData?.nonce)
+      formData.append('nonce', adminData.nonces?.magiccl_tour_public || window.magicclTourPlaybackData?.nonce)
 
-      const response = await fetch(adminData.ajaxurl || window.mclTourPlaybackData?.ajax_url, {
+      const response = await fetch(adminData.ajaxurl || window.magicclTourPlaybackData?.ajax_url, {
         method: 'POST',
         body: formData
       })
@@ -930,7 +930,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
       
       if (result.success) {
         // Trigger a custom event to notify any listening checklist components
-        window.dispatchEvent(new CustomEvent('mclChecklistItemChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistItemChanged', {
           detail: { checklistId, itemId, checked: false, source: 'tour' }
         }))
       } else {
@@ -983,7 +983,7 @@ const TourPlayback = ({ adminData, activeTours = [], continueTourId = 0, continu
     <>
       {showExitConfirmation && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center w-full h-full mcl-tour-exit-modal"
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center w-full h-full magiccl-tour-exit-modal"
           style={{ 
             zIndex: 99999999, // Higher than all other elements including tour creator
             pointerEvents: 'auto', // Ensure pointer events work

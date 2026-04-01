@@ -4,9 +4,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_API_Integration {
+class MAGICCL_API_Integration {
     /**
-     * @var MCL_REST_Controller
+     * @var MAGICCL_REST_Controller
      */
     private $rest_controller;
 
@@ -15,20 +15,20 @@ class MCL_API_Integration {
      */
     public function __construct() {
         add_action('init', array($this, 'init'), 0);
-        add_action('mcl_webhook_checklist_created', array($this, 'dispatch_webhook_created'));
-        add_action('mcl_webhook_checklist_updated', array($this, 'dispatch_webhook_updated'));
-        add_action('mcl_webhook_checklist_deleted', array($this, 'dispatch_webhook_deleted'));
-        add_action('mcl_webhook_checklist_items_updated', array($this, 'dispatch_webhook_items_updated'));
-        add_action('mcl_webhook_checklist_state_updated', array($this, 'dispatch_webhook_state_updated'));
-        add_action('wp_ajax_mcl_test_webhook', array($this, 'handle_test_webhook'));
-        add_action('wp_ajax_mcl_clear_webhook_logs', array($this, 'handle_clear_webhook_logs'));
+        add_action('magiccl_webhook_checklist_created', array($this, 'dispatch_webhook_created'));
+        add_action('magiccl_webhook_checklist_updated', array($this, 'dispatch_webhook_updated'));
+        add_action('magiccl_webhook_checklist_deleted', array($this, 'dispatch_webhook_deleted'));
+        add_action('magiccl_webhook_checklist_items_updated', array($this, 'dispatch_webhook_items_updated'));
+        add_action('magiccl_webhook_checklist_state_updated', array($this, 'dispatch_webhook_state_updated'));
+        add_action('wp_ajax_magiccl_test_webhook', array($this, 'handle_test_webhook'));
+        add_action('wp_ajax_magiccl_clear_webhook_logs', array($this, 'handle_clear_webhook_logs'));
     }
 
     /**
      * Initialize components
      */
     public function init() {
-        $this->rest_controller = new MCL_REST_Controller();
+        $this->rest_controller = new MAGICCL_REST_Controller();
     }
 
     /**
@@ -122,7 +122,7 @@ class MCL_API_Integration {
      * Generate signature for webhook payload
      */
     private function generate_signature($payload, $timestamp, $nonce) {
-        $secret = get_option('mcl_webhook_secret', '');
+        $secret = get_option('magiccl_webhook_secret', '');
         if (empty($secret)) {
             return '';
         }
@@ -135,7 +135,7 @@ class MCL_API_Integration {
      * Get configured webhook endpoints
      */
     private function get_webhook_endpoints() {
-        return get_option('mcl_webhook_endpoints', array());
+        return get_option('magiccl_webhook_endpoints', array());
     }
 
     /**
@@ -143,7 +143,7 @@ class MCL_API_Integration {
      */
     public function handle_test_webhook() {
       // Verify nonce
-      if (!check_ajax_referer('mcl_integration_nonce', 'nonce', false)) {
+      if (!check_ajax_referer('magiccl_integration_nonce', 'nonce', false)) {
           wp_send_json_error(array(
               'message' => 'Invalid security token'
           ));
@@ -215,7 +215,7 @@ class MCL_API_Integration {
     * Log webhook events
     */
     private function log_webhook_event($event, $endpoint, $status, $error = '') {
-      $logs = get_option('mcl_webhook_logs', array());
+      $logs = get_option('magiccl_webhook_logs', array());
       
       // Add new log entry
       array_unshift($logs, array(
@@ -229,7 +229,7 @@ class MCL_API_Integration {
       // Keep only last 100 logs
       $logs = array_slice($logs, 0, 100);
       
-      update_option('mcl_webhook_logs', $logs);
+      update_option('magiccl_webhook_logs', $logs);
     }
 
     /**
@@ -299,9 +299,9 @@ class MCL_API_Integration {
      */
     public function handle_clear_webhook_logs() {
       // Verify nonce
-      if (!check_ajax_referer('mcl_integration_nonce', 'nonce', false)) {
+      if (!check_ajax_referer('magiccl_integration_nonce', 'nonce', false)) {
           wp_send_json_error(array(
-              'message' => __('Invalid security token', 'magic-checklists')
+              'message' => __('Invalid security token', 'magicchecklists')
           ));
           return;
       }
@@ -309,16 +309,16 @@ class MCL_API_Integration {
       // Verify permissions
       if (!current_user_can('manage_options')) {
           wp_send_json_error(array(
-              'message' => __('Insufficient permissions', 'magic-checklists')
+              'message' => __('Insufficient permissions', 'magicchecklists')
           ));
           return;
       }
 
       // Clear the logs by updating the option to an empty array
-      update_option('mcl_webhook_logs', array());
+      update_option('magiccl_webhook_logs', array());
 
       wp_send_json_success(array(
-          'message' => __('Webhook logs cleared successfully', 'magic-checklists')
+          'message' => __('Webhook logs cleared successfully', 'magicchecklists')
       ));
     }
 
@@ -329,7 +329,7 @@ class MCL_API_Integration {
         }
 
         $api_key = str_replace('Bearer ', '', $auth_header);
-        $stored_key = get_option('mcl_integration_settings');
+        $stored_key = get_option('magiccl_integration_settings');
         $stored_key = isset($stored_key['mainwp_api_key']) ? $stored_key['mainwp_api_key'] : '';
 
         return $api_key === $stored_key;

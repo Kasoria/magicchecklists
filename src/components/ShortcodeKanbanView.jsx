@@ -721,8 +721,8 @@ const ShortcodeKanbanView = ({
 
   // Initialize i18n
   useEffect(() => {
-    if (window.mcl_checklists && window.mcl_checklists.i18n && window.mcl_checklists.i18n.kanbanBoard) {
-      setI18n(window.mcl_checklists.i18n.kanbanBoard)
+    if (window.magiccl_checklists && window.magiccl_checklists.i18n && window.magiccl_checklists.i18n.kanbanBoard) {
+      setI18n(window.magiccl_checklists.i18n.kanbanBoard)
     }
   }, [])
 
@@ -744,10 +744,10 @@ const ShortcodeKanbanView = ({
       }
     }
 
-    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    window.addEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
 
     return () => {
-      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+      window.removeEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
     }
   }, [checklistId])
 
@@ -812,8 +812,8 @@ const ShortcodeKanbanView = ({
 
   const loadKanbanBoard = async () => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       // Fetch column sync settings first to ensure we have the latest
       let syncSettings = columnSyncSettings
@@ -822,7 +822,7 @@ const ShortcodeKanbanView = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            action: 'mcl_get_column_sync_settings',
+            action: 'magiccl_get_column_sync_settings',
             checklist_id: checklistId,
             nonce: nonce
           })
@@ -840,7 +840,7 @@ const ShortcodeKanbanView = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_kanban_board',
+          action: 'magiccl_get_kanban_board',
           checklist_id: checklistId,
           nonce: nonce,
           context: 'shortcode'
@@ -898,14 +898,14 @@ const ShortcodeKanbanView = ({
   // Feature board functions
   const loadFeatureBoardSettings = async () => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_feature_board_settings',
+          action: 'magiccl_get_feature_board_settings',
           checklist_id: checklistId,
           nonce: nonce
         })
@@ -923,14 +923,14 @@ const ShortcodeKanbanView = ({
   // Column sync settings functions
   const loadColumnSyncSettings = async () => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_column_sync_settings',
+          action: 'magiccl_get_column_sync_settings',
           checklist_id: checklistId,
           nonce: nonce
         })
@@ -946,7 +946,7 @@ const ShortcodeKanbanView = ({
   }
 
   // localStorage helpers for anonymous upvote tracking
-  const getLocalStorageKey = () => `mcl_upvotes_${checklistId}`
+  const getLocalStorageKey = () => `magiccl_upvotes_${checklistId}`
 
   const loadLocalUpvotes = () => {
     try {
@@ -991,7 +991,7 @@ const ShortcodeKanbanView = ({
       return true
     }
     // For anonymous users with localStorage check enabled, also check localStorage
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     if (!isLoggedIn && featureBoardSettings.upvote_mode === 'anyone' && featureBoardSettings.upvote_anon_check_localstorage) {
       return hasLocalUpvote(itemId)
     }
@@ -1005,8 +1005,8 @@ const ShortcodeKanbanView = ({
 
   const loadItemUpvotes = async () => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       // Collect all item IDs from board
       const itemIds = []
@@ -1020,7 +1020,7 @@ const ShortcodeKanbanView = ({
 
       // Use FormData to properly send array of item IDs
       const formData = new FormData()
-      formData.append('action', 'mcl_get_item_upvotes')
+      formData.append('action', 'magiccl_get_item_upvotes')
       formData.append('checklist_id', checklistId)
       formData.append('nonce', nonce)
       // Append each item ID separately to create proper array in PHP
@@ -1043,7 +1043,7 @@ const ShortcodeKanbanView = ({
   }
 
   const handleUpvote = async (itemId) => {
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     const upvoteMode = featureBoardSettings.upvote_mode
 
     // Check if login is required
@@ -1076,14 +1076,14 @@ const ShortcodeKanbanView = ({
 
   const submitUpvote = async (itemId, email = '', name = '') => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_toggle_item_upvote',
+          action: 'magiccl_toggle_item_upvote',
           checklist_id: checklistId,
           item_id: itemId,
           user_email: email,
@@ -1107,7 +1107,7 @@ const ShortcodeKanbanView = ({
           }))
 
           // Update localStorage for anonymous users if localStorage check is enabled
-          const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+          const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
           if (!isLoggedIn && featureBoardSettings.upvote_mode === 'anyone' && featureBoardSettings.upvote_anon_check_localstorage) {
             if (data.data.action === 'added') {
               saveLocalUpvote(itemId)
@@ -1150,7 +1150,7 @@ const ShortcodeKanbanView = ({
   }
 
   const openIdeaModal = () => {
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     const submissionMode = featureBoardSettings.idea_submission_mode
 
     if (submissionMode === 'logged_in' && !isLoggedIn) {
@@ -1168,7 +1168,7 @@ const ShortcodeKanbanView = ({
   const submitIdea = async () => {
     if (!ideaTitle.trim()) return
 
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     const submissionMode = featureBoardSettings.idea_submission_mode
 
     // Check if email verification is required for anonymous submission
@@ -1181,14 +1181,14 @@ const ShortcodeKanbanView = ({
     setSubmittingIdea(true)
 
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_submit_idea',
+          action: 'magiccl_submit_idea',
           checklist_id: checklistId,
           title: ideaTitle,
           description: ideaDescription,
@@ -1286,7 +1286,7 @@ const ShortcodeKanbanView = ({
     setDraggedItem(null)
 
     // Dispatch event to notify other views that item was moved
-    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+    window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
         action: 'item_moved',
@@ -1387,7 +1387,7 @@ const ShortcodeKanbanView = ({
     await saveKanbanBoard(newBoard)
 
     // Dispatch event to notify other views that item content changed
-    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+    window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
         action: 'item_updated',
@@ -1469,7 +1469,7 @@ const ShortcodeKanbanView = ({
     await saveKanbanBoard(newBoard)
 
     // Dispatch event to notify other views
-    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+    window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
         action: shouldMoveColumn ? 'item_checked_and_moved' : 'item_checked',
@@ -1481,14 +1481,14 @@ const ShortcodeKanbanView = ({
 
   const saveKanbanBoard = async (boardData) => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_kanban_board',
+          action: 'magiccl_save_kanban_board',
           checklist_id: checklistId,
           board: JSON.stringify(boardData),
           nonce: nonce,
@@ -1560,11 +1560,11 @@ const ShortcodeKanbanView = ({
 
     // Save to backend
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_save_item_deadline')
+      formData.append('action', 'magiccl_save_item_deadline')
       formData.append('checklist_id', checklistId)
       formData.append('item_id', itemId)
       formData.append('deadline', timestamp || '')
@@ -1601,7 +1601,7 @@ const ShortcodeKanbanView = ({
     setImageError(null)
 
     // Check if user is logged in and can use media library
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
 
     if (isLoggedIn && typeof wp !== 'undefined' && wp.media) {
       // Show choice modal for logged in users
@@ -1647,11 +1647,11 @@ const ShortcodeKanbanView = ({
     if (!checklistId) return
     setLoadingImages(true)
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('action', 'magiccl_get_uploaded_images')
       formData.append('checklist_id', checklistId)
       if (nonce) {
         formData.append('nonce', nonce)
@@ -1688,11 +1688,11 @@ const ShortcodeKanbanView = ({
     setImageError(null)
 
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_upload_image')
+      formData.append('action', 'magiccl_upload_image')
       formData.append('file', file)
       formData.append('checklist_id', checklistId || 0)
       if (nonce) {
@@ -1824,14 +1824,14 @@ const ShortcodeKanbanView = ({
 
     setLoadingComments(true)
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_threaded_comments',
+          action: 'magiccl_get_threaded_comments',
           checklist_id: checklistIdInt,
           item_id: itemIdInt,
           nonce: nonce
@@ -1861,14 +1861,14 @@ const ShortcodeKanbanView = ({
     const itemIdInt = parseInt(numericId, 10)
 
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_add_threaded_comment',
+          action: 'magiccl_add_threaded_comment',
           checklist_id: checklistId,
           item_id: itemIdInt,
           parent_id: '',
@@ -1896,14 +1896,14 @@ const ShortcodeKanbanView = ({
     const itemIdInt = parseInt(numericId, 10)
 
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_add_threaded_comment',
+          action: 'magiccl_add_threaded_comment',
           checklist_id: checklistId,
           item_id: itemIdInt,
           parent_id: parentId,
@@ -1924,14 +1924,14 @@ const ShortcodeKanbanView = ({
 
   const toggleCommentLike = async (commentId) => {
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_toggle_comment_like',
+          action: 'magiccl_toggle_comment_like',
           comment_id: commentId,
           nonce: nonce
         })
@@ -1969,14 +1969,14 @@ const ShortcodeKanbanView = ({
     }
 
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || ''
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_delete_threaded_comment',
+          action: 'magiccl_delete_threaded_comment',
           comment_id: commentId,
           nonce: nonce
         })
@@ -1993,25 +1993,25 @@ const ShortcodeKanbanView = ({
   }
 
   return (
-    <div className="mcl-kanban-shortcode" style={{
+    <div className="magiccl-kanban-shortcode" style={{
       padding: '20px',
       backgroundColor: settings.bg_color || '#f9fafb',
       borderRadius: '8px'
     }}>
       {/* CSS for proper line-break rendering in kanban items */}
       <style>{`
-        .mcl-kanban-item-content div {
+        .magiccl-kanban-item-content div {
           display: block !important;
         }
-        .mcl-kanban-item-content p {
+        .magiccl-kanban-item-content p {
           display: block !important;
           margin: 0;
         }
-        .mcl-kanban-item-content br {
+        .magiccl-kanban-item-content br {
           display: block !important;
           content: "" !important;
         }
-        .mcl-kanban-item-content img {
+        .magiccl-kanban-item-content img {
           display: block !important;
           max-width: 100% !important;
           height: auto !important;
@@ -2311,7 +2311,7 @@ const ShortcodeKanbanView = ({
                       />
                     )}
                     <div
-                      className="mcl-kanban-item-content"
+                      className="magiccl-kanban-item-content"
                       style={{
                         flex: 1,
                         fontSize: '14px',
@@ -2748,7 +2748,7 @@ const ShortcodeKanbanView = ({
 
             {/* Add comment form - show based on feature board settings or permissions */}
             {(() => {
-              const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+              const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
               let canComment = false
 
               if (featureBoardSettings.enabled) {
@@ -3500,8 +3500,8 @@ const ShortcodeKanbanView = ({
                 onClick={() => {
                   setShowEmailPrompt(false)
                   // Redirect to login or show login modal
-                  if (window.mcl_checklists?.login_url) {
-                    window.location.href = window.mcl_checklists.login_url
+                  if (window.magiccl_checklists?.login_url) {
+                    window.location.href = window.magiccl_checklists.login_url
                   }
                 }}
                 style={{

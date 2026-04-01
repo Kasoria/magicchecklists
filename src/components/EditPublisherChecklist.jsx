@@ -61,7 +61,7 @@ const ToggleSwitch = ({ id, checked, onChange, disabled = false, size = 'normal'
 
 // Meta Field Selector Component
 const MetaFieldSelector = ({ value, onChange, postTypes, adminData }) => {
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const [isOpen, setIsOpen] = useState(false)
   const [metaFields, setMetaFields] = useState({})
   const [loading, setLoading] = useState(false)
@@ -76,8 +76,8 @@ const MetaFieldSelector = ({ value, onChange, postTypes, adminData }) => {
     setLoading(true)
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_meta_fields')
-      formData.append('nonce', adminData.nonces?.mcl_admin || '')
+      formData.append('action', 'magiccl_get_meta_fields')
+      formData.append('nonce', adminData.nonces?.magiccl_admin || '')
       
       postTypes.forEach(postType => {
         formData.append('post_types[]', postType)
@@ -190,7 +190,7 @@ const RequirementInstance = ({
   adminData,
   requirementDefinitions
 }) => {
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const reqDef = requirementDefinitions[requirement.type]
   
   const updateInstance = (field, value) => {
@@ -346,7 +346,7 @@ const EditPublisherChecklist = forwardRef(({
   onSetFormRef 
 }, ref) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -377,8 +377,8 @@ const EditPublisherChecklist = forwardRef(({
   const loadPostTypes = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_post_types')
-      formData.append('nonce', adminData.nonces?.mcl_admin || '')
+      formData.append('action', 'magiccl_get_post_types')
+      formData.append('nonce', adminData.nonces?.magiccl_admin || '')
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -409,8 +409,8 @@ const EditPublisherChecklist = forwardRef(({
   const loadRequirementDefinitions = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_requirement_definitions')
-      formData.append('nonce', adminData.nonces?.mcl_admin || '')
+      formData.append('action', 'magiccl_get_requirement_definitions')
+      formData.append('nonce', adminData.nonces?.magiccl_admin || '')
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -802,9 +802,9 @@ const EditPublisherChecklist = forwardRef(({
   const loadChecklist = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_checklist_for_edit')
+      formData.append('action', 'magiccl_get_checklist_for_edit')
       formData.append('checklist_id', checklistId)
-      formData.append('nonce', adminData.nonces?.mcl_admin || '')
+      formData.append('nonce', adminData.nonces?.magiccl_admin || '')
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -943,7 +943,7 @@ const EditPublisherChecklist = forwardRef(({
     try {
       const submitData = new FormData()
       submitData.append('action', 'save_publisher_checklist')
-      submitData.append('mcl_nonce', adminData.nonces?.mcl_admin || '')
+      submitData.append('magiccl_nonce', adminData.nonces?.magiccl_admin || '')
       
       if (checklistId) {
         submitData.append('checklist_id', checklistId)

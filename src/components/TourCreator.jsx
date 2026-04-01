@@ -5,7 +5,7 @@ import ConfirmationModal from './ConfirmationModal.jsx'
 
 const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || adminData?.i18n || {};
+  const i18n = (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || adminData?.i18n || {};
   
   const [currentMode, setCurrentMode] = useState('select')
   const [tourSteps, setTourSteps] = useState([])
@@ -61,10 +61,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   // Initialize tour creator
   useEffect(() => {
     // Set body class for tour creator mode
-    document.body.classList.add('mcl-tour-creator-active')
+    document.body.classList.add('magiccl-tour-creator-active')
     
     // Set cookie for pagebuilder iframe detection
-    document.cookie = 'mcl_tour_mode=1; path=/; SameSite=Lax'
+    document.cookie = 'magiccl_tour_mode=1; path=/; SameSite=Lax'
     
     // Load existing tour data if editing
     if (tourId > 0) {
@@ -82,8 +82,8 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     initUrlPreservation()
     
     return () => {
-      document.body.classList.remove('mcl-tour-creator-active')
-      document.cookie = 'mcl_tour_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      document.body.classList.remove('magiccl-tour-creator-active')
+      document.cookie = 'magiccl_tour_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
       unbindCreatorEvents()
     }
   }, [tourId])
@@ -91,9 +91,9 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   const loadTourData = async (tourIdToLoad) => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_tour_data')
+      formData.append('action', 'magiccl_get_tour_data')
       formData.append('tour_id', tourIdToLoad)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -121,13 +121,13 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
   const checkForPreviewMode = () => {
     const urlParams = new URLSearchParams(window.location.search)
-    const previewStep = urlParams.get('mcl_preview_step')
+    const previewStep = urlParams.get('magiccl_preview_step')
     
     if (previewStep !== null) {
       const stepIndex = parseInt(previewStep)
       if (!isNaN(stepIndex) && stepIndex >= 0) {
         // Clean up the URL parameter
-        urlParams.delete('mcl_preview_step')
+        urlParams.delete('magiccl_preview_step')
         const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '')
         window.history.replaceState({}, '', newUrl)
         
@@ -174,7 +174,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       return
     }
 
-    if (!window.mclTourPlayback) {
+    if (!window.magicclTourPlayback) {
       console.error('MCL Tour Creator: mclTourPlayback not available')
       showError(i18n.tourCreator?.previewNotAvailable || 'Tour preview is not available. Please refresh the page and try again.')
       return
@@ -193,14 +193,14 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     console.log('MCL Tour Creator: Starting preview from step', stepIndex, 'with tour data:', tourData)
     
     // Start the tour with continuation from the specified step
-    window.mclTourPlayback.startTour(tourData)
+    window.magicclTourPlayback.startTour(tourData)
   }
 
   const loadChecklists = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_checklists_for_tour')
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('action', 'magiccl_get_checklists_for_tour')
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -235,9 +235,9 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       adminElements.forEach(selector => {
         try {
           const element = document.querySelector(selector)
-          if (element && !element.hasAttribute('data-mcl-tour-bound')) {
+          if (element && !element.hasAttribute('data-magiccl-tour-bound')) {
             element.addEventListener('click', handleLinkClick, true)
-            element.setAttribute('data-mcl-tour-bound', 'true')
+            element.setAttribute('data-magiccl-tour-bound', 'true')
           }
         } catch (error) {
           console.warn('Failed to bind tour navigation to', selector, error)
@@ -259,9 +259,9 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     adminElements.forEach(selector => {
       try {
         const element = document.querySelector(selector)
-        if (element && element.hasAttribute('data-mcl-tour-bound')) {
+        if (element && element.hasAttribute('data-magiccl-tour-bound')) {
           element.removeEventListener('click', handleLinkClick, true)
-          element.removeAttribute('data-mcl-tour-bound')
+          element.removeAttribute('data-magiccl-tour-bound')
         }
       } catch (error) {
         console.warn('Failed to unbind tour navigation from', selector, error)
@@ -284,11 +284,11 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     const reselecting = isReselectingRef.current
     const modalOpen = showStepEditorRef.current
     if (mode === 'select' && !reselecting && !modalOpen) {
-      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
       preventForSelection(e)
       selectElement(e.target)
     } else if (reselecting) {
-      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
       preventForSelection(e)
       reselectElement(e.target)
     }
@@ -301,7 +301,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     const modalOpen = showStepEditorRef.current
     if (mode !== 'select' && !reselecting) return
     if (!e.target || typeof e.target.closest !== 'function') return
-    if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+    if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
     if (modalOpen) return
     highlightElement(e.target)
   }
@@ -315,7 +315,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       removeHighlight()
       return
     }
-    if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+    if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
     if (modalOpen) return
     removeHighlight()
   }
@@ -326,7 +326,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     
     // In selection mode or reselection mode, prevent ALL link clicks to allow element selection
     if (mode === 'select' || reselecting) {
-      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
       preventForSelection(e)
       return
     }
@@ -336,14 +336,14 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     if (!link) return
     const href = link.getAttribute('href')
     if (!href || href === '#' || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return
-    if (link.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal')) return
+    if (link.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal')) return
 
     // Check if this is an external link
     if (isExternalLink(href)) return
 
     // Determine if this is admin or plugin navigation
     const isAdminNavigation = link.closest('#adminmenu, #wpadminbar, .wrap, #wpbody-content') !== null
-    const isPluginPageNavigation = href.includes('page=mcl_') ||
+    const isPluginPageNavigation = href.includes('page=magiccl_') ||
                                   href.includes('page=magic-checklists') ||
                                   href.includes('page=magicchecklists') ||
                                   href.includes('admin.php?page=')
@@ -369,7 +369,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     
     // In selection mode or reselection mode, prevent ALL form submissions to allow element selection
     if (mode === 'select' || reselecting) {
-      if (e.target.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal, #mcl-drawer')) return
+      if (e.target.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal, #magiccl-drawer')) return
       preventForSelection(e)
       return
     }
@@ -377,7 +377,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     // Navigation mode logic (existing behavior)
     if (mode !== 'navigate') return
     const form = e.target
-    if (form.closest('.mcl-tour-creator, .mcl-modal, .mcl-tour-exit-modal')) return
+    if (form.closest('.magiccl-tour-creator, .magiccl-modal, .magiccl-tour-exit-modal')) return
     if (form.method && form.method.toLowerCase() === 'get') {
       e.preventDefault()
       handleGetFormSubmission(form)
@@ -484,12 +484,12 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_save_tour')
+      formData.append('action', 'magiccl_save_tour')
       formData.append('tour_id', tourId)
       formData.append('title', tourTitle)
       formData.append('steps', JSON.stringify(tourSteps))
       formData.append('settings', JSON.stringify(tourSettings))
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -542,9 +542,9 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         
         // Navigate to the first step's page with preview parameters
         const previewUrl = new URL(firstStepPageUrl, window.location.origin)
-        previewUrl.searchParams.set('mcl_tour_mode', '1')
+        previewUrl.searchParams.set('magiccl_tour_mode', '1')
         previewUrl.searchParams.set('tour_id', effectiveTourId)
-        previewUrl.searchParams.set('mcl_preview_step', '0')
+        previewUrl.searchParams.set('magiccl_preview_step', '0')
         
         console.log('MCL Tour Creator: Navigating to preview URL:', previewUrl.toString())
         window.location.href = previewUrl.toString()
@@ -552,9 +552,9 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
         // If save fails, try to continue anyway but warn user
         showWarning(i18n.tourCreator?.failedSavePreviewWarning || 'Failed to save tour data. Preview may not work correctly.')
         const previewUrl = new URL(firstStepPageUrl, window.location.origin)
-        previewUrl.searchParams.set('mcl_tour_mode', '1')
+        previewUrl.searchParams.set('magiccl_tour_mode', '1')
         previewUrl.searchParams.set('tour_id', tourId || 0)
-        previewUrl.searchParams.set('mcl_preview_step', '0')
+        previewUrl.searchParams.set('magiccl_preview_step', '0')
         
         setTimeout(() => {
           window.location.href = previewUrl.toString()
@@ -564,7 +564,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     }
     
     // Start tour preview on current page
-    if (window.mclTourPlayback) {
+    if (window.magicclTourPlayback) {
       const previewTourData = {
         steps: tourSteps,
         settings: tourSettings,
@@ -575,7 +575,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       }
       
       console.log('MCL Tour Creator: Starting preview on current page with data:', previewTourData)
-      window.mclTourPlayback.startTour(previewTourData)
+      window.magicclTourPlayback.startTour(previewTourData)
     } else {
       showError(i18n.tourCreator?.previewNotAvailable || 'Tour preview is not available. Please refresh the page and try again.')
     }
@@ -586,12 +586,12 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   }
 
   const handleExitConfirm = () => {
-    document.cookie = 'mcl_tour_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    document.cookie = 'magiccl_tour_mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
     if (onExit) {
       onExit()
     } else {
       // Redirect to tours list
-      window.location.href = '/wp-admin/admin.php?page=mcl_tours'
+      window.location.href = '/wp-admin/admin.php?page=magiccl_tours'
     }
   }
 
@@ -614,10 +614,10 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     // 5) Tag + data attribute combination that is unique
     // 6) Hierarchical path using > and :nth-child until uniqueness is achieved
     //
-    // Example: For <li class="mcl-widget-item" data-item-id="1749648057375">
+    // Example: For <li class="magiccl-widget-item" data-item-id="1749648057375">
     // This will try [data-item-id="1749648057375"] first (if unique),
-    // then li.mcl-widget-item[data-item-id="1749648057375"],
-    // then build a hierarchical path like: .mcl-widget-items > ul.mcl-widget-item-list > li.mcl-widget-item[data-item-id="1749648057375"]:nth-child(1)
+    // then li.magiccl-widget-item[data-item-id="1749648057375"],
+    // then build a hierarchical path like: .magiccl-widget-items > ul.magiccl-widget-item-list > li.magiccl-widget-item[data-item-id="1749648057375"]:nth-child(1)
 
     if (!element || element.nodeType !== 1) {
       return {
@@ -839,7 +839,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
   const highlightElement = (element) => {
     // Check if element is valid and not inside tour creator UI
-    if (!element || typeof element.closest !== 'function' || element.closest('.mcl-tour-creator, .mcl-modal')) return
+    if (!element || typeof element.closest !== 'function' || element.closest('.magiccl-tour-creator, .magiccl-modal')) return
     
     // Remove any existing highlight first
     removeHighlight()
@@ -850,7 +850,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     if (rect.width === 0 || rect.height === 0) return
     
     const highlight = document.createElement('div')
-    highlight.className = 'mcl-element-highlight'
+    highlight.className = 'magiccl-element-highlight'
     highlight.style.cssText = `
       position: fixed;
       top: ${rect.top}px;
@@ -881,7 +881,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     }
     
     // Also clean up any orphaned highlights
-    const orphanedHighlights = document.querySelectorAll('.mcl-element-highlight')
+    const orphanedHighlights = document.querySelectorAll('.magiccl-element-highlight')
     orphanedHighlights.forEach(highlight => {
       try {
         if (highlight.parentNode) {
@@ -899,7 +899,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     document.body.style.cursor = 'crosshair'
     
     const overlay = document.createElement('div')
-    overlay.className = 'mcl-reselect-overlay'
+    overlay.className = 'magiccl-reselect-overlay'
     overlay.textContent = i18n.tourCreator?.clickElementToSelect || 'Click on an element to select it...'
     overlay.style.cssText = `
       position: fixed;
@@ -922,7 +922,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     document.body.style.cursor = ''
     removeHighlight()
     
-    const overlay = document.querySelector('.mcl-reselect-overlay')
+    const overlay = document.querySelector('.magiccl-reselect-overlay')
     if (overlay) {
       overlay.remove()
     }
@@ -948,11 +948,11 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       
       // Add query parameters (excluding tour-specific ones)
       const params = new URLSearchParams(window.location.search)
-      params.delete('mcl_tour_mode')
+      params.delete('magiccl_tour_mode')
       params.delete('tour_id') 
-      params.delete('mcl_continue_tour')
-      params.delete('mcl_tour_step')
-      params.delete('mcl_preview_step')
+      params.delete('magiccl_continue_tour')
+      params.delete('magiccl_tour_step')
+      params.delete('magiccl_preview_step')
       
       if (params.toString()) {
         path += '?' + params.toString()
@@ -963,11 +963,11 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
     
     // Frontend URL - remove tour parameters but keep the rest
     const url = new URL(window.location.href)
-    url.searchParams.delete('mcl_tour_mode')
+    url.searchParams.delete('magiccl_tour_mode')
     url.searchParams.delete('tour_id')
-    url.searchParams.delete('mcl_continue_tour')
-    url.searchParams.delete('mcl_tour_step')
-    url.searchParams.delete('mcl_preview_step')
+    url.searchParams.delete('magiccl_continue_tour')
+    url.searchParams.delete('magiccl_tour_step')
+    url.searchParams.delete('magiccl_preview_step')
     
     let cleanUrl = url.pathname
     if (url.searchParams.toString()) {
@@ -978,7 +978,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
 
   const getTourParams = () => {
     const params = {
-      'mcl_tour_mode': '1'
+      'magiccl_tour_mode': '1'
     }
     
     if (tourId > 0) {
@@ -1158,11 +1158,11 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
   }, [handleMouseMove])
 
   return (
-    <div className="mcl-tour-creator" data-mode={currentMode}>
+    <div className="magiccl-tour-creator" data-mode={currentMode}>
       {/* Floating Control Panel */}
       <div 
         ref={panelRef}
-        className={`mcl-tour-floating-panel ${panelCollapsed ? 'collapsed' : ''} ${isDraggingPanel ? 'dragging' : ''}`}
+        className={`magiccl-tour-floating-panel ${panelCollapsed ? 'collapsed' : ''} ${isDraggingPanel ? 'dragging' : ''}`}
         style={{
           position: 'fixed',
           top: panelPosition.top,
@@ -1182,7 +1182,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       >
         {/* Panel Header */}
         <div 
-          className="mcl-panel-header"
+          className="magiccl-panel-header"
           onMouseDown={handleMouseDown}
           style={{
             background: '#f8f9fa',
@@ -1409,7 +1409,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       </div>
 
       {/* Step Editor Modal */}
-      <div className={`mcl-step-editor-modal ${showStepEditor ? 'open' : ''}`} style={{
+      <div className={`magiccl-step-editor-modal ${showStepEditor ? 'open' : ''}`} style={{
         position: 'fixed',
         top: 0,
         left: 0,
@@ -1600,7 +1600,7 @@ const TourCreator = ({ adminData, tourId = 0, onExit }) => {
       {/* Hidden input for tour title - managed by parent component */}
       <input 
         type="hidden" 
-        id="mcl-tour-title"
+        id="magiccl-tour-title"
         value={tourTitle} 
         readOnly
       />

@@ -3,7 +3,7 @@ import { Button, Label } from 'flowbite-react'
 
 const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
 
   const [formData, setFormData] = useState({
     enable_checklist_navigation: false,
@@ -24,7 +24,7 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
 
   // Tutorial checklist state
   const [tutorialExists, setTutorialExists] = useState(
-    adminData?.tutorialExists || window.mclAdminData?.tutorialExists || false
+    adminData?.tutorialExists || window.magicclAdminData?.tutorialExists || false
   )
   const [creatingTutorial, setCreatingTutorial] = useState(false)
   const [tutorialMessage, setTutorialMessage] = useState(null)
@@ -45,10 +45,10 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
     const fetchAvailableLanguages = async () => {
       try {
         const formData = new FormData()
-        formData.append('action', 'mcl_get_available_languages')
-        formData.append('nonce', window.mclAdminData?.nonces?.mcl_admin || '')
+        formData.append('action', 'magiccl_get_available_languages')
+        formData.append('nonce', window.magicclAdminData?.nonces?.magiccl_admin || '')
 
-        const response = await fetch(window.mclAdminData?.ajaxUrl || '/wp-admin/admin-ajax.php', {
+        const response = await fetch(window.magicclAdminData?.ajaxUrl || '/wp-admin/admin-ajax.php', {
           method: 'POST',
           body: formData
         })
@@ -111,10 +111,10 @@ const GeneralSettings = ({ settings, onSave, loading, adminData }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_create_tutorial_checklist')
-      formData.append('nonce', window.mclAdminData?.nonces?.mcl_admin || '')
+      formData.append('action', 'magiccl_create_tutorial_checklist')
+      formData.append('nonce', window.magicclAdminData?.nonces?.magiccl_admin || '')
 
-      const response = await fetch(window.mclAdminData?.ajaxurl || '/wp-admin/admin-ajax.php', {
+      const response = await fetch(window.magicclAdminData?.ajaxurl || '/wp-admin/admin-ajax.php', {
         method: 'POST',
         body: formData
       })

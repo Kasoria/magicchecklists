@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class MCL_Tour_CPT {
+class MAGICCL_Tour_CPT {
     
     public function __construct() {
         add_action('init', array($this, 'register_tour_cpt'));
@@ -13,19 +13,19 @@ class MCL_Tour_CPT {
 
     public function register_tour_cpt() {
         $labels = array(
-            'name'               => _x('Tours', 'post type general name', 'magic-checklists'),
-            'singular_name'      => _x('Tour', 'post type singular name', 'magic-checklists'),
-            'menu_name'          => _x('Tours', 'admin menu', 'magic-checklists'),
-            'name_admin_bar'     => _x('Tour', 'add new on admin bar', 'magic-checklists'),
-            'add_new'            => _x('Add New', 'tour', 'magic-checklists'),
-            'add_new_item'       => __('Add New Tour', 'magic-checklists'),
-            'new_item'           => __('New Tour', 'magic-checklists'),
-            'edit_item'          => __('Edit Tour', 'magic-checklists'),
-            'view_item'          => __('View Tour', 'magic-checklists'),
-            'all_items'          => __('All Tours', 'magic-checklists'),
-            'search_items'       => __('Search Tours', 'magic-checklists'),
-            'not_found'          => __('No tours found.', 'magic-checklists'),
-            'not_found_in_trash' => __('No tours found in Trash.', 'magic-checklists'),
+            'name'               => _x('Tours', 'post type general name', 'magicchecklists'),
+            'singular_name'      => _x('Tour', 'post type singular name', 'magicchecklists'),
+            'menu_name'          => _x('Tours', 'admin menu', 'magicchecklists'),
+            'name_admin_bar'     => _x('Tour', 'add new on admin bar', 'magicchecklists'),
+            'add_new'            => _x('Add New', 'tour', 'magicchecklists'),
+            'add_new_item'       => __('Add New Tour', 'magicchecklists'),
+            'new_item'           => __('New Tour', 'magicchecklists'),
+            'edit_item'          => __('Edit Tour', 'magicchecklists'),
+            'view_item'          => __('View Tour', 'magicchecklists'),
+            'all_items'          => __('All Tours', 'magicchecklists'),
+            'search_items'       => __('Search Tours', 'magicchecklists'),
+            'not_found'          => __('No tours found.', 'magicchecklists'),
+            'not_found_in_trash' => __('No tours found in Trash.', 'magicchecklists'),
         );
 
         $args = array(
@@ -42,67 +42,67 @@ class MCL_Tour_CPT {
             'show_in_nav_menus'  => false,
         );
 
-        register_post_type('mcl_tour', $args);
+        register_post_type('magiccl_tour', $args);
     }
 
     public function register_tour_meta() {
         // Register meta fields for tours
         $meta_fields = array(
-            '_mcl_tour_steps' => array(
+            '_magiccl_tour_steps' => array(
                 'type' => 'array',
                 'description' => 'Tour steps configuration',
                 'single' => true,
                 'default' => array()
             ),
-            '_mcl_tour_settings' => array(
+            '_magiccl_tour_settings' => array(
                 'type' => 'array',
                 'description' => 'Tour general settings',
                 'single' => true,
                 'default' => array()
             ),
-            '_mcl_tour_active' => array(
+            '_magiccl_tour_active' => array(
                 'type' => 'boolean',
                 'description' => 'Whether the tour is active',
                 'single' => true,
                 'default' => false
             ),
-            '_mcl_tour_trigger_type' => array(
+            '_magiccl_tour_trigger_type' => array(
                 'type' => 'string',
                 'description' => 'Tour trigger type: page, selector, first_login, any_page',
                 'single' => true,
                 'default' => 'page'
             ),
-            '_mcl_tour_trigger_value' => array(
+            '_magiccl_tour_trigger_value' => array(
                 'type' => 'string',
                 'description' => 'Trigger value (URL or CSS selector)',
                 'single' => true,
                 'default' => ''
             ),
-            '_mcl_tour_user_condition' => array(
+            '_magiccl_tour_user_condition' => array(
                 'type' => 'string',
                 'description' => 'User condition: all_logged_in, all_logged_out, all_users, specific_users, specific_roles',
                 'single' => true,
                 'default' => 'all_users'
             ),
-            '_mcl_tour_specific_users' => array(
+            '_magiccl_tour_specific_users' => array(
                 'type' => 'array',
                 'description' => 'Array of specific user IDs',
                 'single' => true,
                 'default' => array()
             ),
-            '_mcl_tour_specific_roles' => array(
+            '_magiccl_tour_specific_roles' => array(
                 'type' => 'array',
                 'description' => 'Array of specific user roles',
                 'single' => true,
                 'default' => array()
             ),
-            '_mcl_tour_show_once' => array(
+            '_magiccl_tour_show_once' => array(
                 'type' => 'boolean',
                 'description' => 'Show tour only once per user',
                 'single' => true,
                 'default' => false
             ),
-            '_mcl_tour_autostart' => array(
+            '_magiccl_tour_autostart' => array(
                 'type' => 'boolean',
                 'description' => 'Auto-start tour when triggered',
                 'single' => true,
@@ -111,7 +111,7 @@ class MCL_Tour_CPT {
         );
 
         foreach ($meta_fields as $meta_key => $args) {
-            register_post_meta('mcl_tour', $meta_key, $args);
+            register_post_meta('magiccl_tour', $meta_key, $args);
         }
     }
 
@@ -120,12 +120,12 @@ class MCL_Tour_CPT {
      */
     public static function get_active_tours_for_context() {
         $tours = get_posts([
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'post_status' => 'publish',
             'numberposts' => -1,
             'meta_query' => [
                 [
-                    'key' => '_mcl_tour_active',
+                    'key' => '_magiccl_tour_active',
                     'value' => '1',
                     'compare' => '='
                 ]
@@ -134,17 +134,17 @@ class MCL_Tour_CPT {
 
         // Get all tours to check their active status - for debugging
         $all_tours = get_posts([
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'post_status' => 'publish',
             'numberposts' => -1
         ]);
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             foreach ($all_tours as $tour) {
-                $active_status = get_post_meta($tour->ID, '_mcl_tour_active', true);
-                $autostart_status = get_post_meta($tour->ID, '_mcl_tour_autostart', true);
-                $trigger_type = get_post_meta($tour->ID, '_mcl_tour_trigger_type', true);
-                $trigger_value = get_post_meta($tour->ID, '_mcl_tour_trigger_value', true);
+                $active_status = get_post_meta($tour->ID, '_magiccl_tour_active', true);
+                $autostart_status = get_post_meta($tour->ID, '_magiccl_tour_autostart', true);
+                $trigger_type = get_post_meta($tour->ID, '_magiccl_tour_trigger_type', true);
+                $trigger_value = get_post_meta($tour->ID, '_magiccl_tour_trigger_value', true);
             }
         }
 
@@ -159,10 +159,10 @@ class MCL_Tour_CPT {
         
         // Get all active tours
         $args = array(
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_tour_active',
+                    'key' => '_magiccl_tour_active',
                     'value' => '1',
                     'compare' => '='
                 )
@@ -173,8 +173,8 @@ class MCL_Tour_CPT {
         $tours = get_posts($args);
         
         foreach ($tours as $tour) {
-            $trigger_type = get_post_meta($tour->ID, '_mcl_tour_trigger_type', true) ?: 'page';
-            $trigger_value = get_post_meta($tour->ID, '_mcl_tour_trigger_value', true) ?: '';
+            $trigger_type = get_post_meta($tour->ID, '_magiccl_tour_trigger_type', true) ?: 'page';
+            $trigger_value = get_post_meta($tour->ID, '_magiccl_tour_trigger_value', true) ?: '';
 
 
             // Check if this tour could be triggered on current page
@@ -224,7 +224,7 @@ class MCL_Tour_CPT {
      * Check if user meets the user condition for the tour
      */
     private static function user_meets_condition($tour_id) {
-        $user_condition = get_post_meta($tour_id, '_mcl_tour_user_condition', true) ?: 'all_users';
+        $user_condition = get_post_meta($tour_id, '_magiccl_tour_user_condition', true) ?: 'all_users';
         $is_logged_in = is_user_logged_in();
         $current_user_id = get_current_user_id();
 
@@ -242,14 +242,14 @@ class MCL_Tour_CPT {
                 
             case 'specific_users':
                 if (!$is_logged_in) return false;
-                $specific_users = get_post_meta($tour_id, '_mcl_tour_specific_users', true) ?: array();
+                $specific_users = get_post_meta($tour_id, '_magiccl_tour_specific_users', true) ?: array();
                 $result = in_array($current_user_id, $specific_users);
                 return $result;
                 
             case 'specific_roles':
                 if (!$is_logged_in) return false;
                 $user = wp_get_current_user();
-                $specific_roles = get_post_meta($tour_id, '_mcl_tour_specific_roles', true) ?: array();
+                $specific_roles = get_post_meta($tour_id, '_magiccl_tour_specific_roles', true) ?: array();
                 $result = !empty(array_intersect($user->roles, $specific_roles));
                 return $result;
         }
@@ -261,7 +261,7 @@ class MCL_Tour_CPT {
      * Check if user has already seen this tour
      */
     private static function has_user_seen_tour($tour_id) {
-        $show_once = get_post_meta($tour_id, '_mcl_tour_show_once', true);
+        $show_once = get_post_meta($tour_id, '_magiccl_tour_show_once', true);
         
         if (!$show_once) {
             return false; // Tour can be shown multiple times
@@ -269,12 +269,12 @@ class MCL_Tour_CPT {
 
         if (is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $completed_tours = get_user_meta($user_id, '_mcl_completed_tours', true) ?: array();
+            $completed_tours = get_user_meta($user_id, '_magiccl_completed_tours', true) ?: array();
             return in_array($tour_id, $completed_tours);
         } else {
             // Check cookie for non-logged-in users
-            if (isset($_COOKIE['mcl_completed_tours'])) {
-                $completed_tours = json_decode(stripslashes($_COOKIE['mcl_completed_tours']), true) ?: array();
+            if (isset($_COOKIE['magiccl_completed_tours'])) {
+                $completed_tours = json_decode(sanitize_text_field(wp_unslash($_COOKIE['magiccl_completed_tours'])), true) ?: array();
                 return in_array($tour_id, $completed_tours);
             }
         }
@@ -286,8 +286,8 @@ class MCL_Tour_CPT {
      * Check if location trigger matches current context
      */
     private static function location_trigger_matches($tour_id) {
-        $trigger_type = get_post_meta($tour_id, '_mcl_tour_trigger_type', true) ?: 'page';
-        $trigger_value = get_post_meta($tour_id, '_mcl_tour_trigger_value', true) ?: '';
+        $trigger_type = get_post_meta($tour_id, '_magiccl_tour_trigger_type', true) ?: 'page';
+        $trigger_value = get_post_meta($tour_id, '_magiccl_tour_trigger_value', true) ?: '';
         $current_url = self::get_current_page_url();
 
 
@@ -359,7 +359,7 @@ class MCL_Tour_CPT {
         }
 
         $user_id = get_current_user_id();
-        $first_login_tours_shown = get_user_meta($user_id, '_mcl_first_login_tours_shown', true);
+        $first_login_tours_shown = get_user_meta($user_id, '_magiccl_first_login_tours_shown', true);
         
         return !$first_login_tours_shown;
     }
@@ -370,7 +370,7 @@ class MCL_Tour_CPT {
     public static function mark_first_login_tours_shown() {
         if (is_user_logged_in()) {
             $user_id = get_current_user_id();
-            update_user_meta($user_id, '_mcl_first_login_tours_shown', true);
+            update_user_meta($user_id, '_magiccl_first_login_tours_shown', true);
         }
     }
 
@@ -395,7 +395,7 @@ class MCL_Tour_CPT {
             if (!empty($_GET)) {
                 $params = $_GET;
                 // Remove tour-specific parameters
-                unset($params['mcl_tour_mode'], $params['tour_id'], $params['mcl_continue_tour'], $params['mcl_tour_step'], $params['mcl_preview_step']);
+                unset($params['magiccl_tour_mode'], $params['tour_id'], $params['magiccl_continue_tour'], $params['magiccl_tour_step'], $params['magiccl_preview_step']);
                 
                 if (!empty($params)) {
                     $path .= '?' . http_build_query($params);
@@ -420,7 +420,7 @@ class MCL_Tour_CPT {
         // Add query string if present
         if (!empty($_GET)) {
             $params = $_GET;
-            unset($params['mcl_tour_mode'], $params['tour_id'], $params['mcl_continue_tour'], $params['mcl_tour_step'], $params['mcl_preview_step']);
+            unset($params['magiccl_tour_mode'], $params['tour_id'], $params['magiccl_continue_tour'], $params['magiccl_tour_step'], $params['magiccl_preview_step']);
             
             if (!empty($params)) {
                 $path .= '?' . http_build_query($params);

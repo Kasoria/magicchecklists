@@ -21,7 +21,7 @@ import { useToast } from './Toast.jsx'
 
 const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarOpen }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   
   const [checklists, setChecklists] = useState([])
   const [filteredChecklists, setFilteredChecklists] = useState([])
@@ -63,8 +63,8 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_get_checklists',
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'action': 'magiccl_get_checklists',
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -151,10 +151,10 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_toggle_active',
+          'action': 'magiccl_toggle_active',
           'checklist_id': checklistId,
           'active': currentStatus === 'active' ? 0 : 1,
-          '_ajax_nonce': adminData.nonces?.mcl_toggle_active || ''
+          '_ajax_nonce': adminData.nonces?.magiccl_toggle_active || ''
         })
       })
       
@@ -209,9 +209,9 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_delete_checklist',
+          'action': 'magiccl_delete_checklist',
           'checklist_id': checklistId,
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -267,9 +267,9 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_clone_checklist',
+          'action': 'magiccl_clone_checklist',
           'checklist_id': checklistId,
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -640,7 +640,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                     setSidebarOpen(false)
                   }
                   const url = new URL(window.location)
-                  url.searchParams.set('page', 'mcl_checklists')
+                  url.searchParams.set('page', 'magiccl_checklists')
                   url.searchParams.set('view', 'add-new')
                   window.history.pushState({}, '', url)
                 }}
@@ -778,7 +778,7 @@ const ChecklistsTable = ({ adminData, onEditChecklist, setActiveTab, setSidebarO
                             if (onEditChecklist) {
                               onEditChecklist(checklist.id, checklist.type || 'classic')
                             } else {
-                              window.open(`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${checklist.id}`, '_self')
+                              window.open(`/wp-admin/admin.php?page=magiccl_add_new&checklist_id=${checklist.id}`, '_self')
                             }
                           }}
                           className="text-brand-dark bg-brand-accent hover:bg-brand-accent/90 focus:ring-brand-accent border-brand-accent dark:bg-brand-accent/90 dark:hover:bg-brand-accent/80 dark:focus:ring-brand-accent/80"

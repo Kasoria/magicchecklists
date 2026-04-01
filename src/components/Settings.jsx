@@ -7,7 +7,7 @@ import { useToast } from './Toast.jsx'
 
 const Settings = ({ adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   
   const [activeTab, setActiveTab] = useState('general')
   const [loading, setLoading] = useState(false)
@@ -32,8 +32,8 @@ const Settings = ({ adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_get_settings',
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'action': 'magiccl_get_settings',
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -67,10 +67,10 @@ const Settings = ({ adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_save_settings',
+          'action': 'magiccl_save_settings',
           'section': section,
           'settings': JSON.stringify(sectionSettings),
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       

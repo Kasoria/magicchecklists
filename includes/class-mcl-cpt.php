@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class MCL_CPT {
+class MAGICCL_CPT {
     // Store color options as class constant
     const TAG_COLORS = [
         'blue' => '#3498db',
@@ -25,14 +25,14 @@ class MCL_CPT {
         add_action('init', [$this, 'register_tag_taxonomy']);
         
         // Tag color management
-        add_action('mcl_tag_add_form_fields', [$this, 'add_color_field']);
-        add_action('mcl_tag_edit_form_fields', [$this, 'edit_color_field']);
-        add_action('created_mcl_tag', [$this, 'save_color_meta']);
-        add_action('edited_mcl_tag', [$this, 'save_color_meta']);
+        add_action('magiccl_tag_add_form_fields', [$this, 'add_color_field']);
+        add_action('magiccl_tag_edit_form_fields', [$this, 'edit_color_field']);
+        add_action('created_magiccl_tag', [$this, 'save_color_meta']);
+        add_action('edited_magiccl_tag', [$this, 'save_color_meta']);
         
         // Tag admin columns
-        add_filter('manage_edit-mcl_tag_columns', [$this, 'add_color_column']);
-        add_filter('manage_mcl_tag_custom_column', [$this, 'render_color_column'], 10, 3);
+        add_filter('manage_edit-magiccl_tag_columns', [$this, 'add_color_column']);
+        add_filter('manage_magiccl_tag_custom_column', [$this, 'render_color_column'], 10, 3);
         
         // Color picker scripts
         add_action('admin_enqueue_scripts', [$this, 'enqueue_color_picker']);
@@ -40,20 +40,20 @@ class MCL_CPT {
 
     public function register_checklist_cpt() {
         $labels = array(
-            'name'               => _x('MagicChecklists', 'post type general name', 'magic-checklists'),
-            'singular_name'      => _x('MagicChecklist', 'post type singular name', 'magic-checklists'),
-            'menu_name'          => _x('MagicChecklists', 'admin menu', 'magic-checklists'),
-            'name_admin_bar'     => _x('MagicChecklist', 'add new on admin bar', 'magic-checklists'),
-            'add_new'            => _x('Add New', 'checklist', 'magic-checklists'),
-            'add_new_item'       => __('Add New Checklist', 'magic-checklists'),
-            'new_item'           => __('New Checklist', 'magic-checklists'),
-            'edit_item'          => __('Edit Checklist', 'magic-checklists'),
-            'view_item'          => __('View Checklist', 'magic-checklists'),
-            'all_items'          => __('All Checklists', 'magic-checklists'),
-            'search_items'       => __('Search Checklists', 'magic-checklists'),
-            'parent_item_colon'  => __('Parent Checklists:', 'magic-checklists'),
-            'not_found'          => __('No checklists found.', 'magic-checklists'),
-            'not_found_in_trash' => __('No checklists found in Trash.', 'magic-checklists'),
+            'name'               => _x('MagicChecklists', 'post type general name', 'magicchecklists'),
+            'singular_name'      => _x('MagicChecklist', 'post type singular name', 'magicchecklists'),
+            'menu_name'          => _x('MagicChecklists', 'admin menu', 'magicchecklists'),
+            'name_admin_bar'     => _x('MagicChecklist', 'add new on admin bar', 'magicchecklists'),
+            'add_new'            => _x('Add New', 'checklist', 'magicchecklists'),
+            'add_new_item'       => __('Add New Checklist', 'magicchecklists'),
+            'new_item'           => __('New Checklist', 'magicchecklists'),
+            'edit_item'          => __('Edit Checklist', 'magicchecklists'),
+            'view_item'          => __('View Checklist', 'magicchecklists'),
+            'all_items'          => __('All Checklists', 'magicchecklists'),
+            'search_items'       => __('Search Checklists', 'magicchecklists'),
+            'parent_item_colon'  => __('Parent Checklists:', 'magicchecklists'),
+            'not_found'          => __('No checklists found.', 'magicchecklists'),
+            'not_found_in_trash' => __('No checklists found in Trash.', 'magicchecklists'),
         );
 
         $args = array(
@@ -70,20 +70,20 @@ class MCL_CPT {
             'show_in_nav_menus'  => false,
         );
 
-        register_post_type('mcl_checklist', $args);
+        register_post_type('magiccl_checklist', $args);
     }
 
     public function register_tag_taxonomy() {
         $labels = [
-            'name' => __('Checklist Tags', 'magic-checklists'),
-            'singular_name' => __('Tag', 'magic-checklists'),
-            'search_items' => __('Search Tags', 'magic-checklists'),
-            'all_items' => __('All Tags', 'magic-checklists'),
-            'edit_item' => __('Edit Tag', 'magic-checklists'),
-            'update_item' => __('Update Tag', 'magic-checklists'),
-            'add_new_item' => __('Add New Tag', 'magic-checklists'),
-            'new_item_name' => __('New Tag Name', 'magic-checklists'),
-            'menu_name' => __('Tags', 'magic-checklists'),
+            'name' => __('Checklist Tags', 'magicchecklists'),
+            'singular_name' => __('Tag', 'magicchecklists'),
+            'search_items' => __('Search Tags', 'magicchecklists'),
+            'all_items' => __('All Tags', 'magicchecklists'),
+            'edit_item' => __('Edit Tag', 'magicchecklists'),
+            'update_item' => __('Update Tag', 'magicchecklists'),
+            'add_new_item' => __('Add New Tag', 'magicchecklists'),
+            'new_item_name' => __('New Tag Name', 'magicchecklists'),
+            'menu_name' => __('Tags', 'magicchecklists'),
         ];
 
         $args = [
@@ -92,18 +92,18 @@ class MCL_CPT {
             'public' => false,
             'show_ui' => true,
             'show_admin_column' => true,
-            'show_in_menu' => 'mcl_checklists',
+            'show_in_menu' => 'magiccl_checklists',
             'show_in_rest' => true,
             'rewrite' => false,
         ];
 
-        register_taxonomy('mcl_tag', 'mcl_checklist', $args);
+        register_taxonomy('magiccl_tag', 'magiccl_checklist', $args);
     }
 
     public function enqueue_color_picker($hook) {
         if (!in_array($hook, ['edit-tags.php', 'term.php']) || 
             !isset($_GET['taxonomy']) || 
-            $_GET['taxonomy'] !== 'mcl_tag') {
+            $_GET['taxonomy'] !== 'magiccl_tag') {
             return;
         }
 
@@ -112,7 +112,7 @@ class MCL_CPT {
         
         wp_add_inline_script('wp-color-picker', '
             jQuery(document).ready(function($){
-                $(".mcl-color-picker").wpColorPicker();
+                $(".magiccl-color-picker").wpColorPicker();
             });
         ');
     }
@@ -120,8 +120,8 @@ class MCL_CPT {
     public function add_color_field() {
         ?>
         <div class="form-field">
-            <label for="tag_color"><?php esc_html_e('Tag Color', 'magic-checklists'); ?></label>
-            <select name="tag_color" id="tag_color" class="mcl-color-select">
+            <label for="tag_color"><?php esc_html_e('Tag Color', 'magicchecklists'); ?></label>
+            <select name="tag_color" id="tag_color" class="magiccl-color-select">
                 <?php foreach (self::TAG_COLORS as $name => $color): ?>
                     <option value="<?php echo esc_attr($color); ?>" style="background-color: <?php echo esc_attr($color); ?>">
                         <?php echo esc_html(ucfirst($name)); ?>
@@ -129,7 +129,7 @@ class MCL_CPT {
                 <?php endforeach; ?>
             </select>
             <p class="description">
-                <?php esc_html_e('Select a color for this tag.', 'magic-checklists'); ?>
+                <?php esc_html_e('Select a color for this tag.', 'magicchecklists'); ?>
             </p>
         </div>
         <?php
@@ -141,10 +141,10 @@ class MCL_CPT {
         ?>
         <tr class="form-field">
             <th scope="row">
-                <label for="tag_color"><?php esc_html_e('Tag Color', 'magic-checklists'); ?></label>
+                <label for="tag_color"><?php esc_html_e('Tag Color', 'magicchecklists'); ?></label>
             </th>
             <td>
-                <select name="tag_color" id="tag_color" class="mcl-color-select">
+                <select name="tag_color" id="tag_color" class="magiccl-color-select">
                     <?php foreach (self::TAG_COLORS as $name => $value): ?>
                         <option value="<?php echo esc_attr($value); ?>"
                                 <?php selected($color, $value); ?>
@@ -154,7 +154,7 @@ class MCL_CPT {
                     <?php endforeach; ?>
                 </select>
                 <p class="description">
-                    <?php esc_html_e('Select a color for this tag.', 'magic-checklists'); ?>
+                    <?php esc_html_e('Select a color for this tag.', 'magicchecklists'); ?>
                 </p>
             </td>
         </tr>
@@ -173,7 +173,7 @@ class MCL_CPT {
         foreach ($columns as $key => $value) {
             $new_columns[$key] = $value;
             if ($key === 'name') {
-                $new_columns['color'] = __('Color', 'magic-checklists');
+                $new_columns['color'] = __('Color', 'magicchecklists');
             }
         }
         return $new_columns;
@@ -186,11 +186,11 @@ class MCL_CPT {
 
         $color = get_term_meta($term_id, 'tag_color', true);
         if (!$color) {
-            return __('No color set', 'magic-checklists');
+            return __('No color set', 'magicchecklists');
         }
 
         return sprintf(
-            '<span class="mcl-tag-color-preview" style="display:inline-block;width:20px;height:20px;background-color:%s;border-radius:4px;"></span>',
+            '<span class="magiccl-tag-color-preview" style="display:inline-block;width:20px;height:20px;background-color:%s;border-radius:4px;"></span>',
             esc_attr($color)
         );
     }
@@ -198,7 +198,7 @@ class MCL_CPT {
     // Helper method to get all tags with their colors
     public static function get_all_tags() {
         $tags = get_terms([
-            'taxonomy' => 'mcl_tag',
+            'taxonomy' => 'magiccl_tag',
             'hide_empty' => false,
         ]);
 

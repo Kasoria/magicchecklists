@@ -38,10 +38,10 @@ const Analytics = ({ adminData }) => {
 
   // Fetch comprehensive analytics via AJAX
   const fetchAnalytics = async () => {
-    if (adminData.ajaxurl && adminData.nonces?.mcl_get_comprehensive_analytics) {
+    if (adminData.ajaxurl && adminData.nonces?.magiccl_get_comprehensive_analytics) {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_comprehensive_analytics')
-      formData.append('_ajax_nonce', adminData.nonces.mcl_get_comprehensive_analytics)
+      formData.append('action', 'magiccl_get_comprehensive_analytics')
+      formData.append('_ajax_nonce', adminData.nonces.magiccl_get_comprehensive_analytics)
       formData.append('time_filter', timeFilter) // Add time filter parameter
       try {
         const response = await fetch(adminData.ajaxurl, { method: 'POST', body: formData })
@@ -67,8 +67,8 @@ const Analytics = ({ adminData }) => {
     setIsCleaningUp(true)
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_cleanup_test_data')
-      formData.append('_ajax_nonce', adminData.nonces.mcl_cleanup_test_data)
+      formData.append('action', 'magiccl_cleanup_test_data')
+      formData.append('_ajax_nonce', adminData.nonces.magiccl_cleanup_test_data)
       
       const response = await fetch(adminData.ajaxurl, { method: 'POST', body: formData })
       const json = await response.json()
@@ -445,7 +445,7 @@ const Analytics = ({ adminData }) => {
                   <TableRow key={index} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
                     <TableCell>
                       <a 
-                        href={`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${item.checklist_id}`}
+                        href={`/wp-admin/admin.php?page=magiccl_add_new&checklist_id=${item.checklist_id}`}
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                       >
                         {item.title}

@@ -42,9 +42,9 @@ const CustomThemeSettings = ({ formData, onChange, adminData }) => {
       if (adminData?.i18n) {
         i18nData = adminData.i18n;
       }
-      // Then try window.mclAdminData
-      else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
-        i18nData = window.mclAdminData.i18n;
+      // Then try window.magicclAdminData
+      else if (typeof window !== 'undefined' && window.magicclAdminData?.i18n) {
+        i18nData = window.magicclAdminData.i18n;
       }
       
       return i18nData;
@@ -57,7 +57,7 @@ const CustomThemeSettings = ({ formData, onChange, adminData }) => {
       setI18n(i18nData);
     } else {
       // If not available yet, try again after a short delay
-      // This handles cases where window.mclAdminData is loaded after component mount
+      // This handles cases where window.magicclAdminData is loaded after component mount
       setTimeout(() => {
         const retryI18nData = getI18nData();
         if (Object.keys(retryI18nData).length > 0) {

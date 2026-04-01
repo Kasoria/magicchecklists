@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class MCL_Image_Handler {
+class MAGICCL_Image_Handler {
     private $upload_dir;
     private $upload_url;
     private $allowed_mime_types = array(
@@ -16,8 +16,8 @@ class MCL_Image_Handler {
     public function __construct() {
         // Set up upload directory
         $wp_upload_dir = wp_upload_dir();
-        $this->upload_dir = $wp_upload_dir['basedir'] . '/mcl-uploads';
-        $this->upload_url = $wp_upload_dir['baseurl'] . '/mcl-uploads';
+        $this->upload_dir = $wp_upload_dir['basedir'] . '/magiccl-uploads';
+        $this->upload_url = $wp_upload_dir['baseurl'] . '/magiccl-uploads';
 
         // Create upload directory if it doesn't exist
         if (!file_exists($this->upload_dir)) {
@@ -39,12 +39,12 @@ class MCL_Image_Handler {
             }
         }
 
-        add_action('wp_ajax_mcl_upload_image', array($this, 'handle_upload'));
-        add_action('wp_ajax_nopriv_mcl_upload_image', array($this, 'handle_upload'));
-        add_action('wp_ajax_mcl_get_uploaded_images', array($this, 'get_uploaded_images'));
-        add_action('wp_ajax_nopriv_mcl_get_uploaded_images', array($this, 'get_uploaded_images'));
-        add_action('wp_ajax_mcl_get_account_images', array($this, 'get_account_images'));
-        add_action('wp_ajax_nopriv_mcl_get_account_images', array($this, 'get_account_images'));
+        add_action('wp_ajax_magiccl_upload_image', array($this, 'handle_upload'));
+        add_action('wp_ajax_nopriv_magiccl_upload_image', array($this, 'handle_upload'));
+        add_action('wp_ajax_magiccl_get_uploaded_images', array($this, 'get_uploaded_images'));
+        add_action('wp_ajax_nopriv_magiccl_get_uploaded_images', array($this, 'get_uploaded_images'));
+        add_action('wp_ajax_magiccl_get_account_images', array($this, 'get_account_images'));
+        add_action('wp_ajax_nopriv_magiccl_get_account_images', array($this, 'get_account_images'));
 
         add_action('init', array($this, 'add_rewrite_rules'));
         add_filter('query_vars', array($this, 'add_query_vars'));
@@ -53,19 +53,19 @@ class MCL_Image_Handler {
 
     public function add_rewrite_rules() {
         add_rewrite_rule(
-            'mcl-image/([^/]+)/?$',
-            'index.php?mcl_image_id=$matches[1]',
+            'magiccl-image/([^/]+)/?$',
+            'index.php?magiccl_image_id=$matches[1]',
             'top'
         );
     }
 
     public function add_query_vars($vars) {
-        $vars[] = 'mcl_image_id';
+        $vars[] = 'magiccl_image_id';
         return $vars;
     }
 
     public function serve_image() {
-        $image_id = get_query_var('mcl_image_id');
+        $image_id = get_query_var('magiccl_image_id');
         if (!$image_id) return;
 
         $file_path = $this->upload_dir . '/' . sanitize_file_name($image_id);
@@ -108,7 +108,7 @@ class MCL_Image_Handler {
           }
 
           // Initialize Public class for permission check
-          $public = new MCL_Public();
+          $public = new MAGICCL_Public();
           
           // Handle stored token for invite users
           if (isset($_POST['stored_token'])) {
@@ -148,25 +148,45 @@ class MCL_Image_Handler {
               return;
           }
 
-          // Generate unique filename
-          $filename = $this->generate_unique_filename($file['name']);
-          $filepath = $this->upload_dir . '/' . $filename;
+          // Use WordPress upload handler
+          $upload_overrides = array(
+              'test_form' => false,
+              'unique_filename_callback' => array($this, 'generate_unique_filename'),
+              'upload_dir' => array(
+                  'path' => $this->upload_dir,
+                  'url' => $this->upload_url,
+                  'subdir' => '',
+                  'basedir' => $this->upload_dir,
+                  'baseurl' => $this->upload_url,
+                  'error' => false,
+              ),
+          );
 
-          error_log('MCL: Attempting to move file to: ' . $filepath);
+          // Temporarily override upload directory
+          add_filter('upload_dir', function() {
+              return array(
+                  'path' => $this->upload_dir,
+                  'url' => $this->upload_url,
+                  'subdir' => '',
+                  'basedir' => $this->upload_dir,
+                  'baseurl' => $this->upload_url,
+                  'error' => false,
+              );
+          });
 
-          // Move uploaded file
-          // phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() is required for security; it validates the file was a genuine HTTP upload.
-          if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+          $movefile = wp_handle_upload($file, array('test_form' => false));
+
+          remove_all_filters('upload_dir');
+
+          if (isset($movefile['error'])) {
               wp_send_json_error(array(
-                  'message' => 'Failed to save file',
-                  'debug' => array(
-                      'tmp_name' => $file['tmp_name'],
-                      'target' => $filepath,
-                      'error' => error_get_last()
-                  )
+                  'message' => 'Failed to save file: ' . $movefile['error']
               ));
               return;
           }
+
+          $filepath = $movefile['file'];
+          $filename = basename($filepath);
 
           // Get image dimensions
           $dimensions = getimagesize($filepath);
@@ -216,7 +236,7 @@ class MCL_Image_Handler {
         $images = $wpdb->get_col(
             "SELECT meta_value 
             FROM $wpdb->postmeta 
-            WHERE meta_key = '_mcl_images'"
+            WHERE meta_key = '_magiccl_images'"
         );
 
         // Get list of all image filenames still in use
@@ -254,7 +274,7 @@ class MCL_Image_Handler {
             }
     
             // Initialize Public class for permission check
-            $public = new MCL_Public();
+            $public = new MAGICCL_Public();
             
             // Handle stored token for invite users
             if (isset($_POST['stored_token'])) {
@@ -340,7 +360,7 @@ class MCL_Image_Handler {
             }
 
             // Initialize Public class for permission check
-            $public = new MCL_Public();
+            $public = new MAGICCL_Public();
 
             // Handle stored token for invite users
             if (isset($_POST['stored_token'])) {
@@ -354,7 +374,7 @@ class MCL_Image_Handler {
             }
 
             // Get MagicProxy to make authenticated request to MagicDash
-            $proxy = new MCL_MagicProxy();
+            $proxy = new MAGICCL_MagicProxy();
 
             // Check if site is connected to MagicDash
             if (!$proxy->is_connected()) {
@@ -407,4 +427,4 @@ class MCL_Image_Handler {
 }
 
 // Initialize the handler
-$mcl_image_handler = new MCL_Image_Handler();
+$magiccl_image_handler = new MAGICCL_Image_Handler();

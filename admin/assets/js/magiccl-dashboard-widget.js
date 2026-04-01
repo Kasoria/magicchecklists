@@ -19,7 +19,7 @@
         }
 
         handleToggleClick(event) {
-            const button = event.target.closest('.mcl-widget-toggle-btn');
+            const button = event.target.closest('.magiccl-widget-toggle-btn');
             if (!button) return;
             event.preventDefault();
 
@@ -32,12 +32,12 @@
             this.setButtonLoading(button, true);
 
             const data = new URLSearchParams();
-            data.append('action', 'mcl_widget_toggle_checklist');
+            data.append('action', 'magiccl_widget_toggle_checklist');
             data.append('checklist_id', checklistId);
             data.append('new_state', newState);
-            data.append('nonce', window.mclDashboardWidget.nonce);
+            data.append('nonce', window.magicclDashboardWidget.nonce);
 
-            fetch(window.mclDashboardWidget.ajaxurl, {
+            fetch(window.magicclDashboardWidget.ajaxurl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -50,11 +50,11 @@
                     this.updateChecklistUI(button, newState);
                     this.showNotice('success', response.data.message);
                 } else {
-                    this.showNotice('error', response.data.message || window.mclDashboardWidget.i18n.error);
+                    this.showNotice('error', response.data.message || window.magicclDashboardWidget.i18n.error);
                 }
             })
             .catch(() => {
-                this.showNotice('error', window.mclDashboardWidget.i18n.error);
+                this.showNotice('error', window.magicclDashboardWidget.i18n.error);
             })
             .finally(() => {
                 this.setButtonLoading(button, false);
@@ -63,8 +63,8 @@
 
         handleCheckboxChange(event) {
             const checkbox = event.target;
-            if (!checkbox.matches('.mcl-widget-checkbox')) return;
-            const item = checkbox.closest('.mcl-widget-item');
+            if (!checkbox.matches('.magiccl-widget-checkbox')) return;
+            const item = checkbox.closest('.magiccl-widget-item');
             const checklistId = item.getAttribute('data-checklist-id');
             const itemId = item.getAttribute('data-item-id');
             const checked = checkbox.checked;
@@ -75,13 +75,13 @@
             checkbox.disabled = true;
 
             const data = new URLSearchParams();
-            data.append('action', 'mcl_widget_toggle_item');
+            data.append('action', 'magiccl_widget_toggle_item');
             data.append('checklist_id', checklistId);
             data.append('item_id', itemId);
             data.append('checked', checked ? 1 : 0);
-            data.append('nonce', window.mclDashboardWidget.nonce);
+            data.append('nonce', window.magicclDashboardWidget.nonce);
 
-            fetch(window.mclDashboardWidget.ajaxurl, {
+            fetch(window.magicclDashboardWidget.ajaxurl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -94,12 +94,12 @@
                     this.updateItemUI(item, checked);
                 } else {
                     checkbox.checked = !checked;
-                    this.showNotice('error', response.data.message || window.mclDashboardWidget.i18n.error);
+                    this.showNotice('error', response.data.message || window.magicclDashboardWidget.i18n.error);
                 }
             })
             .catch(() => {
                 checkbox.checked = !checked;
-                this.showNotice('error', window.mclDashboardWidget.i18n.error);
+                this.showNotice('error', window.magicclDashboardWidget.i18n.error);
             })
             .finally(() => {
                 item.classList.remove('loading');
@@ -109,14 +109,14 @@
 
         updateItemUI(item, checked) {
             if (checked) {
-                item.classList.add('mcl-widget-item-checked');
+                item.classList.add('magiccl-widget-item-checked');
             } else {
-                item.classList.remove('mcl-widget-item-checked');
+                item.classList.remove('magiccl-widget-item-checked');
             }
 
-            item.classList.add('mcl-widget-item-updated');
+            item.classList.add('magiccl-widget-item-updated');
             setTimeout(() => {
-                item.classList.remove('mcl-widget-item-updated');
+                item.classList.remove('magiccl-widget-item-updated');
             }, 300);
         }
 
@@ -126,8 +126,8 @@
                 button.disabled = true;
                 const currentState = parseInt(button.getAttribute('data-current-state'), 10);
                 button.textContent = currentState === 1 ?
-                    window.mclDashboardWidget.i18n.deactivating :
-                    window.mclDashboardWidget.i18n.activating;
+                    window.magicclDashboardWidget.i18n.deactivating :
+                    window.magicclDashboardWidget.i18n.activating;
             } else {
                 button.classList.remove('loading');
                 button.disabled = false;
@@ -135,23 +135,23 @@
         }
 
         updateChecklistUI(button, newState) {
-            const checklist = button.closest('.mcl-widget-checklist');
-            const status = checklist.querySelector('.mcl-widget-status');
+            const checklist = button.closest('.magiccl-widget-checklist');
+            const status = checklist.querySelector('.magiccl-widget-status');
 
             button.setAttribute('data-current-state', newState);
             button.classList.remove('active', 'inactive');
             button.classList.add(newState === 1 ? 'active' : 'inactive');
             button.textContent = newState === 1 ?
-                (window.mclDashboardWidget.i18n.deactivate || 'Deactivate') :
-                (window.mclDashboardWidget.i18n.activate || 'Activate');
+                (window.magicclDashboardWidget.i18n.deactivate || 'Deactivate') :
+                (window.magicclDashboardWidget.i18n.activate || 'Activate');
 
-            status.classList.remove('mcl-status-active', 'mcl-status-inactive');
-            status.classList.add(newState === 1 ? 'mcl-status-active' : 'mcl-status-inactive');
+            status.classList.remove('magiccl-status-active', 'magiccl-status-inactive');
+            status.classList.add(newState === 1 ? 'magiccl-status-active' : 'magiccl-status-inactive');
             status.textContent = newState === 1 ? 'Active' : 'Inactive';
 
-            checklist.classList.add('mcl-widget-updated');
+            checklist.classList.add('magiccl-widget-updated');
             setTimeout(() => {
-                checklist.classList.remove('mcl-widget-updated');
+                checklist.classList.remove('magiccl-widget-updated');
             }, 2000);
         }
 
@@ -164,7 +164,7 @@
 
             const noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
             const notice = document.createElement('div');
-            notice.className = `notice ${noticeClass} is-dismissible mcl-widget-notice`;
+            notice.className = `notice ${noticeClass} is-dismissible magiccl-widget-notice`;
 
             const p = document.createElement('p');
             p.textContent = message;
@@ -176,7 +176,7 @@
             button.innerHTML = '<span class="screen-reader-text">Dismiss this notice.</span>';
             notice.appendChild(button);
 
-            document.querySelectorAll('.mcl-widget-notice').forEach(el => el.remove());
+            document.querySelectorAll('.magiccl-widget-notice').forEach(el => el.remove());
             noticesArea.insertAdjacentElement('afterend', notice);
 
             button.addEventListener('click', function() {
@@ -214,11 +214,11 @@
     const style = document.createElement('style');
     style.type = 'text/css';
     style.textContent = `
-        .mcl-widget-updated { animation: mcl-widget-pulse 0.5s ease-in-out; }
-        .mcl-widget-item-updated { animation: mcl-widget-item-pulse 0.3s ease-in-out; }
-        .mcl-widget-item.loading { opacity: 0.6; pointer-events: none; }
-        @keyframes mcl-widget-pulse { 0% { background-color: transparent; } 50% { background-color: rgba(34, 113, 177, 0.1); } 100% { background-color: transparent; } }
-        @keyframes mcl-widget-item-pulse { 0% { background-color: transparent; } 50% { background-color: rgba(70, 180, 80, 0.1); } 100% { background-color: transparent; } }
+        .magiccl-widget-updated { animation: magiccl-widget-pulse 0.5s ease-in-out; }
+        .magiccl-widget-item-updated { animation: magiccl-widget-item-pulse 0.3s ease-in-out; }
+        .magiccl-widget-item.loading { opacity: 0.6; pointer-events: none; }
+        @keyframes magiccl-widget-pulse { 0% { background-color: transparent; } 50% { background-color: rgba(34, 113, 177, 0.1); } 100% { background-color: transparent; } }
+        @keyframes magiccl-widget-item-pulse { 0% { background-color: transparent; } 50% { background-color: rgba(70, 180, 80, 0.1); } 100% { background-color: transparent; } }
     `;
     document.head.appendChild(style);
 })();

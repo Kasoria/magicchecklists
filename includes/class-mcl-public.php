@@ -4,120 +4,120 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class MCL_Public {
+class MAGICCL_Public {
 
     private $meta_keys = [
-        '_mcl_time_date',
-        '_mcl_items',
-        '_mcl_items_in_progress',
-        '_mcl_item_deadlines',
-        '_mcl_keyboard_shortcut',
-        '_mcl_active',
-        '_mcl_checked_state_handling',
-        '_mcl_theme',
-        '_mcl_priority',
-        '_mcl_enable_item_priority',
-        '_mcl_trigger_shortcut',
-        '_mcl_trigger_button',
-        '_mcl_short_title',
-        '_mcl_public_access',
-        '_mcl_public_permission',
-        '_mcl_public_checked_state_handling',
-        '_mcl_public_description',
-        '_mcl_priority_display_type',
-        '_mcl_checked_state',
-        '_mcl_public_global_checked_state',
-        '_mcl_enable_rate_limit',
-        '_mcl_access_roles',
-        '_mcl_access_roles_permission',
-        '_mcl_access_users',
-        '_mcl_access_users_permission',
-        '_mcl_load_everywhere',
-        '_mcl_allowed_pages',
-        '_mcl_allowed_urls',
-        '_mcl_disable_in_builders',
-        '_mcl_show_description',
+        '_magiccl_time_date',
+        '_magiccl_items',
+        '_magiccl_items_in_progress',
+        '_magiccl_item_deadlines',
+        '_magiccl_keyboard_shortcut',
+        '_magiccl_active',
+        '_magiccl_checked_state_handling',
+        '_magiccl_theme',
+        '_magiccl_priority',
+        '_magiccl_enable_item_priority',
+        '_magiccl_trigger_shortcut',
+        '_magiccl_trigger_button',
+        '_magiccl_short_title',
+        '_magiccl_public_access',
+        '_magiccl_public_permission',
+        '_magiccl_public_checked_state_handling',
+        '_magiccl_public_description',
+        '_magiccl_priority_display_type',
+        '_magiccl_checked_state',
+        '_magiccl_public_global_checked_state',
+        '_magiccl_enable_rate_limit',
+        '_magiccl_access_roles',
+        '_magiccl_access_roles_permission',
+        '_magiccl_access_users',
+        '_magiccl_access_users_permission',
+        '_magiccl_load_everywhere',
+        '_magiccl_allowed_pages',
+        '_magiccl_allowed_urls',
+        '_magiccl_disable_in_builders',
+        '_magiccl_show_description',
     ];
 
     /**
-     * @var MCL_Permissions
+     * @var MAGICCL_Permissions
      */
     private $permissions;
     
     /**
-     * @var MCL_Theme_Renderer
+     * @var MAGICCL_Theme_Renderer
      */
     private $theme_renderer;
 
     public function __construct() {
-        $this->permissions = new MCL_Permissions();
-        $this->theme_renderer = new MCL_Theme_Renderer();
+        $this->permissions = new MAGICCL_Permissions();
+        $this->theme_renderer = new MAGICCL_Theme_Renderer();
         
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_footer', array($this, 'render_checklist_drawer'));
         add_action('admin_footer', array($this, 'render_checklist_drawer'));
-        add_action('wp_ajax_mcl_update_checklist', array($this, 'update_checklist'));
-        add_action('wp_ajax_nopriv_mcl_update_checklist', array($this, 'update_checklist'));
-        add_action('wp_ajax_mcl_get_checklist', array($this, 'get_checklist'));
-        add_action('wp_ajax_mcl_save_checked_state', array($this, 'save_checked_state'));
+        add_action('wp_ajax_magiccl_update_checklist', array($this, 'update_checklist'));
+        add_action('wp_ajax_nopriv_magiccl_update_checklist', array($this, 'update_checklist'));
+        add_action('wp_ajax_magiccl_get_checklist', array($this, 'get_checklist'));
+        add_action('wp_ajax_magiccl_save_checked_state', array($this, 'save_checked_state'));
         add_action('wp_footer', array($this, 'render_floating_buttons'));
         add_action('admin_footer', array($this, 'render_floating_buttons'));
-        add_action('wp_ajax_nopriv_mcl_get_checklist', array($this, 'get_checklist'));
-        add_action('wp_ajax_nopriv_mcl_save_checked_state', array($this, 'save_checked_state'));
-        add_action('wp_ajax_mcl_get_checked_state', array($this, 'ajax_get_checked_state'));
-        add_action('wp_ajax_nopriv_mcl_get_checked_state', array($this, 'ajax_get_checked_state'));
-        add_action('wp_ajax_mcl_add_item', array($this, 'add_item'));
-        add_action('wp_ajax_nopriv_mcl_add_item', array($this, 'add_item'));
-        add_action('wp_ajax_mcl_delete_item', array($this, 'delete_item'));
-        add_action('wp_ajax_nopriv_mcl_delete_item', array($this, 'delete_item'));
+        add_action('wp_ajax_nopriv_magiccl_get_checklist', array($this, 'get_checklist'));
+        add_action('wp_ajax_nopriv_magiccl_save_checked_state', array($this, 'save_checked_state'));
+        add_action('wp_ajax_magiccl_get_checked_state', array($this, 'ajax_get_checked_state'));
+        add_action('wp_ajax_nopriv_magiccl_get_checked_state', array($this, 'ajax_get_checked_state'));
+        add_action('wp_ajax_magiccl_add_item', array($this, 'add_item'));
+        add_action('wp_ajax_nopriv_magiccl_add_item', array($this, 'add_item'));
+        add_action('wp_ajax_magiccl_delete_item', array($this, 'delete_item'));
+        add_action('wp_ajax_nopriv_magiccl_delete_item', array($this, 'delete_item'));
         add_action('init', array($this, 'maybe_set_invite_token_cookie'));
-        add_action('wp_ajax_mcl_release_lock', array($this, 'release_checklist_lock'));
-        add_action('wp_ajax_nopriv_mcl_release_lock', array($this, 'release_checklist_lock'));
-        add_action('wp_ajax_mcl_save_in_progress', array($this, 'save_in_progress_state'));
-        add_action('wp_ajax_nopriv_mcl_save_in_progress', array($this, 'save_in_progress_state'));
-        add_action('wp_ajax_mcl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
-        add_action('wp_ajax_nopriv_mcl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
-        add_action('wp_ajax_mcl_save_item_deadline', array($this, 'save_item_deadline'));
-        add_action('wp_ajax_nopriv_mcl_save_item_deadline', array($this, 'save_item_deadline'));
-        add_action('wp_ajax_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
-        add_action('wp_ajax_nopriv_mcl_clear_item_deadline', array($this, 'clear_item_deadline'));
-        add_action('wp_ajax_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
-        add_action('wp_ajax_nopriv_mcl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
-        add_action('wp_ajax_mcl_get_kanban_board', array($this, 'get_kanban_board'), 5);
-        add_action('wp_ajax_nopriv_mcl_get_kanban_board', array($this, 'get_kanban_board'), 5);
-        add_action('wp_ajax_mcl_save_kanban_board', array($this, 'save_kanban_board'), 5);
-        add_action('wp_ajax_nopriv_mcl_save_kanban_board', array($this, 'save_kanban_board'), 5);
+        add_action('wp_ajax_magiccl_release_lock', array($this, 'release_checklist_lock'));
+        add_action('wp_ajax_nopriv_magiccl_release_lock', array($this, 'release_checklist_lock'));
+        add_action('wp_ajax_magiccl_save_in_progress', array($this, 'save_in_progress_state'));
+        add_action('wp_ajax_nopriv_magiccl_save_in_progress', array($this, 'save_in_progress_state'));
+        add_action('wp_ajax_magiccl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
+        add_action('wp_ajax_nopriv_magiccl_get_in_progress_state', array($this, 'ajax_get_in_progress_state'));
+        add_action('wp_ajax_magiccl_save_item_deadline', array($this, 'save_item_deadline'));
+        add_action('wp_ajax_nopriv_magiccl_save_item_deadline', array($this, 'save_item_deadline'));
+        add_action('wp_ajax_magiccl_clear_item_deadline', array($this, 'clear_item_deadline'));
+        add_action('wp_ajax_nopriv_magiccl_clear_item_deadline', array($this, 'clear_item_deadline'));
+        add_action('wp_ajax_magiccl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
+        add_action('wp_ajax_nopriv_magiccl_get_active_checklists_data', array($this, 'get_active_checklists_data'));
+        add_action('wp_ajax_magiccl_get_kanban_board', array($this, 'get_kanban_board'), 5);
+        add_action('wp_ajax_nopriv_magiccl_get_kanban_board', array($this, 'get_kanban_board'), 5);
+        add_action('wp_ajax_magiccl_save_kanban_board', array($this, 'save_kanban_board'), 5);
+        add_action('wp_ajax_nopriv_magiccl_save_kanban_board', array($this, 'save_kanban_board'), 5);
 
         // Threaded comments for tasks (public-facing with priority 5 to run before admin hooks)
-        add_action('wp_ajax_mcl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
-        add_action('wp_ajax_nopriv_mcl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
-        add_action('wp_ajax_mcl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
-        add_action('wp_ajax_nopriv_mcl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
-        add_action('wp_ajax_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
-        add_action('wp_ajax_nopriv_mcl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
-        add_action('wp_ajax_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
-        add_action('wp_ajax_nopriv_mcl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
+        add_action('wp_ajax_magiccl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
+        add_action('wp_ajax_nopriv_magiccl_get_threaded_comments', array($this, 'get_threaded_comments_public'), 5);
+        add_action('wp_ajax_magiccl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
+        add_action('wp_ajax_nopriv_magiccl_add_threaded_comment', array($this, 'add_threaded_comment_public'), 5);
+        add_action('wp_ajax_magiccl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
+        add_action('wp_ajax_nopriv_magiccl_delete_threaded_comment', array($this, 'delete_threaded_comment_public'), 5);
+        add_action('wp_ajax_magiccl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
+        add_action('wp_ajax_nopriv_magiccl_toggle_comment_like', array($this, 'toggle_comment_like_public'), 5);
 
         // Feature board AJAX handlers
-        add_action('wp_ajax_mcl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
-        add_action('wp_ajax_nopriv_mcl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
-        add_action('wp_ajax_mcl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
-        add_action('wp_ajax_nopriv_mcl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
-        add_action('wp_ajax_mcl_submit_idea', array($this, 'submit_idea'), 5);
-        add_action('wp_ajax_nopriv_mcl_submit_idea', array($this, 'submit_idea'), 5);
-        add_action('wp_ajax_mcl_verify_email', array($this, 'verify_email'), 5);
-        add_action('wp_ajax_nopriv_mcl_verify_email', array($this, 'verify_email'), 5);
-        add_action('wp_ajax_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
-        add_action('wp_ajax_nopriv_mcl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
-        add_action('wp_ajax_mcl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
-        add_action('wp_ajax_nopriv_mcl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
+        add_action('wp_ajax_magiccl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
+        add_action('wp_ajax_nopriv_magiccl_toggle_item_upvote', array($this, 'toggle_item_upvote'), 5);
+        add_action('wp_ajax_magiccl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
+        add_action('wp_ajax_nopriv_magiccl_get_item_upvotes', array($this, 'get_item_upvotes'), 5);
+        add_action('wp_ajax_magiccl_submit_idea', array($this, 'submit_idea'), 5);
+        add_action('wp_ajax_nopriv_magiccl_submit_idea', array($this, 'submit_idea'), 5);
+        add_action('wp_ajax_magiccl_verify_email', array($this, 'verify_email'), 5);
+        add_action('wp_ajax_nopriv_magiccl_verify_email', array($this, 'verify_email'), 5);
+        add_action('wp_ajax_magiccl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
+        add_action('wp_ajax_nopriv_magiccl_get_feature_board_settings', array($this, 'get_feature_board_settings'), 5);
+        add_action('wp_ajax_magiccl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
+        add_action('wp_ajax_nopriv_magiccl_get_column_sync_settings', array($this, 'get_column_sync_settings_public'), 5);
 
         // Schedule daily cleanup of expired IP hashes (for GDPR compliance)
-        if (!wp_next_scheduled('mcl_cleanup_expired_ip_hashes')) {
-            wp_schedule_event(time(), 'daily', 'mcl_cleanup_expired_ip_hashes');
+        if (!wp_next_scheduled('magiccl_cleanup_expired_ip_hashes')) {
+            wp_schedule_event(time(), 'daily', 'magiccl_cleanup_expired_ip_hashes');
         }
-        add_action('mcl_cleanup_expired_ip_hashes', array($this, 'cleanup_expired_ip_hashes'));
+        add_action('magiccl_cleanup_expired_ip_hashes', array($this, 'cleanup_expired_ip_hashes'));
     }
 
     /**
@@ -126,7 +126,7 @@ class MCL_Public {
      */
     public function cleanup_expired_ip_hashes() {
         global $wpdb;
-        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $upvotes_table = $wpdb->prefix . 'magiccl_item_upvotes';
         $expiry_days = 30;
 
         // Clear IP hashes that are older than 30 days (set to NULL instead of deleting the upvote record)
@@ -136,7 +136,7 @@ class MCL_Public {
         ));
 
         if ($result !== false) {
-            error_log("MCL: Cleaned up IP hashes from {$result} upvote records older than {$expiry_days} days");
+            error_log("MAGICCL: Cleaned up IP hashes from {$result} upvote records older than {$expiry_days} days");
         }
     }
 
@@ -154,7 +154,7 @@ class MCL_Public {
         }
 
         // Check if shortcode is enabled for this checklist
-        if (!MCL_Admin::is_shortcode_enabled($checklist_id)) {
+        if (!MAGICCL_Admin::is_shortcode_enabled($checklist_id)) {
             return false;
         }
 
@@ -187,21 +187,21 @@ class MCL_Public {
      */
     public function should_load_assets() {
         // Check for tour mode parameters first - if present, always load assets for tours
-        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
 
         // Check for active tours that match the current context
-        if (class_exists('MCL_Tour_CPT')) {
-            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+        if (class_exists('MAGICCL_Tour_CPT')) {
+            $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
                 return true;
             }
         }
 
         $active_checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
-            'meta_key' => '_mcl_active',
+            'post_type' => 'magiccl_checklist',
+            'meta_key' => '_magiccl_active',
             'meta_value' => '1',
             'posts_per_page' => -1
         ));
@@ -214,7 +214,7 @@ class MCL_Public {
             $checklist_id = $checklist_post_obj->ID;
 
             // Get loading settings
-            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+            $load_everywhere = get_post_meta($checklist_id, '_magiccl_load_everywhere', true);
 
             // First, check if the user has permission to view this specific checklist.
             $has_permission = $this->permissions->has_permission($checklist_id, 'view');
@@ -232,7 +232,7 @@ class MCL_Public {
 
             // Check if the drawer is disabled for this checklist via shortcode settings.
             // Only skip if the checklist is NOT present as a shortcode on this page.
-            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            $shortcode_settings = MAGICCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
                 continue; // Skip for drawer/floating button purposes, but shortcode already checked above
             }
@@ -242,12 +242,12 @@ class MCL_Public {
                 return true; // Found a reason to load assets, no need to check further.
             }
 
-            $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+            $allowed_pages = get_post_meta($checklist_id, '_magiccl_allowed_pages', true) ?: array();
             if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                 return true; // Found a reason to load assets.
             }
 
-            $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+            $allowed_urls = get_post_meta($checklist_id, '_magiccl_allowed_urls', true) ?: array();
             if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                 return true; // Found a reason to load assets.
             }
@@ -273,7 +273,7 @@ class MCL_Public {
             return false;
         }
 
-        $disable_flag = get_post_meta($checklist_id, '_mcl_disable_in_builders', true);
+        $disable_flag = get_post_meta($checklist_id, '_magiccl_disable_in_builders', true);
 
         return !empty($disable_flag) && $disable_flag !== '0';
     }
@@ -283,20 +283,20 @@ class MCL_Public {
             return false;
         }
     
-        $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+        $load_everywhere = get_post_meta($checklist_id, '_magiccl_load_everywhere', true);
         
         if ($load_everywhere) {
             return true;
         }
     
         // Check allowed pages (admin pages)
-        $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+        $allowed_pages = get_post_meta($checklist_id, '_magiccl_allowed_pages', true) ?: array();
         if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
             return true;
         }
         
         // Check allowed URLs (both admin and frontend)
-        $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+        $allowed_urls = get_post_meta($checklist_id, '_magiccl_allowed_urls', true) ?: array();
         if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
             return true;
         }
@@ -331,8 +331,8 @@ class MCL_Public {
         $get_params = $_GET;
 
         // For AJAX requests, parse the referer URL to get the actual admin page
-        if ($this->is_ajax_request() && !empty($_SERVER['HTTP_REFERER'])) {
-            $referer = $_SERVER['HTTP_REFERER'];
+        if ($this->is_ajax_request() && !empty(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])))) {
+            $referer = sanitize_url(wp_unslash($_SERVER['HTTP_REFERER']));
             $referer_parts = wp_parse_url($referer);
 
             // Only process if referer is an admin page
@@ -380,11 +380,11 @@ class MCL_Public {
             return false;
         }
 
-        $current_url = $_SERVER['REQUEST_URI'];
+        $current_url = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
 
         // For AJAX requests, use the referrer URL instead of admin-ajax.php
-        if ($this->is_ajax_request() && !empty($_SERVER['HTTP_REFERER'])) {
-            $referer_parts = wp_parse_url($_SERVER['HTTP_REFERER']);
+        if ($this->is_ajax_request() && !empty(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])))) {
+            $referer_parts = wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])));
             if (!empty($referer_parts['path'])) {
                 $current_url = $referer_parts['path'];
                 // Include query string if present
@@ -423,16 +423,16 @@ class MCL_Public {
      * Check if AJAX request originated from a frontend page (not wp-admin)
      */
     private function is_ajax_from_frontend() {
-        if (empty($_SERVER['HTTP_REFERER'])) {
+        if (empty($_SERVER['HTTP_REFERER'])) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only checking existence
             return false;
         }
 
         // If referer doesn't contain wp-admin, it's from frontend
-        return strpos($_SERVER['HTTP_REFERER'], '/wp-admin/') === false;
+        return strpos(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), '/wp-admin/') === false;
     }
 
     /**
-     * Wrapper for permission check method - delegates to MCL_Permissions
+     * Wrapper for permission check method - delegates to MAGICCL_Permissions
      */
     public function has_permission($checklist_id, $required_permission = 'view') {
         return $this->permissions->has_permission($checklist_id, $required_permission);
@@ -448,15 +448,15 @@ class MCL_Public {
         }
 
         $public_checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key' => '_mcl_active',
+                    'key' => '_magiccl_active',
                     'value' => '1'
                 ),
                 array(
-                    'key' => '_mcl_public_access',
+                    'key' => '_magiccl_public_access',
                     'value' => '1'
                 )
             ),
@@ -470,8 +470,8 @@ class MCL_Public {
 
         if (is_user_logged_in()) {
             $active_checklists = get_posts(array(
-                'post_type' => 'mcl_checklist',
-                'meta_key' => '_mcl_active',
+                'post_type' => 'magiccl_checklist',
+                'meta_key' => '_magiccl_active',
                 'meta_value' => '1',
                 'posts_per_page' => -1,
                 'fields' => 'ids'
@@ -514,20 +514,20 @@ class MCL_Public {
             $metadata[$meta->meta_key] = maybe_unserialize($meta->meta_value);
         }
 
-        $deadlines = $metadata['_mcl_item_deadlines'] ?: array();
+        $deadlines = $metadata['_magiccl_item_deadlines'] ?: array();
 
-        if (!empty($metadata['_mcl_items'])) {
-            foreach ($metadata['_mcl_items'] as &$item) {
+        if (!empty($metadata['_magiccl_items'])) {
+            foreach ($metadata['_magiccl_items'] as &$item) {
                 $item['deadline'] = isset($deadlines[$item['id']]) ? $deadlines[$item['id']] : null;
                 // Add locked flag to indicate items that cannot be edited or deleted
                 $item['locked'] = isset($item['locked']) && $item['locked'] ? true : false;
             }
         }
 
-        if ($metadata['_mcl_theme'] === 'custom') {
-            $theme_class = 'mcl-theme-custom';
+        if ($metadata['_magiccl_theme'] === 'custom') {
+            $theme_class = 'magiccl-theme-custom';
         } else {
-            $theme_class = $metadata['_mcl_theme'] === 'dark' ? 'mcl-theme-dark' : 'mcl-theme-light';
+            $theme_class = $metadata['_magiccl_theme'] === 'dark' ? 'magiccl-theme-dark' : 'magiccl-theme-light';
         }
 
         return [
@@ -542,7 +542,8 @@ class MCL_Public {
      */
     public function get_checklist() {
         try {
-            if (is_user_logged_in() && (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'mcl_ajax_nonce'))) {
+            $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
                 wp_send_json_error(array(
                     'message' => 'Invalid nonce',
                     'code' => 403
@@ -569,7 +570,7 @@ class MCL_Public {
             }
 
             // Abort if drawer is disabled for this checklist via shortcode settings
-            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            $shortcode_settings = MAGICCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
                 wp_send_json_error(array(
                     'message' => 'Drawer disabled for this checklist',
@@ -587,7 +588,7 @@ class MCL_Public {
             $user_can_interact = $user_can_edit || $this->permissions->has_permission($checklist_id, 'interact');
             
             // Skip global checklist lock when per-item locking is enabled
-            $item_locking_enabled = get_post_meta($checklist_id, '_mcl_enable_item_locking', true);
+            $item_locking_enabled = get_post_meta($checklist_id, '_magiccl_enable_item_locking', true);
 
             if ($user_can_edit && !$item_locking_enabled) {
                 $lock = $this->get_lock($checklist_id);
@@ -619,7 +620,7 @@ class MCL_Public {
             }
 
             // Track checklist view for analytics
-            do_action('mcl_checklist_rendered', $checklist_id);
+            do_action('magiccl_checklist_rendered', $checklist_id);
 
             if (ob_get_length()) ob_clean();
             wp_send_json_success($data);
@@ -656,11 +657,11 @@ class MCL_Public {
         $meta = $checklist_data['meta'];
         
         // If item locking enabled, always merge current user's modifications with global items
-        if (get_post_meta($checklist_id, '_mcl_enable_item_locking', true) && is_user_logged_in()) {
+        if (get_post_meta($checklist_id, '_magiccl_enable_item_locking', true) && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $user_items = get_user_meta($user_id, "_mcl_user_items_{$checklist_id}", true);
+            $user_items = get_user_meta($user_id, "_magiccl_user_items_{$checklist_id}", true);
             if (is_array($user_items)) {
-                $global_items = isset($meta['_mcl_items']) && is_array($meta['_mcl_items']) ? $meta['_mcl_items'] : array();
+                $global_items = isset($meta['_magiccl_items']) && is_array($meta['_magiccl_items']) ? $meta['_magiccl_items'] : array();
                 // Index user items by ID for quick lookup
                 $user_map = array();
                 foreach ($user_items as $ui) {
@@ -696,33 +697,33 @@ class MCL_Public {
                         'locked'    => false,
                     );
                 }
-                $meta['_mcl_items'] = $merged_items;
+                $meta['_magiccl_items'] = $merged_items;
             }
         }
 
-        $is_public = $meta['_mcl_public_access'] == '1';
+        $is_public = $meta['_magiccl_public_access'] == '1';
         $checked_state_handling = $this->get_checked_state_handling($checklist_id);
-        $enable_rate_limit = $meta['_mcl_enable_rate_limit'];
+        $enable_rate_limit = $meta['_magiccl_enable_rate_limit'];
         $checked_state = $this->get_checked_state($checklist_id);
-        $tags = get_post_meta($checklist_id, '_mcl_tags', true) ?: array();
-        $reset_enabled = get_post_meta($checklist_id, '_mcl_auto_reset', true) == '1';
+        $tags = get_post_meta($checklist_id, '_magiccl_tags', true) ?: array();
+        $reset_enabled = get_post_meta($checklist_id, '_magiccl_auto_reset', true) == '1';
 
         $return_data = array(
             'id' => $checklist_id,
             'title' => get_the_title($checklist_id),
             'description' => get_post_field('post_content', $checklist_id),
-            'show_description' => get_post_meta($checklist_id, '_mcl_show_description', true),
+            'show_description' => get_post_meta($checklist_id, '_magiccl_show_description', true),
             'is_public' => $is_public,
-            'public_description' => get_post_meta($checklist_id, '_mcl_public_description', true),
-            'time_date' => $meta['_mcl_time_date'],
-            'items' => $meta['_mcl_items'],
+            'public_description' => get_post_meta($checklist_id, '_magiccl_public_description', true),
+            'time_date' => $meta['_magiccl_time_date'],
+            'items' => $meta['_magiccl_items'],
             'items_in_progress' => $this->get_in_progress_state($checklist_id),
             'checked_state' => $checked_state,
-            'theme' => $meta['_mcl_theme'] ?: 'light',
-            'priority' => $meta['_mcl_priority'] ?: 'none',
-            'enable_item_priority' => (bool)$meta['_mcl_enable_item_priority'],
-            'priority_display_type' => $meta['_mcl_priority_display_type'] ?: 'color',
-            'enable_item_locking' => (bool)get_post_meta($checklist_id, '_mcl_enable_item_locking', true),
+            'theme' => $meta['_magiccl_theme'] ?: 'light',
+            'priority' => $meta['_magiccl_priority'] ?: 'none',
+            'enable_item_priority' => (bool)$meta['_magiccl_enable_item_priority'],
+            'priority_display_type' => $meta['_magiccl_priority_display_type'] ?: 'color',
+            'enable_item_locking' => (bool)get_post_meta($checklist_id, '_magiccl_enable_item_locking', true),
             'can_edit' => $user_can_edit,
             'can_check' => $user_can_interact,
             'can_view' => true, // We already checked this
@@ -739,33 +740,33 @@ class MCL_Public {
             'reset_info' => array(
                 'enabled' => $reset_enabled,
                 'was_reset' => $was_reset,
-                'reset_counter' => get_post_meta($checklist_id, '_mcl_reset_counter', true) ?: 1,
-                'next_reset' => get_post_meta($checklist_id, '_mcl_reset_next', true)
+                'reset_counter' => get_post_meta($checklist_id, '_magiccl_reset_counter', true) ?: 1,
+                'next_reset' => get_post_meta($checklist_id, '_magiccl_reset_next', true)
             ),
             // Custom theme settings - include when theme is 'custom' or any custom settings exist
-            'drawer_bg_color' => get_post_meta($checklist_id, '_mcl_drawer_bg_color', true),
-            'list_item_bg_color' => get_post_meta($checklist_id, '_mcl_list_item_bg_color', true),
-            'text_color' => get_post_meta($checklist_id, '_mcl_text_color', true),
-            'description_text_color' => get_post_meta($checklist_id, '_mcl_description_text_color', true),
-            'heading_font_size' => get_post_meta($checklist_id, '_mcl_heading_font_size', true),
-            'description_font_size' => get_post_meta($checklist_id, '_mcl_description_font_size', true),
-            'list_item_font_size' => get_post_meta($checklist_id, '_mcl_list_item_font_size', true),
-            'primary_button_bg' => get_post_meta($checklist_id, '_mcl_primary_button_bg', true),
-            'primary_button_text_color' => get_post_meta($checklist_id, '_mcl_primary_button_text_color', true),
-            'secondary_button_bg' => get_post_meta($checklist_id, '_mcl_secondary_button_bg', true),
-            'secondary_button_text_color' => get_post_meta($checklist_id, '_mcl_secondary_button_text_color', true),
-            'checkbox_bg_color' => get_post_meta($checklist_id, '_mcl_checkbox_bg_color', true),
-            'checkbox_border_radius' => get_post_meta($checklist_id, '_mcl_checkbox_border_radius', true),
-            'checkbox_style' => get_post_meta($checklist_id, '_mcl_checkbox_style', true),
-            'checkbox_custom_icon' => get_post_meta($checklist_id, '_mcl_checkbox_custom_icon', true),
-            'checkbox_checkmark_color' => get_post_meta($checklist_id, '_mcl_checkbox_checkmark_color', true),
-            'drawer_border_radius' => get_post_meta($checklist_id, '_mcl_drawer_border_radius', true),
-            'drawer_width' => get_post_meta($checklist_id, '_mcl_drawer_width', true),
-            'drawer_height' => get_post_meta($checklist_id, '_mcl_drawer_height', true),
-            'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true),
-            'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true),
-            'float_button_font_size' => get_post_meta($checklist_id, '_mcl_float_button_font_size', true),
-            'show_float_button_icon' => get_post_meta($checklist_id, '_mcl_show_float_button_icon', true)
+            'drawer_bg_color' => get_post_meta($checklist_id, '_magiccl_drawer_bg_color', true),
+            'list_item_bg_color' => get_post_meta($checklist_id, '_magiccl_list_item_bg_color', true),
+            'text_color' => get_post_meta($checklist_id, '_magiccl_text_color', true),
+            'description_text_color' => get_post_meta($checklist_id, '_magiccl_description_text_color', true),
+            'heading_font_size' => get_post_meta($checklist_id, '_magiccl_heading_font_size', true),
+            'description_font_size' => get_post_meta($checklist_id, '_magiccl_description_font_size', true),
+            'list_item_font_size' => get_post_meta($checklist_id, '_magiccl_list_item_font_size', true),
+            'primary_button_bg' => get_post_meta($checklist_id, '_magiccl_primary_button_bg', true),
+            'primary_button_text_color' => get_post_meta($checklist_id, '_magiccl_primary_button_text_color', true),
+            'secondary_button_bg' => get_post_meta($checklist_id, '_magiccl_secondary_button_bg', true),
+            'secondary_button_text_color' => get_post_meta($checklist_id, '_magiccl_secondary_button_text_color', true),
+            'checkbox_bg_color' => get_post_meta($checklist_id, '_magiccl_checkbox_bg_color', true),
+            'checkbox_border_radius' => get_post_meta($checklist_id, '_magiccl_checkbox_border_radius', true),
+            'checkbox_style' => get_post_meta($checklist_id, '_magiccl_checkbox_style', true),
+            'checkbox_custom_icon' => get_post_meta($checklist_id, '_magiccl_checkbox_custom_icon', true),
+            'checkbox_checkmark_color' => get_post_meta($checklist_id, '_magiccl_checkbox_checkmark_color', true),
+            'drawer_border_radius' => get_post_meta($checklist_id, '_magiccl_drawer_border_radius', true),
+            'drawer_width' => get_post_meta($checklist_id, '_magiccl_drawer_width', true),
+            'drawer_height' => get_post_meta($checklist_id, '_magiccl_drawer_height', true),
+            'float_button_bg' => get_post_meta($checklist_id, '_magiccl_float_button_bg', true),
+            'float_button_text_color' => get_post_meta($checklist_id, '_magiccl_float_button_text_color', true),
+            'float_button_font_size' => get_post_meta($checklist_id, '_magiccl_float_button_font_size', true),
+            'show_float_button_icon' => get_post_meta($checklist_id, '_magiccl_show_float_button_icon', true)
         );
         
 
@@ -779,10 +780,10 @@ class MCL_Public {
      */
     private function get_all_active_checklists_for_page() {
         $query_args_base = array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_active',
+                    'key' => '_magiccl_active',
                     'value' => '1'
                 )
             ),
@@ -806,7 +807,7 @@ class MCL_Public {
 
             // Check if the drawer is disabled for this checklist via shortcode settings
             // Only skip if the checklist is NOT present as a shortcode on this page.
-            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            $shortcode_settings = MAGICCL_Admin::get_shortcode_settings($checklist_id);
             $disable_drawer = !empty($shortcode_settings['disable_drawer']);
 
             if ($disable_drawer && !$shortcode_present) {
@@ -820,16 +821,16 @@ class MCL_Public {
             if ($shortcode_present) {
                 $is_visible_based_on_conditions = true;
             } else {
-                $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+                $load_everywhere = get_post_meta($checklist_id, '_magiccl_load_everywhere', true);
 
                 if ($load_everywhere) {
                     $is_visible_based_on_conditions = true;
                 } else {
-                    $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+                    $allowed_pages = get_post_meta($checklist_id, '_magiccl_allowed_pages', true) ?: array();
                     if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                         $is_visible_based_on_conditions = true;
                     } else {
-                        $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+                        $allowed_urls = get_post_meta($checklist_id, '_magiccl_allowed_urls', true) ?: array();
                         if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                             $is_visible_based_on_conditions = true;
                         } else {
@@ -845,7 +846,7 @@ class MCL_Public {
             }
 
             if ($is_visible_based_on_conditions) {
-                $theme = get_post_meta($checklist_id, '_mcl_theme', true);
+                $theme = get_post_meta($checklist_id, '_magiccl_theme', true);
                 $visible_checklists_data[] = [
                     'id' => $checklist_id,
                     'theme' => $theme ?: 'light'
@@ -862,10 +863,10 @@ class MCL_Public {
      */
     private function get_visible_checklists_with_theme() {
         // First check if tours are active - tours don't show floating buttons but indicate assets should be loaded
-        if (class_exists('MCL_Tour_CPT')) {
-            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
-            $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-            $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        if (class_exists('MAGICCL_Tour_CPT')) {
+            $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
+            $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+            $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
             $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
             
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
@@ -873,15 +874,15 @@ class MCL_Public {
             }
         }
         $query_args_base = array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key' => '_mcl_active',
+                    'key' => '_magiccl_active',
                     'value' => '1'
                 ),
                 array(
-                    'key' => '_mcl_trigger_button',
+                    'key' => '_magiccl_trigger_button',
                     'value' => '1'
                 )
             ),
@@ -893,11 +894,11 @@ class MCL_Public {
             $query_args_base['meta_query'][] = array(
                 'relation' => 'OR',
                 array(
-                    'key' => '_mcl_disable_in_builders',
+                    'key' => '_magiccl_disable_in_builders',
                     'compare' => 'NOT EXISTS'
                 ),
                 array(
-                    'key' => '_mcl_disable_in_builders',
+                    'key' => '_magiccl_disable_in_builders',
                     'value' => '0'
                 )
             );
@@ -920,7 +921,7 @@ class MCL_Public {
             }
 
             // Step 1.5: Check if the drawer is disabled for this checklist via shortcode settings
-            $shortcode_settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            $shortcode_settings = MAGICCL_Admin::get_shortcode_settings($checklist_id);
             if (!empty($shortcode_settings['disable_drawer'])) {
                 continue;
             }
@@ -928,16 +929,16 @@ class MCL_Public {
             // Step 2: Inline loading condition checks (previously in should_show_checklist)
             // These get_post_meta calls should now hit the primed WP object cache.
             $is_visible_based_on_conditions = false;
-            $load_everywhere = get_post_meta($checklist_id, '_mcl_load_everywhere', true);
+            $load_everywhere = get_post_meta($checklist_id, '_magiccl_load_everywhere', true);
 
             if ($load_everywhere) {
                 $is_visible_based_on_conditions = true;
             } else {
-                $allowed_pages = get_post_meta($checklist_id, '_mcl_allowed_pages', true) ?: array();
+                $allowed_pages = get_post_meta($checklist_id, '_magiccl_allowed_pages', true) ?: array();
                 if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                     $is_visible_based_on_conditions = true;
                 } else {
-                    $allowed_urls = get_post_meta($checklist_id, '_mcl_allowed_urls', true) ?: array();
+                    $allowed_urls = get_post_meta($checklist_id, '_magiccl_allowed_urls', true) ?: array();
                     if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                         $is_visible_based_on_conditions = true;
                     } else {
@@ -953,7 +954,7 @@ class MCL_Public {
 
             if ($is_visible_based_on_conditions) {
                 // If all checks pass (permission + loading conditions), get the theme.
-                $theme = get_post_meta($checklist_id, '_mcl_theme', true);
+                $theme = get_post_meta($checklist_id, '_magiccl_theme', true);
                 $visible_checklists_data[] = [
                     'id' => $checklist_id,
                     'theme' => $theme ?: 'light' // Default to light if not set
@@ -979,22 +980,22 @@ class MCL_Public {
         if (is_user_logged_in()) {
             return 'user_' . get_current_user_id();
         } else {
-            if (isset($_COOKIE['mcl_user_id'])) {
-                return 'guest_' . sanitize_text_field($_COOKIE['mcl_user_id']);
+            if (isset($_COOKIE['magiccl_user_id'])) {
+                return 'guest_' . sanitize_text_field(wp_unslash($_COOKIE['magiccl_user_id']));
             } else {
                 $unique_id = uniqid('guest_', true);
-                setcookie('mcl_user_id', $unique_id, time() + (365 * DAY_IN_SECONDS), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+                setcookie('magiccl_user_id', $unique_id, time() + (365 * DAY_IN_SECONDS), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
                 return 'guest_' . $unique_id;
             }
         }
     }
     
     private function get_lock($checklist_id) {
-        $lock = get_post_meta($checklist_id, '_mcl_lock', true);
+        $lock = get_post_meta($checklist_id, '_magiccl_lock', true);
         if (!empty($lock)) {
             $lock_duration = 5 * MINUTE_IN_SECONDS; 
             if (time() - $lock['timestamp'] > $lock_duration) {
-                delete_post_meta($checklist_id, '_mcl_lock');
+                delete_post_meta($checklist_id, '_magiccl_lock');
                 return false;
             }
             return $lock;
@@ -1007,13 +1008,13 @@ class MCL_Public {
             'user' => $user_identifier,
             'timestamp' => time()
         );
-        update_post_meta($checklist_id, '_mcl_lock', $lock);
+        update_post_meta($checklist_id, '_magiccl_lock', $lock);
     }
     
     private function release_lock($checklist_id, $user_identifier) {
         $lock = $this->get_lock($checklist_id);
         if ($lock && $lock['user'] === $user_identifier) {
-            delete_post_meta($checklist_id, '_mcl_lock');
+            delete_post_meta($checklist_id, '_magiccl_lock');
         }
     }
     
@@ -1025,8 +1026,14 @@ class MCL_Public {
     }
 
     public function release_checklist_lock() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-    
+
         if (!$checklist_id) {
             wp_send_json_error('Invalid checklist ID', 400);
             return;
@@ -1048,7 +1055,7 @@ class MCL_Public {
             return;
         }
 
-        if ($hook === 'magicchecklists_page_mcl_add_new') {
+        if ($hook === 'magicchecklists_page_magiccl_add_new') {
             return;
         }
 
@@ -1061,31 +1068,31 @@ class MCL_Public {
         $has_floating_buttons = !empty($visible_checklists_for_theme); // Determine if any buttons should show based on this
     
         wp_enqueue_style(
-            'mcl-fonts',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-fonts.css',
+            'magiccl-fonts',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/magiccl-fonts.css',
             array(),
             MAGIC_CHECKLISTS_VERSION
         );
         
         wp_enqueue_style(
-            'mcl-drawer',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-drawer-minimal.css',
-            array('mcl-fonts'),
+            'magiccl-drawer',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/magiccl-drawer-minimal.css',
+            array('magiccl-fonts'),
             MAGIC_CHECKLISTS_VERSION
         );
     
         wp_enqueue_style(
-            'mcl-animations',
-            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-animations.css',
-            array('mcl-drawer'),
+            'magiccl-animations',
+            MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/magiccl-animations.css',
+            array('magiccl-drawer'),
             MAGIC_CHECKLISTS_VERSION
         );
     
         if ($has_floating_buttons) {
             wp_enqueue_style(
-                'mcl-floating-button',
-                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-floating-button.css',
-                array('mcl-drawer'),
+                'magiccl-floating-button',
+                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/magiccl-floating-button.css',
+                array('magiccl-drawer'),
                 MAGIC_CHECKLISTS_VERSION
             );
         }
@@ -1094,36 +1101,36 @@ class MCL_Public {
         foreach ($visible_checklists_for_theme as $checklist_data) {
             if ($checklist_data['theme'] === 'custom') {
                 $custom_css = $this->theme_renderer->generate_custom_theme_css($checklist_data['id']);
-                wp_add_inline_style('mcl-drawer', $custom_css);
+                wp_add_inline_style('magiccl-drawer', $custom_css);
             }
         }
     
         $localized_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'shortcuts' => $this->get_accessible_shortcuts(),
-            'priority_colors' => MCL_Priority_Utils::get_priority_colors(),
-            'priority_numbers' => MCL_Priority_Utils::get_priority_numbers(),
+            'priority_colors' => MAGICCL_Priority_Utils::get_priority_colors(),
+            'priority_numbers' => MAGICCL_Priority_Utils::get_priority_numbers(),
             'user_access' => array(
                 'is_admin' => $this->is_administrator(),
                 'is_logged_in' => is_user_logged_in(),
                 'public_only' => !$this->is_administrator()
             ),
             'settings' => array(
-                'enable_navigation' => MCL_Settings::get_setting('enable_checklist_navigation', false),
-                'enable_progress_counter' => MCL_Settings::get_setting('enable_progress_counter', false),
-                'dateFormat' => MCL_Admin::get_shared_date_format(),
+                'enable_navigation' => MAGICCL_Settings::get_setting('enable_checklist_navigation', false),
+                'enable_progress_counter' => MAGICCL_Settings::get_setting('enable_progress_counter', false),
+                'dateFormat' => MAGICCL_Admin::get_shared_date_format(),
                 'timezone_string' => get_option('timezone_string', ''),
                 'gmt_offset' => get_option('gmt_offset', 0),
                 'current_timestamp' => current_time('timestamp'),
                 'utc_timestamp' => time()
             ),
             'i18n' => array(
-                'uncheckAllConfirm' => __('Are you sure you want to uncheck all items? This cannot be undone.', 'magic-checklists')
+                'uncheckAllConfirm' => __('Are you sure you want to uncheck all items? This cannot be undone.', 'magicchecklists')
             )
         );
 
-        if (isset($_GET['mcl_invite'])) {
-            $token_from_url = sanitize_text_field($_GET['mcl_invite']);
+        if (isset($_GET['magiccl_invite'])) {
+            $token_from_url = sanitize_text_field($_GET['magiccl_invite']);
             $token_data_obj = $this->get_invite_token_data(); 
             if ($token_data_obj && $token_data_obj->token === $token_from_url) {
                 $localized_data['invite_token'] = array(
@@ -1136,21 +1143,21 @@ class MCL_Public {
         }
 
         if (is_user_logged_in()) {
-            $localized_data['nonce'] = wp_create_nonce('mcl_ajax_nonce');
+            $localized_data['nonce'] = wp_create_nonce('magiccl_ajax_nonce');
             $localized_data['user_id'] = get_current_user_id();
         } else {
-            $localized_data['nonce'] = wp_create_nonce('mcl_ajax_nopriv_nonce');
+            $localized_data['nonce'] = wp_create_nonce('magiccl_ajax_nopriv_nonce');
         }
 
-        $localized_data = apply_filters('mcl_localized_data', $localized_data);
+        $localized_data = apply_filters('magiccl_localized_data', $localized_data);
         
         // Register a lightweight handle purely for inline data
-        wp_register_script('mcl-inline-data', '', [], MAGIC_CHECKLISTS_VERSION, true);
-        wp_enqueue_script('mcl-inline-data');
+        wp_register_script('magiccl-inline-data', '', [], MAGIC_CHECKLISTS_VERSION, true);
+        wp_enqueue_script('magiccl-inline-data');
 
         wp_add_inline_script(
-            'mcl-inline-data',
-            'window.mcl_checklists = ' . wp_json_encode($localized_data) . ';',
+            'magiccl-inline-data',
+            'window.magiccl_checklists = ' . wp_json_encode($localized_data) . ';',
             'before'
         );
     }
@@ -1160,10 +1167,10 @@ class MCL_Public {
      */
     private function get_accessible_shortcuts() {
         // Check if tours are active first - tours might need shortcuts too
-        if (class_exists('MCL_Tour_CPT')) {
-            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
-            $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-            $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        if (class_exists('MAGICCL_Tour_CPT')) {
+            $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
+            $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+            $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
             $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
             
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
@@ -1174,13 +1181,13 @@ class MCL_Public {
 
         // Expanded list of meta keys to fetch
         $meta_keys_to_fetch = [
-            '_mcl_keyboard_shortcut', 
-            '_mcl_public_access', 
-            '_mcl_checked_state_handling', 
-            '_mcl_load_everywhere', 
-            '_mcl_allowed_pages', 
-            '_mcl_allowed_urls',
-            '_mcl_public_checked_state_handling' // For get_checked_state_handling
+            '_magiccl_keyboard_shortcut', 
+            '_magiccl_public_access', 
+            '_magiccl_checked_state_handling', 
+            '_magiccl_load_everywhere', 
+            '_magiccl_allowed_pages', 
+            '_magiccl_allowed_urls',
+            '_magiccl_public_checked_state_handling' // For get_checked_state_handling
         ];
 
         $query = $wpdb->prepare("
@@ -1192,25 +1199,25 @@ class MCL_Public {
             AND EXISTS (
                 SELECT 1 FROM $wpdb->postmeta 
                 WHERE post_id = p.ID 
-                AND meta_key = '_mcl_active' 
+                AND meta_key = '_magiccl_active' 
                 AND meta_value = '1'
             )
             AND (
                 EXISTS (
                     SELECT 1 FROM $wpdb->postmeta 
                     WHERE post_id = p.ID 
-                    AND meta_key = '_mcl_public_access' 
+                    AND meta_key = '_magiccl_public_access' 
                     AND meta_value = '1'
                 )
                 OR EXISTS (
                     SELECT 1 FROM $wpdb->postmeta 
                     WHERE post_id = p.ID 
-                    AND meta_key = '_mcl_trigger_shortcut' 
+                    AND meta_key = '_magiccl_trigger_shortcut' 
                     AND meta_value = '1'
                 )
             )
             AND pm.meta_key IN (" . implode(',', array_fill(0, count($meta_keys_to_fetch), '%s')) . ")",
-            array_merge(['mcl_checklist'], $meta_keys_to_fetch)
+            array_merge(['magiccl_checklist'], $meta_keys_to_fetch)
         );
 
         $results = $wpdb->get_results($query); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $query is built via $wpdb->prepare() above
@@ -1246,19 +1253,19 @@ class MCL_Public {
             }
 
             // Step 1.5: Respect 'disable_drawer' shortcode setting – completely skip if enabled
-            $shortcode_settings = MCL_Admin::get_shortcode_settings($id);
+            $shortcode_settings = MAGICCL_Admin::get_shortcode_settings($id);
             if (!empty($shortcode_settings['disable_drawer'])) {
                 continue; // Drawer disabled for this checklist
             }
 
-            if ($current_meta['_mcl_load_everywhere']) { // Step 2: Check load_everywhere from pre-fetched meta
+            if ($current_meta['_magiccl_load_everywhere']) { // Step 2: Check load_everywhere from pre-fetched meta
                 $is_visible = true;
             } else {
-                $allowed_pages = $current_meta['_mcl_allowed_pages'] ?: array(); // Use pre-fetched meta
+                $allowed_pages = $current_meta['_magiccl_allowed_pages'] ?: array(); // Use pre-fetched meta
                 if (!empty($allowed_pages) && $this->is_allowed_admin_page($allowed_pages)) {
                     $is_visible = true;
                 } else {
-                    $allowed_urls = $current_meta['_mcl_allowed_urls'] ?: array(); // Use pre-fetched meta
+                    $allowed_urls = $current_meta['_magiccl_allowed_urls'] ?: array(); // Use pre-fetched meta
                     if (!empty($allowed_urls) && $this->matches_url_pattern($allowed_urls)) {
                         $is_visible = true;
                     }
@@ -1270,17 +1277,17 @@ class MCL_Public {
             }
             // --- End Inlined/Optimized visibility check ---
     
-            $shortcut_key = $current_meta['_mcl_keyboard_shortcut'] ?? '';
+            $shortcut_key = $current_meta['_magiccl_keyboard_shortcut'] ?? '';
             if ($shortcut_key) {
                 // --- Start Inlined/Optimized get_checked_state_handling logic ---
                 $checked_state_handling_value = '';
                 // Assuming context is 'drawer' as this is for global shortcuts usually tied to drawer behavior.
                 // If shortcode context needed differentiation here, it would be more complex.
-                $is_public_for_state = ($current_meta['_mcl_public_access'] ?? '') == '1';
+                $is_public_for_state = ($current_meta['_magiccl_public_access'] ?? '') == '1';
                 if ($is_public_for_state) {
-                    $checked_state_handling_value = $current_meta['_mcl_public_checked_state_handling'] ?: 'per_user';
+                    $checked_state_handling_value = $current_meta['_magiccl_public_checked_state_handling'] ?: 'per_user';
                 } else {
-                    $checked_state_handling_value = $current_meta['_mcl_checked_state_handling'] ?: 'global';
+                    $checked_state_handling_value = $current_meta['_magiccl_checked_state_handling'] ?: 'global';
                 }
                 // --- End Inlined/Optimized get_checked_state_handling logic ---
 
@@ -1298,17 +1305,17 @@ class MCL_Public {
 
     private function get_checked_state_handling($checklist_id, $context = 'drawer') {
         if ($context === 'shortcode') {
-            $settings = MCL_Admin::get_shortcode_settings($checklist_id);
+            $settings = MAGICCL_Admin::get_shortcode_settings($checklist_id);
             return $settings['check_state'] ?? 'session';
         }
 
-        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
         
         if ($is_public) {
-            return get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+            return get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
         }
         
-        return get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+        return get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
     }
 
     private function has_active_floating_buttons() {
@@ -1321,15 +1328,15 @@ class MCL_Public {
 
     private function get_active_shortcuts() {
         $active_checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'meta_query' => array(
                 'relation' => 'AND',
                 array(
-                    'key' => '_mcl_active',
+                    'key' => '_magiccl_active',
                     'value' => '1'
                 ),
                 array(
-                    'key' => '_mcl_trigger_shortcut',
+                    'key' => '_magiccl_trigger_shortcut',
                     'value' => '1'
                 )
             ),
@@ -1339,7 +1346,7 @@ class MCL_Public {
     
         $shortcuts = array();
         foreach ($active_checklists as $checklist) {
-            $shortcut = get_post_meta($checklist->ID, '_mcl_keyboard_shortcut', true);
+            $shortcut = get_post_meta($checklist->ID, '_magiccl_keyboard_shortcut', true);
             if ($shortcut) {
                 $shortcuts[$checklist->ID] = $shortcut;
             }
@@ -1359,7 +1366,7 @@ class MCL_Public {
     private function should_render_on_current_page() {
         $screen = function_exists('get_current_screen') ? get_current_screen() : null;
         
-        if ($screen && $screen->id === 'magicchecklists_page_mcl_add_new') {
+        if ($screen && $screen->id === 'magicchecklists_page_magiccl_add_new') {
             return false;
         }
 
@@ -1374,7 +1381,7 @@ class MCL_Public {
 
         $checklist_id = intval($_POST['checklist_id']);
         // Check if item locking is enabled for this checklist
-        $enable_locking = get_post_meta($checklist_id, '_mcl_enable_item_locking', true);
+        $enable_locking = get_post_meta($checklist_id, '_magiccl_enable_item_locking', true);
         $has_edit_permission = $this->has_permission($checklist_id, 'edit');
         
         if ($enable_locking) {
@@ -1383,13 +1390,13 @@ class MCL_Public {
                 wp_send_json_error('Permission denied');
                 return;
             }
-            $items = json_decode(stripslashes($_POST['items']), true);
+            $items = json_decode(wp_unslash($_POST['items']), true);
             if (!is_array($items)) {
                 wp_send_json_error('Invalid items data');
                 return;
             }
             // Preserve locked global items
-            $existing = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+            $existing = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
             $locked_existing = array_filter($existing, function($i) {
                 return !empty($i['locked']);
             });
@@ -1414,7 +1421,7 @@ class MCL_Public {
                     // New or unlocked: sanitize
                     $processed[] = array(
                         'id' => $id,
-                        'content' => MCL_Sanitization::sanitize_item_content($item['content']),
+                        'content' => MAGICCL_Sanitization::sanitize_item_content($item['content']),
                         'parent_id' => isset($item['parent_id']) ? sanitize_text_field($item['parent_id']) : '',
                         'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                         'locked' => false,
@@ -1429,7 +1436,7 @@ class MCL_Public {
             }
             // Save per-user items
             $user_id = get_current_user_id();
-            update_user_meta($user_id, "_mcl_user_items_{$checklist_id}", $processed);
+            update_user_meta($user_id, "_magiccl_user_items_{$checklist_id}", $processed);
             wp_send_json_success();
             return;
         }
@@ -1439,14 +1446,14 @@ class MCL_Public {
             return;
         }
 
-        $items = json_decode(stripslashes($_POST['items']), true);
+        $items = json_decode(wp_unslash($_POST['items']), true);
         if (!is_array($items)) {
             wp_send_json_error('Invalid items data');
             return;
         }
 
         // Preserve locked items, prevent deletion or editing of locked items
-        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $existing_items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         $locked_existing = array_filter($existing_items, function($i) {
             return !empty($i['locked']);
         });
@@ -1473,7 +1480,7 @@ class MCL_Public {
                 // New or unlocked existing item: sanitize input and set locked to false
                 $processed_items[] = array(
                     'id' => $item_id,
-                    'content' => MCL_Sanitization::sanitize_item_content($item['content']),
+                    'content' => MAGICCL_Sanitization::sanitize_item_content($item['content']),
                     'parent_id' => isset($item['parent_id']) ? sanitize_text_field($item['parent_id']) : '',
                     'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                     'locked' => false
@@ -1488,10 +1495,10 @@ class MCL_Public {
             }
         }
 
-        update_post_meta($checklist_id, '_mcl_items', $processed_items);
+        update_post_meta($checklist_id, '_magiccl_items', $processed_items);
 
-        // Also sync to _mcl_kanban_board for Kanban view compatibility
-        $existing_board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+        // Also sync to _magiccl_kanban_board for Kanban view compatibility
+        $existing_board = get_post_meta($checklist_id, '_magiccl_kanban_board', true);
 
         if ($existing_board && is_array($existing_board) && !empty($existing_board)) {
             // Update existing board structure - preserve column structure, update item titles
@@ -1503,7 +1510,7 @@ class MCL_Public {
             foreach ($existing_board as &$column) {
                 if (isset($column['items']) && is_array($column['items'])) {
                     foreach ($column['items'] as &$board_item) {
-                        // Update title from _mcl_items content if item exists
+                        // Update title from _magiccl_items content if item exists
                         if (isset($items_map[$board_item['id']])) {
                             $board_item['title'] = $items_map[$board_item['id']]['content'];
                         }
@@ -1512,7 +1519,7 @@ class MCL_Public {
             }
             unset($column, $board_item);
 
-            update_post_meta($checklist_id, '_mcl_kanban_board', $existing_board);
+            update_post_meta($checklist_id, '_magiccl_kanban_board', $existing_board);
         } else {
             // No existing board, create a default one from items
             $board_items = array();
@@ -1547,7 +1554,7 @@ class MCL_Public {
                 )
             );
 
-            update_post_meta($checklist_id, '_mcl_kanban_board', $default_board);
+            update_post_meta($checklist_id, '_magiccl_kanban_board', $default_board);
         }
 
         wp_send_json_success();
@@ -1559,23 +1566,23 @@ class MCL_Public {
         if ($handling === 'per_user') {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                $user_state = get_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, true);
+                $user_state = get_user_meta($user_id, "_magiccl_{$context}_checked_state_" . $checklist_id, true);
                 // If user has their own state, use it; otherwise fall back to global state
                 // This allows API-pushed state to serve as a baseline for new users
                 if ($user_state !== '' && $user_state !== false) {
                     return $user_state ?: array();
                 }
                 // Fall back to global checked state (pushed from API/admin)
-                return get_post_meta($checklist_id, '_mcl_checked_state', true) ?: array();
+                return get_post_meta($checklist_id, '_magiccl_checked_state', true) ?: array();
             } else {
                 // For non-logged-in users in per_user mode, return global state as baseline
                 // (they can't save their own state anyway without being logged in)
-                return get_post_meta($checklist_id, '_mcl_public_global_checked_state', true) ?: array();
+                return get_post_meta($checklist_id, '_magiccl_public_global_checked_state', true) ?: array();
             }
         }
 
         // Global handling mode - use same key for all contexts to ensure sync
-        $meta_key = '_mcl_checked_state';
+        $meta_key = '_magiccl_checked_state';
         return get_post_meta($checklist_id, $meta_key, true) ?: array();
     }
 
@@ -1585,22 +1592,27 @@ class MCL_Public {
         if ($handling === 'per_user') {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                return get_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, true) ?: array();
+                return get_user_meta($user_id, "_magiccl_{$context}_in_progress_" . $checklist_id, true) ?: array();
             } else {
                 return array();
             }
         }
 
         // Global handling mode
-        return get_post_meta($checklist_id, '_mcl_items_in_progress', true) ?: array();
+        return get_post_meta($checklist_id, '_magiccl_items_in_progress', true) ?: array();
     }
 
     public function save_checked_state() {
         $checklist_id = intval($_POST['checklist_id']);
         $context = sanitize_text_field($_POST['context'] ?? 'drawer');
-        
+
         if (is_user_logged_in()) {
-            if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'mcl_ajax_nonce')) {
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'magiccl_ajax_nonce')) {
+                wp_send_json_error('Invalid nonce', 403);
+                return;
+            }
+        } else {
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'magiccl_ajax_nopriv_nonce')) {
                 wp_send_json_error('Invalid nonce', 403);
                 return;
             }
@@ -1613,7 +1625,7 @@ class MCL_Public {
     
         // Handle checked_items as JSON string (consistent with other endpoints)
         $checked_items = isset($_POST['checked_items']) ? 
-            json_decode(stripslashes($_POST['checked_items']), true) : array();
+            json_decode(wp_unslash($_POST['checked_items']), true) : array();
         
         if (!is_array($checked_items)) {
             $checked_items = array();
@@ -1627,10 +1639,10 @@ class MCL_Public {
 
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
+            update_user_meta($user_id, "_magiccl_{$context}_checked_state_" . $checklist_id, $checked_items);
         } else if ($checked_state_handling === 'global') {
             // Use same key for all contexts to ensure sync across views
-            $meta_key = '_mcl_checked_state';
+            $meta_key = '_magiccl_checked_state';
             update_post_meta($checklist_id, $meta_key, $checked_items);
         } else if ($checked_state_handling === 'per_user' && !is_user_logged_in()) {
             // Per-user checklists with logged-out users should use localStorage on client side
@@ -1642,13 +1654,13 @@ class MCL_Public {
     
         foreach ($checked_items as $item_id) {
             if (!in_array($item_id, $old_checked_items)) {
-                do_action('mcl_item_checked', $checklist_id, $item_id, true, $context);
+                do_action('magiccl_item_checked', $checklist_id, $item_id, true, $context);
             }
         }
     
         foreach ($old_checked_items as $item_id) {
             if (!in_array($item_id, $checked_items)) {
-                do_action('mcl_item_unchecked', $checklist_id, $item_id, false, $context);
+                do_action('magiccl_item_unchecked', $checklist_id, $item_id, false, $context);
             }
         }
     
@@ -1700,7 +1712,7 @@ class MCL_Public {
 
     public function handle_invite_token() { 
         if (is_user_logged_in()) {
-             check_ajax_referer('mcl_ajax_nonce', 'nonce');
+             check_ajax_referer('magiccl_ajax_nonce', 'nonce');
         } 
         
         $token_str = isset($_POST['token']) ? sanitize_text_field($_POST['token']) : '';
@@ -1721,10 +1733,10 @@ class MCL_Public {
     }
 
     public function maybe_set_invite_token_cookie() {
-        if (isset($_GET['mcl_invite'])) {
-            $token = sanitize_text_field($_GET['mcl_invite']);
+        if (isset($_GET['magiccl_invite'])) {
+            $token = sanitize_text_field($_GET['magiccl_invite']);
             if ($this->permissions->validate_token_string($token, false)) { 
-                setcookie('mcl_invite_token', $token, time() + (7 * DAY_IN_SECONDS), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+                setcookie('magiccl_invite_token', $token, time() + (7 * DAY_IN_SECONDS), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
                 error_log('MCL: Valid invite token found in URL. Cookie set.');
             } else {
                 error_log('MCL: Invalid or expired invite token in URL when trying to set cookie.');
@@ -1732,16 +1744,16 @@ class MCL_Public {
         }
     }
 
-    // Token handling methods now handled by MCL_Permissions class
+    // Token handling methods now handled by MAGICCL_Permissions class
 
     public function check_and_handle_reset($checklist_id) {
         try {
-            $auto_reset = get_post_meta($checklist_id, '_mcl_auto_reset', true);
+            $auto_reset = get_post_meta($checklist_id, '_magiccl_auto_reset', true);
             if (!$auto_reset) {
                 return false;
             }
 
-            $next_reset = get_post_meta($checklist_id, '_mcl_reset_next', true);
+            $next_reset = get_post_meta($checklist_id, '_magiccl_reset_next', true);
             if (!$next_reset) {
                 return false;
             }
@@ -1770,8 +1782,8 @@ class MCL_Public {
         try {
             error_log("MCL RESET DEBUG: ========== Starting reset for checklist {$checklist_id} ==========");
 
-            $reset_interval = get_post_meta($checklist_id, '_mcl_reset_interval', true) ?: 'daily';
-            $reset_time = get_post_meta($checklist_id, '_mcl_reset_time', true) ?: '00:00';
+            $reset_interval = get_post_meta($checklist_id, '_magiccl_reset_interval', true) ?: 'daily';
+            $reset_time = get_post_meta($checklist_id, '_magiccl_reset_time', true) ?: '00:00';
     
             $time_parts = explode(':', $reset_time);
             $hours = intval($time_parts[0]);
@@ -1789,7 +1801,7 @@ class MCL_Public {
                     break;
     
                 case 'weekly':
-                    $week_day = get_post_meta($checklist_id, '_mcl_week_day', true) ?: '1';
+                    $week_day = get_post_meta($checklist_id, '_magiccl_week_day', true) ?: '1';
                     // Calculate days until next occurrence of the target day
                     $current_week_day = (int)$now->format('N'); // 1 = Monday, 7 = Sunday
                     $days_until_target = ($week_day - $current_week_day + 7) % 7;
@@ -1801,7 +1813,7 @@ class MCL_Public {
                     break;
     
                 case 'monthly':
-                    $month_day = get_post_meta($checklist_id, '_mcl_month_day', true) ?: '1';
+                    $month_day = get_post_meta($checklist_id, '_magiccl_month_day', true) ?: '1';
                     $next = new DateTime($now->format('Y-m-') . sprintf('%02d', $month_day) . ' ' . sprintf('%02d:%02d:00', $hours, $minutes), $timezone);
                     // If we're past this month's target date, move to next month
                     if ($now >= $next) {
@@ -1810,9 +1822,9 @@ class MCL_Public {
                     break;
     
                 case 'custom':
-                    $custom_months = intval(get_post_meta($checklist_id, '_mcl_custom_months', true)) ?: 0;
-                    $custom_weeks = intval(get_post_meta($checklist_id, '_mcl_custom_weeks', true)) ?: 0;
-                    $custom_days = intval(get_post_meta($checklist_id, '_mcl_custom_days', true)) ?: 0;
+                    $custom_months = intval(get_post_meta($checklist_id, '_magiccl_custom_months', true)) ?: 0;
+                    $custom_weeks = intval(get_post_meta($checklist_id, '_magiccl_custom_weeks', true)) ?: 0;
+                    $custom_days = intval(get_post_meta($checklist_id, '_magiccl_custom_days', true)) ?: 0;
                     
                     // Convert all to days
                     $total_days = ($custom_months * 30) + ($custom_weeks * 7) + $custom_days;
@@ -1827,30 +1839,30 @@ class MCL_Public {
                     break;
             }
     
-            update_post_meta($checklist_id, '_mcl_reset_next', $next->getTimestamp());
+            update_post_meta($checklist_id, '_magiccl_reset_next', $next->getTimestamp());
     
-            $reset_counter = intval(get_post_meta($checklist_id, '_mcl_reset_counter', true)) ?: 1;
-            update_post_meta($checklist_id, '_mcl_reset_counter', $reset_counter + 1);
+            $reset_counter = intval(get_post_meta($checklist_id, '_magiccl_reset_counter', true)) ?: 1;
+            update_post_meta($checklist_id, '_magiccl_reset_counter', $reset_counter + 1);
     
             // Check if public access is enabled - if so, use public checked state handling setting
-            $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+            $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
             error_log("MCL RESET DEBUG: is_public = " . ($is_public ? 'true' : 'false'));
 
             if ($is_public) {
                 // Public access enabled - use public checked state handling setting (defaults to per_user)
-                $checked_state_handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+                $checked_state_handling = get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
             } else {
                 // Not public - use regular checked state handling setting (defaults to global)
-                $checked_state_handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+                $checked_state_handling = get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
             }
             error_log("MCL RESET DEBUG: checked_state_handling = '{$checked_state_handling}'");
 
             if ($checked_state_handling === 'global') {
                 error_log("MCL RESET DEBUG: Using GLOBAL mode - clearing post meta");
                 // Clear both regular and public global checked state
-                update_post_meta($checklist_id, '_mcl_checked_state', array());
-                update_post_meta($checklist_id, '_mcl_public_global_checked_state', array());
-                update_post_meta($checklist_id, '_mcl_items_in_progress', array());
+                update_post_meta($checklist_id, '_magiccl_checked_state', array());
+                update_post_meta($checklist_id, '_magiccl_public_global_checked_state', array());
+                update_post_meta($checklist_id, '_magiccl_items_in_progress', array());
             } else {
                 error_log("MCL RESET DEBUG: Using PER-USER mode - deleting user meta");
                 global $wpdb;
@@ -1871,7 +1883,7 @@ class MCL_Public {
 
                 foreach ($contexts as $context) {
                     // Delete checked state for this context
-                    $checked_meta_key = '_mcl_' . $context . '_checked_state_' . $checklist_id;
+                    $checked_meta_key = '_magiccl_' . $context . '_checked_state_' . $checklist_id;
                     error_log("MCL RESET DEBUG: Deleting meta_key = '{$checked_meta_key}'");
                     $deleted_checked = $wpdb->query($wpdb->prepare(
                         "DELETE FROM {$wpdb->usermeta} WHERE meta_key = %s",
@@ -1880,7 +1892,7 @@ class MCL_Public {
                     error_log("MCL RESET DEBUG:   -> Deleted {$deleted_checked} rows");
 
                     // Delete in-progress state for this context
-                    $in_progress_meta_key = '_mcl_' . $context . '_in_progress_' . $checklist_id;
+                    $in_progress_meta_key = '_magiccl_' . $context . '_in_progress_' . $checklist_id;
                     error_log("MCL RESET DEBUG: Deleting meta_key = '{$in_progress_meta_key}'");
                     $deleted_progress = $wpdb->query($wpdb->prepare(
                         "DELETE FROM {$wpdb->usermeta} WHERE meta_key = %s",
@@ -1902,9 +1914,9 @@ class MCL_Public {
                 // Also clear the fallback post meta to prevent get_checked_state() from returning old data
                 // (get_checked_state falls back to these when user meta doesn't exist)
                 error_log("MCL RESET DEBUG: Clearing fallback post meta");
-                update_post_meta($checklist_id, '_mcl_checked_state', array());
-                update_post_meta($checklist_id, '_mcl_public_global_checked_state', array());
-                update_post_meta($checklist_id, '_mcl_items_in_progress', array());
+                update_post_meta($checklist_id, '_magiccl_checked_state', array());
+                update_post_meta($checklist_id, '_magiccl_public_global_checked_state', array());
+                update_post_meta($checklist_id, '_magiccl_items_in_progress', array());
             }
 
             error_log("MCL RESET DEBUG: ========== Reset complete for checklist {$checklist_id} ==========");
@@ -1932,7 +1944,7 @@ class MCL_Public {
         $param_sets[] = $this->normalize_param_array($_GET);
 
         if (isset($_SERVER['HTTP_REFERER'])) {
-            $referer_query = wp_parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY);
+            $referer_query = wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_QUERY);
             if ($referer_query) {
                 parse_str($referer_query, $referer_params);
                 $param_sets[] = $this->normalize_param_array($referer_params);
@@ -2005,7 +2017,7 @@ class MCL_Public {
             return true;
         }
 
-        if (isset($_SERVER['HTTP_SEC_FETCH_DEST']) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe') {
+        if (isset($_SERVER['HTTP_SEC_FETCH_DEST']) && sanitize_text_field(wp_unslash($_SERVER['HTTP_SEC_FETCH_DEST'])) === 'iframe') {
             return true;
         }
 
@@ -2041,7 +2053,7 @@ class MCL_Public {
             }
 
             $items_in_progress = isset($_POST['items_in_progress']) ?
-                json_decode(stripslashes($_POST['items_in_progress']), true) : array();
+                json_decode(wp_unslash($_POST['items_in_progress']), true) : array();
 
             if (!is_array($items_in_progress)) {
                 $items_in_progress = array();
@@ -2054,9 +2066,9 @@ class MCL_Public {
 
             if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
                 $user_id = get_current_user_id();
-                update_user_meta($user_id, "_mcl_{$context}_in_progress_" . $checklist_id, $items_in_progress);
+                update_user_meta($user_id, "_magiccl_{$context}_in_progress_" . $checklist_id, $items_in_progress);
             } else if ($checked_state_handling === 'global') {
-                update_post_meta($checklist_id, '_mcl_items_in_progress', $items_in_progress);
+                update_post_meta($checklist_id, '_magiccl_items_in_progress', $items_in_progress);
             }
             // For per-user mode with logged-out users, client handles via localStorage
 
@@ -2082,9 +2094,9 @@ class MCL_Public {
             return;
         }
 
-        $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+        $deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
         $deadlines[$item_id] = $deadline;
-        update_post_meta($checklist_id, '_mcl_item_deadlines', $deadlines);
+        update_post_meta($checklist_id, '_magiccl_item_deadlines', $deadlines);
 
         wp_send_json_success();
     }
@@ -2103,11 +2115,11 @@ class MCL_Public {
             return;
         }
 
-        $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+        $deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
     
         if (isset($deadlines[$item_id])) {
             unset($deadlines[$item_id]);
-            update_post_meta($checklist_id, '_mcl_item_deadlines', $deadlines);
+            update_post_meta($checklist_id, '_magiccl_item_deadlines', $deadlines);
         }
 
         wp_send_json_success();
@@ -2117,7 +2129,7 @@ class MCL_Public {
         try {
             // Optional nonce verification for logged-in users
             if (is_user_logged_in() && isset($_POST['nonce'])) {
-                if (!wp_verify_nonce($_POST['nonce'], 'mcl_admin_nonce')) {
+                if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'magiccl_admin_nonce')) {
                     wp_send_json_error(array(
                         'message' => 'Invalid nonce',
                         'code' => 403
@@ -2141,15 +2153,15 @@ class MCL_Public {
                 }
                 
                 // Get meta values
-            $priority = get_post_meta($checklist_id, '_mcl_priority', true) ?: 'none';
-                $short_title = get_post_meta($checklist_id, '_mcl_short_title', true) ?: '';
-                $button_position = get_post_meta($checklist_id, '_mcl_button_position', true) ?: 'bottom-right';
-                $theme = get_post_meta($checklist_id, '_mcl_theme', true) ?: 'light';
-                $trigger_button = get_post_meta($checklist_id, '_mcl_trigger_button', true);
-            $disable_in_builders = get_post_meta($checklist_id, '_mcl_disable_in_builders', true);
+            $priority = get_post_meta($checklist_id, '_magiccl_priority', true) ?: 'none';
+                $short_title = get_post_meta($checklist_id, '_magiccl_short_title', true) ?: '';
+                $button_position = get_post_meta($checklist_id, '_magiccl_button_position', true) ?: 'bottom-right';
+                $theme = get_post_meta($checklist_id, '_magiccl_theme', true) ?: 'light';
+                $trigger_button = get_post_meta($checklist_id, '_magiccl_trigger_button', true);
+            $disable_in_builders = get_post_meta($checklist_id, '_magiccl_disable_in_builders', true);
                 
-                $priority_colors = MCL_Priority_Utils::get_priority_colors();
-                $priority_levels = MCL_Priority_Utils::get_priority_levels();
+                $priority_colors = MAGICCL_Priority_Utils::get_priority_colors();
+                $priority_levels = MAGICCL_Priority_Utils::get_priority_levels();
                 
                 $formatted_checklists[] = array(
                     'id' => $checklist->ID,
@@ -2160,11 +2172,11 @@ class MCL_Public {
                     'priorityColor' => $priority_colors[$priority] ?? '#cccccc',
                     'priorityLabel' => $priority_levels[$priority] ?? 'None',
                     'theme' => $theme,
-                    'checklist_icon_type' => get_post_meta($checklist_id, '_mcl_checklist_icon_type', true) ?: 'preset',
-                    'checklist_icon_preset' => get_post_meta($checklist_id, '_mcl_checklist_icon_preset', true) ?: 'checklist-1',
-                    'checklist_icon_custom' => get_post_meta($checklist_id, '_mcl_checklist_icon_custom', true) ?: '',
-                    'float_button_bg' => get_post_meta($checklist_id, '_mcl_float_button_bg', true) ?: '#ffffff',
-                    'float_button_text_color' => get_post_meta($checklist_id, '_mcl_float_button_text_color', true) ?: '#1a1a1a',
+                    'checklist_icon_type' => get_post_meta($checklist_id, '_magiccl_checklist_icon_type', true) ?: 'preset',
+                    'checklist_icon_preset' => get_post_meta($checklist_id, '_magiccl_checklist_icon_preset', true) ?: 'checklist-1',
+                    'checklist_icon_custom' => get_post_meta($checklist_id, '_magiccl_checklist_icon_custom', true) ?: '',
+                    'float_button_bg' => get_post_meta($checklist_id, '_magiccl_float_button_bg', true) ?: '#ffffff',
+                    'float_button_text_color' => get_post_meta($checklist_id, '_magiccl_float_button_text_color', true) ?: '#1a1a1a',
                     'has_floating_button' => $trigger_button == '1',
                     'disableInBuilders' => !empty($disable_in_builders) && $disable_in_builders !== '0'
                 );
@@ -2196,7 +2208,7 @@ class MCL_Public {
         
         // Decode JSON if it's a string
         if (is_string($item_data)) {
-            $item_data = json_decode(stripslashes($item_data), true);
+            $item_data = json_decode(wp_unslash($item_data), true);
         }
         
         if (!is_array($item_data)) {
@@ -2211,12 +2223,12 @@ class MCL_Public {
         }
         
         // Get existing items
-        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $existing_items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         
         // Sanitize new item
         $new_item = array(
             'id' => sanitize_text_field($item_data['id']),
-            'content' => MCL_Sanitization::sanitize_item_content($item_data['content']),
+            'content' => MAGICCL_Sanitization::sanitize_item_content($item_data['content']),
             'parent_id' => isset($item_data['parent_id']) ? sanitize_text_field($item_data['parent_id']) : '',
             'priority' => isset($item_data['priority']) ? sanitize_text_field($item_data['priority']) : 'none',
             'locked' => false
@@ -2226,10 +2238,10 @@ class MCL_Public {
         $existing_items[] = $new_item;
         
         // Save to database
-        update_post_meta($checklist_id, '_mcl_items', $existing_items);
+        update_post_meta($checklist_id, '_magiccl_items', $existing_items);
         
         // Trigger notification
-        do_action('mcl_item_added', $checklist_id, $new_item);
+        do_action('magiccl_item_added', $checklist_id, $new_item);
         
         wp_send_json_success(array('item' => $new_item));
     }
@@ -2238,14 +2250,20 @@ class MCL_Public {
      * Delete an item from a checklist with notifications
      */
     public function delete_item() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         $checklist_id = intval($_POST['checklist_id'] ?? 0);
         $item_id = sanitize_text_field($_POST['item_id'] ?? '');
-        
+
         if (!$checklist_id || !$item_id) {
             wp_send_json_error('Missing required data');
             return;
         }
-        
+
         // Check permissions
         if (!$this->has_permission($checklist_id, 'edit')) {
             wp_send_json_error('Permission denied');
@@ -2253,7 +2271,7 @@ class MCL_Public {
         }
         
         // Get existing items
-        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $existing_items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         
         // Find and remove the item
         $deleted_item = null;
@@ -2273,10 +2291,10 @@ class MCL_Public {
         }
         
         // Save updated items
-        update_post_meta($checklist_id, '_mcl_items', $filtered_items);
+        update_post_meta($checklist_id, '_magiccl_items', $filtered_items);
         
         // Trigger notification
-        do_action('mcl_item_deleted', $checklist_id, $deleted_item);
+        do_action('magiccl_item_deleted', $checklist_id, $deleted_item);
 
         wp_send_json_success(array('deleted_item' => $deleted_item));
     }
@@ -2300,15 +2318,15 @@ class MCL_Public {
         }
 
         // Get the kanban board structure from post meta
-        $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+        $board = get_post_meta($checklist_id, '_magiccl_kanban_board', true);
 
         // Get checklist items for syncing
-        $checklist_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $checklist_items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         $checked_state = $this->get_checked_state($checklist_id, $context);
         $in_progress_state = $this->get_in_progress_state($checklist_id, $context);
 
         // Get deadlines for items
-        $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+        $deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
 
         // Create priority map from checklist items
         $priority_map = array();
@@ -2446,13 +2464,13 @@ class MCL_Public {
 
             // Save the updated board if there were any changes (new items added or deleted items removed)
             if (!empty($new_items) || $board_changed) {
-                update_post_meta($checklist_id, '_mcl_kanban_board', $board);
+                update_post_meta($checklist_id, '_magiccl_kanban_board', $board);
             }
         }
 
         // Enrich board items with comment counts and user assignments
         global $wpdb;
-        $comments_table = $wpdb->prefix . 'mcl_task_comments';
+        $comments_table = $wpdb->prefix . 'magiccl_task_comments';
 
         // Check if comments table exists
         $comments_table_exists = $wpdb->get_var("SHOW TABLES LIKE '$comments_table'") == $comments_table;
@@ -2512,7 +2530,7 @@ class MCL_Public {
         }
 
         // Get checklist settings for priority display
-        $enable_item_priority = (bool)get_post_meta($checklist_id, '_mcl_enable_item_priority', true);
+        $enable_item_priority = (bool)get_post_meta($checklist_id, '_magiccl_enable_item_priority', true);
 
         wp_send_json_success(array(
             'board' => $board,
@@ -2526,7 +2544,7 @@ class MCL_Public {
      */
     public function save_kanban_board() {
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $board = isset($_POST['board']) ? json_decode(stripslashes($_POST['board']), true) : null;
+        $board = isset($_POST['board']) ? json_decode(wp_unslash($_POST['board']), true) : null;
         $context = isset($_POST['context']) ? sanitize_text_field($_POST['context']) : 'admin';
 
         if (!$checklist_id || !$board) {
@@ -2581,11 +2599,11 @@ class MCL_Public {
         }
 
         // Save the board structure
-        update_post_meta($checklist_id, '_mcl_kanban_board', $sanitized_board);
+        update_post_meta($checklist_id, '_magiccl_kanban_board', $sanitized_board);
 
-        // Also sync kanban board data to _mcl_items for drawer compatibility
+        // Also sync kanban board data to _magiccl_items for drawer compatibility
         // Get existing items to preserve parent_id and priority fields
-        $existing_items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $existing_items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         $existing_items_map = array();
         foreach ($existing_items as $existing_item) {
             $existing_items_map[$existing_item['id']] = $existing_item;
@@ -2615,8 +2633,8 @@ class MCL_Public {
             }
         }
 
-        // Update _mcl_items to keep it in sync with kanban board
-        update_post_meta($checklist_id, '_mcl_items', $updated_items);
+        // Update _magiccl_items to keep it in sync with kanban board
+        update_post_meta($checklist_id, '_magiccl_items', $updated_items);
 
         // Also update checked state based on kanban board
         $checked_items = array();
@@ -2633,10 +2651,10 @@ class MCL_Public {
 
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            update_user_meta($user_id, "_mcl_{$context}_checked_state_" . $checklist_id, $checked_items);
+            update_user_meta($user_id, "_magiccl_{$context}_checked_state_" . $checklist_id, $checked_items);
         } else if ($checked_state_handling === 'global') {
             // Use same key for all contexts to ensure sync across views
-            $meta_key = '_mcl_checked_state';
+            $meta_key = '_magiccl_checked_state';
             update_post_meta($checklist_id, $meta_key, $checked_items);
         }
 
@@ -2649,16 +2667,16 @@ class MCL_Public {
     public function get_threaded_comments_public() {
         try {
             // Verify nonce for public context
-            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
             $is_logged_in = is_user_logged_in();
 
             if ($is_logged_in) {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
             } else {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
@@ -2676,7 +2694,7 @@ class MCL_Public {
 
             // Check feature board settings for comments - allow reading if comments are enabled for anyone
             $can_read_comments = false;
-            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $settings_table = $wpdb->prefix . 'magiccl_feature_board_settings';
             $fb_settings = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $settings_table WHERE checklist_id = %d",
                 $checklist_id
@@ -2699,15 +2717,15 @@ class MCL_Public {
                 return;
             }
 
-            $comments_table = $wpdb->prefix . 'mcl_task_comments';
-            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+            $comments_table = $wpdb->prefix . 'magiccl_task_comments';
+            $likes_table = $wpdb->prefix . 'magiccl_comment_likes';
 
             // Check if tables exist
             if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
                 $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
                 // Try to create tables
-                if (class_exists('MCL_DB_Manager')) {
-                    MCL_DB_Manager::get_instance()->install();
+                if (class_exists('MAGICCL_DB_Manager')) {
+                    MAGICCL_DB_Manager::get_instance()->install();
                 }
             }
 
@@ -2766,16 +2784,16 @@ class MCL_Public {
     public function add_threaded_comment_public() {
         try {
             // Verify nonce for public context
-            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
             $is_logged_in = is_user_logged_in();
 
             if ($is_logged_in) {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
             } else {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
@@ -2794,7 +2812,7 @@ class MCL_Public {
             global $wpdb;
 
             // Check feature board settings for comments
-            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $settings_table = $wpdb->prefix . 'magiccl_feature_board_settings';
             $fb_settings = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $settings_table WHERE checklist_id = %d",
                 $checklist_id
@@ -2821,15 +2839,15 @@ class MCL_Public {
                 wp_send_json_error('Permission denied');
                 return;
             }
-            $comments_table = $wpdb->prefix . 'mcl_task_comments';
-            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+            $comments_table = $wpdb->prefix . 'magiccl_task_comments';
+            $likes_table = $wpdb->prefix . 'magiccl_comment_likes';
 
             // Check if tables exist
             if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
                 $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
                 // Try to create tables
-                if (class_exists('MCL_DB_Manager')) {
-                    MCL_DB_Manager::get_instance()->install();
+                if (class_exists('MAGICCL_DB_Manager')) {
+                    MAGICCL_DB_Manager::get_instance()->install();
                 }
             }
 
@@ -2919,16 +2937,16 @@ class MCL_Public {
     public function toggle_comment_like_public() {
         try {
             // Verify nonce for public context
-            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
             $is_logged_in = is_user_logged_in();
 
             if ($is_logged_in) {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
             } else {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
@@ -2950,15 +2968,15 @@ class MCL_Public {
             $current_user = wp_get_current_user();
 
             global $wpdb;
-            $comments_table = $wpdb->prefix . 'mcl_task_comments';
-            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+            $comments_table = $wpdb->prefix . 'magiccl_task_comments';
+            $likes_table = $wpdb->prefix . 'magiccl_comment_likes';
 
             // Check if tables exist
             if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
                 $wpdb->get_var("SHOW TABLES LIKE '$likes_table'") != $likes_table) {
                 // Try to create tables
-                if (class_exists('MCL_DB_Manager')) {
-                    MCL_DB_Manager::get_instance()->install();
+                if (class_exists('MAGICCL_DB_Manager')) {
+                    MAGICCL_DB_Manager::get_instance()->install();
                 }
             }
 
@@ -3048,16 +3066,16 @@ class MCL_Public {
     public function delete_threaded_comment_public() {
         try {
             // Verify nonce for public context
-            $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+            $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
             $is_logged_in = is_user_logged_in();
 
             if ($is_logged_in) {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
             } else {
-                if (!wp_verify_nonce($nonce, 'mcl_ajax_nopriv_nonce')) {
+                if (!wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
                     // If public nonce fails, return early and let admin hook try
                     return;
                 }
@@ -3071,8 +3089,8 @@ class MCL_Public {
             }
 
             global $wpdb;
-            $comments_table = $wpdb->prefix . 'mcl_task_comments';
-            $likes_table = $wpdb->prefix . 'mcl_comment_likes';
+            $comments_table = $wpdb->prefix . 'magiccl_task_comments';
+            $likes_table = $wpdb->prefix . 'magiccl_comment_likes';
 
             // Check if tables exist
             if ($wpdb->get_var("SHOW TABLES LIKE '$comments_table'") != $comments_table ||
@@ -3173,7 +3191,7 @@ class MCL_Public {
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $table = $wpdb->prefix . 'magiccl_feature_board_settings';
 
         $settings = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE checklist_id = %d",
@@ -3237,7 +3255,7 @@ class MCL_Public {
         }
 
         // Get column sync settings from post meta
-        $settings = get_post_meta($checklist_id, '_mcl_column_sync_settings', true);
+        $settings = get_post_meta($checklist_id, '_magiccl_column_sync_settings', true);
 
         if (!$settings || !is_array($settings)) {
             $settings = array(
@@ -3255,6 +3273,12 @@ class MCL_Public {
      * Toggle upvote on a kanban item (feature board)
      */
     public function toggle_item_upvote() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'), 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
         $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
@@ -3267,7 +3291,7 @@ class MCL_Public {
 
         // Get feature board settings
         global $wpdb;
-        $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $settings_table = $wpdb->prefix . 'magiccl_feature_board_settings';
         $settings = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $settings_table WHERE checklist_id = %d",
             $checklist_id
@@ -3278,7 +3302,7 @@ class MCL_Public {
         $check_ip = $settings && isset($settings->upvote_anon_check_ip) ? (bool) $settings->upvote_anon_check_ip : false;
 
         // Generate IP hash for anonymous upvote tracking
-        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
         $ip_hash = hash('sha256', $ip_address . $checklist_id . wp_salt('auth'));
 
         // Determine user info
@@ -3306,7 +3330,7 @@ class MCL_Public {
 
             // For 'anyone' mode without email, generate anonymous identifier based on IP
             if ($upvote_mode === 'anyone' && !$user_email) {
-                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+                $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
                 $user_email = 'anon_' . md5($ip_address . $checklist_id) . '@anonymous.local';
                 $user_name = 'Anonymous';
             }
@@ -3316,7 +3340,7 @@ class MCL_Public {
             }
         }
 
-        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $upvotes_table = $wpdb->prefix . 'magiccl_item_upvotes';
 
         // Check if user already upvoted (by email first)
         $existing = $wpdb->get_row($wpdb->prepare(
@@ -3410,7 +3434,7 @@ class MCL_Public {
         }
 
         global $wpdb;
-        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $upvotes_table = $wpdb->prefix . 'magiccl_item_upvotes';
 
         // Get current user email
         $current_user_email = '';
@@ -3489,7 +3513,7 @@ class MCL_Public {
      */
     private function get_item_upvote_count($checklist_id, $item_id) {
         global $wpdb;
-        $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+        $upvotes_table = $wpdb->prefix . 'magiccl_item_upvotes';
 
         return (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $upvotes_table WHERE checklist_id = %d AND item_id = %s AND email_verified = 1",
@@ -3514,7 +3538,7 @@ class MCL_Public {
 
         // Get feature board settings
         global $wpdb;
-        $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+        $settings_table = $wpdb->prefix . 'magiccl_feature_board_settings';
         $settings = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $settings_table WHERE checklist_id = %d",
             $checklist_id
@@ -3554,7 +3578,7 @@ class MCL_Public {
 
             // For 'anyone' mode without email, generate anonymous identifier based on IP
             if ($submission_mode === 'anyone' && !$user_email) {
-                $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+                $ip_address = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
                 $user_email = 'anon_' . md5($ip_address . time()) . '@anonymous.local';
                 $user_name = 'Anonymous';
             }
@@ -3564,7 +3588,7 @@ class MCL_Public {
             }
         }
 
-        $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+        $submissions_table = $wpdb->prefix . 'magiccl_idea_submissions';
 
         // For 'anyone' mode or logged-in users, email is automatically verified
         // Only 'email_verified' mode for non-logged-in users needs verification
@@ -3632,7 +3656,7 @@ class MCL_Public {
      */
     private function add_idea_to_board($checklist_id, $submission_id) {
         global $wpdb;
-        $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+        $submissions_table = $wpdb->prefix . 'magiccl_idea_submissions';
 
         $submission = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $submissions_table WHERE id = %d",
@@ -3644,7 +3668,7 @@ class MCL_Public {
         }
 
         // Get the current kanban board
-        $board = get_post_meta($checklist_id, '_mcl_kanban_board', true);
+        $board = get_post_meta($checklist_id, '_magiccl_kanban_board', true);
         if (!is_array($board)) {
             $board = array();
         }
@@ -3689,7 +3713,7 @@ class MCL_Public {
         }
 
         // Save the updated board
-        update_post_meta($checklist_id, '_mcl_kanban_board', $board);
+        update_post_meta($checklist_id, '_magiccl_kanban_board', $board);
 
         return true;
     }
@@ -3709,7 +3733,7 @@ class MCL_Public {
         global $wpdb;
 
         if ($type === 'upvote') {
-            $upvotes_table = $wpdb->prefix . 'mcl_item_upvotes';
+            $upvotes_table = $wpdb->prefix . 'magiccl_item_upvotes';
 
             $upvote = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $upvotes_table WHERE verification_token = %s",
@@ -3732,7 +3756,7 @@ class MCL_Public {
             wp_send_json_success(array('message' => 'Your upvote has been verified!'));
 
         } elseif ($type === 'idea') {
-            $submissions_table = $wpdb->prefix . 'mcl_idea_submissions';
+            $submissions_table = $wpdb->prefix . 'magiccl_idea_submissions';
 
             $submission = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $submissions_table WHERE verification_token = %s",
@@ -3745,7 +3769,7 @@ class MCL_Public {
             }
 
             // Get feature board settings
-            $settings_table = $wpdb->prefix . 'mcl_feature_board_settings';
+            $settings_table = $wpdb->prefix . 'magiccl_feature_board_settings';
             $settings = $wpdb->get_row($wpdb->prepare(
                 "SELECT * FROM $settings_table WHERE checklist_id = %d",
                 $submission->checklist_id
@@ -3779,7 +3803,7 @@ class MCL_Public {
      */
     private function send_verification_email($email, $name, $token, $type, $checklist_id, $item_id = null, $idea_title = null) {
         $verify_url = add_query_arg(array(
-            'action' => 'mcl_verify_email',
+            'action' => 'magiccl_verify_email',
             'token' => $token,
             'type' => $type
         ), admin_url('admin-ajax.php'));
@@ -3787,16 +3811,16 @@ class MCL_Public {
         $checklist_title = get_the_title($checklist_id);
 
         if ($type === 'upvote') {
-            $subject = sprintf(__('Verify your upvote - %s', 'magic-checklists'), $checklist_title);
+            $subject = sprintf(__('Verify your upvote - %s', 'magicchecklists'), $checklist_title);
             $message = sprintf(
-                __("Hi %s,\n\nPlease click the link below to verify your upvote:\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magic-checklists'),
+                __("Hi %s,\n\nPlease click the link below to verify your upvote:\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
                 $name,
                 $verify_url
             );
         } else {
-            $subject = sprintf(__('Verify your idea submission - %s', 'magic-checklists'), $checklist_title);
+            $subject = sprintf(__('Verify your idea submission - %s', 'magicchecklists'), $checklist_title);
             $message = sprintf(
-                __("Hi %s,\n\nPlease click the link below to verify your idea submission: \"%s\"\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magic-checklists'),
+                __("Hi %s,\n\nPlease click the link below to verify your idea submission: \"%s\"\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
                 $name,
                 $idea_title,
                 $verify_url

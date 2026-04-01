@@ -9,8 +9,8 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
   if (!isOpen) return null
 
   return (
-    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
-      <div className={`mcl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div className="magiccl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
+      <div className={`magiccl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <button 
@@ -38,7 +38,7 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
 
 const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLocking = false, errors = {}, onPriorityToggle, checklistId = null, adminData = null }) => {
   // Initialize translations
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const t = i18n.checklistItems || {};
   
   const [draggedItem, setDraggedItem] = useState(null)
@@ -179,7 +179,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     }
 
     /* In progress indicator */
-    .mcl-progress-indicator {
+    .magiccl-progress-indicator {
       position: absolute;
       left: 0;
       top: 0;
@@ -189,7 +189,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       transition: background-color 0.2s ease;
     }
     
-    .mcl-progress-indicator.active {
+    .magiccl-progress-indicator.active {
       background-color: #10b981;
     }
   `;
@@ -245,14 +245,14 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       try {
         // First, check if any tours exist (early exit optimization)
         const formData = new FormData()
-        formData.append('action', 'mcl_has_active_tours')
+        formData.append('action', 'magiccl_has_active_tours')
 
-        const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+        const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
         if (nonce) {
           formData.append('nonce', nonce)
         }
 
-        const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+        const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
         const toursExistResponse = await fetch(ajaxUrl, {
           method: 'POST',
           body: formData,
@@ -278,7 +278,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
         const itemIds = items.map(item => item.id)
         const batchFormData = new FormData()
-        batchFormData.append('action', 'mcl_get_batch_tour_connections')
+        batchFormData.append('action', 'magiccl_get_batch_tour_connections')
         batchFormData.append('checklist_id', checklistId)
         batchFormData.append('item_ids', JSON.stringify(itemIds))
 
@@ -449,7 +449,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       // Update item
       updateItemField(itemId, 'deadline', null)
       // Save to server immediately
-      if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
+      if (checklistId && (adminData?.ajaxurl || window.magiccl_checklists?.ajax_url)) {
         saveDeadlineToServer(itemId, '')
       }
     } else {
@@ -462,7 +462,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       // Update item
       updateItemField(itemId, 'deadline', timestamp)
       // Save to server immediately
-      if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
+      if (checklistId && (adminData?.ajaxurl || window.magiccl_checklists?.ajax_url)) {
         saveDeadlineToServer(itemId, timestamp)
       }
     }
@@ -484,19 +484,19 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   const saveDeadlineToServer = async (itemId, deadline) => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_save_item_deadline')
+      formData.append('action', 'magiccl_save_item_deadline')
       formData.append('checklist_id', checklistId)
       formData.append('item_id', itemId)
       formData.append('deadline', deadline)
       
       // Use admin nonce if available, fallback to frontend nonce
-      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
       // Use admin AJAX URL if available, fallback to frontend URL
-      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
       await fetch(ajaxUrl, {
         method: 'POST',
         body: formData,
@@ -518,7 +518,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       updateItemField(itemId, 'in_progress', !prev.includes(itemId))
       
       // Also save to server immediately if checklistId is available
-      if (checklistId && (adminData?.ajaxurl || window.mcl_checklists?.ajax_url)) {
+      if (checklistId && (adminData?.ajaxurl || window.magiccl_checklists?.ajax_url)) {
         saveInProgressToServer(newItems)
       }
       
@@ -530,18 +530,18 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   const saveInProgressToServer = async (inProgressItemIds) => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_save_in_progress')
+      formData.append('action', 'magiccl_save_in_progress')
       formData.append('checklist_id', checklistId)
       formData.append('items_in_progress', JSON.stringify(inProgressItemIds))
       
       // Use admin nonce if available, fallback to frontend nonce
-      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
       // Use admin AJAX URL if available, fallback to frontend URL
-      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
       await fetch(ajaxUrl, {
         method: 'POST',
         body: formData,
@@ -566,8 +566,8 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
 
     const connection = connections[0]
     const params = new URLSearchParams()
-    params.set('mcl_continue_tour', connection.tour_id)
-    params.set('mcl_tour_step', connection.step_index)
+    params.set('magiccl_continue_tour', connection.tour_id)
+    params.set('magiccl_tour_step', connection.step_index)
 
     let tourUrl = window.location.pathname
     if (window.location.search) {
@@ -945,7 +945,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     setImageError(null)
     
     // Check if user is logged in and can use media library
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     
     if (isLoggedIn && typeof wp !== 'undefined' && wp.media) {
       // Show choice modal for logged in users
@@ -975,15 +975,15 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     setAccountImagesError(null)
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_account_images')
+      formData.append('action', 'magiccl_get_account_images')
       formData.append('checklist_id', checklistId)
 
-      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
-      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         body: formData,
@@ -1042,15 +1042,15 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     setLoadingImages(true)
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('action', 'magiccl_get_uploaded_images')
       formData.append('checklist_id', checklistId)
       
-      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
-      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         body: formData,
@@ -1083,16 +1083,16 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_upload_image')
+      formData.append('action', 'magiccl_upload_image')
       formData.append('file', file)
       formData.append('checklist_id', checklistId || 0)
 
-      const nonce = adminData?.nonces?.mcl_admin || window.mcl_checklists?.nonce
+      const nonce = adminData?.nonces?.magiccl_admin || window.magiccl_checklists?.nonce
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
-      const ajaxUrl = adminData?.ajaxurl || window.mcl_checklists?.ajax_url
+      const ajaxUrl = adminData?.ajaxurl || window.magiccl_checklists?.ajax_url
       const response = await fetch(ajaxUrl, {
         method: 'POST',
         body: formData,
@@ -1131,9 +1131,9 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     let height = Math.round(width * aspectRatio)
     
     const imageHtml = `
-      <div class="mcl-item-image-container" style="width: ${width}px;">
-        <img src="${imageData.url}" alt="${imageData.alt || 'Uploaded image'}" style="width: ${width}px; height: ${height}px;" data-mcl-image="true" />
-        <div class="mcl-resize-handle" data-resize-handle="true"></div>
+      <div class="magiccl-item-image-container" style="width: ${width}px;">
+        <img src="${imageData.url}" alt="${imageData.alt || 'Uploaded image'}" style="width: ${width}px; height: ${height}px;" data-magiccl-image="true" />
+        <div class="magiccl-resize-handle" data-resize-handle="true"></div>
       </div>
     `
     const newContent = currentItem.content + imageHtml
@@ -1173,12 +1173,12 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
   }
 
   const addResizeListeners = (contentDiv) => {
-    const resizeHandles = contentDiv.querySelectorAll('.mcl-resize-handle')
+    const resizeHandles = contentDiv.querySelectorAll('.magiccl-resize-handle')
     resizeHandles.forEach(handle => {
       if (!handle.hasAttribute('data-listener-added')) {
         handle.addEventListener('mousedown', (e) => {
           e.preventDefault()
-          const container = handle.closest('.mcl-item-image-container')
+          const container = handle.closest('.magiccl-item-image-container')
           const img = container.querySelector('img')
           if (img) {
             setResizing({
@@ -1194,16 +1194,16 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
     })
     
     // Also add resize handles to any existing images that don't have them
-    const images = contentDiv.querySelectorAll('img[data-mcl-image="true"]')
+    const images = contentDiv.querySelectorAll('img[data-magiccl-image="true"]')
     images.forEach(img => {
-      if (!img.closest('.mcl-item-image-container')) {
+      if (!img.closest('.magiccl-item-image-container')) {
         // Wrap standalone images in containers
         const container = document.createElement('div')
-        container.className = 'mcl-item-image-container'
+        container.className = 'magiccl-item-image-container'
         container.style.width = `${img.offsetWidth}px`
         
         const resizeHandle = document.createElement('div')
-        resizeHandle.className = 'mcl-resize-handle'
+        resizeHandle.className = 'magiccl-resize-handle'
         resizeHandle.setAttribute('data-resize-handle', 'true')
         
         img.parentNode.insertBefore(container, img)
@@ -1329,7 +1329,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
           link.textContent = match[0];
           link.target = '_blank';
           link.rel = 'noopener noreferrer';
-          link.className = 'mcl-link';
+          link.className = 'magiccl-link';
           link.style.color = '#0066cc';
           link.style.textDecoration = 'underline';
           link.style.fontWeight = '500';
@@ -1430,7 +1430,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
       linkElement.href = linkUrl;
       linkElement.target = '_blank';
       linkElement.rel = 'noopener noreferrer';
-      linkElement.className = 'mcl-link';
+      linkElement.className = 'magiccl-link';
       linkElement.style.color = '#0066cc';
       linkElement.style.textDecoration = 'underline';
       linkElement.style.fontWeight = '500';
@@ -1620,7 +1620,7 @@ const ChecklistItems = ({ items = [], onChange, enablePriority = false, enableLo
             }`}
           >
             {/* In-progress indicator */}
-            <div className={`mcl-progress-indicator ${isInProgress ? 'active' : ''}`} />
+            <div className={`magiccl-progress-indicator ${isInProgress ? 'active' : ''}`} />
 
             {/* Drag Handle */}
             <div

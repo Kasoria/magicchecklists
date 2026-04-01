@@ -5,7 +5,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // Check if we should delete data
-$settings = get_option('mcl_settings', array());
+$settings = get_option('magiccl_settings', array());
 $should_delete = isset($settings['delete_data_on_uninstall']) && $settings['delete_data_on_uninstall'];
 
 if ($should_delete) {
@@ -13,7 +13,7 @@ if ($should_delete) {
 
     // Delete custom post type posts and meta
     $posts = get_posts(array(
-        'post_type' => 'mcl_checklist',
+        'post_type' => 'magiccl_checklist',
         'numberposts' => -1,
         'post_status' => 'any'
     ));
@@ -24,9 +24,9 @@ if ($should_delete) {
 
     // Delete custom tables
     $tables = array(
-        $wpdb->prefix . 'mcl_invite_links',
-        $wpdb->prefix . 'mcl_notification_settings',
-        $wpdb->prefix . 'mcl_notification_queue'
+        $wpdb->prefix . 'magiccl_invite_links',
+        $wpdb->prefix . 'magiccl_notification_settings',
+        $wpdb->prefix . 'magiccl_notification_queue'
     );
 
     foreach ($tables as $table) {
@@ -34,9 +34,9 @@ if ($should_delete) {
     }
 
     // Delete options
-    delete_option('mcl_settings');
-    delete_option('mcl_db_version');
-    delete_option('mcl_version');
-    delete_option('mcl_plugin_data_version');
-    delete_option('mcl_tutorial_checklist_created');
+    delete_option('magiccl_settings');
+    delete_option('magiccl_db_version');
+    delete_option('magiccl_version');
+    delete_option('magiccl_plugin_data_version');
+    delete_option('magiccl_tutorial_checklist_created');
 }

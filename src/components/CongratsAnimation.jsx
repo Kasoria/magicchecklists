@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 const CongratsAnimation = ({ show, adminData }) => {
-    const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || (typeof window !== 'undefined' && window.mcl_checklists?.i18n) || {};
+    const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || (typeof window !== 'undefined' && window.magiccl_checklists?.i18n) || {};
     const [confetti, setConfetti] = useState([]);
     const colors = ['#6c63ff', '#ff6b6b', '#ffd93d', '#6bff95', '#ff6bcd'];
 
@@ -27,16 +27,16 @@ const CongratsAnimation = ({ show, adminData }) => {
     if (!show) return null;
 
     return (
-        <div className="mcl-congratulations active">
-            <div className="mcl-congrats-content">
-                <div className="mcl-congrats-message">
+        <div className="magiccl-congratulations active">
+            <div className="magiccl-congrats-content">
+                <div className="magiccl-congrats-message">
                     {i18n.congratsAnimation?.message || 'Great job! 🎉'}
                 </div>
             </div>
             {confetti.map(piece => (
                 <div
                     key={piece.id}
-                    className="mcl-confetti"
+                    className="magiccl-confetti"
                     style={{
                         backgroundColor: piece.color,
                         left: `${piece.left}%`,

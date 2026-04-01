@@ -44,9 +44,9 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_checklist_for_edit',
+          action: 'magiccl_get_checklist_for_edit',
           checklist_id: checklistId,
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -124,7 +124,7 @@ const ChecklistEditor = ({ adminData, checklistId = null, checklistType = null, 
   }
 
   return (
-    <div className="mcl-checklist-editor">
+    <div className="magiccl-checklist-editor">
       {currentView === 'type-selector' && (
         <ChecklistTypeSelector 
           adminData={adminData}

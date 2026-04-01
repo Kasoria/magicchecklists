@@ -5,13 +5,13 @@ const PriorityUtils = {
         if (!indicator) return;
         
         if (displayType === 'number') {
-            indicator.textContent = mclAdmin.priorityNumbers[priority];
+            indicator.textContent = magicclAdmin.priorityNumbers[priority];
             indicator.setAttribute('data-display', 'number');
             indicator.style.backgroundColor = '';
         } else {
             indicator.textContent = '';
             indicator.setAttribute('data-display', 'color');
-            indicator.style.backgroundColor = mclAdmin.priorityColors[priority];
+            indicator.style.backgroundColor = magicclAdmin.priorityColors[priority];
         }
         indicator.setAttribute('data-priority', priority);
     },
@@ -27,8 +27,8 @@ const PriorityUtils = {
 // Form validation utilities
 const ValidationUtils = {
     addShakeAnimation(element) {
-        element.classList.add('mcl-shake');
-        setTimeout(() => element.classList.remove('mcl-shake'), 820);
+        element.classList.add('magiccl-shake');
+        setTimeout(() => element.classList.remove('magiccl-shake'), 820);
     },
 
     showError(errorElement, message) {
@@ -52,8 +52,8 @@ const AjaxUtils = {
         const formData = new FormData();
         formData.append('action', action);
         
-        // Append nonce if provided in data or get from mclAdmin.nonces
-        let nonce = data._ajax_nonce || (mclAdmin.nonces && mclAdmin.nonces[action]);
+        // Append nonce if provided in data or get from magicclAdmin.nonces
+        let nonce = data._ajax_nonce || (magicclAdmin.nonces && magicclAdmin.nonces[action]);
         if (!nonce) {
             console.error(`No nonce found for action: ${action}`);
             throw new Error('Missing nonce');
@@ -69,7 +69,7 @@ const AjaxUtils = {
         }
 
         try {
-            const response = await fetch(mclAdmin.ajaxurl, {
+            const response = await fetch(magicclAdmin.ajaxurl, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'

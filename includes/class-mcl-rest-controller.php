@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_REST_Controller extends WP_REST_Controller {
+class MAGICCL_REST_Controller extends WP_REST_Controller {
     /**
      * Namespace for the API
      */
@@ -19,7 +19,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     /**
      * Rate limit settings
      */
-    private $rate_limit_key = 'mcl_rate_limit_';
+    private $rate_limit_key = 'magiccl_rate_limit_';
     private $default_rate_limit = 120; // requests per minute
     private $rate_limit_period = 60; // 1 minute in seconds
 
@@ -41,7 +41,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         }
 
         // Get the request URI and check if it's for our API
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
         if (!strpos($request_uri, '/magicchecklists/')) {
             return $result;
         }
@@ -52,23 +52,23 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
             if ($is_v2) {
                 // V2: Check for API key authentication
-                $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+                $auth_header = isset($_SERVER['HTTP_AUTHORIZATION']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_AUTHORIZATION'])) : '';
                 if (strpos($auth_header, 'Bearer ') === 0) {
                     $api_key = str_replace('Bearer ', '', $auth_header);
-                    $settings = get_option('mcl_integration_settings', []);
+                    $settings = get_option('magiccl_integration_settings', []);
 
                     // Get and decrypt API keys from integration settings
                     $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
-                    $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
+                    $magiccl_key = isset($settings['magiccl_api_key']) ? $this->decrypt_api_key($settings['magiccl_api_key']) : '';
 
                     if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
-                        (!empty($mcl_key) && $api_key === $mcl_key)) {
+                        (!empty($magiccl_key) && $api_key === $magiccl_key)) {
                         return true;
                     }
                 }
                 return new WP_Error(
                     'rest_not_authorized',
-                    __('Invalid API key.', 'magic-checklists'),
+                    __('Invalid API key.', 'magicchecklists'),
                     array('status' => 401)
                 );
             } else {
@@ -78,7 +78,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 if (!is_user_logged_in()) {
                     return new WP_Error(
                         'rest_not_logged_in',
-                        __('You must be logged in to access this endpoint.', 'magic-checklists'),
+                        __('You must be logged in to access this endpoint.', 'magicchecklists'),
                         array('status' => 401)
                     );
                 }
@@ -90,7 +90,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             error_log('MagicChecklists Auth Error: ' . $e->getMessage());
             return new WP_Error(
                 'rest_auth_error',
-                __('Authentication error occurred.', 'magic-checklists'),
+                __('Authentication error occurred.', 'magicchecklists'),
                 array('status' => 500)
             );
         }
@@ -266,28 +266,6 @@ class MCL_REST_Controller extends WP_REST_Controller {
             ],
         ]);
 
-        // Add this route to help debug API key issues
-        register_rest_route($this->namespace_v2, '/debug', [
-            [
-                'methods' => WP_REST_Server::READABLE,
-                'callback' => function($request) {
-                    $auth_header = $request->get_header('Authorization');
-                    $api_key = str_replace('Bearer ', '', $auth_header);
-                    $settings = get_option('mcl_integration_settings', []);
-                    $stored_key = $settings['mainwp_api_key'] ?? '';
-                    
-                    return rest_ensure_response([
-                        'has_auth_header' => !empty($auth_header),
-                        'auth_header_starts_with_bearer' => strpos($auth_header, 'Bearer ') === 0,
-                        'api_key_length' => strlen($api_key),
-                        'stored_key_exists' => !empty($stored_key),
-                        'keys_match' => $api_key === $stored_key,
-                    ]);
-                },
-                'permission_callback' => '__return_true'
-            ]
-        ]);
-
         // Register V1 routes (existing routes with app password auth)
         register_rest_route($this->namespace_v1, '/' . $this->rest_base, [
             [
@@ -403,13 +381,13 @@ class MCL_REST_Controller extends WP_REST_Controller {
     }
 
     private function check_api_enabled() {
-        $integration_settings = get_option('mcl_integration_settings', array());
+        $integration_settings = get_option('magiccl_integration_settings', array());
         $api_enabled = isset($integration_settings['enable_api']) ? $integration_settings['enable_api'] : true;
     
         if (!$api_enabled) {
             return new WP_Error(
                 'rest_api_disabled',
-                __('The MagicChecklists API is currently disabled.', 'magic-checklists'),
+                __('The MagicChecklists API is currently disabled.', 'magicchecklists'),
                 array('status' => 403)
             );
         }
@@ -438,7 +416,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             return new WP_Error(
                 'rest_rate_limit_exceeded',
                 sprintf(
-                    __('Rate limit exceeded. Please try again in %d minutes.', 'magic-checklists'),
+                    __('Rate limit exceeded. Please try again in %d minutes.', 'magicchecklists'),
                     ceil($retry_after / 60)
                 ),
                 array(
@@ -480,12 +458,12 @@ class MCL_REST_Controller extends WP_REST_Controller {
     private function get_client_ip() {
         $ip = '';
         
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        if (!empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP'])))) {
+            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP']));
+        } elseif (!empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])))) {
+            $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
         } else {
-            $ip = $_SERVER['REMOTE_ADDR'];
+            $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
         }
 
         return sanitize_text_field($ip);
@@ -509,7 +487,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             if (!is_user_logged_in()) {
                 return new WP_Error(
                     'rest_not_logged_in',
-                    __('You must be logged in to access this endpoint.', 'magic-checklists'),
+                    __('You must be logged in to access this endpoint.', 'magicchecklists'),
                     array('status' => 401)
                 );
             }
@@ -556,9 +534,9 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $response->header('X-API-Version', '1.0');
         
         // Add proper CORS headers if needed
-        $allowed_origins = get_option('mcl_allowed_origins', array());
+        $allowed_origins = get_option('magiccl_allowed_origins', array());
         if (!empty($allowed_origins)) {
-            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+            $origin = isset($_SERVER['HTTP_ORIGIN']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_ORIGIN'])) : '';
             if (in_array($origin, $allowed_origins)) {
                 $response->header('Access-Control-Allow-Origin', $origin);
                 $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -586,7 +564,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         }
 
         $args = [
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'posts_per_page' => $per_page,
             'paged' => isset($request['page']) ? absint($request['page']) : 1,
             'post_status' => ['publish', 'draft'],
@@ -600,17 +578,17 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $args['meta_query'] = array(
             'relation' => 'OR',
             array(
-                'key' => '_mcl_active',
+                'key' => '_magiccl_active',
                 'value' => '1',
                 'compare' => '='
             ),
             array(
-                'key' => '_mcl_active',
+                'key' => '_magiccl_active',
                 'value' => '0',
                 'compare' => '='
             ),
             array(
-                'key' => '_mcl_active',
+                'key' => '_magiccl_active',
                 'compare' => 'NOT EXISTS'
             )
         );
@@ -645,10 +623,10 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $id = (int) $request['id'];
         $post = get_post($id);
 
-        if (empty($post) || $post->post_type !== 'mcl_checklist') {
+        if (empty($post) || $post->post_type !== 'magiccl_checklist') {
             return new WP_Error(
-                'mcl_rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                'magiccl_rest_not_found',
+                __('Checklist not found', 'magicchecklists'),
                 ['status' => 404]
             );
         }
@@ -669,8 +647,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
     public function create_item($request) {
         if (!empty($request['id'])) {
             return new WP_Error(
-                'mcl_rest_checklist_exists',
-                __('Cannot create existing checklist.', 'magic-checklists'),
+                'magiccl_rest_checklist_exists',
+                __('Cannot create existing checklist.', 'magicchecklists'),
                 ['status' => 400]
             );
         }
@@ -679,7 +657,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         if ($payload_size > 1024 * 1024) { // 1MB limit
             return new WP_Error(
                 'rest_payload_too_large',
-                __('Request payload too large', 'magic-checklists'),
+                __('Request payload too large', 'magicchecklists'),
                 array('status' => 413)
             );
         }
@@ -698,7 +676,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $this->save_checklist_meta($post_id, $request);
 
         // Dispatch webhook for checklist creation
-        do_action('mcl_webhook_checklist_created', $post_id);
+        do_action('magiccl_webhook_checklist_created', $post_id);
 
         $post = get_post($post_id);
         $response = $this->prepare_item_for_response($post, $request);
@@ -722,11 +700,11 @@ class MCL_REST_Controller extends WP_REST_Controller {
         error_log('MCL DEBUG: Checklist ID: ' . $id);
         error_log('MCL DEBUG: Request params: ' . print_r($request->get_params(), true));
 
-        if (empty($post) || $post->post_type !== 'mcl_checklist') {
+        if (empty($post) || $post->post_type !== 'magiccl_checklist') {
             error_log('MCL DEBUG: Checklist not found');
             return new WP_Error(
-                'mcl_rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                'magiccl_rest_not_found',
+                __('Checklist not found', 'magicchecklists'),
                 ['status' => 404]
             );
         }
@@ -752,7 +730,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         error_log('MCL DEBUG: Meta saved successfully');
 
         // Dispatch webhook for checklist update
-        do_action('mcl_webhook_checklist_updated', $post_id);
+        do_action('magiccl_webhook_checklist_updated', $post_id);
 
         $post = get_post($post_id);
         $response = rest_ensure_response($this->prepare_item_for_response($post, $request));
@@ -769,10 +747,10 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $id = (int) $request['id'];
         $post = get_post($id);
 
-        if (empty($post) || $post->post_type !== 'mcl_checklist') {
+        if (empty($post) || $post->post_type !== 'magiccl_checklist') {
             return new WP_Error(
-                'mcl_rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                'magiccl_rest_not_found',
+                __('Checklist not found', 'magicchecklists'),
                 ['status' => 404]
             );
         }
@@ -782,14 +760,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
         if (!$result) {
             return new WP_Error(
-                'mcl_rest_cannot_delete',
-                __('The checklist cannot be deleted.', 'magic-checklists'),
+                'magiccl_rest_cannot_delete',
+                __('The checklist cannot be deleted.', 'magicchecklists'),
                 ['status' => 500]
             );
         }
 
         // Dispatch webhook for checklist deletion
-        do_action('mcl_webhook_checklist_deleted', $id);
+        do_action('magiccl_webhook_checklist_deleted', $id);
 
         $response = new WP_REST_Response();
         $response->set_data([
@@ -807,7 +785,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     public function update_checklist_items($request) {
         $id = (int) $request['id'];
         $new_items = $request['items'];
-        $existing_items = get_post_meta($id, '_mcl_items', true) ?: array();
+        $existing_items = get_post_meta($id, '_magiccl_items', true) ?: array();
         
         // Create map of existing items
         $existing_map = array();
@@ -829,8 +807,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
         foreach ($existing_map as $item_id => $existing_item) {
             if (!isset($new_items_map[$item_id])) {
                 // Item was deleted
-                error_log("MCL: Item deleted - checklist_id=$id, item_id=$item_id");
-                do_action('mcl_item_deleted', $id, $existing_item);
+                error_log("MAGICCL: Item deleted - checklist_id=$id, item_id=$item_id");
+                do_action('magiccl_item_deleted', $id, $existing_item);
             }
         }
         
@@ -842,7 +820,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             }
             
             $item_id = sanitize_text_field($item['id']);
-            $item_content = MCL_Sanitization::sanitize_item_content($item['content']);
+            $item_content = MAGICCL_Sanitization::sanitize_item_content($item['content']);
             
             // If item exists, update it while preserving any additional fields
             if (isset($existing_map[$item_id])) {
@@ -865,14 +843,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 );
                 $processed_items[] = $new_item;
                 
-                error_log("MCL: Item added - checklist_id=$id, item_id=$item_id");
-                do_action('mcl_item_added', $id, $new_item);
+                error_log("MAGICCL: Item added - checklist_id=$id, item_id=$item_id");
+                do_action('magiccl_item_added', $id, $new_item);
             }
         }
         
         // NOTE: We don't keep remaining items anymore since they were deleted
         
-        update_post_meta($id, '_mcl_items', $processed_items);
+        update_post_meta($id, '_magiccl_items', $processed_items);
         
         $response = rest_ensure_response(array(
             'success' => true,
@@ -889,30 +867,30 @@ class MCL_REST_Controller extends WP_REST_Controller {
     public function get_checked_state($request) {
         $id = (int) $request['id'];
         
-        if (empty($post = get_post($id)) || $post->post_type !== 'mcl_checklist') {
+        if (empty($post = get_post($id)) || $post->post_type !== 'magiccl_checklist') {
             return new WP_Error(
-                'mcl_rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                'magiccl_rest_not_found',
+                __('Checklist not found', 'magicchecklists'),
                 ['status' => 404]
             );
         }
         
         // Get checked state handling method and public access setting
-        $checked_state_handling = get_post_meta($id, '_mcl_checked_state_handling', true);
-        $is_public = get_post_meta($id, '_mcl_public_access', true) == '1';
+        $checked_state_handling = get_post_meta($id, '_magiccl_checked_state_handling', true);
+        $is_public = get_post_meta($id, '_magiccl_public_access', true) == '1';
         
         // Get the appropriate checked state
         $checked_items = array();
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $checked_items = get_user_meta($user_id, '_mcl_checked_state_' . $id, true) ?: array();
+            $checked_items = get_user_meta($user_id, '_magiccl_checked_state_' . $id, true) ?: array();
         } else {
-            $meta_key = $is_public ? '_mcl_public_global_checked_state' : '_mcl_checked_state';
+            $meta_key = $is_public ? '_magiccl_public_global_checked_state' : '_magiccl_checked_state';
             $checked_items = get_post_meta($id, $meta_key, true) ?: array();
         }
 
         // Get all items for additional context
-        $all_items = get_post_meta($id, '_mcl_items', true) ?: array();
+        $all_items = get_post_meta($id, '_magiccl_items', true) ?: array();
         
         // Calculate completion statistics
         $total_items = count($all_items);
@@ -939,7 +917,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     */
     protected function prepare_item_for_database($request) {
       $prepared_post = [
-          'post_type' => 'mcl_checklist',
+          'post_type' => 'magiccl_checklist',
           'post_status' => 'publish',
       ];
 
@@ -962,81 +940,81 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
         $meta_keys = [
             // Basic settings
-            'time_date' => '_mcl_time_date',
-            'item_deadlines' => '_mcl_item_deadlines',
-            'keyboard_shortcut' => '_mcl_keyboard_shortcut',
-            'active' => '_mcl_active',
-            'checked_state_handling' => '_mcl_checked_state_handling',
-            'theme' => '_mcl_theme',
-            'priority' => '_mcl_priority',
-            'enable_item_priority' => '_mcl_enable_item_priority',
-            'trigger_shortcut' => '_mcl_trigger_shortcut',
-            'trigger_button' => '_mcl_trigger_button',
-            'short_title' => '_mcl_short_title',
-            'button_position' => '_mcl_button_position',
-            'disable_in_builders' => '_mcl_disable_in_builders',
+            'time_date' => '_magiccl_time_date',
+            'item_deadlines' => '_magiccl_item_deadlines',
+            'keyboard_shortcut' => '_magiccl_keyboard_shortcut',
+            'active' => '_magiccl_active',
+            'checked_state_handling' => '_magiccl_checked_state_handling',
+            'theme' => '_magiccl_theme',
+            'priority' => '_magiccl_priority',
+            'enable_item_priority' => '_magiccl_enable_item_priority',
+            'trigger_shortcut' => '_magiccl_trigger_shortcut',
+            'trigger_button' => '_magiccl_trigger_button',
+            'short_title' => '_magiccl_short_title',
+            'button_position' => '_magiccl_button_position',
+            'disable_in_builders' => '_magiccl_disable_in_builders',
 
             // Icon settings
-            'checklist_icon_type' => '_mcl_checklist_icon_type',
-            'checklist_icon_preset' => '_mcl_checklist_icon_preset',
-            'checklist_icon_custom' => '_mcl_checklist_icon_custom',
+            'checklist_icon_type' => '_magiccl_checklist_icon_type',
+            'checklist_icon_preset' => '_magiccl_checklist_icon_preset',
+            'checklist_icon_custom' => '_magiccl_checklist_icon_custom',
 
             // Shortcode settings
-            'enable_shortcode' => '_mcl_enable_shortcode',
+            'enable_shortcode' => '_magiccl_enable_shortcode',
 
             // Access settings
-            'public_access' => '_mcl_public_access',
-            'public_permission' => '_mcl_public_permission',
-            'public_checked_state_handling' => '_mcl_public_checked_state_handling',
-            'public_description' => '_mcl_public_description',
-            'access_roles' => '_mcl_access_roles',
-            'access_roles_permission' => '_mcl_access_roles_permission',
-            'access_users' => '_mcl_access_users',
-            'access_users_permission' => '_mcl_access_users_permission',
+            'public_access' => '_magiccl_public_access',
+            'public_permission' => '_magiccl_public_permission',
+            'public_checked_state_handling' => '_magiccl_public_checked_state_handling',
+            'public_description' => '_magiccl_public_description',
+            'access_roles' => '_magiccl_access_roles',
+            'access_roles_permission' => '_magiccl_access_roles_permission',
+            'access_users' => '_magiccl_access_users',
+            'access_users_permission' => '_magiccl_access_users_permission',
 
             // Display settings
-            'priority_display_type' => '_mcl_priority_display_type',
-            'enable_rate_limit' => '_mcl_enable_rate_limit',
-            'load_everywhere' => '_mcl_load_everywhere',
-            'allowed_pages' => '_mcl_allowed_pages',
-            'allowed_urls' => '_mcl_allowed_urls',
+            'priority_display_type' => '_magiccl_priority_display_type',
+            'enable_rate_limit' => '_magiccl_enable_rate_limit',
+            'load_everywhere' => '_magiccl_load_everywhere',
+            'allowed_pages' => '_magiccl_allowed_pages',
+            'allowed_urls' => '_magiccl_allowed_urls',
 
             // Auto-reset settings
-            'auto_reset' => '_mcl_auto_reset',
-            'reset_interval' => '_mcl_reset_interval',
-            'reset_time' => '_mcl_reset_time',
-            'custom_days' => '_mcl_custom_days',
-            'custom_weeks' => '_mcl_custom_weeks',
-            'custom_months' => '_mcl_custom_months',
-            'week_day' => '_mcl_week_day',
-            'month_day' => '_mcl_month_day',
-            'reset_next' => '_mcl_reset_next',
-            'reset_counter' => '_mcl_reset_counter',
+            'auto_reset' => '_magiccl_auto_reset',
+            'reset_interval' => '_magiccl_reset_interval',
+            'reset_time' => '_magiccl_reset_time',
+            'custom_days' => '_magiccl_custom_days',
+            'custom_weeks' => '_magiccl_custom_weeks',
+            'custom_months' => '_magiccl_custom_months',
+            'week_day' => '_magiccl_week_day',
+            'month_day' => '_magiccl_month_day',
+            'reset_next' => '_magiccl_reset_next',
+            'reset_counter' => '_magiccl_reset_counter',
 
             // Custom theme settings (individual fields)
-            'drawer_bg_color' => '_mcl_drawer_bg_color',
-            'list_item_bg_color' => '_mcl_list_item_bg_color',
-            'text_color' => '_mcl_text_color',
-            'heading_font_size' => '_mcl_heading_font_size',
-            'description_text_color' => '_mcl_description_text_color',
-            'description_font_size' => '_mcl_description_font_size',
-            'list_item_font_size' => '_mcl_list_item_font_size',
-            'primary_button_bg' => '_mcl_primary_button_bg',
-            'primary_button_text_color' => '_mcl_primary_button_text_color',
-            'secondary_button_bg' => '_mcl_secondary_button_bg',
-            'secondary_button_text_color' => '_mcl_secondary_button_text_color',
-            'drawer_width' => '_mcl_drawer_width',
-            'drawer_height' => '_mcl_drawer_height',
-            'float_button_bg' => '_mcl_float_button_bg',
-            'float_button_text_color' => '_mcl_float_button_text_color',
-            'float_button_font_size' => '_mcl_float_button_font_size',
-            'show_float_button_icon' => '_mcl_show_float_button_icon',
-            'drawer_border_radius' => '_mcl_drawer_border_radius',
-            'checkbox_bg_color' => '_mcl_checkbox_bg_color',
-            'checkbox_border_radius' => '_mcl_checkbox_border_radius',
-            'checkbox_style' => '_mcl_checkbox_style',
-            'checkbox_custom_icon' => '_mcl_checkbox_custom_icon',
-            'checkbox_checkmark_color' => '_mcl_checkbox_checkmark_color',
+            'drawer_bg_color' => '_magiccl_drawer_bg_color',
+            'list_item_bg_color' => '_magiccl_list_item_bg_color',
+            'text_color' => '_magiccl_text_color',
+            'heading_font_size' => '_magiccl_heading_font_size',
+            'description_text_color' => '_magiccl_description_text_color',
+            'description_font_size' => '_magiccl_description_font_size',
+            'list_item_font_size' => '_magiccl_list_item_font_size',
+            'primary_button_bg' => '_magiccl_primary_button_bg',
+            'primary_button_text_color' => '_magiccl_primary_button_text_color',
+            'secondary_button_bg' => '_magiccl_secondary_button_bg',
+            'secondary_button_text_color' => '_magiccl_secondary_button_text_color',
+            'drawer_width' => '_magiccl_drawer_width',
+            'drawer_height' => '_magiccl_drawer_height',
+            'float_button_bg' => '_magiccl_float_button_bg',
+            'float_button_text_color' => '_magiccl_float_button_text_color',
+            'float_button_font_size' => '_magiccl_float_button_font_size',
+            'show_float_button_icon' => '_magiccl_show_float_button_icon',
+            'drawer_border_radius' => '_magiccl_drawer_border_radius',
+            'checkbox_bg_color' => '_magiccl_checkbox_bg_color',
+            'checkbox_border_radius' => '_magiccl_checkbox_border_radius',
+            'checkbox_style' => '_magiccl_checkbox_style',
+            'checkbox_custom_icon' => '_magiccl_checkbox_custom_icon',
+            'checkbox_checkmark_color' => '_magiccl_checkbox_checkmark_color',
         ];
 
         error_log('MCL DEBUG: Processing meta keys...');
@@ -1050,7 +1028,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 $processed_count++;
 
                 // Special handling for timestamp values (time_date is sent in milliseconds from JS)
-                if ($meta_key === '_mcl_time_date' && is_numeric($value)) {
+                if ($meta_key === '_magiccl_time_date' && is_numeric($value)) {
                     $timestamp = intval($value);
                     // If timestamp is > 9999999999, it's in milliseconds - convert to seconds
                     if ($timestamp > 9999999999) {
@@ -1061,27 +1039,27 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
                 // Special handling for boolean values
                 if (in_array($meta_key, [
-                    '_mcl_active',
-                    '_mcl_enable_item_priority',
-                    '_mcl_trigger_shortcut',
-                    '_mcl_trigger_button',
-                    '_mcl_public_access',
-                    '_mcl_enable_rate_limit',
-                    '_mcl_load_everywhere',
-                    '_mcl_auto_reset',
-                    '_mcl_disable_in_builders',
-                    '_mcl_enable_shortcode',
-                    '_mcl_show_float_button_icon'
+                    '_magiccl_active',
+                    '_magiccl_enable_item_priority',
+                    '_magiccl_trigger_shortcut',
+                    '_magiccl_trigger_button',
+                    '_magiccl_public_access',
+                    '_magiccl_enable_rate_limit',
+                    '_magiccl_load_everywhere',
+                    '_magiccl_auto_reset',
+                    '_magiccl_disable_in_builders',
+                    '_magiccl_enable_shortcode',
+                    '_magiccl_show_float_button_icon'
                 ])) {
                     $value = rest_sanitize_boolean($value) ? '1' : '0';
                 }
                 
                 // Handle arrays
                 if (in_array($meta_key, [
-                    '_mcl_access_roles',
-                    '_mcl_access_users',
-                    '_mcl_allowed_pages',
-                    '_mcl_allowed_urls'
+                    '_magiccl_access_roles',
+                    '_magiccl_access_users',
+                    '_magiccl_allowed_pages',
+                    '_magiccl_allowed_urls'
                 ])) {
                     if (!is_array($value)) {
                         $value = array();
@@ -1090,9 +1068,9 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 
                 // Validate permission values
                 if (in_array($meta_key, [
-                    '_mcl_public_permission',
-                    '_mcl_access_roles_permission',
-                    '_mcl_access_users_permission'
+                    '_magiccl_public_permission',
+                    '_magiccl_access_roles_permission',
+                    '_magiccl_access_users_permission'
                 ])) {
                     if (!in_array($value, ['view', 'interact', 'edit'])) {
                         $value = 'view';
@@ -1101,8 +1079,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 
                 // Validate checked state handling
                 if (in_array($meta_key, [
-                    '_mcl_checked_state_handling',
-                    '_mcl_public_checked_state_handling'
+                    '_magiccl_checked_state_handling',
+                    '_magiccl_public_checked_state_handling'
                 ])) {
                     if (!in_array($value, ['global', 'per_user'])) {
                         $value = 'global';
@@ -1110,40 +1088,40 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 }
                 
                 // Validate theme
-                if ($meta_key === '_mcl_theme' && !in_array($value, ['light', 'dark'])) {
+                if ($meta_key === '_magiccl_theme' && !in_array($value, ['light', 'dark'])) {
                     $value = 'light';
                 }
                 
                 // Validate priority
-                if ($meta_key === '_mcl_priority' && !in_array($value, ['none', 'low', 'medium', 'high', 'critical'])) {
+                if ($meta_key === '_magiccl_priority' && !in_array($value, ['none', 'low', 'medium', 'high', 'critical'])) {
                     $value = 'none';
                 }
                 
                 // Validate priority display type
-                if ($meta_key === '_mcl_priority_display_type' && !in_array($value, ['color', 'number'])) {
+                if ($meta_key === '_magiccl_priority_display_type' && !in_array($value, ['color', 'number'])) {
                     $value = 'color';
                 }
                 
                 // Validate reset interval
-                if ($meta_key === '_mcl_reset_interval' && !in_array($value, ['daily', 'weekly', 'monthly', 'custom'])) {
+                if ($meta_key === '_magiccl_reset_interval' && !in_array($value, ['daily', 'weekly', 'monthly', 'custom'])) {
                     $value = 'daily';
                 }
                 
                 // Validate reset time format
-                if ($meta_key === '_mcl_reset_time') {
+                if ($meta_key === '_magiccl_reset_time') {
                     if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $value)) {
                         $value = '00:00';
                     }
                 }
                 
                 // Validate custom interval values
-                if (in_array($meta_key, ['_mcl_custom_days', '_mcl_custom_weeks', '_mcl_custom_months'])) {
+                if (in_array($meta_key, ['_magiccl_custom_days', '_magiccl_custom_weeks', '_magiccl_custom_months'])) {
                     $value = absint($value);
                     if ($value < 0) $value = 0;
                 }
 
                 // Add validation for button position
-                if ($meta_key === '_mcl_button_position') {
+                if ($meta_key === '_magiccl_button_position') {
                     $valid_positions = ['bottom-left', 'bottom-right', 'top-left', 'top-right', 'draggable'];
                     if (!in_array($value, $valid_positions)) {
                         $value = 'bottom-right';
@@ -1151,21 +1129,21 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 }
 
                 // Add validation for week day
-                if ($meta_key === '_mcl_week_day') {
+                if ($meta_key === '_magiccl_week_day') {
                     $value = absint($value);
                     if ($value < 1) $value = 1;
                     if ($value > 7) $value = 7;
                 }
 
                 // Add validation for month day
-                if ($meta_key === '_mcl_month_day') {
+                if ($meta_key === '_magiccl_month_day') {
                     $value = absint($value);
                     if ($value < 1) $value = 1;
                     if ($value > 31) $value = 31;
                 }
 
                 // Add validation for icon type
-                if ($meta_key === '_mcl_checklist_icon_type') {
+                if ($meta_key === '_magiccl_checklist_icon_type') {
                     if (!in_array($value, ['preset', 'custom'])) {
                         $value = 'preset';
                     }
@@ -1195,7 +1173,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 if (isset($item['id'], $item['content'])) {
                     $processed_item = array(
                         'id' => sanitize_text_field($item['id']),
-                        'content' => MCL_Sanitization::sanitize_item_content($item['content']),
+                        'content' => MAGICCL_Sanitization::sanitize_item_content($item['content']),
                         'priority' => isset($item['priority']) ? sanitize_text_field($item['priority']) : 'none',
                         // Always include checked state (default to false)
                         'checked' => isset($item['checked']) && rest_sanitize_boolean($item['checked']) ? true : false,
@@ -1235,12 +1213,12 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 }
             }
 
-            update_post_meta($post_id, '_mcl_items', $processed_items);
+            update_post_meta($post_id, '_magiccl_items', $processed_items);
             error_log('MCL DEBUG: Saved ' . count($processed_items) . ' items');
 
             // Also update item_deadlines meta if any deadlines were found
             if (!empty($item_deadlines)) {
-                update_post_meta($post_id, '_mcl_item_deadlines', $item_deadlines);
+                update_post_meta($post_id, '_magiccl_item_deadlines', $item_deadlines);
                 error_log('MCL DEBUG: Saved ' . count($item_deadlines) . ' item deadlines');
             }
 
@@ -1255,22 +1233,22 @@ class MCL_REST_Controller extends WP_REST_Controller {
             // Get current settings (use request values if available, otherwise get from meta)
             $checked_state_handling = isset($request['checked_state_handling'])
                 ? $request['checked_state_handling']
-                : get_post_meta($post_id, '_mcl_checked_state_handling', true);
+                : get_post_meta($post_id, '_magiccl_checked_state_handling', true);
             $is_public = isset($request['public_access'])
                 ? rest_sanitize_boolean($request['public_access'])
-                : get_post_meta($post_id, '_mcl_public_access', true) == '1';
+                : get_post_meta($post_id, '_magiccl_public_access', true) == '1';
             $public_checked_state_handling = isset($request['public_checked_state_handling'])
                 ? $request['public_checked_state_handling']
-                : get_post_meta($post_id, '_mcl_public_checked_state_handling', true);
+                : get_post_meta($post_id, '_magiccl_public_checked_state_handling', true);
 
             // Always update the main checked state (post meta - used as base/global state)
-            update_post_meta($post_id, '_mcl_checked_state', $checked_item_ids);
-            error_log('MCL DEBUG: Updated _mcl_checked_state with ' . count($checked_item_ids) . ' checked items');
+            update_post_meta($post_id, '_magiccl_checked_state', $checked_item_ids);
+            error_log('MCL DEBUG: Updated _magiccl_checked_state with ' . count($checked_item_ids) . ' checked items');
 
             // Also update public global checked state if public access is enabled
             if ($is_public) {
-                update_post_meta($post_id, '_mcl_public_global_checked_state', $checked_item_ids);
-                error_log('MCL DEBUG: Updated _mcl_public_global_checked_state with ' . count($checked_item_ids) . ' checked items');
+                update_post_meta($post_id, '_magiccl_public_global_checked_state', $checked_item_ids);
+                error_log('MCL DEBUG: Updated _magiccl_public_global_checked_state with ' . count($checked_item_ids) . ' checked items');
             }
 
             // For per_user modes, also update the current user's checked state (if logged in via API)
@@ -1278,8 +1256,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
             if (is_user_logged_in()) {
                 $user_id = get_current_user_id();
                 // Update for drawer context (most common)
-                update_user_meta($user_id, '_mcl_drawer_checked_state_' . $post_id, $checked_item_ids);
-                error_log('MCL DEBUG: Updated user meta _mcl_drawer_checked_state_' . $post_id . ' for user ' . $user_id);
+                update_user_meta($user_id, '_magiccl_drawer_checked_state_' . $post_id, $checked_item_ids);
+                error_log('MCL DEBUG: Updated user meta _magiccl_drawer_checked_state_' . $post_id . ' for user ' . $user_id);
             }
         } else {
             error_log('MCL DEBUG: No items in request');
@@ -1299,7 +1277,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     $processed_deadlines[$item_id] = $timestamp;
                 }
             }
-            update_post_meta($post_id, '_mcl_item_deadlines', $processed_deadlines);
+            update_post_meta($post_id, '_magiccl_item_deadlines', $processed_deadlines);
             error_log('MCL DEBUG: Saved ' . count($processed_deadlines) . ' item deadlines from separate object');
         }
 
@@ -1315,7 +1293,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     );
                 }
             }
-            update_post_meta($post_id, '_mcl_tags', $processed_tags);
+            update_post_meta($post_id, '_magiccl_tags', $processed_tags);
             error_log('MCL DEBUG: Saved ' . count($processed_tags) . ' tags');
         }
 
@@ -1324,7 +1302,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             error_log('MCL DEBUG: Processing shortcode_settings: ' . json_encode($request['shortcode_settings']));
             $shortcode_settings = $request['shortcode_settings'];
             if (is_array($shortcode_settings)) {
-                update_post_meta($post_id, '_mcl_shortcode_settings', $shortcode_settings);
+                update_post_meta($post_id, '_magiccl_shortcode_settings', $shortcode_settings);
                 error_log('MCL DEBUG: Saved shortcode_settings');
             }
         } else {
@@ -1346,7 +1324,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     }
                 }
             }
-            update_post_meta($post_id, '_mcl_role_permission_rules', $processed_rules);
+            update_post_meta($post_id, '_magiccl_role_permission_rules', $processed_rules);
             error_log('MCL DEBUG: Saved ' . count($processed_rules) . ' role permission rules');
         }
 
@@ -1365,7 +1343,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     }
                 }
             }
-            update_post_meta($post_id, '_mcl_user_permission_rules', $processed_rules);
+            update_post_meta($post_id, '_magiccl_user_permission_rules', $processed_rules);
             error_log('MCL DEBUG: Saved ' . count($processed_rules) . ' user permission rules');
         }
 
@@ -1394,8 +1372,8 @@ class MCL_REST_Controller extends WP_REST_Controller {
     ];
 
     // Get items and their deadlines
-    $items = get_post_meta($post->ID, '_mcl_items', true) ?: array();
-    $item_deadlines = get_post_meta($post->ID, '_mcl_item_deadlines', true) ?: array();
+    $items = get_post_meta($post->ID, '_magiccl_items', true) ?: array();
+    $item_deadlines = get_post_meta($post->ID, '_magiccl_item_deadlines', true) ?: array();
 
     // Add deadline information to items
     foreach ($items as &$item) {
@@ -1403,7 +1381,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             $deadline_timestamp = intval($item_deadlines[$item['id']]);
             $item['deadline'] = wp_date('Y-m-d H:i:s', $deadline_timestamp);
             $item['deadline_timestamp'] = $deadline_timestamp;
-                                $item['deadline_formatted'] = MCL_Admin::format_date($deadline_timestamp, false);
+                                $item['deadline_formatted'] = MAGICCL_Admin::format_date($deadline_timestamp, false);
         }
     }
     unset($item);
@@ -1414,56 +1392,56 @@ class MCL_REST_Controller extends WP_REST_Controller {
     // Add meta data
     $meta_keys = [
         // Basic settings
-        '_mcl_time_date' => 'time_date',
-        '_mcl_keyboard_shortcut' => 'keyboard_shortcut',
-        '_mcl_active' => 'active',
-        '_mcl_checked_state_handling' => 'checked_state_handling',
-        '_mcl_theme' => 'theme',
-        '_mcl_priority' => 'priority',
-        '_mcl_enable_item_priority' => 'enable_item_priority',
-        '_mcl_trigger_shortcut' => 'trigger_shortcut',
-        '_mcl_trigger_button' => 'trigger_button',
-        '_mcl_short_title' => 'short_title',
-        '_mcl_button_position' => 'button_position',
-        '_mcl_disable_in_builders' => 'disable_in_builders',
+        '_magiccl_time_date' => 'time_date',
+        '_magiccl_keyboard_shortcut' => 'keyboard_shortcut',
+        '_magiccl_active' => 'active',
+        '_magiccl_checked_state_handling' => 'checked_state_handling',
+        '_magiccl_theme' => 'theme',
+        '_magiccl_priority' => 'priority',
+        '_magiccl_enable_item_priority' => 'enable_item_priority',
+        '_magiccl_trigger_shortcut' => 'trigger_shortcut',
+        '_magiccl_trigger_button' => 'trigger_button',
+        '_magiccl_short_title' => 'short_title',
+        '_magiccl_button_position' => 'button_position',
+        '_magiccl_disable_in_builders' => 'disable_in_builders',
 
         // Icon settings
-        '_mcl_checklist_icon_type' => 'checklist_icon_type',
-        '_mcl_checklist_icon_preset' => 'checklist_icon_preset',
-        '_mcl_checklist_icon_custom' => 'checklist_icon_custom',
+        '_magiccl_checklist_icon_type' => 'checklist_icon_type',
+        '_magiccl_checklist_icon_preset' => 'checklist_icon_preset',
+        '_magiccl_checklist_icon_custom' => 'checklist_icon_custom',
 
         // Shortcode settings
-        '_mcl_enable_shortcode' => 'enable_shortcode',
+        '_magiccl_enable_shortcode' => 'enable_shortcode',
 
         // Access settings
-        '_mcl_public_access' => 'public_access',
-        '_mcl_public_permission' => 'public_permission',
-        '_mcl_public_checked_state_handling' => 'public_checked_state_handling',
-        '_mcl_public_description' => 'public_description',
-        '_mcl_access_roles' => 'access_roles',
-        '_mcl_access_roles_permission' => 'access_roles_permission',
-        '_mcl_access_users' => 'access_users',
-        '_mcl_access_users_permission' => 'access_users_permission',
+        '_magiccl_public_access' => 'public_access',
+        '_magiccl_public_permission' => 'public_permission',
+        '_magiccl_public_checked_state_handling' => 'public_checked_state_handling',
+        '_magiccl_public_description' => 'public_description',
+        '_magiccl_access_roles' => 'access_roles',
+        '_magiccl_access_roles_permission' => 'access_roles_permission',
+        '_magiccl_access_users' => 'access_users',
+        '_magiccl_access_users_permission' => 'access_users_permission',
 
         // Display settings
-        '_mcl_priority_display_type' => 'priority_display_type',
-        '_mcl_enable_rate_limit' => 'enable_rate_limit',
-        '_mcl_tags' => 'tags',
-        '_mcl_load_everywhere' => 'load_everywhere',
-        '_mcl_allowed_pages' => 'allowed_pages',
-        '_mcl_allowed_urls' => 'allowed_urls',
+        '_magiccl_priority_display_type' => 'priority_display_type',
+        '_magiccl_enable_rate_limit' => 'enable_rate_limit',
+        '_magiccl_tags' => 'tags',
+        '_magiccl_load_everywhere' => 'load_everywhere',
+        '_magiccl_allowed_pages' => 'allowed_pages',
+        '_magiccl_allowed_urls' => 'allowed_urls',
 
         // Auto-reset settings
-        '_mcl_auto_reset' => 'auto_reset',
-        '_mcl_reset_interval' => 'reset_interval',
-        '_mcl_reset_time' => 'reset_time',
-        '_mcl_reset_next' => 'reset_next',
-        '_mcl_reset_counter' => 'reset_counter',
-        '_mcl_custom_days' => 'custom_days',
-        '_mcl_custom_weeks' => 'custom_weeks',
-        '_mcl_custom_months' => 'custom_months',
-        '_mcl_week_day' => 'week_day',
-        '_mcl_month_day' => 'month_day',
+        '_magiccl_auto_reset' => 'auto_reset',
+        '_magiccl_reset_interval' => 'reset_interval',
+        '_magiccl_reset_time' => 'reset_time',
+        '_magiccl_reset_next' => 'reset_next',
+        '_magiccl_reset_counter' => 'reset_counter',
+        '_magiccl_custom_days' => 'custom_days',
+        '_magiccl_custom_weeks' => 'custom_weeks',
+        '_magiccl_custom_months' => 'custom_months',
+        '_magiccl_week_day' => 'week_day',
+        '_magiccl_month_day' => 'month_day',
     ];
 
     foreach ($meta_keys as $meta_key => $response_key) {
@@ -1476,7 +1454,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     // Get notification settings
     global $wpdb;
     $notification_settings = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}mcl_notification_settings WHERE checklist_id = %d",
+        "SELECT * FROM {$wpdb->prefix}magiccl_notification_settings WHERE checklist_id = %d",
         $post->ID
     ));
 
@@ -1499,7 +1477,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     }
 
     // Add shortcode settings
-    $shortcode_settings = get_post_meta($post->ID, '_mcl_shortcode_settings', true);
+    $shortcode_settings = get_post_meta($post->ID, '_magiccl_shortcode_settings', true);
     if (!empty($shortcode_settings)) {
         $data['shortcode_settings'] = $shortcode_settings;
     }
@@ -1532,7 +1510,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     ];
     $custom_theme = [];
     foreach ($custom_theme_keys as $key) {
-        $value = get_post_meta($post->ID, '_mcl_' . $key, true);
+        $value = get_post_meta($post->ID, '_magiccl_' . $key, true);
         if ($value !== '') {
             $custom_theme[$key] = $value;
         }
@@ -1542,23 +1520,23 @@ class MCL_REST_Controller extends WP_REST_Controller {
     }
 
     // Add permission rules
-    $role_permission_rules = get_post_meta($post->ID, '_mcl_role_permission_rules', true);
+    $role_permission_rules = get_post_meta($post->ID, '_magiccl_role_permission_rules', true);
     if (!empty($role_permission_rules) && is_array($role_permission_rules)) {
         $data['role_permission_rules'] = $role_permission_rules;
     }
 
-    $user_permission_rules = get_post_meta($post->ID, '_mcl_user_permission_rules', true);
+    $user_permission_rules = get_post_meta($post->ID, '_magiccl_user_permission_rules', true);
     if (!empty($user_permission_rules) && is_array($user_permission_rules)) {
         $data['user_permission_rules'] = $user_permission_rules;
     }
 
-    // Add checked state - for REST API, always use _mcl_checked_state as primary source
+    // Add checked state - for REST API, always use _magiccl_checked_state as primary source
     // This ensures MagicDash sync gets the correct checked state regardless of public access settings
-    $checked_state = get_post_meta($post->ID, '_mcl_checked_state', true);
+    $checked_state = get_post_meta($post->ID, '_magiccl_checked_state', true);
 
     // Fall back to public global checked state if main checked state is empty
     if (empty($checked_state)) {
-        $checked_state = get_post_meta($post->ID, '_mcl_public_global_checked_state', true);
+        $checked_state = get_post_meta($post->ID, '_magiccl_public_global_checked_state', true);
     }
 
     $data['checked_state'] = $checked_state ?: [];
@@ -1588,7 +1566,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     );
 
     // Get access users with details
-    $access_users = get_post_meta($post->ID, '_mcl_access_users', true);
+    $access_users = get_post_meta($post->ID, '_magiccl_access_users', true);
     if (!empty($access_users)) {
         if (is_string($access_users)) {
             $access_users = maybe_unserialize($access_users);
@@ -1633,24 +1611,24 @@ class MCL_REST_Controller extends WP_REST_Controller {
             'type' => 'object',
             'properties' => array(
                 'id' => array(
-                    'description' => __('Unique identifier for the checklist.', 'magic-checklists'),
+                    'description' => __('Unique identifier for the checklist.', 'magicchecklists'),
                     'type' => 'integer',
                     'context' => array('view', 'edit', 'embed'),
                     'readonly' => true,
                 ),
                 'title' => array(
-                    'description' => __('The title of the checklist.', 'magic-checklists'),
+                    'description' => __('The title of the checklist.', 'magicchecklists'),
                     'type' => 'string',
                     'required' => true,
                     'context' => array('view', 'edit', 'embed'),
                 ),
                 'description' => array(
-                    'description' => __('The description of the checklist.', 'magic-checklists'),
+                    'description' => __('The description of the checklist.', 'magicchecklists'),
                     'type' => 'string',
                     'context' => array('view', 'edit'),
                 ),
                 'items' => array(
-                    'description' => __('The checklist items.', 'magic-checklists'),
+                    'description' => __('The checklist items.', 'magicchecklists'),
                     'type' => 'array',
                     'context' => array('view', 'edit'),
                     'items' => array(
@@ -1673,7 +1651,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     ),
                 ),
                 'checked_state' => array(
-                    'description' => __('The checked state of items.', 'magic-checklists'),
+                    'description' => __('The checked state of items.', 'magicchecklists'),
                     'type' => 'array',
                     'context' => array('view', 'edit'),
                     'items' => array(
@@ -1681,61 +1659,61 @@ class MCL_REST_Controller extends WP_REST_Controller {
                     ),
                 ),
                 'auto_reset' => array(
-                'description' => __('Whether auto-reset is enabled.', 'magic-checklists'),
+                'description' => __('Whether auto-reset is enabled.', 'magicchecklists'),
                 'type' => 'boolean',
                 'context' => array('view', 'edit'),
                 ),
                 'reset_interval' => array(
-                    'description' => __('Reset interval type.', 'magic-checklists'),
+                    'description' => __('Reset interval type.', 'magicchecklists'),
                     'type' => 'string',
                     'enum' => array('daily', 'weekly', 'monthly', 'custom'),
                     'context' => array('view', 'edit'),
                 ),
                 'reset_time' => array(
-                    'description' => __('Time of day for reset (HH:mm format).', 'magic-checklists'),
+                    'description' => __('Time of day for reset (HH:mm format).', 'magicchecklists'),
                     'type' => 'string',
                     'pattern' => '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
                     'context' => array('view', 'edit'),
                 ),
                 'custom_days' => array(
-                    'description' => __('Number of days for custom reset interval.', 'magic-checklists'),
+                    'description' => __('Number of days for custom reset interval.', 'magicchecklists'),
                     'type' => 'integer',
                     'minimum' => 0,
                     'context' => array('view', 'edit'),
                 ),
                 'custom_weeks' => array(
-                    'description' => __('Number of weeks for custom reset interval.', 'magic-checklists'),
+                    'description' => __('Number of weeks for custom reset interval.', 'magicchecklists'),
                     'type' => 'integer',
                     'minimum' => 0,
                     'context' => array('view', 'edit'),
                 ),
                 'custom_months' => array(
-                    'description' => __('Number of months for custom reset interval.', 'magic-checklists'),
+                    'description' => __('Number of months for custom reset interval.', 'magicchecklists'),
                     'type' => 'integer',
                     'minimum' => 0,
                     'context' => array('view', 'edit'),
                 ),
                 'reset_next' => array(
-                    'description' => __('Timestamp of next reset.', 'magic-checklists'),
+                    'description' => __('Timestamp of next reset.', 'magicchecklists'),
                     'type' => 'integer',
                     'context' => array('view'),
                     'readonly' => true,
                 ),
                 'reset_counter' => array(
-                    'description' => __('Number of times the checklist has been reset.', 'magic-checklists'),
+                    'description' => __('Number of times the checklist has been reset.', 'magicchecklists'),
                     'type' => 'integer',
                     'context' => array('view'),
                     'readonly' => true,
                 ),
                 'reset_day' => array(
-                    'description' => __('Day of the week for weekly reset (1-7, Monday-Sunday).', 'magic-checklists'),
+                    'description' => __('Day of the week for weekly reset (1-7, Monday-Sunday).', 'magicchecklists'),
                     'type' => 'integer',
                     'minimum' => 1,
                     'maximum' => 7,
                     'context' => array('view', 'edit'),
                 ),
                 'reset_date' => array(
-                    'description' => __('Date of the month for monthly reset (1-31).', 'magic-checklists'),
+                    'description' => __('Date of the month for monthly reset (1-31).', 'magicchecklists'),
                     'type' => 'integer',
                     'minimum' => 1,
                     'maximum' => 31,
@@ -1753,14 +1731,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
     public function get_collection_params() {
         return [
             'page' => [
-                'description' => __('Current page of the collection.', 'magic-checklists'),
+                'description' => __('Current page of the collection.', 'magicchecklists'),
                 'type' => 'integer',
                 'default' => 1,
                 'minimum' => 1,
                 'sanitize_callback' => 'absint',
             ],
             'per_page' => [
-                'description' => __('Maximum number of items to be returned in result set.', 'magic-checklists'),
+                'description' => __('Maximum number of items to be returned in result set.', 'magicchecklists'),
                 'type' => 'integer',
                 'default' => 10,
                 'minimum' => 1,
@@ -1768,7 +1746,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
                 'sanitize_callback' => 'absint',
             ],
             'search' => [
-                'description' => __('Limit results to those matching a string.', 'magic-checklists'),
+                'description' => __('Limit results to those matching a string.', 'magicchecklists'),
                 'type' => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ],
@@ -1780,12 +1758,13 @@ class MCL_REST_Controller extends WP_REST_Controller {
      */
     public function get_items_permissions_check($request) {
       // For public checklists
-      if (get_option('mcl_public_access', false)) {
+      if (get_option('magiccl_public_access', false)) {
           return true;
       }
-      
-      // Otherwise require login
-      return is_user_logged_in();
+
+      // Require the ability to edit others' posts (editors+) for listing all checklists
+      // Authors can only see their own via the single-item endpoint
+      return current_user_can('edit_others_posts');
     }
 
     /**
@@ -1796,19 +1775,36 @@ class MCL_REST_Controller extends WP_REST_Controller {
         if (!$post) {
             return new WP_Error(
                 'rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                __('Checklist not found', 'magicchecklists'),
                 array('status' => 404)
             );
         }
 
         // Check if checklist is public
-        $is_public = get_post_meta($post->ID, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($post->ID, '_magiccl_public_access', true) == '1';
         if ($is_public) {
             return true;
         }
 
-        // Otherwise require login
-        return is_user_logged_in();
+        // Must be logged in
+        if (!is_user_logged_in()) {
+            return new WP_Error(
+                'rest_forbidden',
+                __('You do not have permission to view this checklist.', 'magicchecklists'),
+                array('status' => 403)
+            );
+        }
+
+        // Author can view their own; editors+ can view any
+        if ((int) $post->post_author !== get_current_user_id() && !current_user_can('edit_others_posts')) {
+            return new WP_Error(
+                'rest_forbidden',
+                __('You do not have permission to view this checklist.', 'magicchecklists'),
+                array('status' => 403)
+            );
+        }
+
+        return true;
     }
 
     /**
@@ -1826,7 +1822,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         if (!$post) {
             return new WP_Error(
                 'rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                __('Checklist not found', 'magicchecklists'),
                 array('status' => 404)
             );
         }
@@ -1842,7 +1838,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         if (!$post) {
             return new WP_Error(
                 'rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                __('Checklist not found', 'magicchecklists'),
                 array('status' => 404)
             );
         }
@@ -1877,14 +1873,14 @@ class MCL_REST_Controller extends WP_REST_Controller {
         
         global $wpdb;
         $settings = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mcl_notification_settings WHERE checklist_id = %d",
+            "SELECT * FROM {$wpdb->prefix}magiccl_notification_settings WHERE checklist_id = %d",
             $checklist_id
         ));
 
         if (!$settings) {
             return new WP_Error(
                 'rest_notification_settings_not_found',
-                __('No notification settings found for this checklist.', 'magic-checklists'),
+                __('No notification settings found for this checklist.', 'magicchecklists'),
                 ['status' => 404]
             );
         }
@@ -1914,7 +1910,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
     public function update_notification_settings($request) {
         $checklist_id = (int) $request['id'];
         
-        $notification_manager = MCL_Notification_Manager::get_instance();
+        $notification_manager = MAGICCL_Notification_Manager::get_instance();
         $settings = [
             'notifications_enabled' => $request['notifications_enabled'] ?? false,
             'email_enabled' => $request['email_enabled'] ?? false,
@@ -1935,7 +1931,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
 
         return rest_ensure_response([
             'success' => true,
-            'message' => __('Notification settings updated successfully.', 'magic-checklists'),
+            'message' => __('Notification settings updated successfully.', 'magicchecklists'),
             'settings' => $settings
         ]);
     }
@@ -1944,7 +1940,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
      * Calculate next reset time for custom intervals
      */
     private function calculate_next_custom_reset($post_id, $request) {
-        $reset_time = get_post_meta($post_id, '_mcl_reset_time', true) ?: '00:00';
+        $reset_time = get_post_meta($post_id, '_magiccl_reset_time', true) ?: '00:00';
         $time_parts = explode(':', $reset_time);
         $hours = intval($time_parts[0]);
         $minutes = intval($time_parts[1]);
@@ -1954,9 +1950,9 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $next = $today;
 
         // Get custom interval values
-        $custom_days = absint($request['custom_days'] ?? get_post_meta($post_id, '_mcl_custom_days', true) ?? 1);
-        $custom_weeks = absint($request['custom_weeks'] ?? get_post_meta($post_id, '_mcl_custom_weeks', true) ?? 0);
-        $custom_months = absint($request['custom_months'] ?? get_post_meta($post_id, '_mcl_custom_months', true) ?? 0);
+        $custom_days = absint($request['custom_days'] ?? get_post_meta($post_id, '_magiccl_custom_days', true) ?? 1);
+        $custom_weeks = absint($request['custom_weeks'] ?? get_post_meta($post_id, '_magiccl_custom_weeks', true) ?? 0);
+        $custom_months = absint($request['custom_months'] ?? get_post_meta($post_id, '_magiccl_custom_months', true) ?? 0);
 
         // Calculate total days
         $total_days = $custom_days + ($custom_weeks * 7) + ($custom_months * 30);
@@ -1967,7 +1963,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
         }
 
         $next = strtotime("+{$total_days} days", $today);
-        update_post_meta($post_id, '_mcl_reset_next', $next);
+        update_post_meta($post_id, '_magiccl_reset_next', $next);
     }
 
     /**
@@ -1986,13 +1982,13 @@ class MCL_REST_Controller extends WP_REST_Controller {
             // Get total checklists
             $total_checklists = $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
-                'mcl_checklist'
+                'magiccl_checklist'
             ));
 
             // Get all checklist IDs
             $checklist_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
-                'mcl_checklist'
+                'magiccl_checklist'
             ));
 
             $total_items = 0;
@@ -2002,18 +1998,18 @@ class MCL_REST_Controller extends WP_REST_Controller {
             $checklist_title = '';
 
             foreach ($checklist_ids as $id) {
-                $items = get_post_meta($id, '_mcl_items', true);
+                $items = get_post_meta($id, '_magiccl_items', true);
                 if (!empty($items) && is_array($items)) {
                     $total_items += count($items);
                     
-                    $checked_state = get_post_meta($id, '_mcl_checked_state', true);
+                    $checked_state = get_post_meta($id, '_magiccl_checked_state', true);
                     if (!empty($checked_state) && is_array($checked_state)) {
                         $completed_items += count($checked_state);
                     }
                 }
                 
                 // Get deadline timestamp
-                $time_date = get_post_meta($id, '_mcl_time_date', true);
+                $time_date = get_post_meta($id, '_magiccl_time_date', true);
                 if (!empty($time_date)) {
                     if (empty($deadline_timestamp) || $time_date < $deadline_timestamp) {
                         $deadline_timestamp = $time_date;
@@ -2039,7 +2035,7 @@ class MCL_REST_Controller extends WP_REST_Controller {
             error_log('MagicChecklists Stats Error: ' . $e->getMessage());
             return new WP_Error(
                 'stats_error',
-                __('Error retrieving statistics.', 'magic-checklists'),
+                __('Error retrieving statistics.', 'magicchecklists'),
                 ['status' => 500]
             );
         }
@@ -2053,26 +2049,26 @@ class MCL_REST_Controller extends WP_REST_Controller {
         if (!$auth_header || strpos($auth_header, 'Bearer ') !== 0) {
             return new WP_Error(
                 'rest_forbidden',
-                __('Missing or invalid authorization header.', 'magic-checklists'),
+                __('Missing or invalid authorization header.', 'magicchecklists'),
                 ['status' => 401]
             );
         }
 
         $api_key = str_replace('Bearer ', '', $auth_header);
-        $settings = get_option('mcl_integration_settings', []);
+        $settings = get_option('magiccl_integration_settings', []);
 
         // Get and decrypt API keys from integration settings
         $mainwp_key = isset($settings['mainwp_api_key']) ? $this->decrypt_api_key($settings['mainwp_api_key']) : '';
-        $mcl_key = isset($settings['mcl_api_key']) ? $this->decrypt_api_key($settings['mcl_api_key']) : '';
+        $magiccl_key = isset($settings['magiccl_api_key']) ? $this->decrypt_api_key($settings['magiccl_api_key']) : '';
 
         if ((!empty($mainwp_key) && $api_key === $mainwp_key) ||
-            (!empty($mcl_key) && $api_key === $mcl_key)) {
+            (!empty($magiccl_key) && $api_key === $magiccl_key)) {
             return true;
         }
 
         return new WP_Error(
             'rest_forbidden',
-            __('Invalid API key.', 'magic-checklists'),
+            __('Invalid API key.', 'magicchecklists'),
             ['status' => 401]
         );
     }
@@ -2116,57 +2112,57 @@ class MCL_REST_Controller extends WP_REST_Controller {
         $id = (int) $request['id'];
         $checked_items = array_map('sanitize_text_field', $request['checked_items']);
         
-        if (empty($post = get_post($id)) || $post->post_type !== 'mcl_checklist') {
+        if (empty($post = get_post($id)) || $post->post_type !== 'magiccl_checklist') {
             return new WP_Error(
-                'mcl_rest_not_found',
-                __('Checklist not found', 'magic-checklists'),
+                'magiccl_rest_not_found',
+                __('Checklist not found', 'magicchecklists'),
                 ['status' => 404]
             );
         }
         
         // Get previous state
-        $checked_state_handling = get_post_meta($id, '_mcl_checked_state_handling', true);
-        $is_public = get_post_meta($id, '_mcl_public_access', true) == '1';
+        $checked_state_handling = get_post_meta($id, '_magiccl_checked_state_handling', true);
+        $is_public = get_post_meta($id, '_magiccl_public_access', true) == '1';
         
         $previous_state = array();
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $previous_state = get_user_meta($user_id, '_mcl_checked_state_' . $id, true) ?: array();
+            $previous_state = get_user_meta($user_id, '_magiccl_checked_state_' . $id, true) ?: array();
         } else {
-            $meta_key = $is_public ? '_mcl_public_global_checked_state' : '_mcl_checked_state';
+            $meta_key = $is_public ? '_magiccl_public_global_checked_state' : '_magiccl_checked_state';
             $previous_state = get_post_meta($id, $meta_key, true) ?: array();
         }
         
         // Compare states and trigger appropriate actions
-        error_log("MCL: REST Controller - comparing states for checklist_id=$id");
-        error_log("MCL: Previous state: " . print_r($previous_state, true));
-        error_log("MCL: New checked items: " . print_r($checked_items, true));
+        error_log("MAGICCL: REST Controller - comparing states for checklist_id=$id");
+        error_log("MAGICCL: Previous state: " . print_r($previous_state, true));
+        error_log("MAGICCL: New checked items: " . print_r($checked_items, true));
         
         foreach ($checked_items as $item_id) {
             if (!in_array($item_id, $previous_state)) {
-                error_log("MCL: REST Controller firing mcl_item_checked for checklist_id=$id, item_id=$item_id");
-                do_action('mcl_item_checked', $id, $item_id, true);
+                error_log("MAGICCL: REST Controller firing magiccl_item_checked for checklist_id=$id, item_id=$item_id");
+                do_action('magiccl_item_checked', $id, $item_id, true);
             }
         }
         
         foreach ($previous_state as $item_id) {
             if (!in_array($item_id, $checked_items)) {
-                error_log("MCL: REST Controller firing mcl_item_unchecked for checklist_id=$id, item_id=$item_id");
-                do_action('mcl_item_unchecked', $id, $item_id, false);
+                error_log("MAGICCL: REST Controller firing magiccl_item_unchecked for checklist_id=$id, item_id=$item_id");
+                do_action('magiccl_item_unchecked', $id, $item_id, false);
             }
         }
         
         // Save new state
         if ($checked_state_handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            update_user_meta($user_id, '_mcl_checked_state_' . $id, $checked_items);
+            update_user_meta($user_id, '_magiccl_checked_state_' . $id, $checked_items);
         } else {
-            $meta_key = $is_public ? '_mcl_public_global_checked_state' : '_mcl_checked_state';
+            $meta_key = $is_public ? '_magiccl_public_global_checked_state' : '_magiccl_checked_state';
             update_post_meta($id, $meta_key, $checked_items);
         }
         
         // Get all items for additional context
-        $all_items = get_post_meta($id, '_mcl_items', true) ?: array();
+        $all_items = get_post_meta($id, '_magiccl_items', true) ?: array();
         
         // Calculate completion statistics
         $total_items = count($all_items);

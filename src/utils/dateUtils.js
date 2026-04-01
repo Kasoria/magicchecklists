@@ -42,7 +42,7 @@ export const DATE_FORMAT_OPTIONS = {
  */
 const getDateFormatSetting = () => {
   try {
-    const format = window.mcl_checklists?.settings?.dateFormat || 'us'
+    const format = window.magiccl_checklists?.settings?.dateFormat || 'us'
     const config = DATE_FORMAT_OPTIONS[format] || DATE_FORMAT_OPTIONS.us
     
     // Ensure we have a valid config
@@ -229,7 +229,7 @@ export const formatRelativeTime = (date, baseDate = new Date()) => {
 export const formatDeadlineCountdown = (deadline, currentTime = null, i18n = null) => {
   // Get i18n data dynamically if not provided
   if (!i18n && typeof window !== 'undefined') {
-    i18n = (window.mclAdminData?.i18n || window.mclPublicData?.i18n) || {};
+    i18n = (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n) || {};
   } else if (!i18n) {
     i18n = {};
   }

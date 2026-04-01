@@ -56,7 +56,7 @@ const Toggle = ({ checked, onChange, label, disabled = false }) => (
 
 const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic', onBackToChecklists, layoutMode = 'stacked', onSetFormRef }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -248,9 +248,9 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_checklist_for_edit',
+          action: 'magiccl_get_checklist_for_edit',
           checklist_id: checklistId,
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -295,12 +295,12 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
   const handleShortcutInputFocus = () => {
     // Signal to global shortcut listeners to temporarily disable
-    window.mclShortcutInputActive = true
+    window.magicclShortcutInputActive = true
   }
 
   const handleShortcutInputBlur = () => {
     // Re-enable global shortcut listeners
-    window.mclShortcutInputActive = false
+    window.magicclShortcutInputActive = false
   }
 
   const handleShortcutCapture = async (e) => {
@@ -340,7 +340,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            action: 'mcl_check_shortcut',
+            action: 'magiccl_check_shortcut',
             shortcut: shortcut,
             checklist_id: checklistId || '',
             '_ajax_nonce': adminData.nonces?.checkShortcut || ''
@@ -513,7 +513,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         action: 'save_checklist',
         checklist_id: checklistId || '',
         checklist_type: checklistType,
-        mcl_nonce: adminData.nonces?.mcl_save_checklist || '',
+        magiccl_nonce: adminData.nonces?.magiccl_save_checklist || '',
         title: formData.title,
         description: formData.description,
         show_description: formData.show_description ? '1' : '0',
@@ -646,8 +646,8 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
 
       // Add tags data
       formData.tags.forEach((tag, index) => {
-        submitData.append(`mcl_tags[${index}]`, tag.name)
-        submitData.append(`mcl_tag_colors[${index}]`, tag.color)
+        submitData.append(`magiccl_tags[${index}]`, tag.name)
+        submitData.append(`magiccl_tag_colors[${index}]`, tag.color)
       })
 
       // Add array data (legacy format - kept for backwards compatibility)
@@ -699,7 +699,7 @@ const EditChecklist = ({ adminData, checklistId = null, checklistType = 'classic
         setUnsavedChanges(false)
         // Small delay to ensure state update takes effect before redirect
         setTimeout(() => {
-          window.location.href = adminData.admin_url + 'admin.php?page=mcl_checklists'
+          window.location.href = adminData.admin_url + 'admin.php?page=magiccl_checklists'
         }, 100)
       } else {
         throw new Error('Failed to save checklist')

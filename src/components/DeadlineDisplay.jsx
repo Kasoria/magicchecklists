@@ -3,7 +3,7 @@ import { formatDate, formatDeadlineCountdown } from '../utils/dateUtils';
 
 const DeadlineDisplay = ({ deadline }) => {
     // Get i18n data
-    const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+    const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
     const [countdown, setCountdown] = useState('');
     const [deadlineClass, setDeadlineClass] = useState('');
 
@@ -18,13 +18,13 @@ const DeadlineDisplay = ({ deadline }) => {
             // Set appropriate warning class based on status
             switch (countdownData.status) {
                 case 'passed':
-                    setDeadlineClass('mcl-deadline-passed');
+                    setDeadlineClass('magiccl-deadline-passed');
                     break;
                 case 'critical':
-                    setDeadlineClass('mcl-deadline-2h');
+                    setDeadlineClass('magiccl-deadline-2h');
                     break;
                 case 'warning':
-                    setDeadlineClass('mcl-deadline-24h');
+                    setDeadlineClass('magiccl-deadline-24h');
                     break;
                 default:
                     setDeadlineClass('');
@@ -43,10 +43,10 @@ const DeadlineDisplay = ({ deadline }) => {
     if (!deadline) return null;
 
     return (
-        <div className={`mcl-deadline ${deadlineClass}`} id="mcl-deadline-container">
-            <div className="mcl-deadline-info">
-                <span className="mcl-deadline-label">{i18n.deadlineDisplay?.deadline || 'Deadline'}:</span>
-                <span id="mcl-countdown" className="mcl-countdown" data-deadline={deadline}>
+        <div className={`magiccl-deadline ${deadlineClass}`} id="magiccl-deadline-container">
+            <div className="magiccl-deadline-info">
+                <span className="magiccl-deadline-label">{i18n.deadlineDisplay?.deadline || 'Deadline'}:</span>
+                <span id="magiccl-countdown" className="magiccl-countdown" data-deadline={deadline}>
                     {countdown}
                 </span>
             </div>

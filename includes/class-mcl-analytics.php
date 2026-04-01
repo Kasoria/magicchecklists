@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  * 
  * @since 1.0.0
  */
-class MCL_Analytics {
+class MAGICCL_Analytics {
     
     /**
      * The singleton instance
@@ -27,9 +27,9 @@ class MCL_Analytics {
      * Meta keys for storing analytics data
      */
     private $meta_keys = [
-        '_mcl_view_count',
-        '_mcl_last_viewed',
-        '_mcl_most_checked_items',
+        '_magiccl_view_count',
+        '_magiccl_last_viewed',
+        '_magiccl_most_checked_items',
     ];
     
     /**
@@ -49,37 +49,37 @@ class MCL_Analytics {
         global $wpdb;
         
         // Set up database table names
-        $this->analytics_table = $wpdb->prefix . 'mcl_analytics';
-        $this->item_analytics_table = $wpdb->prefix . 'mcl_item_analytics';
+        $this->analytics_table = $wpdb->prefix . 'magiccl_analytics';
+        $this->item_analytics_table = $wpdb->prefix . 'magiccl_item_analytics';
         
         // Hook into checklist interactions
-        add_action('wp_ajax_mcl_track_view', array($this, 'track_view'));
-        add_action('wp_ajax_nopriv_mcl_track_view', array($this, 'track_view'));
+        add_action('wp_ajax_magiccl_track_view', array($this, 'track_view'));
+        add_action('wp_ajax_nopriv_magiccl_track_view', array($this, 'track_view'));
         
-        add_action('wp_ajax_mcl_track_item_check', array($this, 'track_item_check'));
-        add_action('wp_ajax_nopriv_mcl_track_item_check', array($this, 'track_item_check'));
+        add_action('wp_ajax_magiccl_track_item_check', array($this, 'track_item_check'));
+        add_action('wp_ajax_nopriv_magiccl_track_item_check', array($this, 'track_item_check'));
         
         // Hook into checklist rendering to track views
-        add_action('mcl_checklist_rendered', array($this, 'track_checklist_view'));
+        add_action('magiccl_checklist_rendered', array($this, 'track_checklist_view'));
         
         // Hook into item checked/unchecked actions defined in class-mcl-public.php
-        add_action('mcl_item_checked', array($this, 'track_item_checked'), 10, 4);
-        add_action('mcl_item_unchecked', array($this, 'track_item_unchecked'), 10, 4);
+        add_action('magiccl_item_checked', array($this, 'track_item_checked'), 10, 4);
+        add_action('magiccl_item_unchecked', array($this, 'track_item_unchecked'), 10, 4);
         
         // Hook into deadlines
-        add_action('mcl_admin_init', array($this, 'check_approaching_deadlines'));
+        add_action('magiccl_admin_init', array($this, 'check_approaching_deadlines'));
         
         // Render analytics in admin
-        add_action('mcl_after_checklist_table', array($this, 'render_analytics_dashboard'));
+        add_action('magiccl_after_checklist_table', array($this, 'render_analytics_dashboard'));
         
         // Cleanup old data - run weekly
-        add_action('mcl_weekly_cleanup', array($this, 'cleanup_old_data'));
+        add_action('magiccl_weekly_cleanup', array($this, 'cleanup_old_data'));
         
         // AJAX endpoint for fetching comprehensive analytics
-        add_action('wp_ajax_mcl_get_comprehensive_analytics', array($this, 'ajax_get_comprehensive_analytics'));
+        add_action('wp_ajax_magiccl_get_comprehensive_analytics', array($this, 'ajax_get_comprehensive_analytics'));
         
         // AJAX endpoint for cleaning up test data
-        add_action('wp_ajax_mcl_cleanup_test_data', array($this, 'ajax_cleanup_test_data'));
+        add_action('wp_ajax_magiccl_cleanup_test_data', array($this, 'ajax_cleanup_test_data'));
     }
     
     /**
@@ -209,7 +209,7 @@ class MCL_Analytics {
         global $wpdb;
         
         // Get current checklist items to extract content
-        $items = get_post_meta($checklist_id, '_mcl_items', true);
+        $items = get_post_meta($checklist_id, '_magiccl_items', true);
         $item_content = '';
         
         if (is_array($items)) {
@@ -313,7 +313,7 @@ class MCL_Analytics {
                     p.post_title as title
             FROM {$wpdb->posts} p
             LEFT JOIN {$this->analytics_table} a ON p.ID = a.checklist_id
-            WHERE p.post_type = 'mcl_checklist' AND p.post_status = 'publish'
+            WHERE p.post_type = 'magiccl_checklist' AND p.post_status = 'publish'
             ORDER BY COALESCE(a.view_count, 0) DESC, a.last_viewed DESC"
         );
         
@@ -337,8 +337,8 @@ class MCL_Analytics {
         
         // Get all active checklists
         $checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
-            'meta_key' => '_mcl_active',
+            'post_type' => 'magiccl_checklist',
+            'meta_key' => '_magiccl_active',
             'meta_value' => '1',
             'posts_per_page' => -1,
             'fields' => 'ids'
@@ -346,7 +346,7 @@ class MCL_Analytics {
         
         foreach ($checklists as $checklist_id) {
             // Check for checklist-level deadline first
-            $checklist_deadline = get_post_meta($checklist_id, '_mcl_time_date', true);
+            $checklist_deadline = get_post_meta($checklist_id, '_magiccl_time_date', true);
             
             // Validate and process checklist deadline if it exists
             if (!empty($checklist_deadline)) {
@@ -360,7 +360,7 @@ class MCL_Analytics {
                             'checklist_id' => $checklist_id,
                             'checklist_title' => get_the_title($checklist_id),
                             'item_id' => 'checklist',
-                            'item_content' => '<strong>' . __('Entire Checklist', 'magic-checklists') . '</strong>',
+                            'item_content' => '<strong>' . __('Entire Checklist', 'magicchecklists') . '</strong>',
                             'deadline' => $checklist_deadline,
                             'time_remaining' => $checklist_deadline - time(),
                             'is_checklist_deadline' => true
@@ -370,14 +370,14 @@ class MCL_Analytics {
             }
             
             // Get item deadlines
-            $deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
+            $deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
             
             if (empty($deadlines)) {
                 continue;
             }
             
             // Get checklist items
-            $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+            $items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
             $item_map = array();
             
             foreach ($items as $item) {
@@ -385,7 +385,7 @@ class MCL_Analytics {
             }
             
             // Get checked items to filter out completed items
-            $checked_items = get_post_meta($checklist_id, '_mcl_checked_state', true) ?: array();
+            $checked_items = get_post_meta($checklist_id, '_magiccl_checked_state', true) ?: array();
             
             // Check each deadline
             foreach ($deadlines as $item_id => $deadline) {
@@ -444,7 +444,7 @@ class MCL_Analytics {
         $approaching = $this->get_approaching_deadlines();
         
         // Store in transient for dashboard
-        set_transient('mcl_approaching_deadlines', $approaching, HOUR_IN_SECONDS);
+        set_transient('magiccl_approaching_deadlines', $approaching, HOUR_IN_SECONDS);
         
         return $approaching;
     }
@@ -458,12 +458,12 @@ class MCL_Analytics {
         // Total checklists
         $total_checklists_count = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish'",
-            'mcl_checklist'
+            'magiccl_checklist'
         ));
         
         $active_checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
-            'meta_key' => '_mcl_active',
+            'post_type' => 'magiccl_checklist',
+            'meta_key' => '_magiccl_active',
             'meta_value' => '1',
             'posts_per_page' => -1,
             'fields' => 'ids'
@@ -482,7 +482,7 @@ class MCL_Analytics {
             "SELECT a.checklist_id, a.view_count, p.post_title 
             FROM {$this->analytics_table} a
             JOIN {$wpdb->posts} p ON a.checklist_id = p.ID 
-            WHERE p.post_type = 'mcl_checklist' 
+            WHERE p.post_type = 'magiccl_checklist' 
             ORDER BY a.view_count DESC LIMIT 1"
         );
         
@@ -491,7 +491,7 @@ class MCL_Analytics {
             "SELECT ia.checklist_id, ia.item_id, ia.item_content, ia.check_count, p.post_title 
             FROM {$this->item_analytics_table} ia
             JOIN {$wpdb->posts} p ON ia.checklist_id = p.ID 
-            WHERE p.post_type = 'mcl_checklist' 
+            WHERE p.post_type = 'magiccl_checklist' 
             ORDER BY ia.check_count DESC LIMIT 1"
         );
         
@@ -502,7 +502,7 @@ class MCL_Analytics {
             'total_checks' => $total_checks,
             'most_popular' => $most_popular,
             'most_checked_item' => $most_checked_item,
-            'approaching_deadlines' => get_transient('mcl_approaching_deadlines') ?: array()
+            'approaching_deadlines' => get_transient('magiccl_approaching_deadlines') ?: array()
         );
     }
     
@@ -542,13 +542,13 @@ class MCL_Analytics {
         $wpdb->query("
             DELETE a FROM {$this->analytics_table} a
             LEFT JOIN {$wpdb->posts} p ON a.checklist_id = p.ID
-            WHERE p.ID IS NULL OR p.post_type != 'mcl_checklist'
+            WHERE p.ID IS NULL OR p.post_type != 'magiccl_checklist'
         ");
         
         $wpdb->query("
             DELETE ia FROM {$this->item_analytics_table} ia
             LEFT JOIN {$wpdb->posts} p ON ia.checklist_id = p.ID
-            WHERE p.ID IS NULL OR p.post_type != 'mcl_checklist'
+            WHERE p.ID IS NULL OR p.post_type != 'magiccl_checklist'
         ");
     }
     
@@ -652,7 +652,7 @@ class MCL_Analytics {
                 FROM {$this->item_analytics_table}
                 GROUP BY checklist_id
             ) ic ON a.checklist_id = ic.checklist_id
-            WHERE p.post_type = 'mcl_checklist'
+            WHERE p.post_type = 'magiccl_checklist'
             ORDER BY a.view_count DESC
             LIMIT %d",
             $limit
@@ -688,7 +688,7 @@ class MCL_Analytics {
             "SELECT ia.checklist_id, ia.item_id, ia.check_count, p.post_title
             FROM {$this->item_analytics_table} ia
             JOIN {$wpdb->posts} p ON ia.checklist_id = p.ID
-            WHERE p.post_type = 'mcl_checklist'"
+            WHERE p.post_type = 'magiccl_checklist'"
         );
         
         if (empty($completion_data)) {
@@ -744,7 +744,7 @@ class MCL_Analytics {
             "SELECT a.checklist_id, a.last_viewed as activity_date, p.post_title, 'view' as activity_type
             FROM {$this->analytics_table} a
             JOIN {$wpdb->posts} p ON a.checklist_id = p.ID
-            WHERE p.post_type = 'mcl_checklist' AND a.last_viewed IS NOT NULL
+            WHERE p.post_type = 'magiccl_checklist' AND a.last_viewed IS NOT NULL
             ORDER BY a.last_viewed DESC
             LIMIT %d",
             $limit
@@ -756,7 +756,7 @@ class MCL_Analytics {
                     ia.item_content, 'check' as activity_type
             FROM {$this->item_analytics_table} ia
             JOIN {$wpdb->posts} p ON ia.checklist_id = p.ID
-            WHERE p.post_type = 'mcl_checklist' AND ia.last_checked IS NOT NULL
+            WHERE p.post_type = 'magiccl_checklist' AND ia.last_checked IS NOT NULL
             ORDER BY ia.last_checked DESC
             LIMIT %d",
             $limit
@@ -807,7 +807,7 @@ class MCL_Analytics {
         $wpdb->query("TRUNCATE TABLE {$this->item_analytics_table}");
         
         // Remove the seeding flag
-        delete_option('mcl_analytics_seeded');
+        delete_option('magiccl_analytics_seeded');
         
         return array(
             'success' => true,
@@ -820,7 +820,7 @@ class MCL_Analytics {
      */
     public function ajax_cleanup_test_data() {
         // Verify nonce and permissions
-        check_ajax_referer('mcl_cleanup_test_data', '_ajax_nonce');
+        check_ajax_referer('magiccl_cleanup_test_data', '_ajax_nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Insufficient permissions');
@@ -835,7 +835,7 @@ class MCL_Analytics {
      */
     public function ajax_get_comprehensive_analytics() {
         // Verify nonce
-        check_ajax_referer('mcl_get_comprehensive_analytics', '_ajax_nonce');
+        check_ajax_referer('magiccl_get_comprehensive_analytics', '_ajax_nonce');
         
         // Only ensure tables exist, don't seed test data
         $this->create_tables();

@@ -4,52 +4,52 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class MCL_Tour_Admin {
+class MAGICCL_Tour_Admin {
     
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('admin_init', array($this, 'handle_tour_redirects'));
-        add_action('wp_ajax_mcl_save_tour', array($this, 'save_tour'));
-        add_action('wp_ajax_mcl_save_tour_settings', array($this, 'save_tour_settings'));
-        add_action('wp_ajax_mcl_delete_tour', array($this, 'delete_tour'));
-        add_action('wp_ajax_mcl_get_tour_data', array($this, 'get_tour_data'));
-        add_action('wp_ajax_mcl_toggle_tour_status', array($this, 'toggle_tour_status'));
-        add_action('wp_ajax_mcl_get_checklists_for_tour', array($this, 'get_checklists_for_tour'));
-        add_action('wp_ajax_mcl_reset_tour_completion', array($this, 'reset_tour_completion'));
-        add_action('wp_ajax_mcl_reorder_tour_steps', array($this, 'reorder_tour_steps'));
-        add_action('wp_ajax_mcl_tour_step_check_item', array($this, 'tour_step_check_item'));
-        add_action('wp_ajax_nopriv_mcl_tour_step_check_item', array($this, 'tour_step_check_item'));
-        add_action('wp_ajax_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
-        add_action('wp_ajax_nopriv_mcl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
+        add_action('wp_ajax_magiccl_save_tour', array($this, 'save_tour'));
+        add_action('wp_ajax_magiccl_save_tour_settings', array($this, 'save_tour_settings'));
+        add_action('wp_ajax_magiccl_delete_tour', array($this, 'delete_tour'));
+        add_action('wp_ajax_magiccl_get_tour_data', array($this, 'get_tour_data'));
+        add_action('wp_ajax_magiccl_toggle_tour_status', array($this, 'toggle_tour_status'));
+        add_action('wp_ajax_magiccl_get_checklists_for_tour', array($this, 'get_checklists_for_tour'));
+        add_action('wp_ajax_magiccl_reset_tour_completion', array($this, 'reset_tour_completion'));
+        add_action('wp_ajax_magiccl_reorder_tour_steps', array($this, 'reorder_tour_steps'));
+        add_action('wp_ajax_magiccl_tour_step_check_item', array($this, 'tour_step_check_item'));
+        add_action('wp_ajax_nopriv_magiccl_tour_step_check_item', array($this, 'tour_step_check_item'));
+        add_action('wp_ajax_magiccl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
+        add_action('wp_ajax_nopriv_magiccl_get_item_tour_connections', array($this, 'get_item_tour_connections'));
 
         // Batch tour connection checks (optimized)
-        add_action('wp_ajax_mcl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
-        add_action('wp_ajax_nopriv_mcl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
-        add_action('wp_ajax_mcl_has_active_tours', array($this, 'has_active_tours'));
-        add_action('wp_ajax_nopriv_mcl_has_active_tours', array($this, 'has_active_tours'));
+        add_action('wp_ajax_magiccl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
+        add_action('wp_ajax_nopriv_magiccl_get_batch_tour_connections', array($this, 'get_batch_tour_connections'));
+        add_action('wp_ajax_magiccl_has_active_tours', array($this, 'has_active_tours'));
+        add_action('wp_ajax_nopriv_magiccl_has_active_tours', array($this, 'has_active_tours'));
 
         // React component AJAX handlers
-        add_action('wp_ajax_mcl_get_tours_list', array($this, 'get_tours_list'));
-        add_action('wp_ajax_mcl_duplicate_tour', array($this, 'duplicate_tour'));
-        add_action('wp_ajax_mcl_get_users_for_tour', array($this, 'get_users_for_tour'));
-        add_action('wp_ajax_mcl_get_roles_for_tour', array($this, 'get_roles_for_tour'));
+        add_action('wp_ajax_magiccl_get_tours_list', array($this, 'get_tours_list'));
+        add_action('wp_ajax_magiccl_duplicate_tour', array($this, 'duplicate_tour'));
+        add_action('wp_ajax_magiccl_get_users_for_tour', array($this, 'get_users_for_tour'));
+        add_action('wp_ajax_magiccl_get_roles_for_tour', array($this, 'get_roles_for_tour'));
     }
 
     public function add_admin_menu() {
         add_submenu_page(
-            'mcl_checklists',
-            __('Tours', 'magic-checklists'),
-            __('Tours', 'magic-checklists'),
+            'magiccl_checklists',
+            __('Tours', 'magicchecklists'),
+            __('Tours', 'magicchecklists'),
             'manage_options',
-            'mcl_tours',
+            'magiccl_tours',
             array($this, 'render_tours_page')
         );
     }
 
     public function handle_tour_redirects() {
         // Only handle redirects on the tours page
-        if (!isset($_GET['page']) || $_GET['page'] !== 'mcl_tours') {
+        if (!isset($_GET['page']) || $_GET['page'] !== 'magiccl_tours') {
             return;
         }
 
@@ -61,7 +61,7 @@ class MCL_Tour_Admin {
     }
 
     public function enqueue_admin_assets($hook) {
-        if ($hook !== 'magicchecklists_page_mcl_tours') {
+        if ($hook !== 'magicchecklists_page_magiccl_tours') {
             return;
         }
 
@@ -69,30 +69,30 @@ class MCL_Tour_Admin {
         wp_enqueue_script('wp-util');
 
         // Always localize script data for tours page (using driver-js handle as fallback)
-        wp_localize_script('driver-js', 'mclTourAdmin', array(
+        wp_localize_script('driver-js', 'magicclTourAdmin', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('mcl_tour_admin'),
+            'nonce' => wp_create_nonce('magiccl_tour_admin'),
             'dashboard_url' => admin_url('index.php'),
             'i18n' => array(
-                'save' => __('Save', 'magic-checklists'),
-                'cancel' => __('Cancel', 'magic-checklists'),
-                'delete' => __('Delete', 'magic-checklists'),
-                'confirmDelete' => __('Are you sure you want to delete this tour?', 'magic-checklists'),
-                'selectElement' => __('Select Element', 'magic-checklists'),
-                'navigate' => __('Navigate', 'magic-checklists'),
-                'addStep' => __('Add Step', 'magic-checklists'),
-                'stepTitle' => __('Step Title', 'magic-checklists'),
-                'stepContent' => __('Step Content', 'magic-checklists'),
-                'selectChecklist' => __('Select Checklist', 'magic-checklists'),
-                'selectItem' => __('Select Checklist Item', 'magic-checklists'),
-                'tourSaved' => __('Tour saved successfully', 'magic-checklists'),
-                'tourDeleted' => __('Tour deleted successfully', 'magic-checklists'),
-                'error' => __('An error occurred', 'magic-checklists'),
+                'save' => __('Save', 'magicchecklists'),
+                'cancel' => __('Cancel', 'magicchecklists'),
+                'delete' => __('Delete', 'magicchecklists'),
+                'confirmDelete' => __('Are you sure you want to delete this tour?', 'magicchecklists'),
+                'selectElement' => __('Select Element', 'magicchecklists'),
+                'navigate' => __('Navigate', 'magicchecklists'),
+                'addStep' => __('Add Step', 'magicchecklists'),
+                'stepTitle' => __('Step Title', 'magicchecklists'),
+                'stepContent' => __('Step Content', 'magicchecklists'),
+                'selectChecklist' => __('Select Checklist', 'magicchecklists'),
+                'selectItem' => __('Select Checklist Item', 'magicchecklists'),
+                'tourSaved' => __('Tour saved successfully', 'magicchecklists'),
+                'tourDeleted' => __('Tour deleted successfully', 'magicchecklists'),
+                'error' => __('An error occurred', 'magicchecklists'),
             )
         ));
         
         // Add nonces to the main admin data for React components
-        add_filter('mcl_admin_localized_data', array($this, 'add_tour_nonces_to_admin_data'));
+        add_filter('magiccl_admin_localized_data', array($this, 'add_tour_nonces_to_admin_data'));
 
         // Enqueue driver.js
         wp_enqueue_script(
@@ -120,27 +120,60 @@ class MCL_Tour_Admin {
     public function render_tours_page() {
         // All tour management is now handled by React components in AdminApp.jsx
         // This function serves as a placeholder for the React mounting point
-        echo '<div id="mcl-admin-root"></div>';
+        echo '<div id="magiccl-admin-root"></div>';
         
         // The React AdminApp will handle routing between Tours list and TourEditor
         // based on URL parameters automatically
     }
 
     public function save_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
         $title = sanitize_text_field($_POST['title']);
-        $steps = json_decode(stripslashes($_POST['steps']), true);
-        $settings = json_decode(stripslashes($_POST['settings']), true);
-        
+        $steps_raw = json_decode(wp_unslash($_POST['steps']), true);
+        $settings_raw = json_decode(wp_unslash($_POST['settings']), true);
+
+        // Sanitize steps array
+        $steps = array();
+        if (is_array($steps_raw)) {
+            foreach ($steps_raw as $step) {
+                $steps[] = array(
+                    'title'       => isset($step['title']) ? sanitize_text_field($step['title']) : '',
+                    'content'     => isset($step['content']) ? wp_kses_post($step['content']) : '',
+                    'element'     => isset($step['element']) ? sanitize_text_field($step['element']) : '',
+                    'page'        => isset($step['page']) ? sanitize_text_field($step['page']) : '',
+                    'position'    => isset($step['position']) ? sanitize_text_field($step['position']) : 'bottom',
+                    'checklist_id' => isset($step['checklist_id']) ? intval($step['checklist_id']) : 0,
+                    'item_id'     => isset($step['item_id']) ? sanitize_text_field($step['item_id']) : '',
+                );
+            }
+        }
+
+        // Sanitize settings array
+        $settings = array();
+        if (is_array($settings_raw)) {
+            foreach ($settings_raw as $key => $value) {
+                $safe_key = sanitize_text_field($key);
+                if (is_bool($value)) {
+                    $settings[$safe_key] = $value;
+                } elseif (is_int($value)) {
+                    $settings[$safe_key] = intval($value);
+                } elseif (is_array($value)) {
+                    $settings[$safe_key] = array_map('sanitize_text_field', $value);
+                } else {
+                    $settings[$safe_key] = sanitize_text_field($value);
+                }
+            }
+        }
+
         $tour_data = array(
             'post_title' => $title,
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'post_status' => 'publish'
         );
 
@@ -152,27 +185,27 @@ class MCL_Tour_Admin {
         }
 
         if (!$tour_id || is_wp_error($tour_id)) {
-            wp_send_json_error(__('Failed to save tour', 'magic-checklists'));
+            wp_send_json_error(__('Failed to save tour', 'magicchecklists'));
         }
 
         // Save tour meta
-        update_post_meta($tour_id, '_mcl_tour_steps', $steps);
-        update_post_meta($tour_id, '_mcl_tour_settings', $settings);
-        update_post_meta($tour_id, '_mcl_tour_active', isset($settings['active']) ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_autostart', isset($settings['autostart']) ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_show_once', ! empty($settings['show_once']) ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_steps', $steps);
+        update_post_meta($tour_id, '_magiccl_tour_settings', $settings);
+        update_post_meta($tour_id, '_magiccl_tour_active', isset($settings['active']) ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_autostart', isset($settings['autostart']) ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_show_once', ! empty($settings['show_once']) ? 1 : 0);
 
         wp_send_json_success(array(
             'tour_id' => $tour_id,
-            'message' => __('Tour saved successfully', 'magic-checklists')
+            'message' => __('Tour saved successfully', 'magicchecklists')
         ));
     }
 
     public function save_tour_settings() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
@@ -180,10 +213,8 @@ class MCL_Tour_Admin {
         $description = sanitize_textarea_field($_POST['description']);
         
         // Parse JSON settings from frontend
-        $settings_json = $_POST['settings'] ?? '{}';
         // Strip slashes in case of escaped quotes
-        $settings_raw = $settings_json;
-        $settings_unescaped = stripslashes($settings_raw);
+        $settings_unescaped = wp_unslash($_POST['settings'] ?? '{}');
         // Debug: log the unescaped settings JSON
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('MCL Tour Settings Debug: Unescaped settings_json: ' . $settings_unescaped);
@@ -195,7 +226,7 @@ class MCL_Tour_Admin {
                 error_log('MCL Tour Settings Debug: JSON decode error: ' . json_last_error_msg());
             }
         } else {
-            $settings = $settings_json; // Already an array
+            $settings = $settings_unescaped; // Already an array
         }
         
         if (!$settings || !is_array($settings)) {
@@ -208,7 +239,7 @@ class MCL_Tour_Admin {
         $user_condition = sanitize_text_field($_POST['user_condition'] ?? 'all_users');
         
         // Parse JSON arrays from frontend
-        $specific_users_json = $_POST['specific_users'] ?? '[]';
+        $specific_users_json = wp_unslash($_POST['specific_users'] ?? '[]');
         if (is_string($specific_users_json)) {
             $specific_users = json_decode($specific_users_json, true);
         } else {
@@ -216,7 +247,7 @@ class MCL_Tour_Admin {
         }
         $specific_users = is_array($specific_users) ? array_map('intval', $specific_users) : array();
         
-        $specific_roles_json = $_POST['specific_roles'] ?? '[]';
+        $specific_roles_json = wp_unslash($_POST['specific_roles'] ?? '[]');
         if (is_string($specific_roles_json)) {
             $specific_roles = json_decode($specific_roles_json, true);
         } else {
@@ -282,7 +313,7 @@ class MCL_Tour_Admin {
         $tour_data = array(
             'post_title' => $title,
             'post_content' => $description,
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'post_status' => 'publish'
         );
 
@@ -294,25 +325,25 @@ class MCL_Tour_Admin {
         }
 
         if (!$tour_id || is_wp_error($tour_id)) {
-            wp_send_json_error(__('Failed to save tour', 'magic-checklists'));
+            wp_send_json_error(__('Failed to save tour', 'magicchecklists'));
         }
 
         // Save tour meta - always save explicit values
-        update_post_meta($tour_id, '_mcl_tour_settings', $sanitized_settings);
-        update_post_meta($tour_id, '_mcl_tour_active', $sanitized_settings['active'] ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_autostart', $sanitized_settings['autostart'] ? 1 : 0);
-        update_post_meta($tour_id, '_mcl_tour_show_once', $sanitized_settings['show_once'] ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_settings', $sanitized_settings);
+        update_post_meta($tour_id, '_magiccl_tour_active', $sanitized_settings['active'] ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_autostart', $sanitized_settings['autostart'] ? 1 : 0);
+        update_post_meta($tour_id, '_magiccl_tour_show_once', $sanitized_settings['show_once'] ? 1 : 0);
         
         // Save trigger settings
-        update_post_meta($tour_id, '_mcl_tour_trigger_type', $trigger_type);
-        update_post_meta($tour_id, '_mcl_tour_trigger_value', $trigger_value);
-        update_post_meta($tour_id, '_mcl_tour_user_condition', $user_condition);
-        update_post_meta($tour_id, '_mcl_tour_specific_users', $specific_users);
-        update_post_meta($tour_id, '_mcl_tour_specific_roles', $specific_roles);
+        update_post_meta($tour_id, '_magiccl_tour_trigger_type', $trigger_type);
+        update_post_meta($tour_id, '_magiccl_tour_trigger_value', $trigger_value);
+        update_post_meta($tour_id, '_magiccl_tour_user_condition', $user_condition);
+        update_post_meta($tour_id, '_magiccl_tour_specific_users', $specific_users);
+        update_post_meta($tour_id, '_magiccl_tour_specific_roles', $specific_roles);
         
         // Clear any caches that might prevent tour detection
-        wp_cache_delete('mcl_tours_active', 'mcl_tours');
-        delete_transient('mcl_has_active_tours'); // Clear tour existence cache
+        wp_cache_delete('magiccl_tours_active', 'magiccl_tours');
+        delete_transient('magiccl_has_active_tours'); // Clear tour existence cache
 
         // Debug logging
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -322,62 +353,62 @@ class MCL_Tour_Admin {
 
         wp_send_json_success(array(
             'tour_id' => $tour_id,
-            'message' => __('Tour settings saved successfully', 'magic-checklists')
+            'message' => __('Tour settings saved successfully', 'magicchecklists')
         ));
     }
 
     public function delete_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
 
         if (wp_delete_post($tour_id, true)) {
             // Clear tour existence cache when deleting a tour
-            delete_transient('mcl_has_active_tours');
+            delete_transient('magiccl_has_active_tours');
             wp_send_json_success();
         } else {
-            wp_send_json_error(__('Failed to delete tour', 'magic-checklists'));
+            wp_send_json_error(__('Failed to delete tour', 'magicchecklists'));
         }
     }
 
     public function get_tour_data() {
         // Accept both admin and public nonces for tour data retrieval (for continuation playback)
-        $nonce = isset($_REQUEST['nonce']) ? $_REQUEST['nonce'] : '';
-        if (! wp_verify_nonce($nonce, 'mcl_tour_admin') && ! wp_verify_nonce($nonce, 'mcl_tour_public')) {
-            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+        $nonce = isset($_REQUEST['nonce']) ? sanitize_text_field(wp_unslash($_REQUEST['nonce'])) : '';
+        if (! wp_verify_nonce($nonce, 'magiccl_tour_admin') && ! wp_verify_nonce($nonce, 'magiccl_tour_public')) {
+            wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
         $tour = get_post($tour_id);
         
-        if (!$tour || $tour->post_type !== 'mcl_tour') {
-            wp_send_json_error(__('Tour not found', 'magic-checklists'));
+        if (!$tour || $tour->post_type !== 'magiccl_tour') {
+            wp_send_json_error(__('Tour not found', 'magicchecklists'));
         }
 
         // Get settings first, then use them as the source of truth for active/autostart/show_once
-        $settings = get_post_meta($tour_id, '_mcl_tour_settings', true) ?: array();
+        $settings = get_post_meta($tour_id, '_magiccl_tour_settings', true) ?: array();
         
         // For backward compatibility, fall back to separate meta fields if not in settings
-        $active = isset($settings['active']) ? $settings['active'] : (get_post_meta($tour_id, '_mcl_tour_active', true) ? true : false);
-        $autostart = isset($settings['autostart']) ? $settings['autostart'] : (get_post_meta($tour_id, '_mcl_tour_autostart', true) ? true : false);
-        $show_once = isset($settings['show_once']) ? $settings['show_once'] : (get_post_meta($tour_id, '_mcl_tour_show_once', true) ? true : false);
+        $active = isset($settings['active']) ? $settings['active'] : (get_post_meta($tour_id, '_magiccl_tour_active', true) ? true : false);
+        $autostart = isset($settings['autostart']) ? $settings['autostart'] : (get_post_meta($tour_id, '_magiccl_tour_autostart', true) ? true : false);
+        $show_once = isset($settings['show_once']) ? $settings['show_once'] : (get_post_meta($tour_id, '_magiccl_tour_show_once', true) ? true : false);
 
         $data = array(
             'id' => $tour_id,
             'title' => $tour->post_title,
             'description' => $tour->post_content,
-            'steps' => get_post_meta($tour_id, '_mcl_tour_steps', true) ?: array(),
+            'steps' => get_post_meta($tour_id, '_magiccl_tour_steps', true) ?: array(),
             'settings' => $settings,
             'active' => $active,
-            'trigger_type' => get_post_meta($tour_id, '_mcl_tour_trigger_type', true) ?: 'page',
-            'trigger_value' => get_post_meta($tour_id, '_mcl_tour_trigger_value', true) ?: '',
-            'user_condition' => get_post_meta($tour_id, '_mcl_tour_user_condition', true) ?: 'all_users',
-            'specific_users' => get_post_meta($tour_id, '_mcl_tour_specific_users', true) ?: array(),
-            'specific_roles' => get_post_meta($tour_id, '_mcl_tour_specific_roles', true) ?: array(),
+            'trigger_type' => get_post_meta($tour_id, '_magiccl_tour_trigger_type', true) ?: 'page',
+            'trigger_value' => get_post_meta($tour_id, '_magiccl_tour_trigger_value', true) ?: '',
+            'user_condition' => get_post_meta($tour_id, '_magiccl_tour_user_condition', true) ?: 'all_users',
+            'specific_users' => get_post_meta($tour_id, '_magiccl_tour_specific_users', true) ?: array(),
+            'specific_roles' => get_post_meta($tour_id, '_magiccl_tour_specific_roles', true) ?: array(),
             'autostart' => $autostart,
             'show_once' => $show_once,
         );
@@ -386,29 +417,29 @@ class MCL_Tour_Admin {
     }
 
     public function toggle_tour_status() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
-        $current_status = get_post_meta($tour_id, '_mcl_tour_active', true);
+        $current_status = get_post_meta($tour_id, '_magiccl_tour_active', true);
         $new_status = $current_status ? 0 : 1;
 
-        update_post_meta($tour_id, '_mcl_tour_active', $new_status);
+        update_post_meta($tour_id, '_magiccl_tour_active', $new_status);
 
         // Clear tour existence cache when toggling status
-        delete_transient('mcl_has_active_tours');
+        delete_transient('magiccl_has_active_tours');
 
         wp_send_json_success(array('active' => $new_status));
     }
 
     public function get_checklists_for_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         $checklists = get_posts(array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'posts_per_page' => -1,
             'orderby' => 'title',
             'order' => 'ASC'
@@ -416,7 +447,7 @@ class MCL_Tour_Admin {
 
         $result = array();
         foreach ($checklists as $checklist) {
-            $items = get_post_meta($checklist->ID, '_mcl_items', true) ?: array();
+            $items = get_post_meta($checklist->ID, '_magiccl_items', true) ?: array();
             $result[] = array(
                 'id' => $checklist->ID,
                 'title' => $checklist->post_title,
@@ -428,31 +459,31 @@ class MCL_Tour_Admin {
     }
 
     public function reset_tour_completion() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
         $user_id = get_current_user_id();
         
         // Remove from user's completed tours
-        $completed_tours = get_user_meta($user_id, '_mcl_completed_tours', true) ?: array();
+        $completed_tours = get_user_meta($user_id, '_magiccl_completed_tours', true) ?: array();
         $completed_tours = array_diff($completed_tours, array($tour_id));
-        update_user_meta($user_id, '_mcl_completed_tours', $completed_tours);
+        update_user_meta($user_id, '_magiccl_completed_tours', $completed_tours);
         
         // Reset first login status for current user (if applicable)
-        delete_user_meta($user_id, '_mcl_first_login_tours_shown');
+        delete_user_meta($user_id, '_magiccl_first_login_tours_shown');
         
-        wp_send_json_success(array('message' => __('Tour completion reset successfully', 'magic-checklists')));
+        wp_send_json_success(array('message' => __('Tour completion reset successfully', 'magicchecklists')));
     }
 
     public function reorder_tour_steps() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
@@ -460,25 +491,25 @@ class MCL_Tour_Admin {
         // Handle both old format (step_order as indices) and new format (steps as JSON)
         if (isset($_POST['steps'])) {
             // New format: steps as JSON string containing the reordered step objects
-            $reordered_steps = json_decode(stripslashes($_POST['steps']), true);
+            $reordered_steps = json_decode(wp_unslash($_POST['steps']), true);
             
             if (!$tour_id || !is_array($reordered_steps)) {
-                wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+                wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
             }
         } else {
             // Old format: step_order as array of indices (for backward compatibility)
             $step_order = isset($_POST['step_order']) ? array_map('intval', $_POST['step_order']) : array();
             
             if (!$tour_id || empty($step_order)) {
-                wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+                wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
             }
 
             // Get current steps
-            $current_steps = get_post_meta($tour_id, '_mcl_tour_steps', true) ?: array();
+            $current_steps = get_post_meta($tour_id, '_magiccl_tour_steps', true) ?: array();
             
             // Validate step order
             if (count($step_order) !== count($current_steps)) {
-                wp_send_json_error(__('Step count mismatch', 'magic-checklists'));
+                wp_send_json_error(__('Step count mismatch', 'magicchecklists'));
             }
 
             // Reorder steps based on new order
@@ -491,10 +522,10 @@ class MCL_Tour_Admin {
         }
 
         // Save reordered steps
-        update_post_meta($tour_id, '_mcl_tour_steps', $reordered_steps);
+        update_post_meta($tour_id, '_magiccl_tour_steps', $reordered_steps);
         
         wp_send_json_success(array(
-            'message' => __('Steps reordered successfully', 'magic-checklists'),
+            'message' => __('Steps reordered successfully', 'magicchecklists'),
             'steps' => $reordered_steps
         ));
     }
@@ -505,13 +536,13 @@ class MCL_Tour_Admin {
     public function tour_step_check_item() {
         // Check for tour nonces or checklist nonces
         $nonce_verified = false;
-        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
             $nonce_verified = true;
         }
         
@@ -519,7 +550,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Invalid nonce');
             }
-            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+            wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
         $checklist_id = intval($_POST['checklist_id']);
@@ -534,7 +565,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Invalid parameters');
             }
-            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+            wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
         }
 
         // Check if user can interact with this checklist
@@ -542,7 +573,7 @@ class MCL_Tour_Admin {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Permission denied for checklist ' . $checklist_id);
             }
-            wp_send_json_error(__('You do not have permission to interact with this checklist', 'magic-checklists'));
+            wp_send_json_error(__('You do not have permission to interact with this checklist', 'magicchecklists'));
         }
 
         // Get current checked state
@@ -578,7 +609,7 @@ class MCL_Tour_Admin {
         }
 
         wp_send_json_success(array(
-            'message' => $checked ? __('Item checked', 'magic-checklists') : __('Item unchecked', 'magic-checklists'),
+            'message' => $checked ? __('Item checked', 'magicchecklists') : __('Item unchecked', 'magicchecklists'),
             'checked' => $checked,
             'checklist_id' => $checklist_id,
             'item_id' => $item_id,
@@ -592,19 +623,19 @@ class MCL_Tour_Admin {
      * Get checked state for a checklist (similar to dashboard widget)
      */
     private function get_checked_state($checklist_id) {
-        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
         
         if ($is_public) {
-            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+            $handling = get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
         } else {
-            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+            $handling = get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
         }
         
         if ($handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $checked_state = get_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, true);
+            $checked_state = get_user_meta($user_id, "_magiccl_drawer_checked_state_" . $checklist_id, true);
         } else {
-            $checked_state = get_post_meta($checklist_id, '_mcl_checked_state', true);
+            $checked_state = get_post_meta($checklist_id, '_magiccl_checked_state', true);
         }
         
         // Ensure we always return a proper array, not an object
@@ -623,12 +654,12 @@ class MCL_Tour_Admin {
         // Ensure we're saving a proper indexed array
         $checked_state = array_values(array_filter($checked_state));
         
-        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
         
         if ($is_public) {
-            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+            $handling = get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
         } else {
-            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+            $handling = get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
         }
         
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -637,12 +668,12 @@ class MCL_Tour_Admin {
         
         if ($handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $result = update_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, $checked_state);
+            $result = update_user_meta($user_id, "_magiccl_drawer_checked_state_" . $checklist_id, $checked_state);
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: save_checked_state - Saved to user meta for user ' . $user_id . ', result=' . ($result ? 'success' : 'failure'));
             }
         } else {
-            $result = update_post_meta($checklist_id, '_mcl_checked_state', $checked_state);
+            $result = update_post_meta($checklist_id, '_magiccl_checked_state', $checked_state);
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: save_checked_state - Saved to post meta, result=' . ($result ? 'success' : 'failure'));
             }
@@ -653,11 +684,11 @@ class MCL_Tour_Admin {
      * Check if user can interact with checklist (similar to dashboard widget)
      */
     private function can_user_interact_with_checklist($checklist_id) {
-        if (!class_exists('MCL_Permissions')) {
+        if (!class_exists('MAGICCL_Permissions')) {
             return false;
         }
         
-        $permissions = new MCL_Permissions();
+        $permissions = new MAGICCL_Permissions();
         return $permissions->has_permission($checklist_id, 'interact');
     }
 
@@ -667,34 +698,41 @@ class MCL_Tour_Admin {
     public function get_item_tour_connections() {
         // Check for tour nonces or checklist nonces
         $nonce_verified = false;
-        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
             $nonce_verified = true;
         }
         
         if (!$nonce_verified) {
-            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+            wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
         $checklist_id = intval($_POST['checklist_id']);
         $item_id = sanitize_text_field($_POST['item_id']);
 
         if (!$checklist_id || !$item_id) {
-            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+            wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
+            return;
+        }
+
+        // Verify the user has at least view access to the checklist
+        $checklist = get_post($checklist_id);
+        if (!$checklist || $checklist->post_type !== 'magiccl_checklist') {
+            wp_send_json_error(__('Invalid checklist', 'magicchecklists'));
         }
 
         // Get all active tours
         $tours = get_posts(array(
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'posts_per_page' => -1,
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_tour_active',
+                    'key' => '_magiccl_tour_active',
                     'value' => '1',
                     'compare' => '='
                 )
@@ -704,7 +742,7 @@ class MCL_Tour_Admin {
         $connections = array();
 
         foreach ($tours as $tour) {
-            $steps = get_post_meta($tour->ID, '_mcl_tour_steps', true) ?: array();
+            $steps = get_post_meta($tour->ID, '_magiccl_tour_steps', true) ?: array();
             
             foreach ($steps as $step_index => $step) {
                 if (!empty($step['checklist_id']) && !empty($step['checklist_item_id']) &&
@@ -714,7 +752,7 @@ class MCL_Tour_Admin {
                         'tour_id' => $tour->ID,
                         'tour_title' => $tour->post_title,
                         'step_index' => $step_index,
-                        'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
+                        'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magicchecklists'), $step_index + 1),
                         'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                     );
                 }
@@ -734,24 +772,24 @@ class MCL_Tour_Admin {
     public function has_active_tours() {
         // Check for tour nonces or checklist nonces
         $nonce_verified = false;
-        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_admin_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_admin_nonce')) {
             $nonce_verified = true;
         }
 
         if (!$nonce_verified) {
-            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+            wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
         // Check transient cache first (5 minute cache)
-        $cache_key = 'mcl_has_active_tours';
+        $cache_key = 'magiccl_has_active_tours';
         $cached_result = get_transient($cache_key);
 
         if ($cached_result !== false) {
@@ -764,12 +802,12 @@ class MCL_Tour_Admin {
 
         // Query for any active tours
         $tours = get_posts(array(
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'posts_per_page' => 1,
             'fields' => 'ids',
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_tour_active',
+                    'key' => '_magiccl_tour_active',
                     'value' => '1',
                     'compare' => '='
                 )
@@ -793,20 +831,20 @@ class MCL_Tour_Admin {
     public function get_batch_tour_connections() {
         // Check for tour nonces or checklist nonces
         $nonce_verified = false;
-        if (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_admin')) {
+        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_tour_public')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_ajax_nopriv_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
             $nonce_verified = true;
-        } elseif (wp_verify_nonce($_POST['nonce'] ?? '', 'mcl_admin_nonce')) {
+        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_admin_nonce')) {
             $nonce_verified = true;
         }
 
         if (!$nonce_verified) {
-            wp_send_json_error(__('Invalid nonce', 'magic-checklists'));
+            wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
         $checklist_id = intval($_POST['checklist_id']);
@@ -824,16 +862,16 @@ class MCL_Tour_Admin {
         }
 
         if (!$checklist_id || empty($item_ids)) {
-            wp_send_json_error(__('Invalid parameters', 'magic-checklists'));
+            wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
         }
 
         // Get all active tours (do this once for all items)
         $tours = get_posts(array(
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'posts_per_page' => -1,
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_tour_active',
+                    'key' => '_magiccl_tour_active',
                     'value' => '1',
                     'compare' => '='
                 )
@@ -850,7 +888,7 @@ class MCL_Tour_Admin {
 
         // Check each tour for connections to our items
         foreach ($tours as $tour) {
-            $steps = get_post_meta($tour->ID, '_mcl_tour_steps', true) ?: array();
+            $steps = get_post_meta($tour->ID, '_magiccl_tour_steps', true) ?: array();
 
             foreach ($steps as $step_index => $step) {
                 if (!empty($step['checklist_id']) && !empty($step['checklist_item_id']) &&
@@ -864,7 +902,7 @@ class MCL_Tour_Admin {
                             'tour_id' => $tour->ID,
                             'tour_title' => $tour->post_title,
                             'step_index' => $step_index,
-                            'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magic-checklists'), $step_index + 1),
+                            'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magicchecklists'), $step_index + 1),
                             'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                         );
                     }
@@ -883,14 +921,14 @@ class MCL_Tour_Admin {
      * Get tours list for React component
      */
     public function get_tours_list() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tours = get_posts(array(
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'posts_per_page' => -1,
             'orderby' => 'date',
             'order' => 'DESC'
@@ -898,12 +936,12 @@ class MCL_Tour_Admin {
 
         $tours_data = array();
         foreach ($tours as $tour) {
-            $steps = get_post_meta($tour->ID, '_mcl_tour_steps', true) ?: array();
-            $is_active = get_post_meta($tour->ID, '_mcl_tour_active', true);
-            $trigger_type = get_post_meta($tour->ID, '_mcl_tour_trigger_type', true) ?: 'page';
-            $trigger_value = get_post_meta($tour->ID, '_mcl_tour_trigger_value', true) ?: '';
-            $user_condition = get_post_meta($tour->ID, '_mcl_tour_user_condition', true) ?: 'all_users';
-            $autostart = get_post_meta($tour->ID, '_mcl_tour_autostart', true);
+            $steps = get_post_meta($tour->ID, '_magiccl_tour_steps', true) ?: array();
+            $is_active = get_post_meta($tour->ID, '_magiccl_tour_active', true);
+            $trigger_type = get_post_meta($tour->ID, '_magiccl_tour_trigger_type', true) ?: 'page';
+            $trigger_value = get_post_meta($tour->ID, '_magiccl_tour_trigger_value', true) ?: '';
+            $user_condition = get_post_meta($tour->ID, '_magiccl_tour_user_condition', true) ?: 'all_users';
+            $autostart = get_post_meta($tour->ID, '_magiccl_tour_autostart', true);
 
             $tours_data[] = array(
                 'id' => $tour->ID,
@@ -925,45 +963,45 @@ class MCL_Tour_Admin {
      * Duplicate a tour
      */
     public function duplicate_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $tour_id = intval($_POST['tour_id']);
         $original_tour = get_post($tour_id);
         
-        if (!$original_tour || $original_tour->post_type !== 'mcl_tour') {
-            wp_send_json_error(__('Tour not found', 'magic-checklists'));
+        if (!$original_tour || $original_tour->post_type !== 'magiccl_tour') {
+            wp_send_json_error(__('Tour not found', 'magicchecklists'));
         }
 
         // Create new tour
         $new_tour_data = array(
             'post_title' => $original_tour->post_title . ' (Copy)',
             'post_content' => $original_tour->post_content,
-            'post_type' => 'mcl_tour',
+            'post_type' => 'magiccl_tour',
             'post_status' => 'publish'
         );
 
         $new_tour_id = wp_insert_post($new_tour_data);
         
         if (!$new_tour_id || is_wp_error($new_tour_id)) {
-            wp_send_json_error(__('Failed to duplicate tour', 'magic-checklists'));
+            wp_send_json_error(__('Failed to duplicate tour', 'magicchecklists'));
         }
 
         // Copy all meta data
         $meta_keys = array(
-            '_mcl_tour_steps',
-            '_mcl_tour_settings',
-            '_mcl_tour_active',
-            '_mcl_tour_trigger_type',
-            '_mcl_tour_trigger_value',
-            '_mcl_tour_user_condition',
-            '_mcl_tour_specific_users',
-            '_mcl_tour_specific_roles',
-            '_mcl_tour_show_once',
-            '_mcl_tour_autostart'
+            '_magiccl_tour_steps',
+            '_magiccl_tour_settings',
+            '_magiccl_tour_active',
+            '_magiccl_tour_trigger_type',
+            '_magiccl_tour_trigger_value',
+            '_magiccl_tour_user_condition',
+            '_magiccl_tour_specific_users',
+            '_magiccl_tour_specific_roles',
+            '_magiccl_tour_show_once',
+            '_magiccl_tour_autostart'
         );
 
         foreach ($meta_keys as $meta_key) {
@@ -974,11 +1012,11 @@ class MCL_Tour_Admin {
         }
 
         // Set the duplicate as inactive by default
-        update_post_meta($new_tour_id, '_mcl_tour_active', 0);
+        update_post_meta($new_tour_id, '_magiccl_tour_active', 0);
 
         wp_send_json_success(array(
             'tour_id' => $new_tour_id,
-            'message' => __('Tour duplicated successfully', 'magic-checklists')
+            'message' => __('Tour duplicated successfully', 'magicchecklists')
         ));
     }
 
@@ -986,10 +1024,10 @@ class MCL_Tour_Admin {
      * Get users for tour user condition selection
      */
     public function get_users_for_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $users = get_users(array('number' => 100));
@@ -1010,10 +1048,10 @@ class MCL_Tour_Admin {
      * Get roles for tour user condition selection
      */
     public function get_roles_for_tour() {
-        check_ajax_referer('mcl_tour_admin', 'nonce');
+        check_ajax_referer('magiccl_tour_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'magic-checklists'));
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
         $roles = wp_roles()->get_names();
@@ -1037,7 +1075,7 @@ class MCL_Tour_Admin {
             $data['nonces'] = array();
         }
         
-        $data['nonces']['mcl_tour_admin'] = wp_create_nonce('mcl_tour_admin');
+        $data['nonces']['magiccl_tour_admin'] = wp_create_nonce('magiccl_tour_admin');
         $data['dashboard_url'] = admin_url('index.php');
         
         return $data;

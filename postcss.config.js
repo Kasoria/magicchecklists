@@ -6,6 +6,6 @@ export default {
   plugins: [
     tailwindcss(),
     autoprefixer(),
-    prefixwrap(':is(#mcl-admin-root, #mcl-public-root)')
+    prefixwrap(':is(#magiccl-admin-root, #magiccl-public-root)')
   ]
 } 

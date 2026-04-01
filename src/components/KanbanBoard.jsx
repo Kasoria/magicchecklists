@@ -290,9 +290,9 @@ const KanbanBoard = ({ adminData }) => {
       if (adminData?.i18n) {
         i18nData = adminData.i18n;
       }
-      // Then try window.mclAdminData
-      else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
-        i18nData = window.mclAdminData.i18n;
+      // Then try window.magicclAdminData
+      else if (typeof window !== 'undefined' && window.magicclAdminData?.i18n) {
+        i18nData = window.magicclAdminData.i18n;
       }
       
       return i18nData;
@@ -305,7 +305,7 @@ const KanbanBoard = ({ adminData }) => {
       setI18n(i18nData);
     } else {
       // If not available yet, try again after a short delay
-      // This handles cases where window.mclAdminData is loaded after component mount
+      // This handles cases where window.magicclAdminData is loaded after component mount
       setTimeout(() => {
         const retryI18nData = getI18nData();
         if (Object.keys(retryI18nData).length > 0) {
@@ -434,10 +434,10 @@ const KanbanBoard = ({ adminData }) => {
       }
     }
 
-    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    window.addEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
 
     return () => {
-      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+      window.removeEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
     }
   }, [selectedChecklist])
 
@@ -464,8 +464,8 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_checklists',
-          nonce: adminData.nonces?.mcl_admin || ''
+          action: 'magiccl_get_checklists',
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -546,9 +546,9 @@ const KanbanBoard = ({ adminData }) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            action: 'mcl_get_column_sync_settings',
+            action: 'magiccl_get_column_sync_settings',
             checklist_id: selectedChecklist,
-            nonce: adminData.nonces?.mcl_admin || ''
+            nonce: adminData.nonces?.magiccl_admin || ''
           })
         })
         const syncData = await syncResponse.json()
@@ -564,9 +564,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_kanban_board',
+          action: 'magiccl_get_kanban_board',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -595,9 +595,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_feature_board_settings',
+          action: 'magiccl_get_feature_board_settings',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -617,9 +617,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_feature_board_settings',
+          action: 'magiccl_save_feature_board_settings',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || '',
+          nonce: adminData.nonces?.magiccl_admin || '',
           ...featureBoardSettings
         })
       })
@@ -646,9 +646,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_column_sync_settings',
+          action: 'magiccl_get_column_sync_settings',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -668,9 +668,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_column_sync_settings',
+          action: 'magiccl_save_column_sync_settings',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || '',
+          nonce: adminData.nonces?.magiccl_admin || '',
           ...columnSyncSettings
         })
       })
@@ -701,9 +701,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_idea_submissions',
+          action: 'magiccl_get_idea_submissions',
           checklist_id: selectedChecklist,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -724,9 +724,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_approve_idea',
+          action: 'magiccl_approve_idea',
           idea_id: ideaId,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -750,9 +750,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_reject_idea',
+          action: 'magiccl_reject_idea',
           idea_id: ideaId,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -826,10 +826,10 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_kanban_board',
+          action: 'magiccl_save_kanban_board',
           checklist_id: selectedChecklist,
           board: JSON.stringify(newBoard),
-          nonce: adminData.nonces?.mcl_admin || '',
+          nonce: adminData.nonces?.magiccl_admin || '',
           context: 'admin'
         })
       })
@@ -841,7 +841,7 @@ const KanbanBoard = ({ adminData }) => {
       } else {
         showSuccess(i18n.kanbanBoard?.success?.itemMoved || 'Item moved successfully')
         // Dispatch event to notify other views that checklist data changed
-        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
           detail: {
             checklistId: selectedChecklist,
             action: 'item_moved',
@@ -906,14 +906,14 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_update_kanban_columns',
+          action: 'magiccl_update_kanban_columns',
           checklist_id: selectedChecklist,
           columns: JSON.stringify(updatedColumns.map(col => ({
             id: col.id,
             title: col.title,
             color: col.color
           }))),
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -944,14 +944,14 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_update_kanban_columns',
+          action: 'magiccl_update_kanban_columns',
           checklist_id: selectedChecklist,
           columns: JSON.stringify(updatedColumns.map(col => ({
             id: col.id,
             title: col.title,
             color: col.color
           }))),
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1027,10 +1027,10 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_kanban_board',
+          action: 'magiccl_save_kanban_board',
           checklist_id: selectedChecklist,
           board: JSON.stringify(newBoard),
-          nonce: adminData.nonces?.mcl_admin || '',
+          nonce: adminData.nonces?.magiccl_admin || '',
           context: 'admin'
         })
       })
@@ -1051,7 +1051,7 @@ const KanbanBoard = ({ adminData }) => {
       }
 
       // Dispatch event to notify other views that checklist data changed
-      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
         detail: {
           checklistId: selectedChecklist,
           action: 'item_updated',
@@ -1076,13 +1076,13 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_task_comment',
+          action: 'magiccl_save_task_comment',
           checklist_id: selectedChecklist,
           item_id: itemId,
           comment_content: commentContent,
           user_name: adminData.currentUser?.display_name || 'Anonymous',
           user_email: adminData.currentUser?.user_email || '',
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1111,10 +1111,10 @@ const KanbanBoard = ({ adminData }) => {
     try {
       // Send parameters as integers
       const params = new URLSearchParams({
-        action: 'mcl_get_threaded_comments',
+        action: 'magiccl_get_threaded_comments',
         checklist_id: checklistIdInt,
         item_id: itemIdInt,
-        nonce: adminData.nonces?.mcl_admin || ''
+        nonce: adminData.nonces?.magiccl_admin || ''
       })
       
       const response = await fetch(adminData.ajaxurl, {
@@ -1152,12 +1152,12 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_add_threaded_comment',
+          action: 'magiccl_add_threaded_comment',
           checklist_id: selectedChecklist,
           item_id: itemIdInt,
           parent_id: '',
           comment_content: text,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1194,12 +1194,12 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_add_threaded_comment',
+          action: 'magiccl_add_threaded_comment',
           checklist_id: selectedChecklist,
           item_id: itemIdInt,
           parent_id: parentId,
           comment_content: replyText,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1227,9 +1227,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_toggle_comment_like',
+          action: 'magiccl_toggle_comment_like',
           comment_id: commentId,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1273,9 +1273,9 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_delete_threaded_comment',
+          action: 'magiccl_delete_threaded_comment',
           comment_id: commentId,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1378,10 +1378,10 @@ const KanbanBoard = ({ adminData }) => {
     setLoadingImages(true)
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('action', 'magiccl_get_uploaded_images')
       formData.append('checklist_id', selectedChecklist)
 
-      const nonce = adminData?.nonces?.mcl_admin || ''
+      const nonce = adminData?.nonces?.magiccl_admin || ''
       if (nonce) {
         formData.append('nonce', nonce)
       }
@@ -1418,11 +1418,11 @@ const KanbanBoard = ({ adminData }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_upload_image')
+      formData.append('action', 'magiccl_upload_image')
       formData.append('file', file)
       formData.append('checklist_id', selectedChecklist || 0)
 
-      const nonce = adminData?.nonces?.mcl_admin || ''
+      const nonce = adminData?.nonces?.magiccl_admin || ''
       if (nonce) {
         formData.append('nonce', nonce)
       }
@@ -1548,11 +1548,11 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_assign_kanban_user',
+          action: 'magiccl_assign_kanban_user',
           checklist_id: selectedChecklist,
           item_id: assigningItem.id,
           user_id: selectedUser || 0,
-          nonce: adminData.nonces?.mcl_admin || ''
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
 
@@ -1648,25 +1648,25 @@ const KanbanBoard = ({ adminData }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_save_checked_state')
+      formData.append('action', 'magiccl_save_checked_state')
       formData.append('checklist_id', selectedChecklist)
       formData.append('checked_items', JSON.stringify(checkedItems))
       formData.append('context', 'kanban')
 
-      // Use the correct nonce from window.mcl_checklists (same as ChecklistDrawer)
-      const nonce = window.mcl_checklists?.nonce || ''
+      // Use the correct nonce from window.magiccl_checklists (same as ChecklistDrawer)
+      const nonce = window.magiccl_checklists?.nonce || ''
       if (nonce) {
         formData.append('nonce', nonce)
       }
 
       // Add stored token for invite users if available (same as ChecklistDrawer)
-      const storedToken = window.mcl_checklists?.invite_token?.token
+      const storedToken = window.magiccl_checklists?.invite_token?.token
       if (storedToken) {
         formData.append('stored_token', storedToken)
       }
 
       // Use the same AJAX URL as ChecklistDrawer
-      const ajaxUrl = window.mcl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
 
       const response = await fetch(ajaxUrl, {
         method: 'POST',
@@ -1682,10 +1682,10 @@ const KanbanBoard = ({ adminData }) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-              action: 'mcl_save_kanban_board',
+              action: 'magiccl_save_kanban_board',
               checklist_id: selectedChecklist,
               board: JSON.stringify(newBoard),
-              nonce: adminData.nonces?.mcl_admin || '',
+              nonce: adminData.nonces?.magiccl_admin || '',
               context: 'admin'
             })
           })
@@ -1695,7 +1695,7 @@ const KanbanBoard = ({ adminData }) => {
         }
 
         // Dispatch event to notify other views
-        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
           detail: {
             checklistId: selectedChecklist,
             action: shouldMoveColumn ? 'item_checked_and_moved' : 'item_checked',
@@ -1740,10 +1740,10 @@ const KanbanBoard = ({ adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_save_kanban_board',
+          action: 'magiccl_save_kanban_board',
           checklist_id: selectedChecklist,
           board: JSON.stringify(newBoard),
-          nonce: adminData.nonces?.mcl_admin || '',
+          nonce: adminData.nonces?.magiccl_admin || '',
           context: 'admin'
         })
       })
@@ -1783,11 +1783,11 @@ const KanbanBoard = ({ adminData }) => {
 
     // Save to backend
     try {
-      const ajaxUrl = window.mcl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mcl_checklists?.nonce || adminData.nonces?.mcl_admin || ''
+      const ajaxUrl = window.magiccl_checklists?.ajax_url || adminData.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magiccl_checklists?.nonce || adminData.nonces?.magiccl_admin || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_save_item_deadline')
+      formData.append('action', 'magiccl_save_item_deadline')
       formData.append('checklist_id', selectedChecklist)
       formData.append('item_id', itemId)
       formData.append('deadline', timestamp || '')

@@ -54,7 +54,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
   const [testingEmail, setTestingEmail] = useState(false)
   
   // Initialize i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const t = i18n.notificationSettings || {};
 
   const testWebhook = async (platform) => {
@@ -73,7 +73,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_test_notification_webhook',
+          action: 'magiccl_test_notification_webhook',
           platform: platform,
           webhook_url: webhookUrl,
           nonce: adminData.nonces?.testWebhook || ''
@@ -107,7 +107,7 @@ const NotificationSettings = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_test_email_notification',
+          action: 'magiccl_test_email_notification',
           recipients: formData.email_recipients,
           nonce: adminData.nonces?.testWebhook || ''
         })

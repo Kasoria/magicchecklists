@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Global_Notification_Manager {
+class MAGICCL_Global_Notification_Manager {
     private static $instance = null;
     private $default_batch_interval = 'fifteen_minutes';
     
@@ -20,30 +20,30 @@ class MCL_Global_Notification_Manager {
         add_action('init', array($this, 'init'));
         
         // Register global notification processing hook
-        add_action('mcl_process_global_notifications', array($this, 'process_global_notification_queue'));
+        add_action('magiccl_process_global_notifications', array($this, 'process_global_notification_queue'));
         
         // Hook into comment events
-        add_action('mcl_comment_added', array($this, 'queue_comment_notification'), 10, 3);
-        add_action('mcl_comment_liked', array($this, 'queue_comment_like_notification'), 10, 3);
-        add_action('mcl_comment_replied', array($this, 'queue_comment_reply_notification'), 10, 4);
+        add_action('magiccl_comment_added', array($this, 'queue_comment_notification'), 10, 3);
+        add_action('magiccl_comment_liked', array($this, 'queue_comment_like_notification'), 10, 3);
+        add_action('magiccl_comment_replied', array($this, 'queue_comment_reply_notification'), 10, 4);
 
         // Cleanup global notifications
-        if (!wp_next_scheduled('mcl_cleanup_global_notification_queue')) {
-            wp_schedule_event(time(), 'daily', 'mcl_cleanup_global_notification_queue');
+        if (!wp_next_scheduled('magiccl_cleanup_global_notification_queue')) {
+            wp_schedule_event(time(), 'daily', 'magiccl_cleanup_global_notification_queue');
         }
-        add_action('mcl_cleanup_global_notification_queue', array($this, 'cleanup_global_notification_queue'));
+        add_action('magiccl_cleanup_global_notification_queue', array($this, 'cleanup_global_notification_queue'));
     }
     
     public function init() {
         // Schedule global notification processing
-        if (!wp_next_scheduled('mcl_process_global_notifications')) {
-            wp_schedule_event(time(), 'fifteen_minutes', 'mcl_process_global_notifications');
+        if (!wp_next_scheduled('magiccl_process_global_notifications')) {
+            wp_schedule_event(time(), 'fifteen_minutes', 'magiccl_process_global_notifications');
         }
     }
 
     public function cleanup_global_notification_queue() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'mcl_global_notifications';
+        $table_name = $wpdb->prefix . 'magiccl_global_notifications';
     
         // Delete all processed notifications older than 30 days
         $result = $wpdb->query($wpdb->prepare(
@@ -66,7 +66,7 @@ class MCL_Global_Notification_Manager {
         $item_content = $this->get_item_content($checklist_id, $item_id);
         
         // Use regular notification manager to queue comment notifications
-        $notification_manager = MCL_Notification_Manager::get_instance();
+        $notification_manager = MAGICCL_Notification_Manager::get_instance();
         $notification_manager->queue_notification($checklist_id, 'comment', 'comments', array(
             'item_id' => $item_id,
             'item_content' => $item_content,
@@ -106,7 +106,7 @@ class MCL_Global_Notification_Manager {
         $item_content = $this->get_item_content($checklist_id, $item_id);
         
         // Use regular notification manager to queue reply notifications  
-        $notification_manager = MCL_Notification_Manager::get_instance();
+        $notification_manager = MAGICCL_Notification_Manager::get_instance();
         $notification_manager->queue_notification($checklist_id, 'comment', 'comments', array(
             'item_id' => $item_id,
             'item_content' => $item_content,
@@ -125,7 +125,7 @@ class MCL_Global_Notification_Manager {
         
         global $wpdb;
         $result = $wpdb->insert(
-            $wpdb->prefix . 'mcl_global_notifications',
+            $wpdb->prefix . 'magiccl_global_notifications',
             array(
                 'context' => $context,
                 'context_id' => $context_id,
@@ -167,7 +167,7 @@ class MCL_Global_Notification_Manager {
         
         // Get unprocessed notifications that are ready to be sent
         $notifications = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mcl_global_notifications 
+            "SELECT * FROM {$wpdb->prefix}magiccl_global_notifications 
             WHERE processed = 0 
             AND process_after <= %s 
             ORDER BY context, context_id, created_at ASC",
@@ -203,7 +203,7 @@ class MCL_Global_Notification_Manager {
             
             // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated safely via array_fill with %d
             $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}mcl_global_notifications
+                "UPDATE {$wpdb->prefix}magiccl_global_notifications
                 SET processed = 1,
                     processed_at = %s
                 WHERE id IN (" . implode(',', $placeholders) . ")", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders generated via array_fill
@@ -223,7 +223,7 @@ class MCL_Global_Notification_Manager {
         $checklist_id = $notifications[0]->context_id;
         
         // Get notification settings using the existing manager
-        $notification_manager = MCL_Notification_Manager::get_instance();
+        $notification_manager = MAGICCL_Notification_Manager::get_instance();
         $settings = $notification_manager->get_notification_settings($checklist_id);
         
         if (!$settings || !$settings->notifications_enabled) {
@@ -270,12 +270,12 @@ class MCL_Global_Notification_Manager {
         }
         
         $subject = sprintf(
-            __('[%s] Checklist Comment Notifications', 'magic-checklists'),
+            __('[%s] Checklist Comment Notifications', 'magicchecklists'),
             get_bloginfo('name')
         );
         
         $message = sprintf(
-            __("Comment updates for checklist: %s\n\n", 'magic-checklists'),
+            __("Comment updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
         
@@ -353,7 +353,7 @@ class MCL_Global_Notification_Manager {
     }
 
     private function format_comment_notification_message($event, $data) {
-        $user = isset($data['user_name']) ? $data['user_name'] : __('Someone', 'magic-checklists');
+        $user = isset($data['user_name']) ? $data['user_name'] : __('Someone', 'magicchecklists');
         $item_context = isset($data['item_content']) ? ' on "' . wp_strip_all_tags($data['item_content']) . '"' : '';
         
         switch ($event) {
@@ -361,7 +361,7 @@ class MCL_Global_Notification_Manager {
                 $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : '';
                 $preview = strlen($content) > 100 ? substr($content, 0, 100) . '...' : $content;
                 return sprintf(
-                    __('💬 %s added a comment%s: "%s"', 'magic-checklists'),
+                    __('💬 %s added a comment%s: "%s"', 'magicchecklists'),
                     $user,
                     $item_context,
                     $preview
@@ -369,21 +369,21 @@ class MCL_Global_Notification_Manager {
                 
             case 'comment-liked':
                 return sprintf(
-                    __('👍 %s liked a comment%s', 'magic-checklists'),
+                    __('👍 %s liked a comment%s', 'magicchecklists'),
                     $user,
                     $item_context
                 );
                 
             case 'comment-replied':
                 return sprintf(
-                    __('↩️ %s replied to a comment%s', 'magic-checklists'),
+                    __('↩️ %s replied to a comment%s', 'magicchecklists'),
                     $user,
                     $item_context
                 );
                 
             default:
                 return sprintf(
-                    __('Comment event: %s by %s%s', 'magic-checklists'),
+                    __('Comment event: %s by %s%s', 'magicchecklists'),
                     $event,
                     $user,
                     $item_context
@@ -395,7 +395,7 @@ class MCL_Global_Notification_Manager {
      * Get item content from checklist
      */
     private function get_item_content($checklist_id, $item_id) {
-        $items = get_post_meta($checklist_id, '_mcl_items', true);
+        $items = get_post_meta($checklist_id, '_magiccl_items', true);
         if (!is_array($items)) {
             return 'Unknown item';
         }
@@ -446,4 +446,4 @@ class MCL_Global_Notification_Manager {
 }
 
 // Initialize the global notification manager
-MCL_Global_Notification_Manager::get_instance();
+MAGICCL_Global_Notification_Manager::get_instance();

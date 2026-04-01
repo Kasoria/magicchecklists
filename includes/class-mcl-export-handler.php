@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Export_Handler {
+class MAGICCL_Export_Handler {
   private static $instance = null;
 
   public static function get_instance() {
@@ -17,7 +17,7 @@ class MCL_Export_Handler {
     add_action('admin_post_export_checklist_txt', array($this, 'handle_txt_export'), 10);
     add_action('admin_post_export_checklist_pdf', array($this, 'handle_pdf_export'), 10);
     add_action('admin_post_export_checklist_json', array($this, 'handle_json_export'), 10);
-    add_action('wp_ajax_mcl_save_pdf_settings', array($this, 'save_pdf_settings'));
+    add_action('wp_ajax_magiccl_save_pdf_settings', array($this, 'save_pdf_settings'));
   }
 
     /**
@@ -25,28 +25,28 @@ class MCL_Export_Handler {
      */
     public function handle_txt_export() {
       // Verify nonce first
-      if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_txt')) {
-          wp_die(esc_html__('Security check failed', 'magic-checklists'));
+      if (!isset($_POST['magiccl_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['magiccl_nonce'])), 'magiccl_export_txt')) {
+          wp_die(esc_html__('Security check failed', 'magicchecklists'));
       }
 
       // Check permissions
       if (!current_user_can('manage_options')) {
-          wp_die(esc_html__('You do not have permission to perform this action', 'magic-checklists'));
+          wp_die(esc_html__('You do not have permission to perform this action', 'magicchecklists'));
       }
 
       // Get and validate checklist ID
       $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
       if (!$checklist_id) {
-          wp_die(esc_html__('No checklist selected', 'magic-checklists'));
+          wp_die(esc_html__('No checklist selected', 'magicchecklists'));
       }
 
       // Get checklist data
       $checklist = get_post($checklist_id);
-      if (!$checklist || $checklist->post_type !== 'mcl_checklist') {
-          wp_die(esc_html__('Invalid checklist', 'magic-checklists'));
+      if (!$checklist || $checklist->post_type !== 'magiccl_checklist') {
+          wp_die(esc_html__('Invalid checklist', 'magicchecklists'));
       }
 
-      $items = get_post_meta($checklist_id, '_mcl_items', true);
+      $items = get_post_meta($checklist_id, '_magiccl_items', true);
 
       // Build content
       $content = $checklist->post_title . "\n\n";
@@ -78,17 +78,17 @@ class MCL_Export_Handler {
   }
 
   public function handle_json_export() {
-      if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_json')) {
-          wp_die(esc_html__('Security check failed', 'magic-checklists'));
+      if (!isset($_POST['magiccl_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['magiccl_nonce'])), 'magiccl_export_json')) {
+          wp_die(esc_html__('Security check failed', 'magicchecklists'));
       }
 
       if (!current_user_can('manage_options')) {
-          wp_die(esc_html__('You do not have permission to perform this action', 'magic-checklists'));
+          wp_die(esc_html__('You do not have permission to perform this action', 'magicchecklists'));
       }
 
       $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
       if (!$checklist_id) {
-          wp_die(esc_html__('No checklist selected', 'magic-checklists'));
+          wp_die(esc_html__('No checklist selected', 'magicchecklists'));
       }
 
       // Get all checklist data
@@ -113,14 +113,14 @@ class MCL_Export_Handler {
 
   public function handle_pdf_export() {
     
-    if (!isset($_POST['mcl_nonce']) || !wp_verify_nonce($_POST['mcl_nonce'], 'mcl_export_pdf')) {
-        wp_die(esc_html__('Security check failed', 'magic-checklists'));
+    if (!isset($_POST['magiccl_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['magiccl_nonce'])), 'magiccl_export_pdf')) {
+        wp_die(esc_html__('Security check failed', 'magicchecklists'));
     }
 
     $export_id = isset($_POST['export_id']) ? sanitize_text_field($_POST['export_id']) : '';
 
     if (!$export_id) {
-        wp_die(esc_html__('Export ID missing', 'magic-checklists'));
+        wp_die(esc_html__('Export ID missing', 'magicchecklists'));
     }
 
     // Try to get the transient
@@ -128,17 +128,17 @@ class MCL_Export_Handler {
 
     if (!$settings) {
         // Test if transients are working at all
-        $test_transient = 'mcl_test_' . time();
+        $test_transient = 'magiccl_test_' . time();
         set_transient($test_transient, 'test', 60);
         $test_result = get_transient($test_transient);
         
-        wp_die(esc_html__('Export settings have expired or are invalid. Please try again.', 'magic-checklists'));
+        wp_die(esc_html__('Export settings have expired or are invalid. Please try again.', 'magicchecklists'));
     }
 
     // Continue with export...
     $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
     $checklist = get_post($checklist_id);
-    $items = get_post_meta($checklist_id, '_mcl_items', true);
+    $items = get_post_meta($checklist_id, '_magiccl_items', true);
     
     if (ob_get_level()) {
         ob_end_clean();
@@ -201,7 +201,7 @@ class MCL_Export_Handler {
                   max-width: 800px;
                   margin: 0 auto;
               }
-              .mcl-button {
+              .magiccl-button {
                 border: 0;
                 border-radius: 10px;
                 font-size: 20px;
@@ -338,15 +338,15 @@ class MCL_Export_Handler {
   
                   <div class="generation-info">
                       <?php printf(
-                          esc_html__('Generated by %s', 'magic-checklists'),
+                          esc_html__('Generated by %s', 'magicchecklists'),
                           'MagicChecklists'
                       ); ?>
                   </div>
               </div>
           </div>
           <div class="print-controls">
-            <button onclick="window.print()" class="mcl-button">
-                <?php esc_html_e('Print Now', 'magic-checklists'); ?>
+            <button onclick="window.print()" class="magiccl-button">
+                <?php esc_html_e('Print Now', 'magicchecklists'); ?>
             </button>
         </div>
       </body>
@@ -361,22 +361,22 @@ class MCL_Export_Handler {
     private function get_complete_checklist_data($checklist_id) {
         $checklist = get_post($checklist_id);
         $meta_keys = array(
-            '_mcl_items',
-            '_mcl_time_date',
-            '_mcl_keyboard_shortcut',
-            '_mcl_active',
-            '_mcl_checked_state_handling',
-            '_mcl_theme',
-            '_mcl_priority',
-            '_mcl_enable_item_priority',
-            '_mcl_priority_display_type',
-            '_mcl_trigger_shortcut',
-            '_mcl_trigger_button',
-            '_mcl_short_title',
-            '_mcl_button_position',
-            '_mcl_tags',
-            '_mcl_enable_shortcode',
-            '_mcl_shortcode_settings'
+            '_magiccl_items',
+            '_magiccl_time_date',
+            '_magiccl_keyboard_shortcut',
+            '_magiccl_active',
+            '_magiccl_checked_state_handling',
+            '_magiccl_theme',
+            '_magiccl_priority',
+            '_magiccl_enable_item_priority',
+            '_magiccl_priority_display_type',
+            '_magiccl_trigger_shortcut',
+            '_magiccl_trigger_button',
+            '_magiccl_short_title',
+            '_magiccl_button_position',
+            '_magiccl_tags',
+            '_magiccl_enable_shortcode',
+            '_magiccl_shortcode_settings'
         );
 
         $export_data = array(
@@ -398,7 +398,7 @@ class MCL_Export_Handler {
     public function save_pdf_settings() {
       error_log('==== PDF Settings Save Start ====');
       
-      if (!check_ajax_referer('mcl_save_pdf_settings', '_ajax_nonce', false)) {
+      if (!check_ajax_referer('magiccl_save_pdf_settings', '_ajax_nonce', false)) {
           error_log('Nonce verification failed');
           wp_send_json_error('Nonce verification failed');
           return;
@@ -411,21 +411,21 @@ class MCL_Export_Handler {
       }
   
       // Generate export ID
-      $export_id = 'mcl_pdf_export_' . wp_generate_password(12, false);
+      $export_id = 'magiccl_pdf_export_' . wp_generate_password(12, false);
       error_log('Generated export ID: ' . $export_id);
   
       // Sanitize and prepare settings
       $settings = array(
           'logo_url' => esc_url_raw($_POST['pdf_logo_url'] ?? ''),
-          'header_text' => wp_kses_post(stripslashes($_POST['pdf_header_text'] ?? '')),
-          'contact_info' => wp_kses_post(stripslashes($_POST['pdf_contact_info'] ?? '')),
-          'footer_text' => wp_kses_post(stripslashes($_POST['pdf_footer_text'] ?? ''))
+          'header_text' => wp_kses_post(wp_unslash($_POST['pdf_header_text'] ?? '')),
+          'contact_info' => wp_kses_post(wp_unslash($_POST['pdf_contact_info'] ?? '')),
+          'footer_text' => wp_kses_post(wp_unslash($_POST['pdf_footer_text'] ?? ''))
       );
   
       error_log('Settings to save: ' . print_r($settings, true));
   
       // Test transient functionality
-      $test_set = set_transient('mcl_test_' . time(), 'test', 300);
+      $test_set = set_transient('magiccl_test_' . time(), 'test', 300);
       error_log('Test transient set result: ' . ($test_set ? 'success' : 'failed'));
   
       // Store settings in transient
@@ -447,9 +447,11 @@ class MCL_Export_Handler {
   }
 }
 
-class MCL_PDF_Generator {
+class MAGICCL_PDF_Generator {
   public function generate($html, $filename) {
-      require_once ABSPATH . 'wp-includes/class-phppdf.php';
+      if (!class_exists('PHPPDF')) {
+          wp_die(esc_html__('PDF generation library is not available.', 'magicchecklists'));
+      }
 
       // Basic PDF settings
       $pdf = new PHPPDF();

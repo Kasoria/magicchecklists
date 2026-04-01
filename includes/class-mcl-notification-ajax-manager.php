@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Notification_Ajax_Handler {
+class MAGICCL_Notification_Ajax_Handler {
     private static $instance = null;
     
     public static function get_instance() {
@@ -15,17 +15,17 @@ class MCL_Notification_Ajax_Handler {
     }
     
     private function __construct() {
-        add_action('wp_ajax_mcl_test_notification_webhook', array($this, 'handle_test_webhook'));
-        add_action('wp_ajax_mcl_test_email_notification', array($this, 'handle_test_email'));
+        add_action('wp_ajax_magiccl_test_notification_webhook', array($this, 'handle_test_webhook'));
+        add_action('wp_ajax_magiccl_test_email_notification', array($this, 'handle_test_email'));
     }
     
     public function handle_test_webhook() {
         // Verify nonce
-        check_ajax_referer('mcl_test_webhook', 'nonce');
+        check_ajax_referer('magiccl_test_webhook', 'nonce');
     
         if (!current_user_can('manage_options')) {
             wp_send_json_error([
-                'message' => __('Permission denied', 'magic-checklists')
+                'message' => __('Permission denied', 'magicchecklists')
             ]);
             return;
         }
@@ -35,7 +35,7 @@ class MCL_Notification_Ajax_Handler {
     
         if (empty($webhook_url)) {
             wp_send_json_error([
-                'message' => __('Webhook URL is required', 'magic-checklists')
+                'message' => __('Webhook URL is required', 'magicchecklists')
             ]);
             return;
         }
@@ -44,13 +44,13 @@ class MCL_Notification_Ajax_Handler {
         $test_payload = [
             'slack' => [
                 'text' => sprintf(
-                    __('🔔 Test notification from %s - Your Slack integration is working!', 'magic-checklists'),
+                    __('🔔 Test notification from %s - Your Slack integration is working!', 'magicchecklists'),
                     get_bloginfo('name')
                 )
             ],
             'discord' => [
                 'content' => sprintf(
-                    __('🔔 Test notification from %s - Your Discord integration is working!', 'magic-checklists'),
+                    __('🔔 Test notification from %s - Your Discord integration is working!', 'magicchecklists'),
                     get_bloginfo('name')
                 )
             ]
@@ -58,7 +58,7 @@ class MCL_Notification_Ajax_Handler {
     
         if (!isset($test_payload[$platform])) {
             wp_send_json_error([
-                'message' => __('Invalid platform specified', 'magic-checklists')
+                'message' => __('Invalid platform specified', 'magicchecklists')
             ]);
             return;
         }
@@ -79,31 +79,31 @@ class MCL_Notification_Ajax_Handler {
         $response_code = wp_remote_retrieve_response_code($response);
         if ($platform === 'slack' && $response_code !== 200) {
             wp_send_json_error([
-                'message' => sprintf(__('Webhook test failed with status code: %d', 'magic-checklists'), $response_code)
+                'message' => sprintf(__('Webhook test failed with status code: %d', 'magicchecklists'), $response_code)
             ]);
             return;
         }
     
         if ($platform === 'discord' && $response_code !== 204) {
             wp_send_json_error([
-                'message' => sprintf(__('Webhook test failed with status code: %d', 'magic-checklists'), $response_code)
+                'message' => sprintf(__('Webhook test failed with status code: %d', 'magicchecklists'), $response_code)
             ]);
             return;
         }
     
         wp_send_json_success([
-            'message' => __('Webhook test successful', 'magic-checklists')
+            'message' => __('Webhook test successful', 'magicchecklists')
         ]);
     }
 
 
     public function handle_test_email() {
         // Verify nonce
-        check_ajax_referer('mcl_test_webhook', 'nonce');
+        check_ajax_referer('magiccl_test_webhook', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error([
-                'message' => __('Permission denied', 'magic-checklists')
+                'message' => __('Permission denied', 'magicchecklists')
             ]);
             return;
         }
@@ -112,7 +112,7 @@ class MCL_Notification_Ajax_Handler {
         
         if (empty($recipients)) {
             wp_send_json_error([
-                'message' => __('Email recipients are required', 'magic-checklists')
+                'message' => __('Email recipients are required', 'magicchecklists')
             ]);
             return;
         }
@@ -122,11 +122,11 @@ class MCL_Notification_Ajax_Handler {
         $subject = sprintf(
             '[%s] %s',
             $site_name,
-            __('Test Notification', 'magic-checklists')
+            __('Test Notification', 'magicchecklists')
         );
         
         $message = sprintf(
-            __("Hello!\n\nThis is a test notification from %s to verify your email notification settings are working correctly.\n\nIf you received this email, your notification settings are properly configured.\n\nBest regards,\nMagicChecklists", 'magic-checklists'),
+            __("Hello!\n\nThis is a test notification from %s to verify your email notification settings are working correctly.\n\nIf you received this email, your notification settings are properly configured.\n\nBest regards,\nMagicChecklists", 'magicchecklists'),
             $site_name
         );
 
@@ -171,13 +171,13 @@ class MCL_Notification_Ajax_Handler {
 
         if ($success && empty($failed_emails)) {
             wp_send_json_success([
-                'message' => __('Test email(s) sent successfully', 'magic-checklists'),
+                'message' => __('Test email(s) sent successfully', 'magicchecklists'),
                 'debug' => $results
             ]);
         } else {
             wp_send_json_error([
                 'message' => sprintf(
-                    __('Failed to send test email to: %s', 'magic-checklists'),
+                    __('Failed to send test email to: %s', 'magicchecklists'),
                     implode(', ', $failed_emails)
                 ),
                 'debug' => $results
@@ -193,7 +193,7 @@ class MCL_Notification_Ajax_Handler {
                     'text' => array(
                         'type' => 'mrkdwn',
                         'text' => sprintf(
-                            __('🔔 *Test notification from %s*\nYour Slack integration is working correctly!', 'magic-checklists'),
+                            __('🔔 *Test notification from %s*\nYour Slack integration is working correctly!', 'magicchecklists'),
                             get_bloginfo('name')
                         )
                     )
@@ -215,7 +215,7 @@ class MCL_Notification_Ajax_Handler {
         if ($response_code !== 200) {
             return new WP_Error(
                 'webhook_test_failed',
-                sprintf(__('Webhook test failed with response code: %d', 'magic-checklists'), $response_code)
+                sprintf(__('Webhook test failed with response code: %d', 'magicchecklists'), $response_code)
             );
         }
 
@@ -225,7 +225,7 @@ class MCL_Notification_Ajax_Handler {
     private function test_discord_webhook($webhook_url) {
         $test_message = array(
             'content' => sprintf(
-                __('🔔 **Test notification from %s**\nYour Discord integration is working correctly!', 'magic-checklists'),
+                __('🔔 **Test notification from %s**\nYour Discord integration is working correctly!', 'magicchecklists'),
                 get_bloginfo('name')
             )
         );
@@ -244,7 +244,7 @@ class MCL_Notification_Ajax_Handler {
         if ($response_code !== 204) { // Discord returns 204 for success
             return new WP_Error(
                 'webhook_test_failed',
-                sprintf(__('Webhook test failed with response code: %d', 'magic-checklists'), $response_code)
+                sprintf(__('Webhook test failed with response code: %d', 'magicchecklists'), $response_code)
             );
         }
 
@@ -253,4 +253,4 @@ class MCL_Notification_Ajax_Handler {
 }
 
 // Initialize the handler
-MCL_Notification_Ajax_Handler::get_instance();
+MAGICCL_Notification_Ajax_Handler::get_instance();

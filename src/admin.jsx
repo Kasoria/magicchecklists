@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Get the admin data passed from PHP
-const adminData = window.mclAdminData || {}
+const adminData = window.magicclAdminData || {}
 
 // Determine initial tab based on URL
 const getInitialTab = () => {
@@ -41,7 +41,7 @@ const getInitialTab = () => {
   const page = urlParams.get('page')
   
   // Since we now have a single page, check for specific actions/views in URL params
-  if (page === 'mcl_checklists') {
+  if (page === 'magiccl_checklists') {
     // Check for specific view parameters
     const view = urlParams.get('view')
     const checklistId = urlParams.get('checklist_id')
@@ -63,7 +63,7 @@ const getInitialTab = () => {
 }
 
 // Create the root element and render the appropriate app
-const root = ReactDOM.createRoot(document.getElementById('mcl-admin-root'))
+const root = ReactDOM.createRoot(document.getElementById('magiccl-admin-root'))
 
 root.render(
   <React.StrictMode>

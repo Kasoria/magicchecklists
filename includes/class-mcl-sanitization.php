@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Sanitization {
+class MAGICCL_Sanitization {
     /**
      * List of allowed HTML tags and their attributes
      * @var array
@@ -79,7 +79,7 @@ class MCL_Sanitization {
                 'class' => array(),
                 'width' => array(),
                 'height' => array(),
-                'data-mcl-image' => array(),
+                'data-magiccl-image' => array(),
                 'style' => array()
             )
     ];
@@ -116,7 +116,7 @@ class MCL_Sanitization {
                 'class' => array(),
                 'width' => array(),
                 'height' => array(),
-                'data-mcl-image' => array(),
+                'data-magiccl-image' => array(),
                 'style' => array()
             )
         );
@@ -142,8 +142,8 @@ class MCL_Sanitization {
                 }
 
                 // Add our custom class
-                $img->setAttribute('class', 'mcl-item-image');
-                $img->setAttribute('data-mcl-image', 'true');
+                $img->setAttribute('class', 'magiccl-item-image');
+                $img->setAttribute('data-magiccl-image', 'true');
             }
 
             $content = $dom->saveHTML();

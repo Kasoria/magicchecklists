@@ -3,7 +3,7 @@ import { Card, Button } from 'flowbite-react'
 
 const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   const checklistTypes = [
     {
       id: 'classic',
@@ -22,7 +22,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         i18n.checklistTypeSelector?.classic?.features?.themes || 'Themes and customization',
         i18n.checklistTypeSelector?.classic?.features?.shortcode || 'Shortcode support'
       ],
-      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=add-new&type=classic`,
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=magiccl_checklists&view=add-new&type=classic`,
       buttonText: i18n.checklistTypeSelector?.classic?.buttonText || 'Create Classic Checklist'
     },
     {
@@ -42,7 +42,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         i18n.checklistTypeSelector?.publisher?.features?.linksAndTaxonomy || 'Link and taxonomy checks',
         i18n.checklistTypeSelector?.publisher?.features?.publishingPrevention || 'Publishing prevention'
       ],
-      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=add-new&type=publisher`,
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=magiccl_checklists&view=add-new&type=publisher`,
       buttonText: i18n.checklistTypeSelector?.publisher?.buttonText || 'Create Publisher Checklist'
     },
     {
@@ -62,7 +62,7 @@ const ChecklistTypeSelector = ({ adminData, onSelectType }) => {
         i18n.checklistTypeSelector?.tour?.features?.progressTracking || 'Progress tracking',
         i18n.checklistTypeSelector?.tour?.features?.visualHighlights || 'Visual highlights'
       ],
-      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=mcl_checklists&view=tours&action=add`,
+      url: `${adminData.pluginUrl?.replace('/wp-content/plugins/magicchecklists/', '') || ''}admin.php?page=magiccl_checklists&view=tours&action=add`,
       buttonText: i18n.checklistTypeSelector?.tour?.buttonText || 'Create Interactive Tour',
       type: 'tour'
     }

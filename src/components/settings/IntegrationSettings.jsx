@@ -4,14 +4,14 @@ import { useToast } from '../Toast.jsx'
 
 const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   
   const [formData, setFormData] = useState({
     enable_api: true,
     webhook_secret: '',
     webhook_endpoints: [],
     mainwp_api_key: '',
-    mcl_api_key: ''
+    magiccl_api_key: ''
   })
 
   const [webhookLogs, setWebhookLogs] = useState([])
@@ -43,8 +43,8 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_get_webhook_logs',
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'action': 'magiccl_get_webhook_logs',
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -101,9 +101,9 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_test_webhook',
+          'action': 'magiccl_test_webhook',
           'endpoint': endpoint,
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -138,21 +138,21 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
 
   const generateApiKey = () => {
     const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    const prefix = 'mcl_'
+    const prefix = 'magiccl_'
     let key = prefix
     for (let i = 0; i < 32; i++) {
       key += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     
-    if (formData.mcl_api_key && !confirm(i18n.integrationSettings?.confirmations?.regenerateApiKey || 'Are you sure you want to regenerate the API key? This will invalidate the existing key.')) {
+    if (formData.magiccl_api_key && !confirm(i18n.integrationSettings?.confirmations?.regenerateApiKey || 'Are you sure you want to regenerate the API key? This will invalidate the existing key.')) {
       return
     }
     
-    handleInputChange('mcl_api_key', key)
+    handleInputChange('magiccl_api_key', key)
   }
 
   const copyApiKey = () => {
-    navigator.clipboard.writeText(formData.mcl_api_key).then(() => {
+    navigator.clipboard.writeText(formData.magiccl_api_key).then(() => {
       showSuccess(i18n.integrationSettings?.messages?.apiKeyCopied || 'API key copied to clipboard!', {
         title: i18n.integrationSettings?.titles?.copied || 'Copied',
         duration: 2000
@@ -172,8 +172,8 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_clear_webhook_logs',
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'action': 'magiccl_clear_webhook_logs',
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -337,12 +337,12 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
         {/* MagicChecklists API Key */}
         <div className="space-y-2">
           <Label className="text-brand-dark dark:text-white font-medium">
-            {i18n.integrationSettings?.labels?.mclApiKey || 'MagicChecklists API Key'}
+            {i18n.integrationSettings?.labels?.magicclApiKey || 'MagicChecklists API Key'}
           </Label>
           <div className="flex items-center space-x-2">
             <input
               type={showApiKey ? "text" : "password"}
-              value={formData.mcl_api_key}
+              value={formData.magiccl_api_key}
               readOnly
               placeholder={i18n.integrationSettings?.placeholders?.noApiKey || 'No API key generated'}
               className="flex-1 px-3 py-2 border border-gray-300 bg-gray-50 dark:bg-gray-600 dark:border-gray-600 rounded-md shadow-sm text-brand-dark dark:text-white"
@@ -353,7 +353,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
               onClick={generateApiKey}
               className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600"
             >
-              {formData.mcl_api_key ? (i18n.integrationSettings?.buttons?.regenerate || 'Regenerate') : (i18n.integrationSettings?.buttons?.generate || 'Generate')}
+              {formData.magiccl_api_key ? (i18n.integrationSettings?.buttons?.regenerate || 'Regenerate') : (i18n.integrationSettings?.buttons?.generate || 'Generate')}
             </Button>
             <Button
               type="button"
@@ -363,7 +363,7 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
             >
               {showApiKey ? (i18n.integrationSettings?.buttons?.hide || 'Hide') : (i18n.integrationSettings?.buttons?.show || 'Show')}
             </Button>
-            {formData.mcl_api_key && (
+            {formData.magiccl_api_key && (
               <Button
                 type="button"
                 color="gray"
@@ -375,9 +375,9 @@ const IntegrationSettings = ({ settings, onSave, loading, adminData }) => {
             )}
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            {i18n.integrationSettings?.descriptions?.mclApiKey || 'Generate an API key to allow third-party applications to access your MagicChecklists data through the v2 API endpoints.'}
+            {i18n.integrationSettings?.descriptions?.magicclApiKey || 'Generate an API key to allow third-party applications to access your MagicChecklists data through the v2 API endpoints.'}
           </p>
-          {formData.mcl_api_key && (
+          {formData.magiccl_api_key && (
             <p className="text-sm text-red-600 dark:text-red-400">
               {i18n.integrationSettings?.warnings?.regenerateApiKey || 'Warning: Regenerating the API key will invalidate any existing integrations using the current key.'}
             </p>

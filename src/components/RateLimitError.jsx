@@ -33,14 +33,14 @@ const RateLimitError = ({ type, message, onClose }) => {
         : message;
 
     const containerClass = type === 'global' 
-        ? 'mcl-rate-limit-error mcl-global-error' 
-        : 'mcl-rate-limit-error mcl-drawer-error';
+        ? 'magiccl-rate-limit-error magiccl-global-error' 
+        : 'magiccl-rate-limit-error magiccl-drawer-error';
 
     return (
         <div className={`${containerClass} active`}>
-            <div className="mcl-rate-limit-error-content">
+            <div className="magiccl-rate-limit-error-content">
                 <svg 
-                    className="mcl-rate-limit-icon" 
+                    className="magiccl-rate-limit-icon" 
                     width="24" 
                     height="24" 
                     viewBox="0 0 24 24" 
@@ -54,8 +54,8 @@ const RateLimitError = ({ type, message, onClose }) => {
                         fill="currentColor"
                     />
                 </svg>
-                <span className="mcl-rate-limit-message">{displayMessage}</span>
-                <button className="mcl-rate-limit-close" onClick={onClose}>×</button>
+                <span className="magiccl-rate-limit-message">{displayMessage}</span>
+                <button className="magiccl-rate-limit-close" onClick={onClose}>×</button>
             </div>
         </div>
     );

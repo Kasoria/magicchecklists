@@ -48,8 +48,8 @@ const useAPI = () => {
     const formData = new FormData()
     
     // Use the correct WordPress AJAX URL and nonce
-    const ajaxUrl = window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
-    const nonce = window.mcl_checklists?.nonce || ''
+    const ajaxUrl = window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php'
+    const nonce = window.magiccl_checklists?.nonce || ''
     
     // Append action and nonce
     formData.append('action', endpoint)
@@ -58,7 +58,7 @@ const useAPI = () => {
     }
 
     // Add stored token for invite users if available
-    const storedToken = window.mcl_checklists?.invite_token?.token
+    const storedToken = window.magiccl_checklists?.invite_token?.token
     if (storedToken) {
       formData.append('stored_token', storedToken)
     }
@@ -96,7 +96,7 @@ const useChecklistData = () => {
   
   const fetchChecklistData = useCallback(async (checklistId) => {
     try {
-      const response = await makeRequest('mcl_get_checklist', { checklist_id: checklistId })
+      const response = await makeRequest('magiccl_get_checklist', { checklist_id: checklistId })
       
       if (response.success) {
         return response.data
@@ -111,7 +111,7 @@ const useChecklistData = () => {
 
   const saveChecklistData = useCallback(async (checklistId, title, items) => {
     try {
-      const response = await makeRequest('mcl_update_checklist', {
+      const response = await makeRequest('magiccl_update_checklist', {
         checklist_id: checklistId,
         title,
         items: JSON.stringify(items)
@@ -139,7 +139,7 @@ const useCheckedState = () => {
     
     try {
       // Fall back to local storage only
-      const localKey = `mcl_checked_${checklistId}`
+      const localKey = `magiccl_checked_${checklistId}`
       const localState = localStorage.getItem(localKey)
       return localState ? JSON.parse(localState) : []
     } catch (error) {
@@ -157,11 +157,11 @@ const useCheckedState = () => {
     try {
       if (storageMode === 'localStorage') {
         // For per-user checklists with logged-out users: use localStorage only
-        const localKey = `mcl_checked_${checklistId}`
+        const localKey = `magiccl_checked_${checklistId}`
         localStorage.setItem(localKey, JSON.stringify(checkedItems))
       } else {
         // For global checklists or per-user with logged-in users: save to server only
-        const response = await makeRequest('mcl_save_checked_state', {
+        const response = await makeRequest('magiccl_save_checked_state', {
           checklist_id: checklistId,
           checked_items: checkedItems,
           context: context
@@ -178,7 +178,7 @@ const useCheckedState = () => {
       
       // Only fallback to localStorage for logged-out users or if explicitly using localStorage mode
       if (storageMode === 'localStorage') {
-        const localKey = `mcl_checked_${checklistId}`
+        const localKey = `magiccl_checked_${checklistId}`
         localStorage.setItem(localKey, JSON.stringify(checkedItems))
       } else {
         // For logged-in users, don't fallback to localStorage - let the error bubble up
@@ -191,7 +191,7 @@ const useCheckedState = () => {
   const getStorageMode = useCallback((checklistData) => {
     if (!checklistData) return 'server' // Default fallback
 
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     const isPublic = checklistData.is_public
     
     // Determine handling mode (mirrors PHP logic)
@@ -291,7 +291,7 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     setCurrentItem(listItem)
     
     // Check if user is logged in and can use media library
-    const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+    const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
     
     if (isLoggedIn && typeof wp !== 'undefined' && wp.media) {
       // Show choice modal for logged in users
@@ -337,12 +337,12 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     })
 
     mediaFrame.on('open', () => {
-      const drawer = document.getElementById('mcl-drawer')
+      const drawer = document.getElementById('magiccl-drawer')
       if (drawer) { drawer.style.zIndex = '99999' }
     })
 
     mediaFrame.on('close', () => {
-      const drawer = document.getElementById('mcl-drawer')
+      const drawer = document.getElementById('magiccl-drawer')
       if (drawer) { drawer.style.zIndex = '999999' }
       // Clean up if user cancels
       if (currentItem) {
@@ -358,7 +358,7 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     if (!checklistId) return;
     setLoadingImages(true)
     try {
-      const response = await makeRequest('mcl_get_uploaded_images', {
+      const response = await makeRequest('magiccl_get_uploaded_images', {
         checklist_id: checklistId
       })
       
@@ -378,23 +378,23 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
 
   const uploadImage = useCallback(async (file, checklistId) => {
     const formData = new FormData()
-    formData.append('action', 'mcl_upload_image')
+    formData.append('action', 'magiccl_upload_image')
     formData.append('file', file)
     formData.append('checklist_id', checklistId || 0)
 
     // Add nonce if available
-    const nonce = window.mcl_checklists?.nonce
+    const nonce = window.magiccl_checklists?.nonce
     if (nonce) {
       formData.append('nonce', nonce)
     }
 
     // Add stored token for invite users if available
-    const storedToken = window.mcl_checklists?.invite_token?.token
+    const storedToken = window.magiccl_checklists?.invite_token?.token
     if (storedToken) {
       formData.append('stored_token', storedToken)
     }
 
-    const response = await fetch(window.mcl_checklists.ajax_url, {
+    const response = await fetch(window.magiccl_checklists.ajax_url, {
       method: 'POST',
       body: formData,
       credentials: 'same-origin'
@@ -410,15 +410,15 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
   const insertImage = useCallback((imageData) => {
     if (!currentItem) return
 
-    const contentDiv = currentItem.querySelector('.mcl-item-content')
+    const contentDiv = currentItem.querySelector('.magiccl-item-content')
     if (!contentDiv) return
 
     // Create image element
     const img = document.createElement('img')
     img.src = imageData.url
     img.alt = imageData.alt || ''
-    img.className = 'max-w-full h-auto rounded-md my-2 cursor-ew-resize mcl-item-image'
-    img.setAttribute('data-mcl-image', 'true')
+    img.className = 'max-w-full h-auto rounded-md my-2 cursor-ew-resize magiccl-item-image'
+    img.setAttribute('data-magiccl-image', 'true')
 
     // Calculate dimensions maintaining aspect ratio
     const maxWidth = 400
@@ -471,7 +471,7 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
     setResizeStartX(e.clientX)
     setResizeStartWidth(img.offsetWidth)
     setResizingImage(img)
-    img.classList.add('mcl-resizing')
+    img.classList.add('magiccl-resizing')
   }, [])
 
   const handleImageResize = useCallback((e) => {
@@ -490,7 +490,7 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
 
   const stopImageResize = useCallback(() => {
     if (resizingImage) {
-      resizingImage.classList.remove('mcl-resizing')
+      resizingImage.classList.remove('magiccl-resizing')
       setResizingImage(null)
       
       // Save the checklist after resizing
@@ -499,7 +499,7 @@ const useImageManager = (canEdit, currentChecklistId, items, title, setItems) =>
         const listItem = resizingImage.closest('[data-item-id]')
         if (listItem) {
           const itemId = listItem.getAttribute('data-item-id')
-          const contentDiv = listItem.querySelector('.mcl-item-content')
+          const contentDiv = listItem.querySelector('.magiccl-item-content')
           if (contentDiv && itemId) {
             // Update the item content in state
             const updatedItems = items.map(item => 
@@ -653,7 +653,7 @@ const useTourIntegration = () => {
   // Check if any active tours exist (optimized with server-side caching)
   const hasActiveTours = useCallback(async () => {
     try {
-      const response = await makeRequest('mcl_has_active_tours', {})
+      const response = await makeRequest('magiccl_has_active_tours', {})
       if (response.success) {
         return response.data.has_tours
       }
@@ -666,7 +666,7 @@ const useTourIntegration = () => {
   // Batch check tour connections for multiple items (optimized)
   const checkBatchTourConnections = useCallback(async (checklistId, itemIds) => {
     try {
-      const response = await makeRequest('mcl_get_batch_tour_connections', {
+      const response = await makeRequest('magiccl_get_batch_tour_connections', {
         checklist_id: checklistId,
         item_ids: JSON.stringify(itemIds)
       })
@@ -682,7 +682,7 @@ const useTourIntegration = () => {
 
   const checkTourConnections = useCallback(async (checklistId, itemId) => {
     try {
-      const response = await makeRequest('mcl_get_item_tour_connections', {
+      const response = await makeRequest('magiccl_get_item_tour_connections', {
         checklist_id: checklistId,
         item_id: itemId
       })
@@ -704,7 +704,7 @@ const useTourIntegration = () => {
     
     try {
       // First, fetch the tour data to check if the target step is on the current page
-      const response = await makeRequest('mcl_get_tour_data', { tour_id: connection.tour_id })
+      const response = await makeRequest('magiccl_get_tour_data', { tour_id: connection.tour_id })
       
       if (response.success && response.data.steps) {
         const tourData = response.data
@@ -731,11 +731,11 @@ const useTourIntegration = () => {
               }
               
               const params = new URLSearchParams(window.location.search)
-              params.delete('mcl_tour_mode')
+              params.delete('magiccl_tour_mode')
               params.delete('tour_id') 
-              params.delete('mcl_continue_tour')
-              params.delete('mcl_tour_step')
-              params.delete('mcl_preview_step')
+              params.delete('magiccl_continue_tour')
+              params.delete('magiccl_tour_step')
+              params.delete('magiccl_preview_step')
               
               if (params.toString()) {
                 path += '?' + params.toString()
@@ -745,11 +745,11 @@ const useTourIntegration = () => {
             }
             
             const url = new URL(window.location.href)
-            url.searchParams.delete('mcl_tour_mode')
+            url.searchParams.delete('magiccl_tour_mode')
             url.searchParams.delete('tour_id')
-            url.searchParams.delete('mcl_continue_tour')
-            url.searchParams.delete('mcl_tour_step')
-            url.searchParams.delete('mcl_preview_step')
+            url.searchParams.delete('magiccl_continue_tour')
+            url.searchParams.delete('magiccl_tour_step')
+            url.searchParams.delete('magiccl_preview_step')
             
             let cleanUrl = url.pathname
             if (url.searchParams.toString()) {
@@ -778,8 +778,8 @@ const useTourIntegration = () => {
             console.log('MCL Tour: Starting tour directly on current page from step', stepIndex)
             
             // Start the tour directly using the global tour playback instance
-            if (window.mclTourPlayback?.startTour) {
-              window.mclTourPlayback.startTour({
+            if (window.magicclTourPlayback?.startTour) {
+              window.magicclTourPlayback.startTour({
                 ...tourData,
                 continue_from_step: stepIndex
               })
@@ -796,8 +796,8 @@ const useTourIntegration = () => {
     console.log('MCL Tour: Navigating to different page or falling back to URL method for step', stepIndex)
     
     const params = new URLSearchParams()
-    params.set('mcl_continue_tour', connection.tour_id)
-    params.set('mcl_tour_step', stepIndex.toString())
+    params.set('magiccl_continue_tour', connection.tour_id)
+    params.set('magiccl_tour_step', stepIndex.toString())
     
     let tourUrl = window.location.pathname
     if (window.location.search) {
@@ -983,14 +983,14 @@ const useContentEditing = () => {
 const useGlobalKeyboardShortcuts = (toggleChecklist, isClosing) => {
   useEffect(() => {
     const handleKeyboardShortcut = (event) => {
-      const activeChecklists = window.mcl_checklists?.shortcuts || {}
+      const activeChecklists = window.magiccl_checklists?.shortcuts || {}
       
       if (isClosing) {
         return
       }
       
       // Don't process shortcuts if shortcut input field is active
-      if (window.mclShortcutInputActive) {
+      if (window.magicclShortcutInputActive) {
         return
       }
       
@@ -1058,8 +1058,8 @@ const Modal = ({ isOpen, onClose, title, children, actions, className = '' }) =>
   if (!isOpen) return null
 
   return (
-    <div className="mcl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
-      <div className={`mcl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
+    <div className="magiccl-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-4" onClick={onClose}>
+      <div className={`magiccl-modal bg-white rounded-lg shadow-xl w-full max-w-md relative transform transition-all ${className}`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <button 
@@ -1088,7 +1088,7 @@ const ImageChoiceModal = ({ isOpen, onClose, onMediaLibrary, onQuickUpload }) =>
   if (!isOpen) return null
 
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={i18n.checklistDrawer?.imageModal?.insertImageTitle || 'Insert Image'}>
@@ -1190,7 +1190,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
   }, [])
 
   const getButtonText = () => {
-    const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+    const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
     if (activeTab === 'upload') {
       return uploading ? (i18n.checklistDrawer?.imageModal?.uploading || 'Uploading...') : (i18n.checklistDrawer?.imageModal?.uploadImage || 'Upload Image')
     }
@@ -1204,7 +1204,7 @@ const ImageUploadModal = ({ isOpen, onClose, onUpload, onSelectExisting, checkli
     return !selectedExisting
   }
 
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
 
   const actions = (
     <>
@@ -1352,7 +1352,7 @@ const LinkToolbar = ({
   onClose,
   isValidUrl
 }) => {
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
   
   if (!isVisible) return null
 
@@ -1654,7 +1654,7 @@ const ItemCommentsModal = ({
 // Add deadline modal component
 const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
   const [dateTime, setDateTime] = useState('')
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
   
   useEffect(() => {
     if (isOpen && currentDeadline) {
@@ -1798,7 +1798,7 @@ const ResetInfoDisplay = ({ resetInfo, themeColors }) => {
 const ChecklistDeadlineDisplay = ({ deadline, themeColors }) => {
   const [timeLeft, setTimeLeft] = useState('')
   const [status, setStatus] = useState('normal')
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
 
   useEffect(() => {
     if (!deadline) return
@@ -1888,10 +1888,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Tour integration - check if tours are enabled globally and track item connections
   const toursEnabled = useMemo(() => {
     // Check multiple possible ways tours could be enabled
-    const settingEnabled = window.mcl_checklists?.settings?.enable_tours === '1' || 
-                          window.mcl_checklists?.settings?.enable_tours === true
-    const hasTourData = !!(window.mclTourPlaybackData?.tours?.length > 0)
-    const hasActiveTours = !!(window.mcl_checklists?.tours?.length > 0)
+    const settingEnabled = window.magiccl_checklists?.settings?.enable_tours === '1' || 
+                          window.magiccl_checklists?.settings?.enable_tours === true
+    const hasTourData = !!(window.magicclTourPlaybackData?.tours?.length > 0)
+    const hasActiveTours = !!(window.magiccl_checklists?.tours?.length > 0)
     
     return settingEnabled || hasTourData || hasActiveTours
   }, [])
@@ -1900,7 +1900,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   const [itemsWithTourConnections, setItemsWithTourConnections] = useState(new Set())
   
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && (window.mclAdminData?.i18n || window.mclPublicData?.i18n)) || {};
+  const i18n = (typeof window !== 'undefined' && (window.magicclAdminData?.i18n || window.magicclPublicData?.i18n)) || {};
   
   // Permission states
   const [canEdit, setCanEdit] = useState(false)
@@ -2176,13 +2176,13 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   // Admin/permissions
   const isAdministrator = useCallback(() => {
-    return window.mcl_checklists?.user_access?.is_admin === true
+    return window.magiccl_checklists?.user_access?.is_admin === true
   }, [])
 
   // Token management
   const getStoredToken = useCallback(() => {
     try {
-      const stored = localStorage.getItem('mcl_invite_token')
+      const stored = localStorage.getItem('magiccl_invite_token')
       if (!stored) return null
 
       const data = JSON.parse(stored)
@@ -2190,7 +2190,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       // Check if token has expired
       if (now > data.expiry) {
-        localStorage.removeItem('mcl_invite_token')
+        localStorage.removeItem('magiccl_invite_token')
         return null
       }
 
@@ -2208,7 +2208,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Initialize active checklists once on mount
   useEffect(() => {
     try {
-      const shortcuts = window.mcl_checklists?.shortcuts || {}
+      const shortcuts = window.magiccl_checklists?.shortcuts || {}
       const checklists = Object.entries(shortcuts)
         .filter(([id, data]) => data && id)
         .map(([id]) => id)
@@ -2251,7 +2251,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     // Capture content from any focused elements before closing
     const activeElement = document.activeElement
 
-    if (activeElement && activeElement.classList.contains('mcl-item-content') && activeElement.isContentEditable) {
+    if (activeElement && activeElement.classList.contains('magiccl-item-content') && activeElement.isContentEditable) {
       const itemId = activeElement.closest('[data-item-id]')?.getAttribute('data-item-id')
       if (itemId) {
         const content = activeElement.innerHTML
@@ -2270,7 +2270,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
 
     // Also capture title changes if title is focused
-    if (activeElement && activeElement.classList.contains('mcl-drawer-title') && activeElement.isContentEditable) {
+    if (activeElement && activeElement.classList.contains('magiccl-drawer-title') && activeElement.isContentEditable) {
       finalTitle = activeElement.textContent
       setTitle(finalTitle)
       titleRef.current = finalTitle
@@ -2288,7 +2288,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
     // Release server side lock after save completes
     if (checklistId) {
-      makeRequest('mcl_release_lock', { checklist_id: checklistId }).catch(() => {})
+      makeRequest('magiccl_release_lock', { checklist_id: checklistId }).catch(() => {})
     }
     
     // Start closing animation
@@ -2342,7 +2342,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       let finalCheckedState = data.checked_state || []
 
       // For per-user checklists with logged-out users, check localStorage since server won't have state
-      const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+      const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
       const isPublic = data.is_public
       const handlingMode = isPublic ? (data.checked_state_handling || 'per_user') : (data.checked_state_handling || 'global')
 
@@ -2350,7 +2350,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       const wasJustReset = data.reset_info?.enabled && data.reset_info?.was_reset
 
       if (handlingMode === 'per_user' && !isLoggedIn) {
-        const localKey = `mcl_checked_${checklistId}`
+        const localKey = `magiccl_checked_${checklistId}`
 
         if (wasJustReset) {
           // Reset happened - clear localStorage immediately and use empty state
@@ -2415,7 +2415,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   const toggleChecklist = useCallback(async (checklistId) => {
     // Rate limit check
-    const drawerCheck = checkRateLimit(`mcl_drawer_${checklistId}`)
+    const drawerCheck = checkRateLimit(`magiccl_drawer_${checklistId}`)
     if (!drawerCheck.allowed) {
       setError(`Rate limit reached. Try again in ${drawerCheck.remaining} seconds.`)
       return
@@ -2443,7 +2443,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   // Navigation functions
   const navigateChecklists = useCallback(async (direction) => {
-    const drawerCheck = checkRateLimit(`mcl_drawer_nav`)
+    const drawerCheck = checkRateLimit(`magiccl_drawer_nav`)
     if (!drawerCheck.allowed) {
       setError(`Rate limit reached. Try again in ${drawerCheck.remaining} seconds.`)
       return
@@ -2491,14 +2491,14 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           
           // Save tour-updated state according to storage mode
           if (checklistData) {
-            const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+            const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
             const isPublic = checklistData.is_public
             const handlingMode = isPublic ? (checklistData.checked_state_handling || 'per_user') : (checklistData.checked_state_handling || 'global')
             
             if (handlingMode === 'per_user' && !isLoggedIn) {
               // Logged-out users: save to localStorage only
               try {
-                const localKey = `mcl_checked_${checklistId}`
+                const localKey = `magiccl_checked_${checklistId}`
                 localStorage.setItem(localKey, JSON.stringify(newChecked))
               } catch (error) {
                 console.warn('MCL Drawer: Error saving tour state to localStorage:', error)
@@ -2511,10 +2511,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       }
     }
 
-    window.addEventListener('mclChecklistItemChanged', handleTourChecklistChange)
+    window.addEventListener('magicclChecklistItemChanged', handleTourChecklistChange)
     
     return () => {
-      window.removeEventListener('mclChecklistItemChanged', handleTourChecklistChange)
+      window.removeEventListener('magicclChecklistItemChanged', handleTourChecklistChange)
     }
   }, [currentChecklistId, isVisible])
 
@@ -2619,12 +2619,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         // Clear localStorage for logged-out users (per-user mode stores state in localStorage)
         try {
           // Drawer localStorage key
-          const drawerKey = `mcl_checked_${resetChecklistId}`
+          const drawerKey = `magiccl_checked_${resetChecklistId}`
           localStorage.removeItem(drawerKey)
 
           // Also clear any shortcode localStorage keys for this checklist
-          // Shortcode keys follow pattern: mcl_shortcode_${checklistId}_${instanceId}_checked
-          const shortcodePrefix = `mcl_shortcode_${resetChecklistId}_`
+          // Shortcode keys follow pattern: magiccl_shortcode_${checklistId}_${instanceId}_checked
+          const shortcodePrefix = `magiccl_shortcode_${resetChecklistId}_`
           const keysToRemove = []
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i)
@@ -2673,7 +2673,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Enhanced in-progress management
   const saveInProgressState = useCallback(async (newInProgressItems) => {
     try {
-      const response = await makeRequest('mcl_save_in_progress', {
+      const response = await makeRequest('magiccl_save_in_progress', {
         checklist_id: currentChecklistId,
         items_in_progress: newInProgressItems
       })
@@ -2698,7 +2698,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       saveInProgressState(newItems).then(() => {
         // Dispatch event to notify other views that in-progress state changed
-        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
           detail: {
             checklistId: currentChecklistId,
             action: 'in_progress_changed',
@@ -2757,7 +2757,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Item operations
   const handleCheckboxChange = useCallback(async (itemId, isChecked) => {
     // Rate limit check for checkbox changes
-    const checkRateCheck = checkRateLimit(`mcl_checkbox_${currentChecklistId}_${itemId}`, 10) // Allow 10 operations per minute
+    const checkRateCheck = checkRateLimit(`magiccl_checkbox_${currentChecklistId}_${itemId}`, 10) // Allow 10 operations per minute
     if (!checkRateCheck.allowed) {
       setError(`Rate limit reached. Try again in ${checkRateCheck.remaining} seconds.`)
       return
@@ -2850,7 +2850,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       await saveCheckedState(currentChecklistId, newCheckedItems, 'drawer', checklistData)
 
       // Dispatch event to notify other views that checked state changed
-      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
         detail: {
           checklistId: currentChecklistId,
           action: 'checked_state_changed',
@@ -2883,7 +2883,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!canEdit || locked) return
 
     // Rate limit check for adding items
-    const addItemCheck = checkRateLimit(`mcl_add_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
+    const addItemCheck = checkRateLimit(`magiccl_add_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
     if (!addItemCheck.allowed) {
       setError(`Rate limit reached. Try again in ${addItemCheck.remaining} seconds.`)
       return
@@ -2891,7 +2891,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
     // First capture any in-flight edits (contentEditable changes that haven't blurred yet)
     const syncedItems = items.map(it => {
-      const el = document.querySelector(`[data-item-id="${it.id}"] .mcl-item-content`)
+      const el = document.querySelector(`[data-item-id="${it.id}"] .magiccl-item-content`)
       if (el) {
         return { ...it, content: el.innerHTML }
       }
@@ -2910,10 +2910,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     setItems(updated)
 
     // Call the dedicated add endpoint with notification
-    // Note: We don't dispatch mclChecklistDataChanged here because the item has no content yet.
+    // Note: We don't dispatch magicclChecklistDataChanged here because the item has no content yet.
     // The event will be dispatched when content is actually saved in updateItemContent.
     if (currentChecklistId) {
-      makeRequest('mcl_add_item', {
+      makeRequest('magiccl_add_item', {
         checklist_id: currentChecklistId,
         item: JSON.stringify(newItem)
       }).catch(() => {
@@ -2924,7 +2924,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
     // Focus the new item after render
     setTimeout(() => {
-      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"] .mcl-item-content`)
+      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"] .magiccl-item-content`)
       if (newItemElement) {
         newItemElement.focus()
       }
@@ -2938,7 +2938,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!canEdit && !(checklistData?.enable_item_locking && !itemIsLocked)) return
 
     // Rate limit check for removing items
-    const removeItemCheck = checkRateLimit(`mcl_remove_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
+    const removeItemCheck = checkRateLimit(`magiccl_remove_item_${currentChecklistId}`, 5) // Allow 5 operations per minute
     if (!removeItemCheck.allowed) {
       setError(`Rate limit reached. Try again in ${removeItemCheck.remaining} seconds.`)
       return
@@ -2957,12 +2957,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
     // Call the dedicated delete endpoint with notification
     if (currentChecklistId) {
-      makeRequest('mcl_delete_item', {
+      makeRequest('magiccl_delete_item', {
         checklist_id: currentChecklistId,
         item_id: itemId
       }).then(() => {
         // Dispatch event to notify other views that checklist data changed
-        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
           detail: {
             checklistId: currentChecklistId,
             action: 'item_deleted',
@@ -2987,7 +2987,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!allowEdit || locked) return
 
     // Rate limit check for content updates (more lenient limit since users edit content frequently)
-    const updateContentCheck = checkRateLimit(`mcl_update_content_${currentChecklistId}`, 20) // Allow 20 operations per minute
+    const updateContentCheck = checkRateLimit(`magiccl_update_content_${currentChecklistId}`, 20) // Allow 20 operations per minute
     if (!updateContentCheck.allowed) {
       setError(`Rate limit reached. Try again in ${updateContentCheck.remaining} seconds.`)
       return
@@ -3003,7 +3003,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       saveChecklistData(currentChecklistId, title, newItems)
         .then(() => {
           // Dispatch event to notify other views that checklist data changed
-          window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+          window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
             detail: {
               checklistId: currentChecklistId,
               action: 'item_updated',
@@ -3057,7 +3057,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       await saveCheckedState(currentChecklistId, [], 'drawer', checklistData)
 
       // Dispatch event to notify other views that checked state changed
-      window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+      window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
         detail: {
           checklistId: currentChecklistId,
           action: 'checked_state_changed',
@@ -3088,7 +3088,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     bindingRef.current = true
     
     // Bind only to floating buttons (not the drawer content)
-    const buttons = document.querySelectorAll('.mcl-speed-dial-button, .mcl-single-floating-button')
+    const buttons = document.querySelectorAll('.magiccl-speed-dial-button, .magiccl-single-floating-button')
 
     const handleFloatingButtonClick = async (e) => {
       e.preventDefault()
@@ -3097,8 +3097,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       const checklistId = e.currentTarget.getAttribute('data-checklist-id')
       if (checklistId) {
         // Use the current toggleChecklist function from the bridge instead of the dependency
-        if (window.mclDrawer && window.mclDrawer.toggleChecklist) {
-          await window.mclDrawer.toggleChecklist(checklistId)
+        if (window.magicclDrawer && window.magicclDrawer.toggleChecklist) {
+          await window.magicclDrawer.toggleChecklist(checklistId)
         }
       }
     }
@@ -3118,12 +3118,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     const handleClickOutside = (e) => {
       if (isVisible && drawerRef.current) {
         const isOutsideDrawer = !drawerRef.current.contains(e.target)
-        const isNotFloatingButton = !e.target.closest('.mcl-speed-dial-button, .mcl-single-floating-button')
+        const isNotFloatingButton = !e.target.closest('.magiccl-speed-dial-button, .magiccl-single-floating-button')
         const isNotModal = !e.target.closest('.modal, [data-modal]')
         const isNotMediaModal = !e.target.closest('.media-modal')
         const isNotMediaFrame = !e.target.closest('.media-frame')
         // Add exclusions for our image modals and link toolbar
-        const isNotImageModal = !e.target.closest('.mcl-modal-overlay, .mcl-modal')
+        const isNotImageModal = !e.target.closest('.magiccl-modal-overlay, .magiccl-modal')
         const isNotLinkToolbar = !e.target.closest('[data-link-toolbar="true"]')
         
         if (isOutsideDrawer && isNotFloatingButton && isNotModal && isNotMediaModal && isNotMediaFrame && isNotImageModal && isNotLinkToolbar) {
@@ -3186,7 +3186,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     }
 
     setTimeout(() => {
-      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"] .mcl-item-content`)
+      const newItemElement = document.querySelector(`[data-item-id="${newItem.id}"] .magiccl-item-content`)
       if (newItemElement) {
         newItemElement.focus()
       }
@@ -3208,17 +3208,17 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       if (hasEditPermission && checklistId && finalItems.length > 0) {
         // Use sendBeacon for reliable async save on page unload
         const data = new FormData()
-        data.append('action', 'mcl_update_checklist')
+        data.append('action', 'magiccl_update_checklist')
         data.append('checklist_id', checklistId)
         data.append('title', finalTitle)
         data.append('items', JSON.stringify(finalItems))
 
-        const nonce = window.mcl_checklists?.nonce
+        const nonce = window.magiccl_checklists?.nonce
         if (nonce) {
           data.append('nonce', nonce)
         }
 
-        const ajaxUrl = window.mcl_checklists?.ajax_url
+        const ajaxUrl = window.magiccl_checklists?.ajax_url
         if (ajaxUrl) {
           // sendBeacon is designed for this exact use case
           navigator.sendBeacon(ajaxUrl, data)
@@ -3269,8 +3269,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
   // Handle image resizing
   const handleItemMouseDown = useCallback((e) => {
-    // Check if the clicked element is an image with data-mcl-image attribute
-    if (e.target.matches('img[data-mcl-image]')) {
+    // Check if the clicked element is an image with data-magiccl-image attribute
+    if (e.target.matches('img[data-magiccl-image]')) {
       imageManager.startImageResize(e, e.target)
     }
   }, [imageManager])
@@ -3409,7 +3409,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         const itemElement = textNode.parentElement?.closest('[data-item-id]')
         if (itemElement) {
           const itemId = itemElement.getAttribute('data-item-id')
-          const contentElement = itemElement.querySelector('.mcl-item-content')
+          const contentElement = itemElement.querySelector('.magiccl-item-content')
           if (contentElement && itemId) {
             // Update local state immediately
             const newContent = contentElement.innerHTML
@@ -3506,7 +3506,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       const itemElement = link.closest('[data-item-id]')
       if (itemElement) {
         const itemId = itemElement.getAttribute('data-item-id')
-        const contentElement = itemElement.querySelector('.mcl-item-content')
+        const contentElement = itemElement.querySelector('.magiccl-item-content')
         if (contentElement && itemId) {
           // Update local state immediately
           const newContent = contentElement.innerHTML
@@ -3554,7 +3554,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   
   // Expose methods globally for compatibility - only set up once
   useEffect(() => {
-    if (window.mclDrawer || bridgeSetupRef.current) {
+    if (window.magicclDrawer || bridgeSetupRef.current) {
       return // Already set up
     }
     
@@ -3592,8 +3592,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       // Debug method to check DOM elements
       checkDOM: () => {
-        const drawer = document.querySelector('#mcl-drawer')
-        const items = document.querySelector('#mcl-items')
+        const drawer = document.querySelector('#magiccl-drawer')
+        const items = document.querySelector('#magiccl-items')
         return { drawer: !!drawer, items: !!items }
       },
 
@@ -3612,11 +3612,11 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       
     }
     
-    window.addEventListener('mclChecklistItemChanged', globalTourEventHandler)
+    window.addEventListener('magicclChecklistItemChanged', globalTourEventHandler)
 
     // Expose to global scope
-    window.mclDrawerBridge = drawerBridge
-    window.mclDrawer = drawerBridge
+    window.magicclDrawerBridge = drawerBridge
+    window.magicclDrawer = drawerBridge
 
     // Auto-bind floating buttons when this component mounts
     // Use a delayed binding to allow FloatingButtons to render first
@@ -3628,9 +3628,9 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     // Clean up the timeout if component unmounts before it fires
     const cleanup = () => {
       clearTimeout(bindingTimeout)
-      window.removeEventListener('mclChecklistItemChanged', globalTourEventHandler)
-      delete window.mclDrawerBridge
-      delete window.mclDrawer
+      window.removeEventListener('magicclChecklistItemChanged', globalTourEventHandler)
+      delete window.magicclDrawerBridge
+      delete window.magicclDrawer
       bridgeSetupRef.current = false
     }
 
@@ -3641,7 +3641,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   // Add save deadline function
   const saveItemDeadline = useCallback(async (itemId, timestamp) => {
     try {
-      await makeRequest('mcl_save_item_deadline', {
+      await makeRequest('magiccl_save_item_deadline', {
         checklist_id: currentChecklistId,
         item_id: itemId,
         deadline: timestamp || ''
@@ -3685,7 +3685,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
     setLoadingComments(true)
     try {
-      const response = await makeRequest('mcl_get_threaded_comments', {
+      const response = await makeRequest('magiccl_get_threaded_comments', {
         checklist_id: checklistIdInt,
         item_id: numericItemId
       })
@@ -3707,7 +3707,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!numericItemId || !checklistIdInt || !commentText.trim()) return
 
     try {
-      const response = await makeRequest('mcl_add_threaded_comment', {
+      const response = await makeRequest('magiccl_add_threaded_comment', {
         checklist_id: checklistIdInt,
         item_id: numericItemId,
         comment: commentText.trim()
@@ -3734,7 +3734,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!numericItemId || !checklistIdInt || !replyText.trim()) return
 
     try {
-      const response = await makeRequest('mcl_add_threaded_comment', {
+      const response = await makeRequest('magiccl_add_threaded_comment', {
         checklist_id: checklistIdInt,
         item_id: numericItemId,
         comment: replyText.trim(),
@@ -3754,7 +3754,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!currentChecklistId) return
 
     try {
-      const response = await makeRequest('mcl_toggle_comment_like', {
+      const response = await makeRequest('magiccl_toggle_comment_like', {
         checklist_id: currentChecklistId,
         comment_id: commentId
       })
@@ -3792,7 +3792,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
     if (!currentChecklistId) return
 
     try {
-      const response = await makeRequest('mcl_delete_threaded_comment', {
+      const response = await makeRequest('magiccl_delete_threaded_comment', {
         checklist_id: currentChecklistId,
         comment_id: commentId
       })
@@ -3836,13 +3836,13 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       // Handle checked state based on storage mode
       let finalCheckedState = data.checked_state || []
-      const isLoggedIn = window.mcl_checklists?.user_access?.is_logged_in || false
+      const isLoggedIn = window.magiccl_checklists?.user_access?.is_logged_in || false
       const isPublic = data.is_public
       const handlingMode = isPublic ? (data.checked_state_handling || 'per_user') : (data.checked_state_handling || 'global')
 
       if (handlingMode === 'per_user' && !isLoggedIn) {
         try {
-          const localKey = `mcl_checked_${currentChecklistId}`
+          const localKey = `magiccl_checked_${currentChecklistId}`
           const localState = localStorage.getItem(localKey)
           if (localState) {
             finalCheckedState = JSON.parse(localState)
@@ -3880,10 +3880,10 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       }
     }
 
-    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    window.addEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
 
     return () => {
-      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+      window.removeEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
     }
   }, [currentChecklistId, isVisible, refreshCurrentChecklist])
 
@@ -3899,7 +3899,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       lockPollRef.current = setInterval(async () => {
         try {
-          const resp = await makeRequest('mcl_get_checklist', { checklist_id: currentChecklistId })
+          const resp = await makeRequest('magiccl_get_checklist', { checklist_id: currentChecklistId })
           if (resp.success && resp.data) {
             setLocked(resp.data.locked || false)
           }
@@ -3922,8 +3922,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
   useEffect(() => {
     const handleUnload = () => {
       if (currentChecklistId) {
-        navigator.sendBeacon?.(window.mcl_checklists?.ajax_url || '/wp-admin/admin-ajax.php',
-          new URLSearchParams({ action: 'mcl_release_lock', checklist_id: currentChecklistId }))
+        navigator.sendBeacon?.(window.magiccl_checklists?.ajax_url || '/wp-admin/admin-ajax.php',
+          new URLSearchParams({ action: 'magiccl_release_lock', checklist_id: currentChecklistId }))
       }
     }
 
@@ -3938,8 +3938,8 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
       <style>
         {`
           /* Disable WP-generated checkmark pseudo-element on our custom checkbox */
-          #mcl-admin-root input.mcl-item-checkbox::before,
-          #mcl-public-root input.mcl-item-checkbox::before {
+          #magiccl-admin-root input.magiccl-item-checkbox::before,
+          #magiccl-public-root input.magiccl-item-checkbox::before {
             content: none !important;
           }
         `}
@@ -4056,14 +4056,14 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
       {/* Main drawer */}
               <div 
-          id="mcl-drawer" 
+          id="magiccl-drawer" 
           className={`
             fixed inset-x-0 mx-auto w-full max-w-[700px] min-w-0 z-[99999]
             ${themeColors.bg} ${themeColors.border}
             rounded-t-2xl border-t border-l border-r shadow-2xl
             font-sans
             sm:min-w-96 sm:max-w-[700px]
-            ${drawerTheme === 'custom' ? 'mcl-theme-custom' : drawerTheme === 'dark' ? 'mcl-theme-dark' : 'mcl-theme-light'}
+            ${drawerTheme === 'custom' ? 'magiccl-theme-custom' : drawerTheme === 'dark' ? 'magiccl-theme-dark' : 'magiccl-theme-light'}
           `}
           ref={drawerRef}
           onClick={(e) => e.stopPropagation()}
@@ -4079,7 +4079,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
         }}
       >
         <div 
-          className={`flex flex-col h-full min-h-0 p-4 gap-3 ${themeColors.text} drawer-content mcl-drawer-content`}
+          className={`flex flex-col h-full min-h-0 p-4 gap-3 ${themeColors.text} drawer-content magiccl-drawer-content`}
           data-checklist-id={currentChecklistId || ""} 
           data-checked-items={JSON.stringify(checkedItems)}
           style={{
@@ -4101,7 +4101,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
 
           {/* Drawer header */}
           <div className="flex-shrink-0">
-            {memoizedActiveChecklists.length > 1 && window.mcl_checklists?.settings?.enable_navigation ? (
+            {memoizedActiveChecklists.length > 1 && window.magiccl_checklists?.settings?.enable_navigation ? (
               <div className="flex items-center gap-2">
                 <button 
                   className={`p-2 rounded-lg ${themeColors.textSecondary} hover:${themeColors.surface} transition-colors disabled:opacity-50 flex-shrink-0 ${themeColors.surface}`}
@@ -4122,7 +4122,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                     flex-1 text-xl font-bold leading-tight px-2 py-1 rounded min-w-0
                     ${themeColors.text}
                     ${canEdit && !locked ? 'hover:' + themeColors.surface + ' focus:' + themeColors.surface + ' focus:outline-none' : ''}
-                    mcl-drawer-title
+                    magiccl-drawer-title
                   `}
                   onBlur={(e) => setTitle(e.target.textContent)}
                   onInput={(e) => setTitle(e.target.textContent)}
@@ -4160,7 +4160,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                     text-xl font-bold leading-tight px-2 py-1 rounded flex-1
                     ${themeColors.text}
                     ${canEdit && !locked ? 'hover:' + themeColors.surface + ' focus:' + themeColors.surface + ' focus:outline-none' : ''}
-                    mcl-drawer-title
+                    magiccl-drawer-title
                   `}
                   onBlur={(e) => setTitle(e.target.textContent)}
                   onInput={(e) => setTitle(e.target.textContent)}
@@ -4181,7 +4181,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                       {/* Description handling - prioritize public description */}
           {checklistData?.is_public && checklistData?.public_description && (
             <div className="flex-shrink-0">
-              <div className={`${themeColors.textSecondary} text-sm leading-relaxed max-h-16 overflow-y-auto mcl-public-description`}>
+              <div className={`${themeColors.textSecondary} text-sm leading-relaxed max-h-16 overflow-y-auto magiccl-public-description`}>
                 {checklistData.public_description}
               </div>
             </div>
@@ -4191,7 +4191,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           {(!checklistData?.is_public || !checklistData?.public_description) && 
            checklistData?.show_description === "1" && checklistData?.description && (
             <div className="flex-shrink-0">
-              <div className={`${themeColors.textSecondary} text-sm leading-relaxed max-h-16 overflow-y-auto mcl-public-description`}>
+              <div className={`${themeColors.textSecondary} text-sm leading-relaxed max-h-16 overflow-y-auto magiccl-public-description`}>
                 {checklistData.description}
               </div>
             </div>
@@ -4211,7 +4211,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           <ChecklistDeadlineDisplay deadline={checklistDeadline} themeColors={themeColors} />
 
           {/* Progress counter - only show when enabled and has items - reduced size */}
-          {items.length > 0 && window.mcl_checklists?.settings?.enable_progress_counter && (
+          {items.length > 0 && window.magiccl_checklists?.settings?.enable_progress_counter && (
             <div className={`${themeColors.surface} rounded-lg p-2 flex-shrink-0`}>
               <div className="flex justify-between text-xs mb-1">
                 <span className={themeColors.textSecondary}>{progressStats.total} {i18n.checklistDrawer?.progressCounter?.items || 'items'}</span>
@@ -4242,12 +4242,12 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
           {/* Items wrapper */}
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             <DragDropContext onDragEnd={handleDragEnd} portalContainer={document.body}>
-              <Droppable droppableId="mcl-items-droppable" isCombineEnabled>
+              <Droppable droppableId="magiccl-items-droppable" isCombineEnabled>
                 {(provided, snapshot) => (
                   <ul
-                    id="mcl-items"
+                    id="magiccl-items"
                     className={`
-                      mcl-items-list
+                      magiccl-items-list
                       space-y-2
                       ${snapshot.isDraggingOver ? 'bg-blue-50/50 rounded-lg p-2' : ''}
                     `}
@@ -4276,7 +4276,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                 ${deadlineClasses || (isInProgress ? 'bg-emerald-100' : themeColors.surface)} ${themeColors.itemHover}
                                 ${snapshotDraggable.isDragging ? 'shadow-lg scale-105 rotate-1' : 'shadow-sm'}
                                 ${snapshotDraggable.combineWith ? 'ring-2 ring-blue-400 bg-blue-50' : ''}
-                                ${isChild ? 'mcl-child-item' : ''}
+                                ${isChild ? 'magiccl-child-item' : ''}
                                 ${isChecked ? 'opacity-70' : ''}
                                 group relative transition-all duration-200
                               `}
@@ -4287,7 +4287,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                               onMouseDown={handleItemMouseDown}
                             >
                               {/* In-progress indicator */}
-                              <div className={`mcl-progress-indicator ${isInProgress ? 'active' : ''}`} />
+                              <div className={`magiccl-progress-indicator ${isInProgress ? 'active' : ''}`} />
 
                               {/* Drag handle - only show if can edit and not locked, hidden by default, shown on hover */}
                               {(canCheck || canEdit) && (
@@ -4308,7 +4308,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                 <div className="relative flex-shrink-0">
                                   <input
                                     type="checkbox"
-                                    className="mcl-item-checkbox"
+                                    className="magiccl-item-checkbox"
                                     style={{
                                       appearance: 'none',
                                       WebkitAppearance: 'none',
@@ -4363,7 +4363,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                         height="12" 
                                         viewBox="0 0 20 20" 
                                         fill={drawerTheme === 'custom' ? 'currentColor' : '#1e40af'}
-                                        className={drawerTheme === 'custom' ? 'mcl-custom-checkmark' : ''}
+                                        className={drawerTheme === 'custom' ? 'magiccl-custom-checkmark' : ''}
                                         style={{ flexShrink: 0 }}
                                       >
                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -4405,7 +4405,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                                     w-full p-2 rounded border-2 border-transparent
                                     ${((canEdit) && !locked && !isLocked) ? `text-[16px] cursor-text ${themeColors.itemHover} focus:border-yellow-400 focus:${themeColors.surface} focus:outline-none` : 'cursor-default select-none'}
                                     ${isChecked ? 'line-through opacity-70' : ''}
-                                    break-words mcl-item-content ${isLocked ? 'pointer-events-none' : ''}
+                                    break-words magiccl-item-content ${isLocked ? 'pointer-events-none' : ''}
                                   `}
                                   contentEditable={canEdit && !locked && !isLocked}
                                   tabIndex={isLocked ? -1 : 0}
@@ -4603,7 +4603,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                       flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors bg-brand-accent text-brand-dark
                       ${themeColors.accent} ${themeColors.accentHover}
                       hover:shadow-md active:scale-95
-                      mcl-drawer-button-primary
+                      magiccl-drawer-button-primary
                     `}
                     onClick={addNewItem}
                   >
@@ -4621,7 +4621,7 @@ const ChecklistDrawer = ({ theme = 'light' }) => {
                       flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors
                       ${themeColors.buttonSecondary}
                       hover:shadow-md active:scale-95
-                      mcl-drawer-button-secondary
+                      magiccl-drawer-button-secondary
                     `}
                     onClick={uncheckAllItems}
                   >

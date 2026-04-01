@@ -23,7 +23,7 @@ const TourWrapper = ({ adminData, tourData = {}, onExit }) => {
     const urlParams = new URLSearchParams(window.location.search)
     
     // Check for tour creator mode
-    const tourMode = urlParams.get('mcl_tour_mode')
+    const tourMode = urlParams.get('magiccl_tour_mode')
     const tourId = parseInt(urlParams.get('tour_id')) || 0
     
     if (tourMode === '1') {
@@ -31,8 +31,8 @@ const TourWrapper = ({ adminData, tourData = {}, onExit }) => {
       setCurrentTourId(tourId)
     } else {
       // This is playback mode - handle tour continuation and normal tour loading
-      const continueTour = parseInt(urlParams.get('mcl_continue_tour')) || 0
-      const continueStepParam = parseInt(urlParams.get('mcl_tour_step')) || 0
+      const continueTour = parseInt(urlParams.get('magiccl_continue_tour')) || 0
+      const continueStepParam = parseInt(urlParams.get('magiccl_tour_step')) || 0
       
       if (continueTour > 0) {
         setContinueTourId(continueTour)
@@ -44,8 +44,8 @@ const TourWrapper = ({ adminData, tourData = {}, onExit }) => {
       
       if (tourData.activeTours && tourData.activeTours.length > 0) {
         toursToLoad = tourData.activeTours
-      } else if (window.mclTourPlaybackData && window.mclTourPlaybackData.tours) {
-        toursToLoad = window.mclTourPlaybackData.tours
+      } else if (window.magicclTourPlaybackData && window.magicclTourPlaybackData.tours) {
+        toursToLoad = window.magicclTourPlaybackData.tours
       }
       
       if (toursToLoad.length > 0) {
@@ -68,13 +68,13 @@ const TourWrapper = ({ adminData, tourData = {}, onExit }) => {
       onExit()
     } else {
       // Navigate back to admin tours page
-      window.location.href = adminData.dashboard_url || '/wp-admin/admin.php?page=mcl_tours'
+      window.location.href = adminData.dashboard_url || '/wp-admin/admin.php?page=magiccl_tours'
     }
   }
 
   const handleStartTour = (tour) => {
-    if (window.mclTourPlayback) {
-      window.mclTourPlayback.startTour(tour)
+    if (window.magicclTourPlayback) {
+      window.magicclTourPlayback.startTour(tour)
     }
   }
 

@@ -3,9 +3,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Dashboard_Widget {
+class MAGICCL_Dashboard_Widget {
     private static $instance = null;
-    private $widget_id = 'mcl_dashboard_widget';
+    private $widget_id = 'magiccl_dashboard_widget';
     
     public static function get_instance() {
         if (self::$instance === null) {
@@ -17,8 +17,8 @@ class MCL_Dashboard_Widget {
     private function __construct() {
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_widget_scripts'));
-        add_action('wp_ajax_mcl_widget_toggle_checklist', array($this, 'ajax_toggle_checklist'));
-        add_action('wp_ajax_mcl_widget_toggle_item', array($this, 'ajax_toggle_item'));
+        add_action('wp_ajax_magiccl_widget_toggle_checklist', array($this, 'ajax_toggle_checklist'));
+        add_action('wp_ajax_magiccl_widget_toggle_item', array($this, 'ajax_toggle_item'));
     }
     
     public function add_dashboard_widget() {
@@ -29,7 +29,7 @@ class MCL_Dashboard_Widget {
         
         wp_add_dashboard_widget(
             $this->widget_id,
-            __('MagicChecklists', 'magic-checklists'),
+            __('MagicChecklists', 'magicchecklists'),
             array($this, 'render_widget_content'),
             array($this, 'render_widget_config')
         );
@@ -45,34 +45,34 @@ class MCL_Dashboard_Widget {
         }
         
         wp_enqueue_style(
-            'mcl-dashboard-widget',
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/mcl-dashboard-widget.css',
+            'magiccl-dashboard-widget',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/css/magiccl-dashboard-widget.css',
             array(),
             MAGIC_CHECKLISTS_VERSION
         );
         
         wp_enqueue_script(
-            'mcl-dashboard-widget',
-            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/mcl-dashboard-widget.js',
+            'magiccl-dashboard-widget',
+            MAGIC_CHECKLISTS_ADMIN_URL . 'assets/js/magiccl-dashboard-widget.js',
             array('jquery'),
             MAGIC_CHECKLISTS_VERSION,
             true
         );
         
-        wp_localize_script('mcl-dashboard-widget', 'mclDashboardWidget', array(
+        wp_localize_script('magiccl-dashboard-widget', 'magicclDashboardWidget', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('mcl_widget_nonce'),
+            'nonce' => wp_create_nonce('magiccl_widget_nonce'),
             'i18n' => array(
-                'confirmToggle' => __('Are you sure you want to toggle this checklist?', 'magic-checklists'),
-                'error' => __('An error occurred. Please try again.', 'magic-checklists'),
-                'activating' => __('Activating...', 'magic-checklists'),
-                'deactivating' => __('Deactivating...', 'magic-checklists'),
+                'confirmToggle' => __('Are you sure you want to toggle this checklist?', 'magicchecklists'),
+                'error' => __('An error occurred. Please try again.', 'magicchecklists'),
+                'activating' => __('Activating...', 'magicchecklists'),
+                'deactivating' => __('Deactivating...', 'magicchecklists'),
             )
         ));
     }
     
     private function should_show_widget() {
-        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $widget_settings = MAGICCL_Settings::get_setting('dashboard_widget', array());
         
         if (!isset($widget_settings['enabled']) || !$widget_settings['enabled']) {
             return false;
@@ -98,15 +98,15 @@ class MCL_Dashboard_Widget {
     }
     
     public function render_widget_content() {
-        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $widget_settings = MAGICCL_Settings::get_setting('dashboard_widget', array());
         $checklists = $this->get_checklists_data();
         
         if (empty($checklists)) {
-            echo '<p class="mcl-widget-empty">' . esc_html__('No checklists found.', 'magic-checklists') . '</p>';
+            echo '<p class="magiccl-widget-empty">' . esc_html__('No checklists found.', 'magicchecklists') . '</p>';
             return;
         }
         
-        echo '<div class="mcl-dashboard-widget-content">';
+        echo '<div class="magiccl-dashboard-widget-content">';
         
         foreach ($checklists as $checklist) {
             $this->render_checklist_item($checklist, $widget_settings);
@@ -115,9 +115,9 @@ class MCL_Dashboard_Widget {
         echo '</div>';
         
         // Add link to main plugin page
-        echo '<div class="mcl-widget-footer">';
-        echo '<a href="' . esc_url(admin_url('admin.php?page=mcl_checklists')) . '" class="mcl-widget-link">';
-        echo esc_html__('View All Checklists', 'magic-checklists') . ' →';
+        echo '<div class="magiccl-widget-footer">';
+        echo '<a href="' . esc_url(admin_url('admin.php?page=magiccl_checklists')) . '" class="magiccl-widget-link">';
+        echo esc_html__('View All Checklists', 'magicchecklists') . ' →';
         echo '</a>';
         echo '</div>';
     }
@@ -126,29 +126,29 @@ class MCL_Dashboard_Widget {
         $checklist_id = $checklist['id'];
         $is_active = $checklist['active'];
         
-        echo '<div class="mcl-widget-checklist" data-checklist-id="' . esc_attr($checklist_id) . '">';
+        echo '<div class="magiccl-widget-checklist" data-checklist-id="' . esc_attr($checklist_id) . '">';
         
         // Checklist header
-        echo '<div class="mcl-widget-checklist-header">';
+        echo '<div class="magiccl-widget-checklist-header">';
         
         if (!empty($settings['show_checklists'])) {
-            echo '<h4 class="mcl-widget-checklist-title">';
+            echo '<h4 class="magiccl-widget-checklist-title">';
             echo esc_html($checklist['title']);
             
             // Status indicator
-            echo '<span class="mcl-widget-status mcl-status-' . ($is_active ? 'active' : 'inactive') . '">';
-            echo $is_active ? esc_html__('Active', 'magic-checklists') : esc_html__('Inactive', 'magic-checklists');
+            echo '<span class="magiccl-widget-status magiccl-status-' . ($is_active ? 'active' : 'inactive') . '">';
+            echo $is_active ? esc_html__('Active', 'magicchecklists') : esc_html__('Inactive', 'magicchecklists');
             echo '</span>';
             echo '</h4>';
         }
         
         // Quick actions (only show if checklists are being displayed)
         if (!empty($settings['show_quick_actions']) && !empty($settings['show_checklists'])) {
-            echo '<div class="mcl-widget-actions">';
-            echo '<button type="button" class="mcl-widget-toggle-btn ' . ($is_active ? 'active' : 'inactive') . '" ';
+            echo '<div class="magiccl-widget-actions">';
+            echo '<button type="button" class="magiccl-widget-toggle-btn ' . ($is_active ? 'active' : 'inactive') . '" ';
             echo 'data-checklist-id="' . esc_attr($checklist_id) . '" ';
             echo 'data-current-state="' . ($is_active ? '1' : '0') . '">';
-            echo $is_active ? esc_html__('Deactivate', 'magic-checklists') : esc_html__('Activate', 'magic-checklists');
+            echo $is_active ? esc_html__('Deactivate', 'magicchecklists') : esc_html__('Activate', 'magicchecklists');
             echo '</button>';
             echo '</div>';
         }
@@ -157,17 +157,17 @@ class MCL_Dashboard_Widget {
         
         // Description
         if (!empty($settings['show_descriptions']) && !empty($checklist['description'])) {
-            echo '<div class="mcl-widget-description">';
+            echo '<div class="magiccl-widget-description">';
             echo '<p>' . wp_kses_post(wp_trim_words($checklist['description'], 20)) . '</p>';
             echo '</div>';
         }
         
         // Tags
         if (!empty($settings['show_tags']) && !empty($checklist['tags'])) {
-            echo '<div class="mcl-widget-tags">';
-            echo '<span class="mcl-widget-label">' . esc_html__('Tags:', 'magic-checklists') . '</span>';
+            echo '<div class="magiccl-widget-tags">';
+            echo '<span class="magiccl-widget-label">' . esc_html__('Tags:', 'magicchecklists') . '</span>';
             foreach ($checklist['tags'] as $tag) {
-                echo '<span class="mcl-widget-tag" style="background-color: ' . esc_attr($tag['color']) . '">';
+                echo '<span class="magiccl-widget-tag" style="background-color: ' . esc_attr($tag['color']) . '">';
                 echo esc_html($tag['name']);
                 echo '</span>';
             }
@@ -178,24 +178,24 @@ class MCL_Dashboard_Widget {
         if (!empty($settings['show_deadlines'])) {
             $deadlines = $this->get_checklist_deadlines($checklist_id);
             if (!empty($deadlines)) {
-                echo '<div class="mcl-widget-deadlines">';
-                echo '<span class="mcl-widget-label">' . esc_html__('Upcoming Deadlines:', 'magic-checklists') . '</span>';
-                echo '<ul class="mcl-widget-deadline-list">';
+                echo '<div class="magiccl-widget-deadlines">';
+                echo '<span class="magiccl-widget-label">' . esc_html__('Upcoming Deadlines:', 'magicchecklists') . '</span>';
+                echo '<ul class="magiccl-widget-deadline-list">';
                 foreach ($deadlines as $deadline) {
                     $deadline_class = $this->get_deadline_urgency_class($deadline['timestamp']);
                     $is_checklist_deadline = isset($deadline['is_checklist_deadline']) && $deadline['is_checklist_deadline'];
-                    $extra_class = $is_checklist_deadline ? ' mcl-widget-checklist-deadline' : '';
+                    $extra_class = $is_checklist_deadline ? ' magiccl-widget-checklist-deadline' : '';
                     
-                    echo '<li class="mcl-widget-deadline ' . esc_attr($deadline_class . $extra_class) . '">';
-                    echo '<span class="mcl-deadline-item">' . wp_kses_post($deadline['item_content']) . '</span>';
-                    echo '<span class="mcl-deadline-date">';
+                    echo '<li class="magiccl-widget-deadline ' . esc_attr($deadline_class . $extra_class) . '">';
+                    echo '<span class="magiccl-deadline-item">' . wp_kses_post($deadline['item_content']) . '</span>';
+                    echo '<span class="magiccl-deadline-date">';
                     if ($deadline_class === 'overdue') {
-                        echo '<strong>' . esc_html__('OVERDUE', 'magic-checklists') . '</strong> - ';
+                        echo '<strong>' . esc_html__('OVERDUE', 'magicchecklists') . '</strong> - ';
                     }
                     echo esc_html($deadline['formatted_date']);
                     echo '</span>';
                     if ($is_checklist_deadline) {
-                        echo '<span class="mcl-deadline-type">' . esc_html__('Checklist', 'magic-checklists') . '</span>';
+                        echo '<span class="magiccl-deadline-type">' . esc_html__('Checklist', 'magicchecklists') . '</span>';
                     }
                     echo '</li>';
                 }
@@ -211,25 +211,25 @@ class MCL_Dashboard_Widget {
                 $checked_state = $this->get_checked_state($checklist_id);
                 $can_interact = $this->can_user_interact_with_checklist($checklist_id);
                 
-                echo '<div class="mcl-widget-items">';
-                echo '<span class="mcl-widget-label">' . esc_html__('Items:', 'magic-checklists') . '</span>';
-                echo '<ul class="mcl-widget-item-list">';
+                echo '<div class="magiccl-widget-items">';
+                echo '<span class="magiccl-widget-label">' . esc_html__('Items:', 'magicchecklists') . '</span>';
+                echo '<ul class="magiccl-widget-item-list">';
                 foreach ($items as $item) {
                     $is_checked = in_array($item['id'], $checked_state);
-                    $item_class = 'mcl-widget-item' . ($is_checked ? ' mcl-widget-item-checked' : '');
+                    $item_class = 'magiccl-widget-item' . ($is_checked ? ' magiccl-widget-item-checked' : '');
                     
                     echo '<li class="' . esc_attr($item_class) . '" data-item-id="' . esc_attr($item['id']) . '" data-checklist-id="' . esc_attr($checklist_id) . '">';
                     
                     if ($can_interact) {
-                        echo '<label class="mcl-widget-checkbox-wrapper">';
-                        echo '<input type="checkbox" class="mcl-widget-checkbox" ' . checked($is_checked, true, false) . ' data-item-id="' . esc_attr($item['id']) . '">';
-                        echo '<span class="mcl-widget-checkmark"></span>';
+                        echo '<label class="magiccl-widget-checkbox-wrapper">';
+                        echo '<input type="checkbox" class="magiccl-widget-checkbox" ' . checked($is_checked, true, false) . ' data-item-id="' . esc_attr($item['id']) . '">';
+                        echo '<span class="magiccl-widget-checkmark"></span>';
                         echo '</label>';
                     } else {
-                        echo '<span class="mcl-widget-status-indicator ' . ($is_checked ? 'checked' : 'unchecked') . '"></span>';
+                        echo '<span class="magiccl-widget-status-indicator ' . ($is_checked ? 'checked' : 'unchecked') . '"></span>';
                     }
                     
-                    echo '<span class="mcl-widget-item-content">' . wp_kses_post($this->format_item_content_for_widget($item['content'])) . '</span>';
+                    echo '<span class="magiccl-widget-item-content">' . wp_kses_post($this->format_item_content_for_widget($item['content'])) . '</span>';
                     echo '</li>';
                 }
                 echo '</ul>';
@@ -241,18 +241,18 @@ class MCL_Dashboard_Widget {
     }
     
     private function get_checklists_data() {
-        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $widget_settings = MAGICCL_Settings::get_setting('dashboard_widget', array());
         $selected_checklists = isset($widget_settings['selected_checklists']) ? $widget_settings['selected_checklists'] : array();
         
         $query_args = array(
-            'post_type' => 'mcl_checklist',
+            'post_type' => 'magiccl_checklist',
             'post_status' => 'publish',
             'posts_per_page' => 10, // Limit for dashboard
             'orderby' => 'title',
             'order' => 'ASC',
             'meta_query' => array(
                 array(
-                    'key' => '_mcl_checklist_type',
+                    'key' => '_magiccl_checklist_type',
                     'value' => 'publisher',
                     'compare' => '!='
                 )
@@ -270,7 +270,7 @@ class MCL_Dashboard_Widget {
         $result = array();
         foreach ($checklists as $checklist) {
             // Double-check that this isn't a publisher checklist (in case meta_query didn't work perfectly)
-            $checklist_type = get_post_meta($checklist->ID, '_mcl_checklist_type', true) ?: 'classic';
+            $checklist_type = get_post_meta($checklist->ID, '_magiccl_checklist_type', true) ?: 'classic';
             if ($checklist_type === 'publisher') {
                 continue; // Skip publisher checklists
             }
@@ -279,8 +279,8 @@ class MCL_Dashboard_Widget {
                 'id' => $checklist->ID,
                 'title' => $checklist->post_title,
                 'description' => $checklist->post_content,
-                'active' => get_post_meta($checklist->ID, '_mcl_active', true) == '1',
-                'tags' => get_post_meta($checklist->ID, '_mcl_tags', true) ?: array()
+                'active' => get_post_meta($checklist->ID, '_magiccl_active', true) == '1',
+                'tags' => get_post_meta($checklist->ID, '_magiccl_tags', true) ?: array()
             );
         }
         
@@ -319,32 +319,32 @@ class MCL_Dashboard_Widget {
             }
             
             // Fallback for images without alt text
-            return esc_html__('[Image]', 'magic-checklists');
+            return esc_html__('[Image]', 'magicchecklists');
         }
         
         // Check for other media types
         if (preg_match('/<(video|audio|iframe|embed)[^>]*>/i', $content)) {
-            return esc_html__('[Media]', 'magic-checklists');
+            return esc_html__('[Media]', 'magicchecklists');
         }
         
         // If content contains other HTML but no readable text
         if (strlen($content) > strlen($trimmed_text) && strlen($content) > 10) {
-            return esc_html__('[Content]', 'magic-checklists');
+            return esc_html__('[Content]', 'magicchecklists');
         }
         
         // Fallback for truly empty or minimal content
-        return esc_html__('[Empty item]', 'magic-checklists');
+        return esc_html__('[Empty item]', 'magicchecklists');
     }
     
     private function get_checklist_deadlines($checklist_id) {
         // Only show deadlines for active checklists
-        $is_active = get_post_meta($checklist_id, '_mcl_active', true) == '1';
+        $is_active = get_post_meta($checklist_id, '_magiccl_active', true) == '1';
         if (!$is_active) {
             return array();
         }
         
         // Check if this checklist should be displayed based on selection
-        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $widget_settings = MAGICCL_Settings::get_setting('dashboard_widget', array());
         $selected_checklists = isset($widget_settings['selected_checklists']) ? $widget_settings['selected_checklists'] : array();
         
         // If specific checklists are selected, only show deadlines for those
@@ -363,7 +363,7 @@ class MCL_Dashboard_Widget {
         $checklist_title = get_the_title($checklist_id);
         
         // Check for checklist-level deadline first
-        $checklist_deadline = get_post_meta($checklist_id, '_mcl_time_date', true);
+        $checklist_deadline = get_post_meta($checklist_id, '_magiccl_time_date', true);
         
         // Validate and process checklist deadline if it exists
         if (!empty($checklist_deadline)) {
@@ -377,15 +377,15 @@ class MCL_Dashboard_Widget {
                     'item_id' => 'checklist',
                     'item_content' => '<strong>' . esc_html($checklist_title) . '</strong>',
                     'timestamp' => $checklist_deadline,
-                                            'formatted_date' => MCL_Admin::format_date($checklist_deadline),
+                                            'formatted_date' => MAGICCL_Admin::format_date($checklist_deadline),
                     'is_checklist_deadline' => true
                 );
             }
         }
         
         // Get item deadlines
-        $item_deadlines = get_post_meta($checklist_id, '_mcl_item_deadlines', true) ?: array();
-        $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $item_deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
+        $items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         
         // Create item map for faster lookup
         $item_map = array();
@@ -421,7 +421,7 @@ class MCL_Dashboard_Widget {
                     'item_id' => $item_id,
                     'item_content' => $item_content,
                     'timestamp' => $timestamp,
-                                            'formatted_date' => MCL_Admin::format_date($timestamp),
+                                            'formatted_date' => MAGICCL_Admin::format_date($timestamp),
                     'is_checklist_deadline' => false
                 );
             }
@@ -451,24 +451,24 @@ class MCL_Dashboard_Widget {
     }
     
     private function get_checklist_items($checklist_id) {
-        $items = get_post_meta($checklist_id, '_mcl_items', true) ?: array();
+        $items = get_post_meta($checklist_id, '_magiccl_items', true) ?: array();
         return $items;
     }
     
     private function get_checked_state($checklist_id) {
-        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
         
         if ($is_public) {
-            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+            $handling = get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
         } else {
-            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+            $handling = get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
         }
         
         if ($handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            $checked_state = get_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, true);
+            $checked_state = get_user_meta($user_id, "_magiccl_drawer_checked_state_" . $checklist_id, true);
         } else {
-            $checked_state = get_post_meta($checklist_id, '_mcl_checked_state', true);
+            $checked_state = get_post_meta($checklist_id, '_magiccl_checked_state', true);
         }
         
         // Ensure we always return a proper array, not an object
@@ -481,20 +481,20 @@ class MCL_Dashboard_Widget {
     }
     
     private function can_user_interact_with_checklist($checklist_id) {
-        if (!class_exists('MCL_Permissions')) {
+        if (!class_exists('MAGICCL_Permissions')) {
             return false;
         }
         
-        $permissions = new MCL_Permissions();
+        $permissions = new MAGICCL_Permissions();
         return $permissions->has_permission($checklist_id, 'interact');
     }
     
     public function ajax_toggle_checklist() {
-        check_ajax_referer('mcl_widget_nonce', 'nonce');
+        check_ajax_referer('magiccl_widget_nonce', 'nonce');
         
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array(
-                'message' => __('You do not have permission to perform this action', 'magic-checklists')
+                'message' => __('You do not have permission to perform this action', 'magicchecklists')
             ));
         }
         
@@ -503,28 +503,28 @@ class MCL_Dashboard_Widget {
         
         if (!$checklist_id) {
             wp_send_json_error(array(
-                'message' => __('Invalid checklist ID', 'magic-checklists')
+                'message' => __('Invalid checklist ID', 'magicchecklists')
             ));
         }
         
-        $result = update_post_meta($checklist_id, '_mcl_active', $new_state);
+        $result = update_post_meta($checklist_id, '_magiccl_active', $new_state);
         
         if ($result !== false) {
             wp_send_json_success(array(
                 'message' => $new_state ? 
-                    __('Checklist activated successfully', 'magic-checklists') : 
-                    __('Checklist deactivated successfully', 'magic-checklists'),
+                    __('Checklist activated successfully', 'magicchecklists') : 
+                    __('Checklist deactivated successfully', 'magicchecklists'),
                 'new_state' => $new_state
             ));
         } else {
             wp_send_json_error(array(
-                'message' => __('Failed to update checklist status', 'magic-checklists')
+                'message' => __('Failed to update checklist status', 'magicchecklists')
             ));
         }
     }
     
     public function ajax_toggle_item() {
-        check_ajax_referer('mcl_widget_nonce', 'nonce');
+        check_ajax_referer('magiccl_widget_nonce', 'nonce');
         
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
@@ -532,14 +532,14 @@ class MCL_Dashboard_Widget {
         
         if (!$checklist_id || !$item_id) {
             wp_send_json_error(array(
-                'message' => __('Invalid parameters', 'magic-checklists')
+                'message' => __('Invalid parameters', 'magicchecklists')
             ));
         }
         
         // Check if user can interact with this checklist
         if (!$this->can_user_interact_with_checklist($checklist_id)) {
             wp_send_json_error(array(
-                'message' => __('You do not have permission to interact with this checklist', 'magic-checklists')
+                'message' => __('You do not have permission to interact with this checklist', 'magicchecklists')
             ));
         }
         
@@ -562,8 +562,8 @@ class MCL_Dashboard_Widget {
         
         wp_send_json_success(array(
             'message' => $checked ? 
-                __('Item checked', 'magic-checklists') : 
-                __('Item unchecked', 'magic-checklists'),
+                __('Item checked', 'magicchecklists') : 
+                __('Item unchecked', 'magicchecklists'),
             'checked' => $checked
         ));
     }
@@ -572,30 +572,30 @@ class MCL_Dashboard_Widget {
         // Ensure we're saving a proper indexed array
         $checked_state = array_values(array_filter($checked_state));
         
-        $is_public = get_post_meta($checklist_id, '_mcl_public_access', true) == '1';
+        $is_public = get_post_meta($checklist_id, '_magiccl_public_access', true) == '1';
         
         if ($is_public) {
-            $handling = get_post_meta($checklist_id, '_mcl_public_checked_state_handling', true) ?: 'per_user';
+            $handling = get_post_meta($checklist_id, '_magiccl_public_checked_state_handling', true) ?: 'per_user';
         } else {
-            $handling = get_post_meta($checklist_id, '_mcl_checked_state_handling', true) ?: 'global';
+            $handling = get_post_meta($checklist_id, '_magiccl_checked_state_handling', true) ?: 'global';
         }
         
         if ($handling === 'per_user' && is_user_logged_in()) {
             $user_id = get_current_user_id();
-            update_user_meta($user_id, "_mcl_drawer_checked_state_" . $checklist_id, $checked_state);
+            update_user_meta($user_id, "_magiccl_drawer_checked_state_" . $checklist_id, $checked_state);
         } else {
-            update_post_meta($checklist_id, '_mcl_checked_state', $checked_state);
+            update_post_meta($checklist_id, '_magiccl_checked_state', $checked_state);
         }
     }
     
     public function render_widget_config() {
         // Widget configuration form (appears when clicking "Configure" on the widget)
-        $widget_settings = MCL_Settings::get_setting('dashboard_widget', array());
+        $widget_settings = MAGICCL_Settings::get_setting('dashboard_widget', array());
         ?>
         <p>
-            <?php esc_html_e('Configure this widget from the', 'magic-checklists'); ?>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=mcl_checklists&view=settings')); ?>">
-                <?php esc_html_e('Settings page', 'magic-checklists'); ?>
+            <?php esc_html_e('Configure this widget from the', 'magicchecklists'); ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=magiccl_checklists&view=settings')); ?>">
+                <?php esc_html_e('Settings page', 'magicchecklists'); ?>
             </a>
         </p>
         <?php

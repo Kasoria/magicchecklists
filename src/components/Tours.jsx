@@ -28,13 +28,13 @@ const Tours = ({ adminData, onEditTour }) => {
     const dashboardUrl = new URL(adminData.dashboard_url || '/wp-admin/index.php', window.location.origin)
     
     // Add tour mode parameters
-    dashboardUrl.searchParams.set('mcl_tour_mode', '1')
+    dashboardUrl.searchParams.set('magiccl_tour_mode', '1')
     if (tourIdToUse > 0) {
       dashboardUrl.searchParams.set('tour_id', tourIdToUse.toString())
     }
     
     // Set cookie as backup for page navigation
-    document.cookie = 'mcl_tour_mode=1; path=/; SameSite=Lax'
+    document.cookie = 'magiccl_tour_mode=1; path=/; SameSite=Lax'
     
     // Redirect to dashboard with tour parameters
     window.location.href = dashboardUrl.href
@@ -50,8 +50,8 @@ const Tours = ({ adminData, onEditTour }) => {
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('action', 'mcl_get_tours_list')
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('action', 'magiccl_get_tours_list')
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -78,9 +78,9 @@ const Tours = ({ adminData, onEditTour }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_toggle_tour_status')
+      formData.append('action', 'magiccl_toggle_tour_status')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -117,9 +117,9 @@ const Tours = ({ adminData, onEditTour }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_delete_tour')
+      formData.append('action', 'magiccl_delete_tour')
       formData.append('tour_id', tourToDelete.id)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -155,9 +155,9 @@ const Tours = ({ adminData, onEditTour }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_duplicate_tour')
+      formData.append('action', 'magiccl_duplicate_tour')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -191,9 +191,9 @@ const Tours = ({ adminData, onEditTour }) => {
 
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_reset_tour_completion')
+      formData.append('action', 'magiccl_reset_tour_completion')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',

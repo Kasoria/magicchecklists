@@ -4,7 +4,7 @@ import { formatDate as formatDateUtil } from '../utils/dateUtils'
 
 const AnalyticsDashboard = ({ analyticsData, adminData }) => {
   // Get i18n data
-  const i18n = (typeof window !== 'undefined' && window.mclAdminData?.i18n) || adminData?.i18n || {};
+  const i18n = (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || adminData?.i18n || {};
   
   if (!analyticsData) {
     return null
@@ -61,7 +61,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
         <Button 
           color="light" 
           size="sm"
-          onClick={() => window.location.href = `${window.location.origin}/wp-admin/admin.php?page=mcl_checklists&view=analytics`}
+          onClick={() => window.location.href = `${window.location.origin}/wp-admin/admin.php?page=magiccl_checklists&view=analytics`}
         >
           {i18n.analyticsDashboard?.header?.viewFullAnalytics || 'View Full Analytics'}
         </Button>
@@ -149,7 +149,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-2">
                         <a 
-                          href={`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${deadline.checklist_id}`}
+                          href={`/wp-admin/admin.php?page=magiccl_add_new&checklist_id=${deadline.checklist_id}`}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                         >
                           {deadline.checklist_title}
@@ -192,7 +192,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
             <div className="flex justify-between items-center">
               <div>
                 <a 
-                  href={`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${most_popular.checklist_id}`}
+                  href={`/wp-admin/admin.php?page=magiccl_add_new&checklist_id=${most_popular.checklist_id}`}
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                 >
                   {most_popular.post_title}
@@ -225,7 +225,7 @@ const AnalyticsDashboard = ({ analyticsData, adminData }) => {
                 <span className="text-gray-500 dark:text-gray-400">
                   {i18n.analyticsDashboard?.mostChecked?.in || 'in'}{' '}
                   <a 
-                    href={`/wp-admin/admin.php?page=mcl_add_new&checklist_id=${most_checked_item.checklist_id}`}
+                    href={`/wp-admin/admin.php?page=magiccl_add_new&checklist_id=${most_checked_item.checklist_id}`}
                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     {most_checked_item.post_title}

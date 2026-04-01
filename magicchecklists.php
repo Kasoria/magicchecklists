@@ -15,7 +15,7 @@
  * Requires PHP:      7.4
  * Author:            Christian Wenterodt
  * Author URI:        https://chrispump.me
- * Text Domain:       magic-checklists
+ * Text Domain:       magicchecklists
  * Domain Path:       /languages
  * License:           GPL v2 or later
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
@@ -34,7 +34,7 @@ define('MAGIC_CHECKLISTS_ADMIN_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'admin/');
 define('MAGIC_CHECKLISTS_ADMIN_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'admin/');
 define('MAGIC_CHECKLISTS_PUBLIC_PATH', MAGIC_CHECKLISTS_PLUGIN_PATH . 'public/');
 define('MAGIC_CHECKLISTS_PUBLIC_URL', MAGIC_CHECKLISTS_PLUGIN_URL . 'public/');
-define('MAGIC_CHECKLISTS_TEXT_DOMAIN', 'magic-checklists');
+define('MAGIC_CHECKLISTS_TEXT_DOMAIN', 'magicchecklists');
 
 if ( ! class_exists( 'MagicChecklists' ) ) {
 
@@ -51,12 +51,12 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
         private function setup_autoloader() {
             spl_autoload_register(function($class_name) {
                 // Only handle our plugin's classes
-                if (strpos($class_name, 'MCL_') !== 0) {
+                if (strpos($class_name, 'MAGICCL_') !== 0) {
                     return;
                 }
 
                 // Convert class name to file path
-                $class_name = str_replace('MCL_', '', $class_name);
+                $class_name = str_replace('MAGICCL_', '', $class_name);
                 $file_name = 'class-mcl-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
                 $file_path = MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/' . $file_name;
 
@@ -85,7 +85,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          */
         public function setup_language_override() {
             // Check if user has set a custom language for the plugin
-            $settings = get_option('mcl_settings', array());
+            $settings = get_option('magiccl_settings', array());
             $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
             
             // If a custom language is set, add filters before any textdomain is loaded
@@ -100,7 +100,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          */
         public function load_textdomain() {
             load_plugin_textdomain(
-                'magic-checklists',
+                'magicchecklists',
                 false,
                 dirname(plugin_basename(__FILE__)) . '/languages/'
             );
@@ -110,8 +110,8 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Override the locale for our plugin only
          */
         public function override_plugin_locale($locale, $domain) {
-            if ($domain === 'magic-checklists') {
-                $settings = get_option('mcl_settings', array());
+            if ($domain === 'magicchecklists') {
+                $settings = get_option('magiccl_settings', array());
                 $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
                 
                 if (!empty($plugin_language)) {
@@ -125,13 +125,12 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Override the MO file path for our plugin
          */
         public function override_mo_file($mofile, $domain) {
-            if ($domain === 'magic-checklists') {
-                $settings = get_option('mcl_settings', array());
+            if ($domain === 'magicchecklists') {
+                $settings = get_option('magiccl_settings', array());
                 $plugin_language = isset($settings['plugin_language']) ? $settings['plugin_language'] : '';
                 
                 if (!empty($plugin_language)) {
-                    $languages_path = dirname(plugin_basename(__FILE__)) . '/languages/';
-                    $new_mofile = WP_PLUGIN_DIR . '/' . $languages_path . 'magic-checklists-' . $plugin_language . '.mo';
+                    $new_mofile = MAGIC_CHECKLISTS_PLUGIN_PATH . 'languages/magicchecklists-' . $plugin_language . '.mo';
                     
                     if (file_exists($new_mofile)) {
                         return $new_mofile;
@@ -145,72 +144,72 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
          * Initialize the plugin
          */
         public function init() {
-            new MCL_CPT();
+            new MAGICCL_CPT();
             
-            // Store MCL_Public instance globally for other classes to access
-            global $mcl_public_instance;
-            $mcl_public_instance = new MCL_Public();
+            // Store MAGICCL_Public instance globally for other classes to access
+            global $magiccl_public_instance;
+            $magiccl_public_instance = new MAGICCL_Public();
             
-            MCL_Settings::get_instance();
-            MCL_Export_Handler::get_instance();
-            MCL_Analytics::get_instance();
-            MCL_Notification_Manager::get_instance();
-            MCL_Global_Notification_Manager::get_instance();
+            MAGICCL_Settings::get_instance();
+            MAGICCL_Export_Handler::get_instance();
+            MAGICCL_Analytics::get_instance();
+            MAGICCL_Notification_Manager::get_instance();
+            MAGICCL_Global_Notification_Manager::get_instance();
             
             // Initialize tour functionality
-            new MCL_Tour_CPT();
-            new MCL_Tour_Public();
+            new MAGICCL_Tour_CPT();
+            new MAGICCL_Tour_Public();
 
             // Initialize React development environment and store globally
-            global $mcl_react_dev;
-            $mcl_react_dev = new MCL_React_Dev();
+            global $magiccl_react_dev;
+            $magiccl_react_dev = new MAGICCL_React_Dev();
 
             // Load AJAX handler for test notifications
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-notification-ajax-manager.php';
-            MCL_Notification_Ajax_Handler::get_instance();
+            MAGICCL_Notification_Ajax_Handler::get_instance();
 
             // Initialize image upload/select AJAX handlers
-            new MCL_Image_Handler();
+            new MAGICCL_Image_Handler();
             
             // Load i18n class
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-i18n.php';
 
             // Initialize tutorial checklist handler (for AJAX)
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
-            MCL_Tutorial::get_instance();
+            MAGICCL_Tutorial::get_instance();
 
             if (is_admin()) {
-                new MCL_Admin();
-                new MCL_Tour_Admin();
+                new MAGICCL_Admin();
+                new MAGICCL_Tour_Admin();
                 
-                MCL_Admin_Integration::get_instance();
+                MAGICCL_Admin_Integration::get_instance();
 
-                MCL_Publisher_Checklist::get_instance();
+                MAGICCL_Publisher_Checklist::get_instance();
 
-                MCL_Dashboard_Widget::get_instance();
+                MAGICCL_Dashboard_Widget::get_instance();
             }
 
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-shortcode.php';
-            MCL_Shortcode::get_instance();
+            MAGICCL_Shortcode::get_instance();
         }
 
         public function activate() {
-            MCL_DB_Manager::get_instance()->install();
-            MCL_Analytics::get_instance()->activate();
+            MAGICCL_DB_Manager::get_instance()->install();
+            MAGICCL_Analytics::get_instance()->activate();
 
             // Auto-detect and set plugin language based on WordPress locale
             $this->maybe_set_language_on_activation();
 
             // Create tutorial checklist on fresh installs
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
-            MCL_Tutorial::get_instance()->maybe_create_on_activation();
+            MAGICCL_Tutorial::get_instance()->maybe_create_on_activation();
         }
 
         /**
          * Auto-detect WordPress language and set plugin language if translation exists
          */
         private function maybe_set_language_on_activation() {
-            $settings = get_option('mcl_settings', array());
+            $settings = get_option('magiccl_settings', array());
 
             // Only set if not already configured
             if (!empty($settings['plugin_language'])) {
@@ -226,34 +225,39 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
             }
 
             // Check if we have a translation file for this locale
-            $mo_file = MAGIC_CHECKLISTS_PLUGIN_PATH . 'languages/magic-checklists-' . $wp_locale . '.mo';
+            $mo_file = MAGIC_CHECKLISTS_PLUGIN_PATH . 'languages/magicchecklists-' . $wp_locale . '.mo';
 
             if (file_exists($mo_file)) {
                 $settings['plugin_language'] = $wp_locale;
-                update_option('mcl_settings', $settings);
+                update_option('magiccl_settings', $settings);
             }
         }
         
         public function check_version() {
-            if (version_compare(get_option('mcl_version', '1.2'), MAGIC_CHECKLISTS_VERSION, '<')) {
-                // Run database updates
-                MCL_DB_Manager::get_instance()->install();
-                
-                // Update version
-                update_option('mcl_version', MAGIC_CHECKLISTS_VERSION);
+            // Migrate from old mcl_ prefix to magiccl_ prefix
+            if (!get_option('magiccl_prefix_migrated')) {
+                $this->migrate_prefix();
             }
 
-            $plugin_data_version = get_option('mcl_plugin_data_version', '1.0');
+            if (version_compare(get_option('magiccl_version', '1.2'), MAGIC_CHECKLISTS_VERSION, '<')) {
+                // Run database updates
+                MAGICCL_DB_Manager::get_instance()->install();
+                
+                // Update version
+                update_option('magiccl_version', MAGIC_CHECKLISTS_VERSION);
+            }
+
+            $plugin_data_version = get_option('magiccl_plugin_data_version', '1.0');
             if (version_compare($plugin_data_version, '1.2.1', '<')) {
                 // Run the upgrade routine for load_everywhere meta
                 global $wpdb;
                 
-                // Get all checklist IDs that DON'T have the _mcl_load_everywhere meta key
+                // Get all checklist IDs that DON'T have the _magiccl_load_everywhere meta key
                 $checklist_ids = $wpdb->get_col("
                     SELECT p.ID 
                     FROM {$wpdb->posts} p 
-                    LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_mcl_load_everywhere'
-                    WHERE p.post_type = 'mcl_checklist' 
+                    LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_magiccl_load_everywhere'
+                    WHERE p.post_type = 'magiccl_checklist' 
                     AND pm.meta_id IS NULL
                 ");
 
@@ -264,7 +268,7 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                     
                     foreach ($checklist_ids as $checklist_id) {
                         $values[] = $checklist_id;
-                        $values[] = '_mcl_load_everywhere';
+                        $values[] = '_magiccl_load_everywhere';
                         $values[] = '1';
                         $placeholders[] = '(%d, %s, %s)';
                     }
@@ -280,12 +284,63 @@ if ( ! class_exists( 'MagicChecklists' ) ) {
                 }
                 
                 // Update the plugin data version
-                update_option('mcl_plugin_data_version', '1.2.1');
+                update_option('magiccl_plugin_data_version', '1.2.1');
             }
+        }
+
+        /**
+         * Migrate from old mcl_ prefix to magiccl_ prefix
+         */
+        private function migrate_prefix() {
+            global $wpdb;
+
+            // Migrate post types
+            $wpdb->query("UPDATE {$wpdb->posts} SET post_type = 'magiccl_checklist' WHERE post_type = 'mcl_checklist'");
+            $wpdb->query("UPDATE {$wpdb->posts} SET post_type = 'magiccl_tour' WHERE post_type = 'mcl_tour'");
+
+            // Migrate taxonomy
+            $wpdb->query("UPDATE {$wpdb->term_taxonomy} SET taxonomy = 'magiccl_tag' WHERE taxonomy = 'mcl_tag'");
+
+            // Migrate post meta keys
+            $wpdb->query("UPDATE {$wpdb->postmeta} SET meta_key = REPLACE(meta_key, '_mcl_', '_magiccl_') WHERE meta_key LIKE '\\_mcl\\_%'");
+
+            // Migrate options
+            $old_options = $wpdb->get_results("SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE 'mcl\\_%'");
+            foreach ($old_options as $option) {
+                $new_name = 'magiccl_' . substr($option->option_name, 4);
+                if (!get_option($new_name)) {
+                    update_option($new_name, maybe_unserialize($option->option_value));
+                }
+                delete_option($option->option_name);
+            }
+
+            // Migrate user meta
+            $wpdb->query("UPDATE {$wpdb->usermeta} SET meta_key = REPLACE(meta_key, 'mcl_', 'magiccl_') WHERE meta_key LIKE 'mcl\\_%'");
+
+            // Migrate custom tables if they exist
+            $old_tables = array(
+                'mcl_global_notifications' => 'magiccl_global_notifications',
+                'mcl_notification_settings' => 'magiccl_notification_settings',
+                'mcl_feature_board_settings' => 'magiccl_feature_board_settings',
+            );
+            foreach ($old_tables as $old_suffix => $new_suffix) {
+                $old_table = $wpdb->prefix . $old_suffix;
+                $new_table = $wpdb->prefix . $new_suffix;
+                if ($wpdb->get_var("SHOW TABLES LIKE '{$old_table}'") === $old_table
+                    && $wpdb->get_var("SHOW TABLES LIKE '{$new_table}'") !== $new_table) {
+                    $wpdb->query("RENAME TABLE `{$old_table}` TO `{$new_table}`");
+                }
+            }
+
+            // Migrate transients
+            $wpdb->query("UPDATE {$wpdb->options} SET option_name = REPLACE(option_name, '_transient_mcl_', '_transient_magiccl_') WHERE option_name LIKE '\\_transient\\_mcl\\_%'");
+            $wpdb->query("UPDATE {$wpdb->options} SET option_name = REPLACE(option_name, '_transient_timeout_mcl_', '_transient_timeout_magiccl_') WHERE option_name LIKE '\\_transient\\_timeout\\_mcl\\_%'");
+
+            update_option('magiccl_prefix_migrated', true);
         }
 
     }
 
     new MagicChecklists();
-    new MCL_API_Integration();
+    new MAGICCL_API_Integration();
 }

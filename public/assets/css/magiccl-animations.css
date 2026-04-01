@@ -66,26 +66,26 @@
 }
 
 /* Animation Classes */
-.mcl-slide-in {
+.magiccl-slide-in {
   animation: drawerSlideIn 0.3s ease forwards;
 }
 
-.mcl-slide-out {
+.magiccl-slide-out {
   animation: drawerSlideOut 0.3s ease forwards;
 }
 
-.mcl-confetti-active {
+.magiccl-confetti-active {
   animation: confettiFall var(--fall-duration, 3s) linear forwards;
 }
 
-.mcl-congrats-active {
+.magiccl-congrats-active {
   animation: congratsMessage 0.5s ease forwards;
 }
 
-.mcl-priority-changed {
+.magiccl-priority-changed {
   animation: priorityPulse 0.3s ease;
 }
 
-.mcl-button-hover {
+.magiccl-button-hover {
   animation: buttonHover 0.3s ease;
 }

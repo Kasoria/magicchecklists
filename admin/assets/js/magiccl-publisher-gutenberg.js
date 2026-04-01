@@ -62,12 +62,12 @@ const PublisherChecklistSidebar = () => {
             removePublishButtonIndicators();
             
             // Remove body class
-            document.body.classList.remove('mcl-requirements-blocking');
+            document.body.classList.remove('magiccl-requirements-blocking');
             
             // Clear any intervals
-            if (window.mclPublishButtonInterval) {
-                clearInterval(window.mclPublishButtonInterval);
-                window.mclPublishButtonInterval = null;
+            if (window.magicclPublishButtonInterval) {
+                clearInterval(window.magicclPublishButtonInterval);
+                window.magicclPublishButtonInterval = null;
             }
         };
     }, []);
@@ -80,11 +80,11 @@ const PublisherChecklistSidebar = () => {
 
         try {
             const formData = new FormData();
-            formData.append('action', 'mcl_get_publisher_checklist_data');
-            formData.append('nonce', window.mclPublisher.nonce);
+            formData.append('action', 'magiccl_get_publisher_checklist_data');
+            formData.append('nonce', window.magicclPublisher.nonce);
             formData.append('post_id', currentPost.id);
 
-            const response = await fetch(window.mclPublisher.ajaxurl, {
+            const response = await fetch(window.magicclPublisher.ajaxurl, {
                 method: 'POST',
                 body: formData
             });
@@ -125,8 +125,8 @@ const PublisherChecklistSidebar = () => {
 
         try {
             const formData = new FormData();
-            formData.append('action', 'mcl_check_publisher_requirements');
-            formData.append('nonce', window.mclPublisher.nonce);
+            formData.append('action', 'magiccl_check_publisher_requirements');
+            formData.append('nonce', window.magicclPublisher.nonce);
             formData.append('post_id', currentPost.id);
             formData.append('post_content', editedPostContent);
             formData.append('post_title', editedPostTitle);
@@ -136,7 +136,7 @@ const PublisherChecklistSidebar = () => {
             formData.append('tags', JSON.stringify(tags));
             formData.append('post_meta', JSON.stringify(postMeta));
 
-            const response = await fetch(window.mclPublisher.ajaxurl, {
+            const response = await fetch(window.magicclPublisher.ajaxurl, {
                 method: 'POST',
                 body: formData
             });
@@ -226,8 +226,8 @@ const PublisherChecklistSidebar = () => {
             setIsBlocking(hasFailedRequired);
             
             if (hasFailedRequired) {
-                lockPostSaving('mcl-publisher-requirements');
-                lockPostAutosaving('mcl-publisher-requirements');
+                lockPostSaving('magiccl-publisher-requirements');
+                lockPostAutosaving('magiccl-publisher-requirements');
                 
                 // Add click listener to publish button to open checklist sidebar
                 addPublishButtonListener();
@@ -236,10 +236,10 @@ const PublisherChecklistSidebar = () => {
                 addPublishButtonIndicators();
                 
                 // Add body class for global styling
-                document.body.classList.add('mcl-requirements-blocking');
+                document.body.classList.add('magiccl-requirements-blocking');
             } else {
-                unlockPostSaving('mcl-publisher-requirements');
-                unlockPostAutosaving('mcl-publisher-requirements');
+                unlockPostSaving('magiccl-publisher-requirements');
+                unlockPostAutosaving('magiccl-publisher-requirements');
                 
                 // Remove the click listener when requirements are met
                 removePublishButtonListener();
@@ -248,7 +248,7 @@ const PublisherChecklistSidebar = () => {
                 removePublishButtonIndicators();
                 
                 // Remove body class
-                document.body.classList.remove('mcl-requirements-blocking');
+                document.body.classList.remove('magiccl-requirements-blocking');
                 
             }
         }
@@ -298,7 +298,7 @@ const PublisherChecklistSidebar = () => {
         
         if (isPublishButton) {
             // Double-check if we should still be blocking
-            if (!document.body.classList.contains('mcl-requirements-blocking')) {
+            if (!document.body.classList.contains('magiccl-requirements-blocking')) {
                 // Requirements are met, allow normal publishing
                 return;
             }
@@ -320,7 +320,7 @@ const PublisherChecklistSidebar = () => {
         
         try {
             // Open the plugin sidebar - using the correct sidebar name format
-            dispatch('core/edit-post').openGeneralSidebar('mcl-publisher-checklist-sidebar/mcl-publisher-checklist-sidebar');
+            dispatch('core/edit-post').openGeneralSidebar('magiccl-publisher-checklist-sidebar/magiccl-publisher-checklist-sidebar');
             
             // Optional: Show a notice to guide the user
             dispatch('core/notices').createNotice(
@@ -339,15 +339,15 @@ const PublisherChecklistSidebar = () => {
     const handleManualCheck = async (checklistId, requirementType, instanceId, checked) => {
         try {
             const formData = new FormData();
-            formData.append('action', 'mcl_save_publisher_checklist_state');
-            formData.append('nonce', window.mclPublisher.nonce);
+            formData.append('action', 'magiccl_save_publisher_checklist_state');
+            formData.append('nonce', window.magicclPublisher.nonce);
             formData.append('post_id', currentPost.id);
             formData.append('checklist_id', checklistId);
             formData.append('requirement_type', requirementType);
             formData.append('instance_id', instanceId);
             formData.append('checked', checked);
 
-            const response = await fetch(window.mclPublisher.ajaxurl, {
+            const response = await fetch(window.magicclPublisher.ajaxurl, {
                 method: 'POST',
                 body: formData
             });
@@ -365,8 +365,8 @@ const PublisherChecklistSidebar = () => {
                                         ...req,
                                         status: checked ? 'passed' : 'failed',
                                         message: checked ? 
-                                            (window.mclPublisher?.i18n?.labels?.manualVerificationComplete || __('Manual verification complete', 'magic-checklists')) : 
-                                            (window.mclPublisher?.i18n?.labels?.customItemVerificationRequired || __('Custom item verification required', 'magic-checklists'))
+                                            (window.magicclPublisher?.i18n?.labels?.manualVerificationComplete || __('Manual verification complete', 'magic-checklists')) : 
+                                            (window.magicclPublisher?.i18n?.labels?.customItemVerificationRequired || __('Custom item verification required', 'magic-checklists'))
                                     };
                                 }
                                 return req;
@@ -443,8 +443,8 @@ const PublisherChecklistSidebar = () => {
         }
         
         // Use localized tips from PHP first, then fallback to JavaScript translations
-        if (window.mclPublisher?.i18n?.tips?.[requirement.type]) {
-            return window.mclPublisher.i18n.tips[requirement.type];
+        if (window.magicclPublisher?.i18n?.tips?.[requirement.type]) {
+            return window.magicclPublisher.i18n.tips[requirement.type];
         }
         
         // Fallback to default tips
@@ -485,9 +485,9 @@ const PublisherChecklistSidebar = () => {
         publishButtons.forEach(addIndicatorToButton);
         
         // Set up periodic check to catch dynamically added buttons
-        if (!window.mclPublishButtonInterval) {
-            window.mclPublishButtonInterval = setInterval(() => {
-                if (document.body.classList.contains('mcl-requirements-blocking')) {
+        if (!window.magicclPublishButtonInterval) {
+            window.magicclPublishButtonInterval = setInterval(() => {
+                if (document.body.classList.contains('magiccl-requirements-blocking')) {
                     const newButtons = document.querySelectorAll(
                         '.editor-post-publish-button:not(.is-locked), .editor-post-publish-panel__toggle:not(.is-locked), .editor-post-publish-button__button:not(.is-locked)'
                     );
@@ -514,9 +514,9 @@ const PublisherChecklistSidebar = () => {
         publishButtons.forEach(removeIndicatorFromButton);
         
         // Clear the periodic check
-        if (window.mclPublishButtonInterval) {
-            clearInterval(window.mclPublishButtonInterval);
-            window.mclPublishButtonInterval = null;
+        if (window.magicclPublishButtonInterval) {
+            clearInterval(window.magicclPublishButtonInterval);
+            window.magicclPublishButtonInterval = null;
         }
     };
 
@@ -530,22 +530,22 @@ const PublisherChecklistSidebar = () => {
         wp.element.createElement(
             PluginSidebarMoreMenuItem,
             {
-                target: "mcl-publisher-checklist-sidebar",
+                target: "magiccl-publisher-checklist-sidebar",
                 icon: "yes-alt"
             },
-            window.mclPublisher?.i18n?.publisherChecklist || __('Publisher Checklist', 'magic-checklists')
+            window.magicclPublisher?.i18n?.publisherChecklist || __('Publisher Checklist', 'magic-checklists')
         ),
         
         wp.element.createElement(
             PluginSidebar,
             {
-                name: "mcl-publisher-checklist-sidebar",
-                title: window.mclPublisher?.i18n?.publisherChecklist || __('Publisher Checklist', 'magic-checklists'),
+                name: "magiccl-publisher-checklist-sidebar",
+                title: window.magicclPublisher?.i18n?.publisherChecklist || __('Publisher Checklist', 'magic-checklists'),
                 icon: "yes-alt"
             },
             wp.element.createElement(
                 'div',
-                { className: "mcl-publisher-sidebar" },
+                { className: "magiccl-publisher-sidebar" },
                 checklists.length === 0 ? 
                     wp.element.createElement(
                         'div',
@@ -589,13 +589,13 @@ const PublisherChecklistSidebar = () => {
 
                             wp.element.createElement(
                                 'div',
-                                { className: "mcl-requirements-list" },
+                                { className: "magiccl-requirements-list" },
                                 checklist.requirements.map((requirement, index) => 
                                                             wp.element.createElement(
                             'div',
                             {
                                 key: `${checklist.id}-${requirement.type}-${index}`,
-                                className: "mcl-requirement-item",
+                                className: "magiccl-requirement-item",
                                 'data-requirement-type': requirement.type,
                                 'data-status': requirement.status,
                                 style: {
@@ -626,7 +626,7 @@ const PublisherChecklistSidebar = () => {
                                         zIndex: 1
                                     }
                                 },
-                                window.mclPublisher?.i18n?.labels?.required || __('Required', 'magic-checklists')
+                                window.magicclPublisher?.i18n?.labels?.required || __('Required', 'magic-checklists')
                             ),
                             
                             wp.element.createElement(
@@ -669,7 +669,7 @@ const PublisherChecklistSidebar = () => {
                                                 }
                                             },
                                             // Try to translate the label if it's not already translated
-                                            window.mclPublisher?.i18n?.requirements?.[requirement.type] || 
+                                            window.magicclPublisher?.i18n?.requirements?.[requirement.type] || 
                                             __(requirement.label, 'magic-checklists') || 
                                             requirement.label
                                         )
@@ -711,7 +711,7 @@ const PublisherChecklistSidebar = () => {
                                                 !requirement.auto_check && wp.element.createElement(
                                                     CheckboxControl,
                                                     {
-                                                        label: window.mclPublisher?.i18n?.labels?.markAsComplete || __('Mark as complete', 'magic-checklists'),
+                                                        label: window.magicclPublisher?.i18n?.labels?.markAsComplete || __('Mark as complete', 'magic-checklists'),
                                                         checked: requirement.status === 'passed',
                                                         onChange: (checked) => 
                                                             handleManualCheck(checklist.id, requirement.type, requirement.instance_id || '', checked),
@@ -739,23 +739,23 @@ const PublisherChecklistSidebar = () => {
                                 checklistStatus === 'passed' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#22c55e', fontWeight: '500' } },
-                                    '✅ ' + (window.mclPublisher?.i18n?.labels?.allRequirementsMet || __('All requirements met!', 'magic-checklists'))
+                                    '✅ ' + (window.magicclPublisher?.i18n?.labels?.allRequirementsMet || __('All requirements met!', 'magic-checklists'))
                                 ),
                                 checklistStatus === 'failed' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#ef4444', fontWeight: '500' } },
-                                    '⚠️ ' + (window.mclPublisher?.i18n?.labels?.someRequiredItems || __('Some required items need attention before publishing.', 'magic-checklists'))
+                                    '⚠️ ' + (window.magicclPublisher?.i18n?.labels?.someRequiredItems || __('Some required items need attention before publishing.', 'magic-checklists'))
                                 ),
                                 checklistStatus === 'pending' && wp.element.createElement(
                                     'div',
                                     { style: { color: '#f59e0b', fontWeight: '500' } },
-                                    '⏳ ' + (window.mclPublisher?.i18n?.labels?.checkingRequirements || __('Checking requirements...', 'magic-checklists'))
+                                    '⏳ ' + (window.magicclPublisher?.i18n?.labels?.checkingRequirements || __('Checking requirements...', 'magic-checklists'))
                                 ),
                                 
                                 lastCheck && wp.element.createElement(
                                     'div',
                                     { style: { marginTop: '8px' } },
-                                    (window.mclPublisher?.i18n?.labels?.lastChecked || __('Last checked:', 'magic-checklists')) + ' ' + lastCheck.toLocaleTimeString()
+                                    (window.magicclPublisher?.i18n?.labels?.lastChecked || __('Last checked:', 'magic-checklists')) + ' ' + lastCheck.toLocaleTimeString()
                                 )
                             ),
 
@@ -774,7 +774,7 @@ const PublisherChecklistSidebar = () => {
                                         wp.element.createElement(Spinner, { style: { width: '16px', height: '16px', marginRight: '8px' } }),
                                         __('Checking...', 'magic-checklists')
                                     ) :
-                                    window.mclPublisher?.i18n?.labels?.checkRequirements || __('Check Requirements', 'magic-checklists')
+                                    window.magicclPublisher?.i18n?.labels?.checkRequirements || __('Check Requirements', 'magic-checklists')
                             )
                         );
                     })
@@ -784,50 +784,50 @@ const PublisherChecklistSidebar = () => {
 };
 
 // Register the plugin
-registerPlugin('mcl-publisher-checklist-sidebar', {
+registerPlugin('magiccl-publisher-checklist-sidebar', {
     render: PublisherChecklistSidebar
 });
 
 // Add custom styles
 const style = document.createElement('style');
 style.textContent = `
-.mcl-publisher-sidebar .components-panel__body-title {
+.magiccl-publisher-sidebar .components-panel__body-title {
     font-size: 14px !important;
     font-weight: 600 !important;
 }
 
-.mcl-publisher-sidebar .components-panel__body {
+.magiccl-publisher-sidebar .components-panel__body {
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
-.mcl-publisher-sidebar .components-panel__body:last-child {
+.magiccl-publisher-sidebar .components-panel__body:last-child {
     border-bottom: none !important;
 }
 
-.mcl-requirement-item {
+.magiccl-requirement-item {
     transition: all 0.2s ease !important;
 }
 
-.mcl-requirement-item:hover {
+.magiccl-requirement-item:hover {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
-.mcl-publisher-sidebar .components-checkbox-control__label {
+.magiccl-publisher-sidebar .components-checkbox-control__label {
     font-size: 12px !important;
     color: #64748b !important;
 }
 
-.mcl-publisher-sidebar .components-base-control__field {
+.magiccl-publisher-sidebar .components-base-control__field {
     margin-bottom: 0 !important;
 }
 
-@keyframes mcl-pulse {
+@keyframes magiccl-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
-.mcl-checking .mcl-requirement-item {
-    animation: mcl-pulse 1.5s ease-in-out infinite;
+.magiccl-checking .magiccl-requirement-item {
+    animation: magiccl-pulse 1.5s ease-in-out infinite;
 }
 `;
 document.head.appendChild(style);

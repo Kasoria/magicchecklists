@@ -3,8 +3,8 @@ import { useState } from 'react'
 const ChecklistForm = ({ onClose, adminData, checklist = null }) => {
   // Redirect to the existing PHP form page
   const redirectUrl = checklist 
-    ? `${adminData.pluginUrl ? adminData.pluginUrl.replace('/wp-content/plugins/magicchecklists/', '') : ''}admin.php?page=mcl_add_new&checklist_id=${checklist.id}`
-    : `${adminData.pluginUrl ? adminData.pluginUrl.replace('/wp-content/plugins/magicchecklists/', '') : ''}admin.php?page=mcl_add_new`
+    ? `${adminData.pluginUrl ? adminData.pluginUrl.replace('/wp-content/plugins/magicchecklists/', '') : ''}admin.php?page=magiccl_add_new&checklist_id=${checklist.id}`
+    : `${adminData.pluginUrl ? adminData.pluginUrl.replace('/wp-content/plugins/magicchecklists/', '') : ''}admin.php?page=magiccl_add_new`
 
   // Auto-redirect
   if (typeof window !== 'undefined') {

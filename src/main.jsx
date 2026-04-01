@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-const rootElement = document.getElementById('mcl-public-root')
+const rootElement = document.getElementById('magiccl-public-root')
 
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement)
@@ -23,7 +23,7 @@ if (rootElement) {
   
   // Try to find it after a delay
   setTimeout(() => {
-    const delayedRootElement = document.getElementById('mcl-public-root')
+    const delayedRootElement = document.getElementById('magiccl-public-root')
     
     if (delayedRootElement) {
       const root = ReactDOM.createRoot(delayedRootElement)

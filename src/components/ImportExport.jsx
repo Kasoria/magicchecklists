@@ -4,7 +4,7 @@ import { useToast } from './Toast.jsx'
 
 const ImportExport = ({ adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   
   const { showSuccess, showError } = useToast()
   const [importedChecklistId, setImportedChecklistId] = useState(null)
@@ -32,9 +32,9 @@ const ImportExport = ({ adminData }) => {
           <div>
             <p>{i18n.importExport?.messages?.importSuccess || 'Checklist imported successfully!'}</p>
             <a 
-              href={`${adminData.admin_url}admin.php?page=mcl_checklists&checklist_id=${checklistId}&type=classic`}
+              href={`${adminData.admin_url}admin.php?page=magiccl_checklists&checklist_id=${checklistId}&type=classic`}
               className="underline hover:no-underline font-medium"
-              onClick={() => window.location.href = `${adminData.admin_url}admin.php?page=mcl_add_new&checklist_id=${checklistId}&type=classic`}
+              onClick={() => window.location.href = `${adminData.admin_url}admin.php?page=magiccl_add_new&checklist_id=${checklistId}&type=classic`}
             >
               {i18n.importExport?.buttons?.editImported || 'Edit the imported checklist →'}
             </a>
@@ -46,11 +46,11 @@ const ImportExport = ({ adminData }) => {
         )
       }
       // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname + '?page=mcl_import')
+      window.history.replaceState({}, '', window.location.pathname + '?page=magiccl_import')
     } else if (urlParams.get('error') === '1') {
       showError(i18n.importExport?.errors?.importFailed || 'Failed to import checklist. Please try again.')
       // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname + '?page=mcl_import')
+      window.history.replaceState({}, '', window.location.pathname + '?page=magiccl_import')
     }
 
     // Fetch all checklists via AJAX
@@ -58,8 +58,8 @@ const ImportExport = ({ adminData }) => {
       try {
         
         const formData = new FormData()
-        formData.append('action', 'mcl_get_checklists')
-        formData.append('_ajax_nonce', adminData.nonces.mcl_admin)
+        formData.append('action', 'magiccl_get_checklists')
+        formData.append('_ajax_nonce', adminData.nonces.magiccl_admin)
 
         const response = await fetch(adminData.ajaxurl, {
           method: 'POST',
@@ -153,8 +153,8 @@ const ImportExport = ({ adminData }) => {
     
     const nonceInput = document.createElement('input')
     nonceInput.type = 'hidden'
-    nonceInput.name = 'mcl_nonce'
-    nonceInput.value = adminData.nonces[`mcl_export_${type}`]
+    nonceInput.name = 'magiccl_nonce'
+    nonceInput.value = adminData.nonces[`magiccl_export_${type}`]
     form.appendChild(nonceInput)
     
     document.body.appendChild(form)
@@ -166,12 +166,12 @@ const ImportExport = ({ adminData }) => {
     try {
       // First save PDF settings
       const formData = new FormData()
-      formData.append('action', 'mcl_save_pdf_settings')
+      formData.append('action', 'magiccl_save_pdf_settings')
       formData.append('pdf_logo_url', pdfSettings.logoUrl)
       formData.append('pdf_header_text', pdfSettings.headerText)
       formData.append('pdf_contact_info', pdfSettings.contactInfo)
       formData.append('pdf_footer_text', pdfSettings.footerText)
-      formData.append('_ajax_nonce', adminData.nonces.mcl_save_pdf_settings || adminData.nonces.mcl_admin)
+      formData.append('_ajax_nonce', adminData.nonces.magiccl_save_pdf_settings || adminData.nonces.magiccl_admin)
 
       const saveResponse = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -193,7 +193,7 @@ const ImportExport = ({ adminData }) => {
         action: 'export_checklist_pdf',
         checklist_id: selectedChecklistForPdf,
         export_id: saveResult.data.export_id,
-        mcl_nonce: adminData.nonces.mcl_export_pdf
+        magiccl_nonce: adminData.nonces.magiccl_export_pdf
       }
 
       Object.entries(inputs).forEach(([name, value]) => {
@@ -290,7 +290,7 @@ const ImportExport = ({ adminData }) => {
           <form id="import-text-form" action={`${adminData.admin_url}admin-post.php`} method="post">
             <input type="hidden" name="action" value="import_checklist" />
             <input type="hidden" name="type" value="classic" />
-            <input type="hidden" name="mcl_nonce" value={adminData.nonces.mcl_import_checklist} />
+            <input type="hidden" name="magiccl_nonce" value={adminData.nonces.magiccl_import_checklist} />
             <Label htmlFor="importText">{i18n.importExport?.labels?.pasteItems || 'Paste items (one per line)'}</Label>
             <textarea
               id="importText"
@@ -319,7 +319,7 @@ const ImportExport = ({ adminData }) => {
           >
             <input type="hidden" name="action" value="import_json_checklist" />
             <input type="hidden" name="type" value="classic" />
-            <input type="hidden" name="mcl_json_nonce" value={adminData.nonces.mcl_import_json_checklist} />
+            <input type="hidden" name="magiccl_json_nonce" value={adminData.nonces.magiccl_import_json_checklist} />
             
                         <Label htmlFor="importFile">{i18n.importExport?.labels?.uploadFile || 'Upload JSON File'}</Label>
             

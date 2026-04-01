@@ -64,34 +64,34 @@
 }
 
 /* Apply Nunito Sans as the default font for Magic Checklists elements */
-.mcl-drawer,
-.mcl-drawer *,
-.mcl-floating-button,
-.mcl-floating-button *,
-.mcl-shortcode,
-.mcl-shortcode * {
+.magiccl-drawer,
+.magiccl-drawer *,
+.magiccl-floating-button,
+.magiccl-floating-button *,
+.magiccl-shortcode,
+.magiccl-shortcode * {
     font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 /* Specific font weights */
-.mcl-drawer-title,
-.mcl-section-title,
-h1.mcl-title,
-h2.mcl-title,
-h3.mcl-title,
-.mcl-notification-title {
+.magiccl-drawer-title,
+.magiccl-section-title,
+h1.magiccl-title,
+h2.magiccl-title,
+h3.magiccl-title,
+.magiccl-notification-title {
     font-weight: 700;
 }
 
-.mcl-item-content,
-.mcl-drawer button,
-.mcl-drawer-content p {
+.magiccl-item-content,
+.magiccl-drawer button,
+.magiccl-drawer-content p {
     font-weight: 400;
 }
 
-.mcl-drawer-button,
-.mcl-button,
-.mcl-floating-button-text {
+.magiccl-drawer-button,
+.magiccl-button,
+.magiccl-floating-button-text {
     font-weight: 600;
 }
 

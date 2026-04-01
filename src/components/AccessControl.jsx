@@ -33,9 +33,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       if (adminData?.i18n) {
         i18nData = adminData.i18n;
       }
-      // Then try window.mclAdminData
-      else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
-        i18nData = window.mclAdminData.i18n;
+      // Then try window.magicclAdminData
+      else if (typeof window !== 'undefined' && window.magicclAdminData?.i18n) {
+        i18nData = window.magicclAdminData.i18n;
       }
       
       return i18nData;
@@ -48,7 +48,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       setI18n(i18nData);
     } else {
       // If not available yet, try again after a short delay
-      // This handles cases where window.mclAdminData is loaded after component mount
+      // This handles cases where window.magicclAdminData is loaded after component mount
       setTimeout(() => {
         const retryI18nData = getI18nData();
         if (Object.keys(retryI18nData).length > 0) {
@@ -86,8 +86,8 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_users',
-          nonce: adminData.nonces?.mcl_admin || ''
+          action: 'magiccl_get_users',
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
       const data = await response.json()
@@ -105,8 +105,8 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_roles',
-          nonce: adminData.nonces?.mcl_admin || ''
+          action: 'magiccl_get_roles',
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
       const data = await response.json()
@@ -125,15 +125,15 @@ const AccessControl = ({ formData, onChange, adminData }) => {
       
       console.log('Loading admin pages...', { 
         ajaxurl: adminData.ajaxurl, 
-        nonce: adminData.nonces?.mcl_admin 
+        nonce: adminData.nonces?.magiccl_admin 
       })
       
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_admin_pages',
-          nonce: adminData.nonces?.mcl_admin || ''
+          action: 'magiccl_get_admin_pages',
+          nonce: adminData.nonces?.magiccl_admin || ''
         })
       })
       
@@ -205,7 +205,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_invite_links',
+          action: 'magiccl_get_invite_links',
           checklist_id: checklist_id,
           nonce: nonceValue
         })
@@ -246,7 +246,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_generate_invite',
+          action: 'magiccl_generate_invite',
           checklist_id: formData.checklist_id || adminData.checklist_id,
           permissions: formData.invite_permissions || 'interact',
           expiry_days: formData.invite_expiry || '7',
@@ -288,7 +288,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_delete_invite_link',
+          action: 'magiccl_delete_invite_link',
           link_id: linkId,
           nonce: nonceValue
         })
@@ -371,9 +371,9 @@ const AccessControl = ({ formData, onChange, adminData }) => {
     // If not, let's try to generate one by fetching it directly
     try {
       // First try directly from the global window object if available
-      if (typeof window !== 'undefined' && window.mclAdminData && window.mclAdminData.nonces?.inviteLinks) {
-        console.log('Retrieved invite links nonce from window.mclAdminData');
-        return window.mclAdminData.nonces.inviteLinks;
+      if (typeof window !== 'undefined' && window.magicclAdminData && window.magicclAdminData.nonces?.inviteLinks) {
+        console.log('Retrieved invite links nonce from window.magicclAdminData');
+        return window.magicclAdminData.nonces.inviteLinks;
       }
       
       // Fallback - attempt to fetch the nonce from the server 
@@ -382,8 +382,8 @@ const AccessControl = ({ formData, onChange, adminData }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action: 'mcl_get_invite_nonce',
-          _ajax_nonce: adminData.nonces?.mcl_admin || ''
+          action: 'magiccl_get_invite_nonce',
+          _ajax_nonce: adminData.nonces?.magiccl_admin || ''
         })
       });
       
@@ -398,7 +398,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
     
     // If all else fails, return a placeholder - this likely won't work but it's better than nothing
     console.warn('Using fallback value for invite links nonce - this may not work');
-    return 'mcl_invite_links_nonce';
+    return 'magiccl_invite_links_nonce';
   }
 
   // Role Permission Rules handlers
@@ -941,7 +941,7 @@ const AccessControl = ({ formData, onChange, adminData }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
-                      action: 'mcl_force_delete_lock',
+                      action: 'magiccl_force_delete_lock',
                       checklist_id: formData.checklist_id,
                       nonce: adminData.nonces?.forceDeleteLock || ''
                     })

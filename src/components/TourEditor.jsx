@@ -64,9 +64,9 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('action', 'mcl_get_tour_data')
+      formData.append('action', 'magiccl_get_tour_data')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -121,8 +121,8 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
   const loadUsers = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_users_for_tour')
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('action', 'magiccl_get_users_for_tour')
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -141,8 +141,8 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
   const loadRoles = async () => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_get_roles_for_tour')
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('action', 'magiccl_get_roles_for_tour')
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -169,7 +169,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
     try {
       setSaving(true)
       const formData = new FormData()
-      formData.append('action', 'mcl_save_tour_settings')
+      formData.append('action', 'magiccl_save_tour_settings')
       formData.append('tour_id', tourId || 0)
       formData.append('title', tourData.title)
       formData.append('description', tourData.description)
@@ -219,7 +219,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
         smooth_scroll: tourData.settings.smooth_scroll
       }
       formData.append('settings', JSON.stringify(settings))
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -230,11 +230,11 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
       if (data.success) {
         if (openCreator) {
           // Set tour mode cookie for navigation persistence
-          document.cookie = 'mcl_tour_mode=1; path=/; SameSite=Lax'
+          document.cookie = 'magiccl_tour_mode=1; path=/; SameSite=Lax'
           
           // Redirect to visual creator on dashboard
           const dashboardUrl = new URL(adminData.dashboard_url || '/wp-admin/index.php', window.location.origin)
-          dashboardUrl.searchParams.set('mcl_tour_mode', '1')
+          dashboardUrl.searchParams.set('magiccl_tour_mode', '1')
           dashboardUrl.searchParams.set('tour_id', data.data.tour_id.toString())
           
           window.location.href = dashboardUrl.href
@@ -260,9 +260,9 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
     
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_reset_tour_completion')
+      formData.append('action', 'magiccl_reset_tour_completion')
       formData.append('tour_id', tourId)
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -342,10 +342,10 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
   const saveStepsOrder = async (reorderedSteps) => {
     try {
       const formData = new FormData()
-      formData.append('action', 'mcl_reorder_tour_steps')
+      formData.append('action', 'magiccl_reorder_tour_steps')
       formData.append('tour_id', tourId)
       formData.append('steps', JSON.stringify(reorderedSteps))
-      formData.append('nonce', adminData.nonces.mcl_tour_admin)
+      formData.append('nonce', adminData.nonces.magiccl_tour_admin)
 
       const response = await fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -978,7 +978,7 @@ const TourEditor = ({ adminData, tourId, onBackToTours }) => {
                     placeholder={adminData?.i18n?.tourEditor?.customCssPlaceholder || 'my-custom-tour-theme'}
                   />
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {adminData?.i18n?.tourEditor?.customCssHelp || 'Add a custom CSS class to style the popover. Leave empty for default styling.\nTry: mcl-theme-dark, mcl-theme-primary, mcl-theme-minimal, mcl-theme-rounded, or mcl-theme-large.'}
+                    {adminData?.i18n?.tourEditor?.customCssHelp || 'Add a custom CSS class to style the popover. Leave empty for default styling.\nTry: magiccl-theme-dark, magiccl-theme-primary, magiccl-theme-minimal, magiccl-theme-rounded, or magiccl-theme-large.'}
                   </p>
                 </div>
               </div>

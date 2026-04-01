@@ -3,7 +3,7 @@ import { Button, Label } from 'flowbite-react'
 
 const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
   // Get i18n data
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {};
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {};
   
   const [formData, setFormData] = useState({
     enabled: false,
@@ -49,8 +49,8 @@ const DashboardSettings = ({ settings, onSave, loading, adminData }) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          'action': 'mcl_get_checklists',
-          'nonce': adminData.nonces?.mcl_admin || ''
+          'action': 'magiccl_get_checklists',
+          'nonce': adminData.nonces?.magiccl_admin || ''
         })
       })
       

@@ -3,7 +3,7 @@ import { Button } from 'flowbite-react'
 
 const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
   const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false)
-  const [containerClasses, setContainerClasses] = useState(['mcl-speed-dial-container'])
+  const [containerClasses, setContainerClasses] = useState(['magiccl-speed-dial-container'])
   const containerRef = useRef(null)
   
   // Define preset icon collection
@@ -21,10 +21,10 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
   useEffect(() => {
     const multi = activeChecklists.length > 1
-    const classes = ['mcl-speed-dial-container']
+    const classes = ['magiccl-speed-dial-container']
 
     if (multi) {
-      classes.push('mcl-multi-fab')
+      classes.push('magiccl-multi-fab')
       
       // Check if any checklist within the FAB group is set to be draggable
       const hasAnyDraggable = activeChecklists.some(checklist => 
@@ -37,7 +37,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
         classes.push('position-bottom-right')
       }
     } else if (activeChecklists.length === 1) {
-      classes.push('mcl-single-fab')
+      classes.push('magiccl-single-fab')
       const firstChecklist = activeChecklists[0]
       const positionSetting = firstChecklist.buttonPosition || 'bottom-right'
 
@@ -82,11 +82,11 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
     const handleMouseDown = (e) => {
       // Only start dragging when clicking on the wrapper element
-      const wrapperEl = container.querySelector('.mcl-speed-dial-wrapper') || container.querySelector('.mcl-single-button-wrapper')
+      const wrapperEl = container.querySelector('.magiccl-speed-dial-wrapper') || container.querySelector('.magiccl-single-button-wrapper')
       if (!wrapperEl || !wrapperEl.contains(e.target)) return
 
       isDragging = true
-      container.classList.add('mcl-dragging')
+      container.classList.add('magiccl-dragging')
       startX = e.clientX
       startY = e.clientY
       const rect = container.getBoundingClientRect()
@@ -118,7 +118,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
     const handleMouseUp = () => {
       if (!isDragging) return
       isDragging = false
-      container.classList.remove('mcl-dragging')
+      container.classList.remove('magiccl-dragging')
       if (moved) {
         const swallowClick = (evt) => {
           evt.preventDefault()
@@ -135,7 +135,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
       const target = touch.target
       
       // Only start dragging when clicking on the wrapper element
-      const wrapperEl = container.querySelector('.mcl-speed-dial-wrapper') || container.querySelector('.mcl-single-button-wrapper')
+      const wrapperEl = container.querySelector('.magiccl-speed-dial-wrapper') || container.querySelector('.magiccl-single-button-wrapper')
       if (!wrapperEl || !wrapperEl.contains(target)) return
 
       // Store initial touch info without preventing defaults yet
@@ -161,7 +161,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
       // Only start dragging if user moves more than threshold (10px)
       if (!isDragging && distance > 10) {
         isDragging = true
-        container.classList.add('mcl-dragging')
+        container.classList.add('magiccl-dragging')
         e.preventDefault() // Now prevent scrolling since we're dragging
       }
 
@@ -190,7 +190,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
     const handleTouchEnd = () => {
       if (isDragging) {
-        container.classList.remove('mcl-dragging')
+        container.classList.remove('magiccl-dragging')
         if (moved) {
           const swallowClick = (evt) => {
             evt.preventDefault()
@@ -260,7 +260,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
         <img 
           src={checklist.checklist_icon_custom} 
           alt="Checklist icon" 
-          className="mcl-checklist-icon"
+          className="magiccl-checklist-icon"
           style={{ width: size, height: size }}
         />
       )
@@ -271,7 +271,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
       
       return (
         <svg 
-          className="mcl-checklist-icon" 
+          className="magiccl-checklist-icon" 
           width={size} 
           height={size} 
           viewBox="0 0 24 24" 
@@ -290,12 +290,12 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
     return (
       <div 
-        className="mcl-speed-dial-wrapper"
+        className="magiccl-speed-dial-wrapper"
         data-draggable="true"
       >
         {/* Speed Dial Items */}
         <div 
-          className={`mcl-speed-dial-menu ${isSpeedDialOpen ? 'open' : ''}`}
+          className={`magiccl-speed-dial-menu ${isSpeedDialOpen ? 'open' : ''}`}
           role="list"
         >
           {activeChecklists.map((checklist) => renderChecklistSpeedDialItem(checklist))}
@@ -303,7 +303,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
 
         {/* Speed Dial Trigger Button */}
         <Button
-          className="mcl-speed-dial-trigger rounded-full w-[50px] h-[50px] border-2 border-gray-700"
+          className="magiccl-speed-dial-trigger rounded-full w-[50px] h-[50px] border-2 border-gray-700"
           size="lg"
           color="brand-dark"
           onClick={toggleSpeedDial}
@@ -316,7 +316,7 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
           }}
         >
           <svg 
-            className={`mcl-speed-dial-icon shrink-0 ${isSpeedDialOpen ? 'open' : ''}`}
+            className={`magiccl-speed-dial-icon shrink-0 ${isSpeedDialOpen ? 'open' : ''}`}
             width="20" 
             height="20" 
             viewBox="0 0 24 24" 
@@ -343,9 +343,9 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
     const priorityColor = checklist.priorityColor || '#cccccc'
 
     return (
-      <div key={checklist.id} className="mcl-speed-dial-item">
+      <div key={checklist.id} className="magiccl-speed-dial-item">
         <Button
-          className="mcl-speed-dial-button"
+          className="magiccl-speed-dial-button"
           data-checklist-id={checklist.id}
           size="sm"
           pill
@@ -353,11 +353,11 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
           style={checklist.theme === 'custom' ? getButtonStyles(checklist) : {}}
           title={checklist.title}
         >
-          <div className="mcl-button-content">
+          <div className="magiccl-button-content">
             {renderIcon(checklist, 16)}
             {priority !== 'none' && (
               <span 
-                className="mcl-priority-indicator" 
+                className="magiccl-priority-indicator" 
                 style={{ backgroundColor: priorityColor }}
                 aria-label={`Priority: ${priority}`}
               />
@@ -366,9 +366,9 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
         </Button>
         
         {/* Tooltip */}
-        <div className="mcl-tooltip" role="tooltip">
+        <div className="magiccl-tooltip" role="tooltip">
           {checklist.shortTitle || checklist.title}
-          <div className="mcl-tooltip-arrow"></div>
+          <div className="magiccl-tooltip-arrow"></div>
         </div>
       </div>
     )
@@ -384,11 +384,11 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
     return (
       <div 
         key={checklist.id}
-        className="mcl-single-button-wrapper"
+        className="magiccl-single-button-wrapper"
         data-draggable="true"
       >
         <Button
-          className="mcl-single-floating-button"
+          className="magiccl-single-floating-button"
           data-checklist-id={checklist.id}
           data-position={position}
           size="lg"
@@ -397,11 +397,11 @@ const FloatingButtons = ({ activeChecklists = [], settings = {} }) => {
           style={checklist.theme === 'custom' ? getButtonStyles(checklist) : {}}
           title={checklist.title}
         >
-          <div className="mcl-button-content">
+          <div className="magiccl-button-content">
             {renderIcon(checklist, 20)}
             {priority !== 'none' && (
               <span 
-                className="mcl-priority-indicator" 
+                className="magiccl-priority-indicator" 
                 style={{ backgroundColor: priorityColor }}
                 aria-label={`Priority: ${priority}`}
               />

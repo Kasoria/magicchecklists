@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-class MCL_Permissions {
+class MAGICCL_Permissions {
 
     private static $validated_tokens = [];
 
@@ -31,8 +31,8 @@ class MCL_Permissions {
      */
     public function get_invite_token_data() {
         // First check if we have a token in the URL
-        if (isset($_GET['mcl_invite'])) {
-            $token = sanitize_text_field($_GET['mcl_invite']);
+        if (isset($_GET['magiccl_invite'])) {
+            $token = sanitize_text_field($_GET['magiccl_invite']);
             // Use the internal validation logic which also handles caching and usage increment
             return $this->validate_invite_token($token);
         }
@@ -46,8 +46,8 @@ class MCL_Permissions {
         }
 
         // Check for invite token in cookie
-        if (isset($_COOKIE['mcl_invite_token'])) {
-            $token = sanitize_text_field($_COOKIE['mcl_invite_token']);
+        if (isset($_COOKIE['magiccl_invite_token'])) {
+            $token = sanitize_text_field(wp_unslash($_COOKIE['magiccl_invite_token']));
             return $this->validate_invite_token($token);
         }
 
@@ -77,7 +77,7 @@ class MCL_Permissions {
         }
 
         global $wpdb;
-        $table_name = $wpdb->prefix . 'mcl_invite_links';
+        $table_name = $wpdb->prefix . 'magiccl_invite_links';
         $current_time = current_time('mysql', true);
 
         $query = $wpdb->prepare(
@@ -119,8 +119,8 @@ class MCL_Permissions {
     }
 
     private function has_user_used_token($token) {
-        if (isset($_COOKIE['mcl_used_tokens'])) {
-            $used_tokens = json_decode(stripslashes($_COOKIE['mcl_used_tokens']), true);
+        if (isset($_COOKIE['magiccl_used_tokens'])) {
+            $used_tokens = json_decode(sanitize_text_field(wp_unslash($_COOKIE['magiccl_used_tokens'])), true);
             if (is_array($used_tokens) && in_array($token, $used_tokens)) {
                 return true;
             }
@@ -130,8 +130,8 @@ class MCL_Permissions {
 
     private function mark_token_as_used($token) {
         $used_tokens = array();
-        if (isset($_COOKIE['mcl_used_tokens'])) {
-            $used_tokens = json_decode(stripslashes($_COOKIE['mcl_used_tokens']), true);
+        if (isset($_COOKIE['magiccl_used_tokens'])) {
+            $used_tokens = json_decode(sanitize_text_field(wp_unslash($_COOKIE['magiccl_used_tokens'])), true);
         }
         if (!is_array($used_tokens)) {
             $used_tokens = array();
@@ -140,7 +140,7 @@ class MCL_Permissions {
         if (!in_array($token, $used_tokens)) {
             $used_tokens[] = $token;
             setcookie(
-                'mcl_used_tokens',
+                'magiccl_used_tokens',
                 json_encode($used_tokens),
                 time() + (365 * DAY_IN_SECONDS), // WordPress constant
                 COOKIEPATH,                       // WordPress constant
@@ -177,10 +177,10 @@ class MCL_Permissions {
         }
 
         // Check 3: Public access
-        $public_access = get_post_meta($checklist_id, '_mcl_public_access', true);
+        $public_access = get_post_meta($checklist_id, '_magiccl_public_access', true);
         
         if ($public_access == '1') {
-            $public_permission_setting = get_post_meta($checklist_id, '_mcl_public_permission', true) ?: 'interact';
+            $public_permission_setting = get_post_meta($checklist_id, '_magiccl_public_permission', true) ?: 'interact';
             
             if ($this->permission_sufficient($public_permission_setting, $required_permission)) {
                 return true;
@@ -231,7 +231,7 @@ class MCL_Permissions {
         $user_roles = (array) $user->roles;
 
         // First check new granular permission rules
-        $role_permission_rules = get_post_meta($checklist_id, '_mcl_role_permission_rules', true);
+        $role_permission_rules = get_post_meta($checklist_id, '_magiccl_role_permission_rules', true);
 
         if (!empty($role_permission_rules) && is_array($role_permission_rules)) {
             // Find the highest permission level granted to the user
@@ -243,8 +243,8 @@ class MCL_Permissions {
         }
 
         // Fallback to legacy format for backward compatibility
-        $allowed_roles = get_post_meta($checklist_id, '_mcl_access_roles', true) ?: array();
-        $roles_permission_setting = get_post_meta($checklist_id, '_mcl_access_roles_permission', true) ?: 'interact';
+        $allowed_roles = get_post_meta($checklist_id, '_magiccl_access_roles', true) ?: array();
+        $roles_permission_setting = get_post_meta($checklist_id, '_magiccl_access_roles_permission', true) ?: 'interact';
 
         $has_allowed_role = !empty(array_intersect($allowed_roles, $user_roles));
 
@@ -290,7 +290,7 @@ class MCL_Permissions {
         $user_id = get_current_user_id();
 
         // First check new granular permission rules
-        $user_permission_rules = get_post_meta($checklist_id, '_mcl_user_permission_rules', true);
+        $user_permission_rules = get_post_meta($checklist_id, '_magiccl_user_permission_rules', true);
 
         if (!empty($user_permission_rules) && is_array($user_permission_rules)) {
             // Find the highest permission level granted to the user
@@ -302,8 +302,8 @@ class MCL_Permissions {
         }
 
         // Fallback to legacy format for backward compatibility
-        $allowed_users = get_post_meta($checklist_id, '_mcl_access_users', true) ?: array();
-        $users_permission_setting = get_post_meta($checklist_id, '_mcl_access_users_permission', true) ?: 'interact';
+        $allowed_users = get_post_meta($checklist_id, '_magiccl_access_users', true) ?: array();
+        $users_permission_setting = get_post_meta($checklist_id, '_magiccl_access_users_permission', true) ?: 'interact';
 
         $user_is_allowed = in_array($user_id, $allowed_users);
 
@@ -347,11 +347,11 @@ class MCL_Permissions {
      * @return string|false The permission level string or false if not publicly accessible.
      */
     public function get_public_permission_level($checklist_id) {
-        $public_access = get_post_meta($checklist_id, '_mcl_public_access', true);
+        $public_access = get_post_meta($checklist_id, '_magiccl_public_access', true);
         if ($public_access != '1') { // Ensure strict check for '1'
             return false;
         }
-        return get_post_meta($checklist_id, '_mcl_public_permission', true) ?: 'interact';
+        return get_post_meta($checklist_id, '_magiccl_public_permission', true) ?: 'interact';
     }
 
     /**

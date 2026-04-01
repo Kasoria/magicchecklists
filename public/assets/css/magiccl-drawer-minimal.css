@@ -53,13 +53,13 @@
 }
 
 /* Image resizing cursor */
-.mcl-item-content img {
+.magiccl-item-content img {
   cursor: ew-resize;
   user-select: none;
 }
 
 /* Image resizing state */
-.mcl-item-content img.mcl-resizing {
+.magiccl-item-content img.magiccl-resizing {
   cursor: ew-resize;
   user-select: none;
   opacity: 0.8;
@@ -67,7 +67,7 @@
 }
 
 /* Ensure images maintain aspect ratio */
-.mcl-item-content img[data-mcl-image] {
+.magiccl-item-content img[data-magiccl-image] {
   max-width: 400px;
   height: auto;
   display: block;
@@ -75,23 +75,23 @@
 }
 
 /* Link styles within content */
-.mcl-item-content a {
+.magiccl-item-content a {
   color: #2563eb;
   text-decoration: underline;
   cursor: pointer !important;
   pointer-events: auto !important;
 }
 
-.mcl-item-content a:hover {
+.magiccl-item-content a:hover {
   color: #1d4ed8;
 }
 
 /* Dark theme link adjustments */
-.dark .mcl-item-content a {
+.dark .magiccl-item-content a {
   color: #fbbf24;
 }
 
-.dark .mcl-item-content a:hover {
+.dark .magiccl-item-content a:hover {
   color: #f59e0b;
 }
 
@@ -120,13 +120,13 @@
 }
 
 /* Child item connection lines - enhanced with Tailwind-friendly approach */
-.mcl-child-item {
+.magiccl-child-item {
   margin-left: 32px;
   position: relative;
 }
 
 /* Vertical connecting line */
-.mcl-child-item::before {
+.magiccl-child-item::before {
   content: '';
   position: absolute;
   left: -25px;
@@ -137,7 +137,7 @@
 }
 
 /* Horizontal connecting line */
-.mcl-child-item::after {
+.magiccl-child-item::after {
   content: '';
   position: absolute;
   left: -25px;
@@ -148,68 +148,68 @@
 }
 
 /* Last child in a group should only have vertical line to center */
-.mcl-child-item[data-parent-id]:not(:has(+ .mcl-child-item[data-parent-id]))::before {
+.magiccl-child-item[data-parent-id]:not(:has(+ .magiccl-child-item[data-parent-id]))::before {
   top: -10px;
   height: calc(50% + 10px);
 }
 
 /* First child in a group should start from its top */
-.mcl-child-item:first-of-type::before {
+.magiccl-child-item:first-of-type::before {
   top: 0;
   height: calc(100% + 10px);
 }
 
 /* Dark theme adjustments for connecting lines */
-.dark .mcl-child-item::before,
-.dark .mcl-child-item::after {
+.dark .magiccl-child-item::before,
+.dark .magiccl-child-item::after {
   background-color: #6b7280;
 }
 
 /* Dark theme general text color override */
-.mcl-theme-dark {
+.magiccl-theme-dark {
   /* Default dark theme text color; children can override with utility classes */
   color: #ffffff;
 }
 
 /* Dark theme button text colors */
-.mcl-theme-dark .mcl-drawer-button-primary {
+.magiccl-theme-dark .magiccl-drawer-button-primary {
   color: #1e293b !important;
 }
 
-.mcl-theme-dark .mcl-drawer-button-secondary {
+.magiccl-theme-dark .magiccl-drawer-button-secondary {
   color: #ffffff !important;
 }
 
 /* Dark theme item hover improvements */
-.mcl-theme-dark .mcl-items-list li:hover {
+.magiccl-theme-dark .magiccl-items-list li:hover {
   background-color: #475569 !important;
   color: #ffffff !important;
 }
 
-.mcl-theme-dark .mcl-items-list li:hover .mcl-item-content {
+.magiccl-theme-dark .magiccl-items-list li:hover .magiccl-item-content {
   color: #ffffff !important;
 }
 
 /* Dark theme description text */
-.mcl-theme-dark .mcl-public-description {
+.magiccl-theme-dark .magiccl-public-description {
   color: #d1d5db !important;
 }
 
 /* Dark theme content editable focus and hover states */
-.mcl-theme-dark .mcl-item-content:hover {
+.magiccl-theme-dark .magiccl-item-content:hover {
   background-color: #475569 !important;
   color: #ffffff !important;
 }
 
-.mcl-theme-dark .mcl-item-content:focus {
+.magiccl-theme-dark .magiccl-item-content:focus {
   background-color: #475569 !important;
   color: #ffffff !important;
   border-color: #f59e0b !important;
 }
 
 /* Dark theme title focus and hover states */
-.mcl-theme-dark .mcl-drawer-title:hover,
-.mcl-theme-dark .mcl-drawer-title:focus {
+.magiccl-theme-dark .magiccl-drawer-title:hover,
+.magiccl-theme-dark .magiccl-drawer-title:focus {
   background-color: #475569 !important;
   color: #ffffff !important;
 }
@@ -230,7 +230,7 @@
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-  #mcl-drawer {
+  #magiccl-drawer {
     max-width: 95vw;
     left: 2.5vw;
     right: 2.5vw;
@@ -246,26 +246,26 @@
 }
 
 /* Ensure proper line height for content */
-.mcl-item-content {
+.magiccl-item-content {
   line-height: 1.5;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 /* Custom checkbox styles that work with Tailwind */
-input[type="checkbox"].mcl-item-checkbox {
+input[type="checkbox"].magiccl-item-checkbox {
   appearance: none;
   -webkit-appearance: none;
 }
 
 /* Ensure floating buttons don't interfere */
-.mcl-speed-dial-button,
-.mcl-single-floating-button {
+.magiccl-speed-dial-button,
+.magiccl-single-floating-button {
   z-index: 40;
 }
 
 /* Drawer should be above floating buttons but below modals */
-#mcl-drawer {
+#magiccl-drawer {
   z-index: 50;
 }
 
@@ -275,7 +275,7 @@ input[type="checkbox"].mcl-item-checkbox {
 }
 
 /* In-progress indicator as child element */
-.mcl-progress-indicator {
+.magiccl-progress-indicator {
   position: absolute;
   top: 0;
   left: 0px;
@@ -289,12 +289,12 @@ input[type="checkbox"].mcl-item-checkbox {
   pointer-events: none;
 }
 
-.mcl-progress-indicator.active {
+.magiccl-progress-indicator.active {
   opacity: 1;
 }
 
 /* Override custom checkbox styling for native appearance */
-body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox) {
+body #magiccl-drawer input[type="checkbox"]:not(.magiccl-item-checkbox) {
   appearance: auto !important;
   -webkit-appearance: auto !important;
   width: auto !important;
@@ -309,28 +309,28 @@ body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox) {
   padding: initial !important;
 }
 
-body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked::before {
+body #magiccl-drawer input[type="checkbox"]:not(.magiccl-item-checkbox):checked::before {
   content: none !important;
   display: none !important;
 }
 
-body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked {
+body #magiccl-drawer input[type="checkbox"]:not(.magiccl-item-checkbox):checked {
   background-color: initial !important;
   border-color: initial !important;
   background-image: none !important;
 }
 
 /* Custom theme support */
-.mcl-theme-custom {
+.magiccl-theme-custom {
   /* Reset any default styling to let custom CSS take over */
 }
 
-.mcl-theme-custom .mcl-item-checkbox {
+.magiccl-theme-custom .magiccl-item-checkbox {
   /* Ensure custom checkboxes can be styled properly */
   position: relative;
 }
 
-.mcl-theme-custom .mcl-item-checkbox:checked::before {
+.magiccl-theme-custom .magiccl-item-checkbox:checked::before {
   /* Base styling for custom checkmark content */
   position: absolute;
   left: 50%;
@@ -342,18 +342,18 @@ body #mcl-drawer input[type="checkbox"]:not(.mcl-item-checkbox):checked {
 }
 
 /* Ensure custom theme text colors are properly inherited */
-.mcl-theme-custom * {
+.magiccl-theme-custom * {
   color: inherit;
 }
 
 /* Make sure custom theme backgrounds work properly */
-.mcl-theme-custom .mcl-drawer-content {
+.magiccl-theme-custom .magiccl-drawer-content {
   border-radius: inherit;
 }
 
 /* Custom theme responsive adjustments */
 @media (max-width: 640px) {
-  .mcl-theme-custom {
+  .magiccl-theme-custom {
     /* Maintain custom styling on mobile */
   }
 }

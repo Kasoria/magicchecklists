@@ -2,7 +2,7 @@
    Floating Button Styles - Flowbite Speed Dial Design
    ============================================================ */
 
-.mcl-speed-dial-container {
+.magiccl-speed-dial-container {
     position: fixed;
     z-index: 999998;
     pointer-events: none;
@@ -12,22 +12,22 @@
    Multi-Button Speed Dial Positioning
    ============================================================ */
 
-.mcl-speed-dial-container.mcl-multi-fab.position-bottom-right {
+.magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-right {
     bottom: 20px;
     right: 20px;
 }
 
-.mcl-speed-dial-container.mcl-multi-fab.position-bottom-left {
+.magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-left {
     bottom: 20px;
     left: 20px;
 }
 
-.mcl-speed-dial-container.mcl-multi-fab.position-top-right {
+.magiccl-speed-dial-container.magiccl-multi-fab.position-top-right {
     top: 20px;
     right: 20px;
 }
 
-.mcl-speed-dial-container.mcl-multi-fab.position-top-left {
+.magiccl-speed-dial-container.magiccl-multi-fab.position-top-left {
     top: 20px;
     left: 20px;
 }
@@ -36,22 +36,22 @@
    Single Button Positioning
    ============================================================ */
 
-.mcl-speed-dial-container.mcl-single-fab.position-bottom-right {
+.magiccl-speed-dial-container.magiccl-single-fab.position-bottom-right {
     bottom: 20px;
     right: 20px;
 }
 
-.mcl-speed-dial-container.mcl-single-fab.position-bottom-left {
+.magiccl-speed-dial-container.magiccl-single-fab.position-bottom-left {
     bottom: 20px;
     left: 20px;
 }
 
-.mcl-speed-dial-container.mcl-single-fab.position-top-right {
+.magiccl-speed-dial-container.magiccl-single-fab.position-top-right {
     top: 20px;
     right: 20px;
 }
 
-.mcl-speed-dial-container.mcl-single-fab.position-top-left {
+.magiccl-speed-dial-container.magiccl-single-fab.position-top-left {
     top: 20px;
     left: 20px;
 }
@@ -60,8 +60,8 @@
    Draggable Containers - Fixed positioning
    ============================================================ */
 
-.mcl-speed-dial-container.has-draggable,
-.mcl-speed-dial-container.has-draggable-fab {
+.magiccl-speed-dial-container.has-draggable,
+.magiccl-speed-dial-container.has-draggable-fab {
     /* Start at default bottom-right position for draggable items */
     bottom: 20px;
     right: 20px;
@@ -76,14 +76,14 @@
    Admin Bar Adjustments
    ============================================================ */
 
-body.admin-bar .mcl-speed-dial-container.position-top-left,
-body.admin-bar .mcl-speed-dial-container.position-top-right {
+body.admin-bar .magiccl-speed-dial-container.position-top-left,
+body.admin-bar .magiccl-speed-dial-container.position-top-right {
     margin-top: 32px;
 }
 
 @media screen and (max-width: 782px) {
-    body.admin-bar .mcl-speed-dial-container.position-top-left,
-    body.admin-bar .mcl-speed-dial-container.position-top-right {
+    body.admin-bar .magiccl-speed-dial-container.position-top-left,
+    body.admin-bar .magiccl-speed-dial-container.position-top-right {
         margin-top: 46px;
     }
 }
@@ -92,7 +92,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Speed Dial Wrapper
    ============================================================ */
 
-.mcl-speed-dial-wrapper {
+.magiccl-speed-dial-wrapper {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -101,7 +101,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 }
 
 /* Draggable speed dial wrapper positioning */
-.mcl-speed-dial-wrapper[data-draggable="true"] {
+.magiccl-speed-dial-wrapper[data-draggable="true"] {
     cursor: grab;
     user-select: none;
     touch-action: manipulation;
@@ -111,7 +111,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Speed Dial Menu (Items Container)
    ============================================================ */
 
-.mcl-speed-dial-menu {
+.magiccl-speed-dial-menu {
     position: absolute;
     bottom: 65px;
     display: flex;
@@ -125,7 +125,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     z-index: 1;
 }
 
-.mcl-speed-dial-menu.open {
+.magiccl-speed-dial-menu.open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
@@ -133,9 +133,9 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 }
 
 /* Position adjustments for top containers */
-.mcl-speed-dial-container.position-top-right .mcl-speed-dial-menu,
-.mcl-speed-dial-container.position-top-left .mcl-speed-dial-menu,
-.mcl-speed-dial-container.has-draggable-fab.mcl-positioned-top .mcl-speed-dial-menu {
+.magiccl-speed-dial-container.position-top-right .magiccl-speed-dial-menu,
+.magiccl-speed-dial-container.position-top-left .magiccl-speed-dial-menu,
+.magiccl-speed-dial-container.has-draggable-fab.magiccl-positioned-top .magiccl-speed-dial-menu {
     bottom: auto;
     top: 70px;
     flex-direction: column-reverse;
@@ -145,14 +145,14 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Speed Dial Items
    ============================================================ */
 
-.mcl-speed-dial-item {
+.magiccl-speed-dial-item {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.mcl-speed-dial-item .mcl-speed-dial-button {
+.magiccl-speed-dial-item .magiccl-speed-dial-button {
     width: 48px !important;
     height: 48px !important;
     min-width: 48px !important;
@@ -165,7 +165,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 }
 
 @media (hover: hover) {
-    .mcl-speed-dial-item .mcl-speed-dial-button:hover {
+    .magiccl-speed-dial-item .magiccl-speed-dial-button:hover {
         transform: scale(1.1);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
     }
@@ -175,11 +175,11 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Speed Dial Icon Animation
    ============================================================ */
 
-.mcl-speed-dial-icon {
+.magiccl-speed-dial-icon {
     transition: transform 0.2s ease;
 }
 
-.mcl-speed-dial-icon.open {
+.magiccl-speed-dial-icon.open {
     transform: rotate(45deg);
 }
 
@@ -187,17 +187,17 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Single Button Wrapper
    ============================================================ */
 
-.mcl-single-button-wrapper {
+.magiccl-single-button-wrapper {
     pointer-events: auto;
 }
 
-.mcl-single-button-wrapper[data-draggable="true"] {
+.magiccl-single-button-wrapper[data-draggable="true"] {
     cursor: grab;
     user-select: none;
     touch-action: manipulation;
 }
 
-.mcl-single-floating-button {
+.magiccl-single-floating-button {
     width: 56px !important;
     height: 56px !important;
     min-width: 56px !important;
@@ -210,7 +210,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
 }
 
 @media (hover: hover) {
-    .mcl-single-floating-button:hover {
+    .magiccl-single-floating-button:hover {
         transform: scale(1.05);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
     }
@@ -220,14 +220,14 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Button Content Layout
    ============================================================ */
 
-.mcl-button-content {
+.magiccl-button-content {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.mcl-checklist-icon {
+.magiccl-checklist-icon {
     display: block;
     flex-shrink: 0;
     object-fit: contain;
@@ -237,7 +237,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Priority Indicator
    ============================================================ */
 
-.mcl-priority-indicator {
+.magiccl-priority-indicator {
     position: absolute;
     top: -6px;
     right: -6px;
@@ -252,7 +252,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Tooltip Styles
    ============================================================ */
 
-.mcl-tooltip {
+.magiccl-tooltip {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -271,7 +271,7 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     pointer-events: none;
 }
 
-.mcl-tooltip-arrow {
+.magiccl-tooltip-arrow {
     position: absolute;
     top: 100%;
     left: 50%;
@@ -283,22 +283,22 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     border-top: 5px solid rgba(0, 0, 0, 0.9);
 }
 
-.mcl-speed-dial-item:hover .mcl-tooltip {
+.magiccl-speed-dial-item:hover .magiccl-tooltip {
     opacity: 1;
     visibility: visible;
 }
 
 /* For top positioned containers, show tooltip below */
-.mcl-speed-dial-container.position-top-right .mcl-tooltip,
-.mcl-speed-dial-container.position-top-left .mcl-tooltip,
-.mcl-speed-dial-container.has-draggable-fab.mcl-positioned-top .mcl-tooltip {
+.magiccl-speed-dial-container.position-top-right .magiccl-tooltip,
+.magiccl-speed-dial-container.position-top-left .magiccl-tooltip,
+.magiccl-speed-dial-container.has-draggable-fab.magiccl-positioned-top .magiccl-tooltip {
     bottom: auto;
     top: calc(100% + 8px);
 }
 
-.mcl-speed-dial-container.position-top-right .mcl-tooltip-arrow,
-.mcl-speed-dial-container.position-top-left .mcl-tooltip-arrow,
-.mcl-speed-dial-container.has-draggable-fab.mcl-positioned-top .mcl-tooltip-arrow {
+.magiccl-speed-dial-container.position-top-right .magiccl-tooltip-arrow,
+.magiccl-speed-dial-container.position-top-left .magiccl-tooltip-arrow,
+.magiccl-speed-dial-container.has-draggable-fab.magiccl-positioned-top .magiccl-tooltip-arrow {
     top: auto;
     bottom: 100%;
     border-top: none;
@@ -309,15 +309,15 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Dragging States
    ============================================================ */
 
-.mcl-speed-dial-wrapper.mcl-dragging,
-.mcl-single-button-wrapper.mcl-dragging {
+.magiccl-speed-dial-wrapper.magiccl-dragging,
+.magiccl-single-button-wrapper.magiccl-dragging {
     cursor: grabbing !important;
     opacity: 0.8;
     z-index: 999999;
 }
 
-.mcl-speed-dial-wrapper.mcl-dragging .mcl-speed-dial-trigger,
-.mcl-single-button-wrapper.mcl-dragging .mcl-single-floating-button {
+.magiccl-speed-dial-wrapper.magiccl-dragging .magiccl-speed-dial-trigger,
+.magiccl-single-button-wrapper.magiccl-dragging .magiccl-single-floating-button {
     transform: scale(1.1);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
@@ -326,11 +326,11 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Animation Delays for Speed Dial Items
    ============================================================ */
 
-.mcl-speed-dial-menu.open .mcl-speed-dial-item {
-    animation: mcl-speed-dial-item-appear 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.magiccl-speed-dial-menu.open .magiccl-speed-dial-item {
+    animation: magiccl-speed-dial-item-appear 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-@keyframes mcl-speed-dial-item-appear {
+@keyframes magiccl-speed-dial-item-appear {
     from {
         opacity: 0;
         transform: translateY(-10px) scale(0.8);
@@ -341,58 +341,58 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
     }
 }
 
-.mcl-speed-dial-item:nth-child(1) { animation-delay: 0.05s; }
-.mcl-speed-dial-item:nth-child(2) { animation-delay: 0.1s; }
-.mcl-speed-dial-item:nth-child(3) { animation-delay: 0.15s; }
-.mcl-speed-dial-item:nth-child(4) { animation-delay: 0.2s; }
-.mcl-speed-dial-item:nth-child(5) { animation-delay: 0.25s; }
+.magiccl-speed-dial-item:nth-child(1) { animation-delay: 0.05s; }
+.magiccl-speed-dial-item:nth-child(2) { animation-delay: 0.1s; }
+.magiccl-speed-dial-item:nth-child(3) { animation-delay: 0.15s; }
+.magiccl-speed-dial-item:nth-child(4) { animation-delay: 0.2s; }
+.magiccl-speed-dial-item:nth-child(5) { animation-delay: 0.25s; }
 
 /* ============================================================
    Responsive Design
    ============================================================ */
 
 @media (max-width: 768px) {
-    .mcl-speed-dial-container {
+    .magiccl-speed-dial-container {
         /* Reduce spacing on mobile */
     }
     
     /* Touch experience improvements handled by global hover media queries */
     
-    .mcl-speed-dial-container.mcl-multi-fab.position-bottom-right,
-    .mcl-speed-dial-container.mcl-multi-fab.position-bottom-left,
-    .mcl-speed-dial-container.mcl-single-fab.position-bottom-right,
-    .mcl-speed-dial-container.mcl-single-fab.position-bottom-left,
-    .mcl-speed-dial-container.has-draggable,
-    .mcl-speed-dial-container.has-draggable-fab {
+    .magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-right,
+    .magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-left,
+    .magiccl-speed-dial-container.magiccl-single-fab.position-bottom-right,
+    .magiccl-speed-dial-container.magiccl-single-fab.position-bottom-left,
+    .magiccl-speed-dial-container.has-draggable,
+    .magiccl-speed-dial-container.has-draggable-fab {
         bottom: 15px;
     }
     
-    .mcl-speed-dial-container.mcl-multi-fab.position-bottom-right,
-    .mcl-speed-dial-container.mcl-single-fab.position-bottom-right,
-    .mcl-speed-dial-container.has-draggable,
-    .mcl-speed-dial-container.has-draggable-fab {
+    .magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-right,
+    .magiccl-speed-dial-container.magiccl-single-fab.position-bottom-right,
+    .magiccl-speed-dial-container.has-draggable,
+    .magiccl-speed-dial-container.has-draggable-fab {
         right: 15px;
     }
     
-    .mcl-speed-dial-container.mcl-multi-fab.position-bottom-left,
-    .mcl-speed-dial-container.mcl-single-fab.position-bottom-left {
+    .magiccl-speed-dial-container.magiccl-multi-fab.position-bottom-left,
+    .magiccl-speed-dial-container.magiccl-single-fab.position-bottom-left {
         left: 15px;
     }
     
     
-    .mcl-speed-dial-item .mcl-speed-dial-button {
+    .magiccl-speed-dial-item .magiccl-speed-dial-button {
         width: 44px !important;
         height: 44px !important;
         min-width: 44px !important;
     }
     
-    .mcl-speed-dial-menu {
+    .magiccl-speed-dial-menu {
         bottom: 40px;
     }
     
-    .mcl-speed-dial-container.position-top-right .mcl-speed-dial-menu,
-    .mcl-speed-dial-container.position-top-left .mcl-speed-dial-menu,
-    .mcl-speed-dial-container.has-draggable-fab.mcl-positioned-top .mcl-speed-dial-menu {
+    .magiccl-speed-dial-container.position-top-right .magiccl-speed-dial-menu,
+    .magiccl-speed-dial-container.position-top-left .magiccl-speed-dial-menu,
+    .magiccl-speed-dial-container.has-draggable-fab.magiccl-positioned-top .magiccl-speed-dial-menu {
         top: 60px;
     }
 }
@@ -401,9 +401,9 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Focus States for Accessibility
    ============================================================ */
 
-.mcl-speed-dial-trigger:focus-visible,
-.mcl-single-floating-button:focus-visible,
-.mcl-speed-dial-button:focus-visible {
+.magiccl-speed-dial-trigger:focus-visible,
+.magiccl-single-floating-button:focus-visible,
+.magiccl-speed-dial-button:focus-visible {
     outline: 2px solid #3b82f6 !important;
     outline-offset: 2px !important;
 }
@@ -428,8 +428,8 @@ body.admin-bar .mcl-speed-dial-container.position-top-right {
    Hide elements during initialization
    ============================================================ */
 
-.mcl-speed-dial-wrapper.initializing,
-.mcl-single-button-wrapper.initializing {
+.magiccl-speed-dial-wrapper.initializing,
+.magiccl-single-button-wrapper.initializing {
     visibility: hidden;
     opacity: 0;
     transition: none !important;

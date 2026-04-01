@@ -17,8 +17,8 @@ const TourTriggerButton = ({ tour, onStartTour, position = 'bottom-right' }) => 
   const handleClick = () => {
     if (onStartTour) {
       onStartTour(tour)
-    } else if (window.mclTourPlayback) {
-      window.mclTourPlayback.startTour(tour)
+    } else if (window.magicclTourPlayback) {
+      window.magicclTourPlayback.startTour(tour)
     }
   }
 
@@ -51,7 +51,7 @@ const TourTriggerButton = ({ tour, onStartTour, position = 'bottom-right' }) => 
     <div className={getPositionClasses()}>
       <Button
         className={`
-          mcl-tour-trigger-btn
+          magiccl-tour-trigger-btn
           bg-blue-600 hover:bg-blue-700 text-white
           rounded-full w-16 h-16 p-0
           shadow-lg hover:shadow-xl

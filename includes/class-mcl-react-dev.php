@@ -8,31 +8,31 @@ if ( ! defined( 'ABSPATH' ) ) {
  * React Development Environment Handler
  * 
  * This class handles loading React components in both development and production modes.
- * Instead of duplicating logic, it leverages the existing MCL_Public::should_load_assets()
+ * Instead of duplicating logic, it leverages the existing MAGICCL_Public::should_load_assets()
  * logic to determine when to enqueue React scripts, ensuring consistency with the 
  * existing permission and loading systems.
  * 
  * @since 2.0.0
  */
-class MCL_React_Dev {
+class MAGICCL_React_Dev {
     
     private $vite_dev_server = 'http://localhost:3000';
     public $is_dev_mode = false;
     
     /**
      * Allows developers to explicitly turn dev-mode on or off by defining the
-     * `MCL_DEV_MODE` constant in wp-config.php. If the constant is defined
+     * `MAGICCL_DEV_MODE` constant in wp-config.php. If the constant is defined
      * the plugin will never perform the localhost availability check – this
      * avoids unnecessary requests on production while still giving full
      * control in local environments.
      */
     private function is_dev_mode_forced() {
-        return defined( 'MCL_DEV_MODE' );
+        return defined( 'MAGICCL_DEV_MODE' );
     }
     
     public function __construct() {
         if ( $this->is_dev_mode_forced() ) {
-            $this->is_dev_mode = (bool) MCL_DEV_MODE;
+            $this->is_dev_mode = (bool) MAGICCL_DEV_MODE;
         } else {
             $this->is_dev_mode = false;
         }
@@ -43,8 +43,8 @@ class MCL_React_Dev {
             add_action( 'wp_head', array( $this, 'vite_refresh_preamble' ) );
         }
         
-        // Hook into the existing MCL_Public enqueue logic
-        add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 9 ); // After MCL_Public (priority 5)
+        // Hook into the existing MAGICCL_Public enqueue logic
+        add_action( 'admin_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 9 ); // After MAGICCL_Public (priority 5)
         add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_react_scripts' ), 9 );
         
         // Add React root elements to both frontend and admin
@@ -60,7 +60,7 @@ class MCL_React_Dev {
     public function is_vite_dev_server_running() {
         // If the developer forced dev-mode explicitly, never probe the server.
         if ( $this->is_dev_mode_forced() ) {
-            return (bool) MCL_DEV_MODE;
+            return (bool) MAGICCL_DEV_MODE;
         }
 
         // Only check in development/staging environments
@@ -93,7 +93,7 @@ class MCL_React_Dev {
     }
     
     /**
-     * Hook into existing MCL_Public enqueue logic to provide React scripts
+     * Hook into existing MAGICCL_Public enqueue logic to provide React scripts
      */
     public function maybe_enqueue_react_scripts( $hook ) {
         // Prevent multiple enqueue attempts
@@ -103,21 +103,21 @@ class MCL_React_Dev {
         }
         $enqueue_attempted = true;
         
-        // Get the global MCL_Public instance
-        global $mcl_public_instance;
-        if ( ! $mcl_public_instance ) {
-            return; // MCL_Public not loaded yet
+        // Get the global MAGICCL_Public instance
+        global $magiccl_public_instance;
+        if ( ! $magiccl_public_instance ) {
+            return; // MAGICCL_Public not loaded yet
         }
         
         // Check for tour mode parameters first - if present, always load React
-        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         
         // Check for active tours via Tour CPT
         $has_active_tours = false;
-        if (class_exists('MCL_Tour_CPT')) {
-            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+        if (class_exists('MAGICCL_Tour_CPT')) {
+            $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
             $has_active_tours = !empty($active_tours);
         }
         
@@ -125,7 +125,7 @@ class MCL_React_Dev {
         $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id || $has_active_tours;
         
         // Check tour mode cookie as fallback
-        if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
+        if (!$force_load_for_tours && isset($_COOKIE['magiccl_tour_mode']) && sanitize_text_field(wp_unslash($_COOKIE['magiccl_tour_mode'])) === '1') {
             $force_load_for_tours = true;
         }
         
@@ -139,8 +139,8 @@ class MCL_React_Dev {
             if ( $screen ) {
                 $plugin_pages = array(
                     'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
-                    'magicplugins_page_mcl_checklists',    // MagicChecklists main page
-                    'magicplugins_page_mcl_manage_license' // License management page
+                    'magicplugins_page_magiccl_checklists',    // MagicChecklists main page
+                    'magicplugins_page_magiccl_manage_license' // License management page
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
@@ -148,12 +148,12 @@ class MCL_React_Dev {
                     $this->enqueue_admin_scripts( $hook );
                                          // Only load public React app if there are actual checklists that need drawer/floating buttons
                      // This prevents React instance conflicts on fresh installs
-                     if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                     if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
                          $this->enqueue_public_scripts( $hook );
                      }
                 } else {
                     // For non-plugin admin pages, check if we should load public assets
-                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                    if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
                         // Load public React app for drawer/floating buttons on admin pages
                         $this->enqueue_public_scripts( $hook );
                     }
@@ -161,7 +161,7 @@ class MCL_React_Dev {
             }
         } else {
             // For frontend pages, check if we should load public assets
-            if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+            if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
                 // Load public React app on frontend
                 $this->enqueue_public_scripts( $hook );
             }
@@ -221,7 +221,7 @@ class MCL_React_Dev {
         
         // Admin React app from Vite dev server
         wp_enqueue_script(
-            'mcl-react-admin-dev',
+            'magiccl-react-admin-dev',
             $this->vite_dev_server . '/src/admin.jsx',
             array( 'vite-client' ),
             null,
@@ -229,7 +229,7 @@ class MCL_React_Dev {
         );
         
         add_filter( 'script_loader_tag', function( $tag, $handle ) {
-            if ( $handle === 'mcl-react-admin-dev' ) {
+            if ( $handle === 'magiccl-react-admin-dev' ) {
                 return str_replace( ' src=', ' type="module" src=', $tag );
             }
             return $tag;
@@ -276,7 +276,7 @@ class MCL_React_Dev {
         
         // Public React app from Vite dev server
         wp_enqueue_script(
-            'mcl-react-public-dev' . $public_handle_suffix,
+            'magiccl-react-public-dev' . $public_handle_suffix,
             $this->vite_dev_server . '/src/main.jsx',
             array( 'vite-client' ),
             null,
@@ -284,7 +284,7 @@ class MCL_React_Dev {
         );
         
         add_filter( 'script_loader_tag', function( $tag, $handle ) use ( $public_handle_suffix ) {
-            if ( $handle === 'mcl-react-public-dev' . $public_handle_suffix ) {
+            if ( $handle === 'magiccl-react-public-dev' . $public_handle_suffix ) {
                 return str_replace( ' src=', ' type="module" src=', $tag );
             }
             return $tag;
@@ -328,7 +328,7 @@ class MCL_React_Dev {
             $dependencies = !empty($vendor_handles) ? $vendor_handles : array();
             
             wp_enqueue_script(
-                'mcl-react-admin',
+                'magiccl-react-admin',
                 $dist_url . 'admin.js',
                 $dependencies,
                 MAGIC_CHECKLISTS_VERSION,
@@ -337,7 +337,7 @@ class MCL_React_Dev {
             
             // Add type="module" to admin script
             add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                if ( $handle === 'mcl-react-admin' ) {
+                if ( $handle === 'magiccl-react-admin' ) {
                     return str_replace( ' src=', ' type="module" src=', $tag );
                 }
                 return $tag;
@@ -359,7 +359,7 @@ class MCL_React_Dev {
                     $dependencies = !empty($vendor_handles) ? $vendor_handles : array();
                     
                     wp_enqueue_script(
-                        'mcl-react-admin',
+                        'magiccl-react-admin',
                         $dist_url . $admin_file,
                         $dependencies,
                         MAGIC_CHECKLISTS_VERSION,
@@ -368,7 +368,7 @@ class MCL_React_Dev {
                     
                     // Add type="module" to admin script
                     add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                        if ( $handle === 'mcl-react-admin' ) {
+                        if ( $handle === 'magiccl-react-admin' ) {
                             return str_replace( ' src=', ' type="module" src=', $tag );
                         }
                         return $tag;
@@ -416,7 +416,7 @@ class MCL_React_Dev {
         // Public React app
         if ( file_exists( $dist_path . 'main.js' ) ) {
             wp_enqueue_script(
-                'mcl-react-public' . $public_handle_suffix,
+                'magiccl-react-public' . $public_handle_suffix,
                 $dist_url . 'main.js',
                 $vendor_handles,
                 MAGIC_CHECKLISTS_VERSION,
@@ -425,7 +425,7 @@ class MCL_React_Dev {
             
             // Add type="module" to public script
             add_filter( 'script_loader_tag', function( $tag, $handle ) use ( $public_handle_suffix ) {
-                if ( $handle === 'mcl-react-public' . $public_handle_suffix ) {
+                if ( $handle === 'magiccl-react-public' . $public_handle_suffix ) {
                     return str_replace( ' src=', ' type="module" src=', $tag );
                 }
                 return $tag;
@@ -448,7 +448,7 @@ class MCL_React_Dev {
      */
     private function enqueue_main_css( $dist_path, $dist_url ) {
         // Only enqueue CSS once if not already enqueued
-        if ( wp_style_is( 'mcl-react-styles', 'enqueued' ) ) {
+        if ( wp_style_is( 'magiccl-react-styles', 'enqueued' ) ) {
             return;
         }
         
@@ -458,7 +458,7 @@ class MCL_React_Dev {
         if ( ! empty( $css_files ) ) {
             $css_file = str_replace( $dist_path, '', $css_files[0] );
             wp_enqueue_style(
-                'mcl-react-styles',
+                'magiccl-react-styles',
                 $dist_url . $css_file,
                 array(),
                 MAGIC_CHECKLISTS_VERSION
@@ -470,7 +470,7 @@ class MCL_React_Dev {
             if ( ! empty( $css_files ) ) {
                 $css_file = str_replace( $dist_path, '', $css_files[0] );
                 wp_enqueue_style(
-                    'mcl-react-styles',
+                    'magiccl-react-styles',
                     $dist_url . $css_file,
                     array(),
                     MAGIC_CHECKLISTS_VERSION
@@ -479,7 +479,7 @@ class MCL_React_Dev {
                 // Final fallback: check for CSS in root directory
                 if ( file_exists( $dist_path . 'index.css' ) ) {
                     wp_enqueue_style(
-                        'mcl-react-styles',
+                        'magiccl-react-styles',
                         $dist_url . 'index.css',
                         array(),
                         MAGIC_CHECKLISTS_VERSION
@@ -505,10 +505,10 @@ class MCL_React_Dev {
         // Load vendor chunk (React, ReactDOM) - only enqueue if not already enqueued
         $vendor_files = glob( $dist_path . 'vendor-*.js' );
         
-        if ( ! empty( $vendor_files ) && ! wp_script_is( 'mcl-vendor-chunk', 'enqueued' ) ) {
+        if ( ! empty( $vendor_files ) && ! wp_script_is( 'magiccl-vendor-chunk', 'enqueued' ) ) {
             $vendor_file = str_replace( $dist_path, '', $vendor_files[0] );
             wp_enqueue_script(
-                'mcl-vendor-chunk',
+                'magiccl-vendor-chunk',
                 $dist_url . $vendor_file,
                 array(),
                 MAGIC_CHECKLISTS_VERSION,
@@ -516,7 +516,7 @@ class MCL_React_Dev {
             );
             
             add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                if ( $handle === 'mcl-vendor-chunk' ) {
+                if ( $handle === 'magiccl-vendor-chunk' ) {
                     return str_replace( ' src=', ' type="module" src=', $tag );
                 }
                 return $tag;
@@ -535,7 +535,7 @@ class MCL_React_Dev {
                 if (!empty($possible_vendor_files)) {
                     $vendor_file = str_replace( $dist_path, '', $possible_vendor_files[0] );
                     wp_enqueue_script(
-                        'mcl-vendor-chunk',
+                        'magiccl-vendor-chunk',
                         $dist_url . $vendor_file,
                         array(),
                         MAGIC_CHECKLISTS_VERSION,
@@ -543,69 +543,69 @@ class MCL_React_Dev {
                     );
                     
                     add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                        if ( $handle === 'mcl-vendor-chunk' ) {
+                        if ( $handle === 'magiccl-vendor-chunk' ) {
                             return str_replace( ' src=', ' type="module" src=', $tag );
                         }
                         return $tag;
                     }, 10, 2 );
-                    $vendor_handles[] = 'mcl-vendor-chunk';
+                    $vendor_handles[] = 'magiccl-vendor-chunk';
                 }
             } else {
             }
         }
         
-        if ( wp_script_is( 'mcl-vendor-chunk', 'enqueued' ) || wp_script_is( 'mcl-vendor-chunk', 'done' ) ) {
-            $vendor_handles[] = 'mcl-vendor-chunk';
+        if ( wp_script_is( 'magiccl-vendor-chunk', 'enqueued' ) || wp_script_is( 'magiccl-vendor-chunk', 'done' ) ) {
+            $vendor_handles[] = 'magiccl-vendor-chunk';
         }
         
         // Load Flowbite chunk - only enqueue if not already enqueued
         $flowbite_files = glob( $dist_path . 'flowbite-*.js' );
         
-        if ( ! empty( $flowbite_files ) && ! wp_script_is( 'mcl-flowbite-chunk', 'enqueued' ) ) {
+        if ( ! empty( $flowbite_files ) && ! wp_script_is( 'magiccl-flowbite-chunk', 'enqueued' ) ) {
             $flowbite_file = str_replace( $dist_path, '', $flowbite_files[0] );
             wp_enqueue_script(
-                'mcl-flowbite-chunk',
+                'magiccl-flowbite-chunk',
                 $dist_url . $flowbite_file,
-                array( 'mcl-vendor-chunk' ),
+                array( 'magiccl-vendor-chunk' ),
                 MAGIC_CHECKLISTS_VERSION,
                 true
             );
             
             add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                if ( $handle === 'mcl-flowbite-chunk' ) {
+                if ( $handle === 'magiccl-flowbite-chunk' ) {
                     return str_replace( ' src=', ' type="module" src=', $tag );
                 }
                 return $tag;
             }, 10, 2 );
         }
         
-        if ( wp_script_is( 'mcl-flowbite-chunk', 'enqueued' ) || wp_script_is( 'mcl-flowbite-chunk', 'done' ) ) {
-            $vendor_handles[] = 'mcl-flowbite-chunk';
+        if ( wp_script_is( 'magiccl-flowbite-chunk', 'enqueued' ) || wp_script_is( 'magiccl-flowbite-chunk', 'done' ) ) {
+            $vendor_handles[] = 'magiccl-flowbite-chunk';
         }
         
         // Load utils chunk - only enqueue if not already enqueued
         $utils_files = glob( $dist_path . 'utils-*.js' );
         
-        if ( ! empty( $utils_files ) && ! wp_script_is( 'mcl-utils-chunk', 'enqueued' ) ) {
+        if ( ! empty( $utils_files ) && ! wp_script_is( 'magiccl-utils-chunk', 'enqueued' ) ) {
             $utils_file = str_replace( $dist_path, '', $utils_files[0] );
             wp_enqueue_script(
-                'mcl-utils-chunk',
+                'magiccl-utils-chunk',
                 $dist_url . $utils_file,
-                array( 'mcl-vendor-chunk' ),
+                array( 'magiccl-vendor-chunk' ),
                 MAGIC_CHECKLISTS_VERSION,
                 true
             );
             
             add_filter( 'script_loader_tag', function( $tag, $handle ) {
-                if ( $handle === 'mcl-utils-chunk' ) {
+                if ( $handle === 'magiccl-utils-chunk' ) {
                     return str_replace( ' src=', ' type="module" src=', $tag );
                 }
                 return $tag;
             }, 10, 2 );
         }
         
-        if ( wp_script_is( 'mcl-utils-chunk', 'enqueued' ) || wp_script_is( 'mcl-utils-chunk', 'done' ) ) {
-            $vendor_handles[] = 'mcl-utils-chunk';
+        if ( wp_script_is( 'magiccl-utils-chunk', 'enqueued' ) || wp_script_is( 'magiccl-utils-chunk', 'done' ) ) {
+            $vendor_handles[] = 'magiccl-utils-chunk';
         }
         
         return $vendor_handles;
@@ -615,7 +615,7 @@ class MCL_React_Dev {
      * Localize data for admin React apps
      */
     private function localize_admin_data() {
-        $handle = $this->is_dev_mode ? 'mcl-react-admin-dev' : 'mcl-react-admin';
+        $handle = $this->is_dev_mode ? 'magiccl-react-admin-dev' : 'magiccl-react-admin';
         
         // Check if script has already been localized to prevent duplicates
         if ( wp_script_is( $handle, 'done' ) ) {
@@ -628,27 +628,27 @@ class MCL_React_Dev {
         $screen = get_current_screen();
         if ( $screen ) {
             switch ( $screen->id ) {
-                case 'toplevel_page_mcl_checklists':
+                case 'toplevel_page_magiccl_checklists':
                     $current_page = 'main';
                     break;
-                case 'magicchecklists_page_mcl_add_new':
+                case 'magicchecklists_page_magiccl_add_new':
                     $current_page = 'add_new';
                     $page_params = array(
                         'type' => isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '',
                         'checklist_id' => isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0,
                     );
                     break;
-                case 'magicchecklists_page_mcl_tours':
+                case 'magicchecklists_page_magiccl_tours':
                     $current_page = 'tours';
                     $page_params = array(
                         'edit' => isset($_GET['edit']) ? intval($_GET['edit']) : 0,
                         'create' => isset($_GET['create']) ? true : false,
                     );
                     break;
-                case 'magicchecklists_page_mcl_import':
+                case 'magicchecklists_page_magiccl_import':
                     $current_page = 'import';
                     break;
-                case 'magicchecklists_page_mcl_analytics':
+                case 'magicchecklists_page_magiccl_analytics':
                     $current_page = 'analytics';
                     break;
             }
@@ -656,8 +656,8 @@ class MCL_React_Dev {
 
         // Get analytics data for admin pages
         $analytics_data = array();
-        if (class_exists('MCL_Analytics')) {
-            $analytics = MCL_Analytics::get_instance();
+        if (class_exists('MAGICCL_Analytics')) {
+            $analytics = MAGICCL_Analytics::get_instance();
             
             // For the analytics page, get comprehensive data. For others, just summary.
             if ($current_page === 'analytics') {
@@ -667,31 +667,31 @@ class MCL_React_Dev {
             }
         }
         
-        wp_localize_script( $handle, 'mclAdminData', array(
+        wp_localize_script( $handle, 'magicclAdminData', array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
-            'restUrl' => rest_url( 'mcl/v1/' ),
+            'restUrl' => rest_url( 'magiccl/v1/' ),
             'nonces' => array(
                 'wp_rest' => wp_create_nonce( 'wp_rest' ),
-                'mcl_admin' => wp_create_nonce( 'mcl_admin_nonce' ),
-                'mcl_toggle_active' => wp_create_nonce( 'mcl_toggle_active' ),
-                'mcl_save_theme_mode' => wp_create_nonce( 'mcl_save_theme_mode' ),
-                'mcl_save_checklist' => wp_create_nonce( 'mcl_save_checklist' ),
-                'checkShortcut' => wp_create_nonce( 'mcl_check_shortcut_nonce' ),
-                'inviteLinks' => wp_create_nonce( 'mcl_invite_links_nonce' ),
-                'testWebhook' => wp_create_nonce( 'mcl_test_webhook' ),
-                'mcl_import_checklist' => wp_create_nonce( 'mcl_import_checklist' ),
-                'mcl_import_json_checklist' => wp_create_nonce( 'mcl_import_json_checklist' ),
-                'mcl_export_txt' => wp_create_nonce( 'mcl_export_txt' ),
-                'mcl_export_json' => wp_create_nonce( 'mcl_export_json' ),
-                'mcl_export_pdf' => wp_create_nonce( 'mcl_export_pdf' ),
-                'mcl_save_pdf_settings' => wp_create_nonce( 'mcl_save_pdf_settings' ),
-                'mcl_get_comprehensive_analytics' => wp_create_nonce( 'mcl_get_comprehensive_analytics' ),
-                'mcl_cleanup_test_data' => wp_create_nonce( 'mcl_cleanup_test_data' ),
-                'mcl_tour_admin' => wp_create_nonce( 'mcl_tour_admin' ),
-                'mcl_kanban' => wp_create_nonce( 'mcl_admin_nonce' ),
+                'magiccl_admin' => wp_create_nonce( 'magiccl_admin_nonce' ),
+                'magiccl_toggle_active' => wp_create_nonce( 'magiccl_toggle_active' ),
+                'magiccl_save_theme_mode' => wp_create_nonce( 'magiccl_save_theme_mode' ),
+                'magiccl_save_checklist' => wp_create_nonce( 'magiccl_save_checklist' ),
+                'checkShortcut' => wp_create_nonce( 'magiccl_check_shortcut_nonce' ),
+                'inviteLinks' => wp_create_nonce( 'magiccl_invite_links_nonce' ),
+                'testWebhook' => wp_create_nonce( 'magiccl_test_webhook' ),
+                'magiccl_import_checklist' => wp_create_nonce( 'magiccl_import_checklist' ),
+                'magiccl_import_json_checklist' => wp_create_nonce( 'magiccl_import_json_checklist' ),
+                'magiccl_export_txt' => wp_create_nonce( 'magiccl_export_txt' ),
+                'magiccl_export_json' => wp_create_nonce( 'magiccl_export_json' ),
+                'magiccl_export_pdf' => wp_create_nonce( 'magiccl_export_pdf' ),
+                'magiccl_save_pdf_settings' => wp_create_nonce( 'magiccl_save_pdf_settings' ),
+                'magiccl_get_comprehensive_analytics' => wp_create_nonce( 'magiccl_get_comprehensive_analytics' ),
+                'magiccl_cleanup_test_data' => wp_create_nonce( 'magiccl_cleanup_test_data' ),
+                'magiccl_tour_admin' => wp_create_nonce( 'magiccl_tour_admin' ),
+                'magiccl_kanban' => wp_create_nonce( 'magiccl_admin_nonce' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
-            'savedTheme' => get_user_meta( get_current_user_id(), 'mcl_theme', true ),
+            'savedTheme' => get_user_meta( get_current_user_id(), 'magiccl_theme', true ),
             'isAdmin' => is_admin(),
             'isDev' => $this->is_dev_mode,
             'pluginUrl' => MAGIC_CHECKLISTS_PLUGIN_URL,
@@ -711,10 +711,10 @@ class MCL_React_Dev {
      * @return bool
      */
     private function check_tutorial_exists() {
-        if (!class_exists('MCL_Tutorial')) {
+        if (!class_exists('MAGICCL_Tutorial')) {
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-tutorial.php';
         }
-        return MCL_Tutorial::get_instance()->tutorial_exists();
+        return MAGICCL_Tutorial::get_instance()->tutorial_exists();
     }
     
     /**
@@ -724,18 +724,18 @@ class MCL_React_Dev {
      */
     private function get_localization_data() {
         // Include the i18n class if not already loaded
-        if (!class_exists('MCL_I18n')) {
+        if (!class_exists('MAGICCL_I18n')) {
             require_once MAGIC_CHECKLISTS_PLUGIN_PATH . 'includes/class-mcl-i18n.php';
         }
         
-        return MCL_I18n::get_all_translations();
+        return MAGICCL_I18n::get_all_translations();
     }
     
     /**
      * Localize data for public React apps
      */
     private function localize_public_data( $public_handle_suffix = '' ) {
-        $handle = $this->is_dev_mode ? 'mcl-react-public-dev' . $public_handle_suffix : 'mcl-react-public' . $public_handle_suffix;
+        $handle = $this->is_dev_mode ? 'magiccl-react-public-dev' . $public_handle_suffix : 'magiccl-react-public' . $public_handle_suffix;
         
         // Check if script has already been localized to prevent duplicates
         if ( wp_script_is( $handle, 'done' ) ) {
@@ -743,30 +743,30 @@ class MCL_React_Dev {
         }
         
         // Check if we're in tour mode to provide additional admin data
-        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         $tour_mode_detected = $is_tour_mode || $continue_tour_id || $has_tour_id;
         
         // Base public data
-        global $mcl_public_instance;
+        global $magiccl_public_instance;
 
         $is_pagebuilder_context = false;
-        if ( $mcl_public_instance && method_exists( $mcl_public_instance, 'is_inside_pagebuilder_context' ) ) {
-            $is_pagebuilder_context = (bool) $mcl_public_instance->is_inside_pagebuilder_context();
+        if ( $magiccl_public_instance && method_exists( $magiccl_public_instance, 'is_inside_pagebuilder_context' ) ) {
+            $is_pagebuilder_context = (bool) $magiccl_public_instance->is_inside_pagebuilder_context();
         }
 
         $is_iframe_request = $this->is_iframe_like_request();
 
         $public_data = array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
-            'restUrl' => rest_url( 'mcl/v1/' ),
+            'restUrl' => rest_url( 'magiccl/v1/' ),
             'nonces' => array(
                 'wp_rest' => wp_create_nonce( 'wp_rest' ),
-                'mcl_admin' => wp_create_nonce( 'mcl_admin_nonce' ),
-                'mcl_ajax' => wp_create_nonce( 'mcl_ajax_nonce' ),
-                'mcl_ajax_nopriv' => wp_create_nonce( 'mcl_ajax_nopriv_nonce' ),
-                'mcl_tour_public' => wp_create_nonce( 'mcl_tour_public' ),
+                'magiccl_admin' => wp_create_nonce( 'magiccl_admin_nonce' ),
+                'magiccl_ajax' => wp_create_nonce( 'magiccl_ajax_nonce' ),
+                'magiccl_ajax_nopriv' => wp_create_nonce( 'magiccl_ajax_nopriv_nonce' ),
+                'magiccl_tour_public' => wp_create_nonce( 'magiccl_tour_public' ),
             ),
             'currentUser' => wp_get_current_user()->ID,
             'isLoggedIn' => is_user_logged_in(),
@@ -777,15 +777,15 @@ class MCL_React_Dev {
                 'isPageBuilder' => $is_pagebuilder_context,
                 'isIframeRequest' => $is_iframe_request,
             ),
-            'priorityColors' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_colors() : array(),
-            'priorityNumbers' => class_exists('MCL_Priority_Utils') ? MCL_Priority_Utils::get_priority_numbers() : array(),
+            'priorityColors' => class_exists('MAGICCL_Priority_Utils') ? MAGICCL_Priority_Utils::get_priority_colors() : array(),
+            'priorityNumbers' => class_exists('MAGICCL_Priority_Utils') ? MAGICCL_Priority_Utils::get_priority_numbers() : array(),
             'i18n' => $this->get_localization_data()
         );
         
         // Add tour-specific data when in tour mode
         if ($tour_mode_detected) {
-            $public_data['nonces']['mcl_tour_admin'] = wp_create_nonce( 'mcl_tour_admin' );
-            $public_data['nonces']['mcl_tour_public'] = wp_create_nonce( 'mcl_tour_public' );
+            $public_data['nonces']['magiccl_tour_admin'] = wp_create_nonce( 'magiccl_tour_admin' );
+            $public_data['nonces']['magiccl_tour_public'] = wp_create_nonce( 'magiccl_tour_public' );
             $public_data['dashboard_url'] = admin_url( 'index.php' );
             $public_data['admin_url'] = admin_url();
         }
@@ -795,10 +795,10 @@ class MCL_React_Dev {
         if (!empty($tour_data['tours'])) {
             
             // Use the same object name that TourPlayback expects
-            wp_localize_script( $handle, 'mclTourPlaybackData', $tour_data );
+            wp_localize_script( $handle, 'magicclTourPlaybackData', $tour_data );
         }
         
-        wp_localize_script( $handle, 'mclPublicData', $public_data );
+        wp_localize_script( $handle, 'magicclPublicData', $public_data );
     }
     
     /**
@@ -810,11 +810,11 @@ class MCL_React_Dev {
         
         // Handle tour continuation
         if ($continue_tour_id) {
-            $continue_step = isset($_GET['mcl_continue_step']) ? intval($_GET['mcl_continue_step']) : 0;
+            $continue_step = isset($_GET['magiccl_continue_step']) ? intval($_GET['magiccl_continue_step']) : 0;
             $tour = get_post($continue_tour_id);
-            if ($tour && $tour->post_type === 'mcl_tour') {
-                $steps = get_post_meta($continue_tour_id, '_mcl_tour_steps', true) ?: array();
-                $settings = get_post_meta($continue_tour_id, '_mcl_tour_settings', true) ?: array();
+            if ($tour && $tour->post_type === 'magiccl_tour') {
+                $steps = get_post_meta($continue_tour_id, '_magiccl_tour_steps', true) ?: array();
+                $settings = get_post_meta($continue_tour_id, '_magiccl_tour_settings', true) ?: array();
                 
                 $tours_data[] = array(
                     'id' => $continue_tour_id,
@@ -832,9 +832,9 @@ class MCL_React_Dev {
         // Handle tour creator mode - load specific tour if provided
         elseif ($is_tour_mode && $has_tour_id) {
             $tour = get_post($has_tour_id);
-            if ($tour && $tour->post_type === 'mcl_tour') {
-                $steps = get_post_meta($has_tour_id, '_mcl_tour_steps', true) ?: array();
-                $settings = get_post_meta($has_tour_id, '_mcl_tour_settings', true) ?: array();
+            if ($tour && $tour->post_type === 'magiccl_tour') {
+                $steps = get_post_meta($has_tour_id, '_magiccl_tour_steps', true) ?: array();
+                $settings = get_post_meta($has_tour_id, '_magiccl_tour_settings', true) ?: array();
                 
                 $tours_data[] = array(
                     'id' => $has_tour_id,
@@ -843,8 +843,8 @@ class MCL_React_Dev {
                     'settings' => $settings,
                     'autostart' => false,
                     'active' => true,
-                    'trigger_type' => get_post_meta($has_tour_id, '_mcl_tour_trigger_type', true) ?: 'page',
-                    'trigger_value' => get_post_meta($has_tour_id, '_mcl_tour_trigger_value', true) ?: ''
+                    'trigger_type' => get_post_meta($has_tour_id, '_magiccl_tour_trigger_type', true) ?: 'page',
+                    'trigger_value' => get_post_meta($has_tour_id, '_magiccl_tour_trigger_value', true) ?: ''
                 );
                 
             }
@@ -853,29 +853,29 @@ class MCL_React_Dev {
         // Normal tour loading (only if not in creator mode or continuation mode)
         elseif (!$is_tour_mode && !$continue_tour_id) {
             // Only load normal tours if we have the Tour CPT class available
-            if (class_exists('MCL_Tour_CPT')) {
-                $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+            if (class_exists('MAGICCL_Tour_CPT')) {
+                $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
                 
                 foreach ($active_tours as $tour) {
                     $tour_id = $tour->ID;
-                    $steps = get_post_meta($tour_id, '_mcl_tour_steps', true) ?: array();
-                    $settings = get_post_meta($tour_id, '_mcl_tour_settings', true) ?: array();
+                    $steps = get_post_meta($tour_id, '_magiccl_tour_steps', true) ?: array();
+                    $settings = get_post_meta($tour_id, '_magiccl_tour_settings', true) ?: array();
                     
                     // Get autostart from settings first, then fall back to meta field
                     $autostart = false;
                     if (isset($settings['autostart'])) {
                         $autostart = $settings['autostart'];
                     } else {
-                        $autostart_meta = get_post_meta($tour_id, '_mcl_tour_autostart', true);
+                        $autostart_meta = get_post_meta($tour_id, '_magiccl_tour_autostart', true);
                         $autostart = !empty($autostart_meta);
                     }
                     
-                    $trigger_type = get_post_meta($tour_id, '_mcl_tour_trigger_type', true) ?: 'page';
-                    $trigger_value = get_post_meta($tour_id, '_mcl_tour_trigger_value', true) ?: '';
-                    $user_condition = get_post_meta($tour_id, '_mcl_tour_user_condition', true) ?: 'all_users';
-                    $specific_users = get_post_meta($tour_id, '_mcl_tour_specific_users', true) ?: array();
-                    $specific_roles = get_post_meta($tour_id, '_mcl_tour_specific_roles', true) ?: array();
-                    $show_once = get_post_meta($tour_id, '_mcl_tour_show_once', true);
+                    $trigger_type = get_post_meta($tour_id, '_magiccl_tour_trigger_type', true) ?: 'page';
+                    $trigger_value = get_post_meta($tour_id, '_magiccl_tour_trigger_value', true) ?: '';
+                    $user_condition = get_post_meta($tour_id, '_magiccl_tour_user_condition', true) ?: 'all_users';
+                    $specific_users = get_post_meta($tour_id, '_magiccl_tour_specific_users', true) ?: array();
+                    $specific_roles = get_post_meta($tour_id, '_magiccl_tour_specific_roles', true) ?: array();
+                    $show_once = get_post_meta($tour_id, '_magiccl_tour_show_once', true);
                     
                     $tours_data[] = array(
                         'id' => $tour_id,
@@ -898,7 +898,7 @@ class MCL_React_Dev {
         
         return array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => $is_tour_mode ? wp_create_nonce('mcl_tour_admin') : wp_create_nonce('mcl_tour_public'),
+            'nonce' => $is_tour_mode ? wp_create_nonce('magiccl_tour_admin') : wp_create_nonce('magiccl_tour_public'),
             'tours' => $tours_data,
             'is_tour_mode' => $is_tour_mode,
             'continue_tour_id' => $continue_tour_id,
@@ -916,7 +916,7 @@ class MCL_React_Dev {
         if (is_admin()) {
             // For admin pages, use the full URL including query parameters
             $protocol = is_ssl() ? 'https://' : 'http://';
-            $current_url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            $current_url = $protocol . sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) . esc_url_raw(wp_unslash($_SERVER['REQUEST_URI']));
         } else {
             // For frontend pages, use WordPress functions
             global $wp;
@@ -930,30 +930,30 @@ class MCL_React_Dev {
      * Add script isolation to prevent React render loops when both admin and public apps are loaded
      */
     private function add_script_isolation_for_dual_loading( $public_handle_suffix = '' ) {
-        $public_handle = $this->is_dev_mode ? 'mcl-react-public-dev' . $public_handle_suffix : 'mcl-react-public' . $public_handle_suffix;
+        $public_handle = $this->is_dev_mode ? 'magiccl-react-public-dev' . $public_handle_suffix : 'magiccl-react-public' . $public_handle_suffix;
 
         // Only add once per handle
-        if ( did_action( 'mcl_isolation_added_' . $public_handle ) ) {
+        if ( did_action( 'magiccl_isolation_added_' . $public_handle ) ) {
             return;
         }
-        do_action( 'mcl_isolation_added_' . $public_handle );
+        do_action( 'magiccl_isolation_added_' . $public_handle );
 
         $isolation_script = "
         (function() {
             // Flag to indicate admin React presence
-            window.mclAdminReactPresent = true;
+            window.magicclAdminReactPresent = true;
 
             // Store original public data temporarily
-            if (typeof window.mclPublicData !== 'undefined') {
-                window.mclPublicDataOriginal = { ...window.mclPublicData };
-                window.mclPublicData.delayInit = true;
-                window.mclPublicData.dualLoadMode = true;
+            if (typeof window.magicclPublicData !== 'undefined') {
+                window.magicclPublicDataOriginal = { ...window.magicclPublicData };
+                window.magicclPublicData.delayInit = true;
+                window.magicclPublicData.dualLoadMode = true;
 
                 let maxWaitTime = 2000;
                 let startTime = Date.now();
 
                 const checkAdminReady = function() {
-                    const adminRoot = document.querySelector('#mcl-admin-root');
+                    const adminRoot = document.querySelector('#magiccl-admin-root');
                     if (adminRoot && adminRoot.children.length > 0) {
                         return true;
                     }
@@ -961,10 +961,10 @@ class MCL_React_Dev {
                 };
 
                 const initPublicReact = function() {
-                    if (window.mclPublicDataOriginal) {
-                        window.mclPublicDataOriginal.delayInit = false;
-                        window.mclPublicDataOriginal.dualLoadMode = true;
-                        const evt = new CustomEvent('mclInitPublicReact', { detail: window.mclPublicDataOriginal });
+                    if (window.magicclPublicDataOriginal) {
+                        window.magicclPublicDataOriginal.delayInit = false;
+                        window.magicclPublicDataOriginal.dualLoadMode = true;
+                        const evt = new CustomEvent('magicclInitPublicReact', { detail: window.magicclPublicDataOriginal });
                         document.dispatchEvent(evt);
                     }
                 };
@@ -993,24 +993,24 @@ class MCL_React_Dev {
      * Add tour script isolation to prevent driver.js conflicts when multiple instances load
      */
     private function add_tour_script_isolation( $handle_suffix = '' ) {
-        $tour_handle = 'mcl-driver-js' . $handle_suffix;
+        $tour_handle = 'magiccl-driver-js' . $handle_suffix;
 
         // Only add once per handle
-        if ( did_action( 'mcl_tour_isolation_added_' . $tour_handle ) ) {
+        if ( did_action( 'magiccl_tour_isolation_added_' . $tour_handle ) ) {
             return;
         }
-        do_action( 'mcl_tour_isolation_added_' . $tour_handle );
+        do_action( 'magiccl_tour_isolation_added_' . $tour_handle );
 
         $tour_script = "
         (function() {
-            if (window.mclDriverInstance || window.mclDriverInitializing) { return; }
-            window.mclDriverInitializing = true;
+            if (window.magicclDriverInstance || window.magicclDriverInitializing) { return; }
+            window.magicclDriverInitializing = true;
             document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(function() {
-                    if (typeof window.Driver !== 'undefined' && !window.mclDriverInstance) {
-                        window.mclDriverInstance = new window.Driver();
+                    if (typeof window.Driver !== 'undefined' && !window.magicclDriverInstance) {
+                        window.magicclDriverInstance = new window.Driver();
                     }
-                    window.mclDriverInitializing = false;
+                    window.magicclDriverInitializing = false;
                 }, 100);
             });
         })();
@@ -1031,12 +1031,13 @@ class MCL_React_Dev {
      */
     public function vite_refresh_preamble() {
         // HMR preamble required by @vitejs/plugin-react
-        echo '<script type="module">';
-        echo 'import RefreshRuntime from "' . esc_url( $this->vite_dev_server ) . '/@react-refresh";';
-        echo 'RefreshRuntime.injectIntoGlobalHook(window);';
-        echo 'window.$RefreshReg$ = () => {};';
-        echo 'window.$RefreshSig$ = () => type => type;';
-        echo '</script>';
+        $refresh_script = 'import RefreshRuntime from "' . esc_url( $this->vite_dev_server ) . '/@react-refresh";'
+            . 'RefreshRuntime.injectIntoGlobalHook(window);'
+            . 'window.$RefreshReg$ = () => {};'
+            . 'window.$RefreshSig$ = () => type => type;';
+        wp_register_script( 'magiccl-vite-refresh', false, array(), false, false );
+        wp_enqueue_script( 'magiccl-vite-refresh' );
+        wp_add_inline_script( 'magiccl-vite-refresh', $refresh_script );
     }
     
     /**
@@ -1049,21 +1050,21 @@ class MCL_React_Dev {
             return;
         }
         
-        // Get the MCL_Public instance to leverage its existing logic
-        global $mcl_public_instance;
-        if ( ! $mcl_public_instance ) {
-            return; // No point adding roots if MCL_Public isn't even loaded
+        // Get the MAGICCL_Public instance to leverage its existing logic
+        global $magiccl_public_instance;
+        if ( ! $magiccl_public_instance ) {
+            return; // No point adding roots if MAGICCL_Public isn't even loaded
         }
         
         // Check for tour mode parameters first - if present, always add React roots
-        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         
         // Check for active tours via Tour CPT
         $has_active_tours = false;
-        if (class_exists('MCL_Tour_CPT')) {
-            $active_tours = MCL_Tour_CPT::get_active_tours_for_context();
+        if (class_exists('MAGICCL_Tour_CPT')) {
+            $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
             $has_active_tours = !empty($active_tours);
         }
         
@@ -1071,7 +1072,7 @@ class MCL_React_Dev {
         $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id || $has_active_tours;
         
         // Check tour mode cookie as fallback
-        if (!$force_load_for_tours && isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1') {
+        if (!$force_load_for_tours && isset($_COOKIE['magiccl_tour_mode']) && sanitize_text_field(wp_unslash($_COOKIE['magiccl_tour_mode'])) === '1') {
             $force_load_for_tours = true;
         }
         
@@ -1080,9 +1081,9 @@ class MCL_React_Dev {
         
         if ( ! is_admin() ) {
             // For frontend pages, check if we should add public root
-            if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+            if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
                 // Add public root element on frontend pages
-                echo '<div id="mcl-public-root"></div>';
+                echo '<div id="magiccl-public-root"></div>';
                 $roots_added = true;
             }
         } else {
@@ -1091,22 +1092,22 @@ class MCL_React_Dev {
             if ( $screen ) {
                 $plugin_pages = array(
                     'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
-                    'magicplugins_page_mcl_checklists',    // MagicChecklists main page
-                    'magicplugins_page_mcl_manage_license' // License management page
+                    'magicplugins_page_magiccl_checklists',    // MagicChecklists main page
+                    'magicplugins_page_magiccl_manage_license' // License management page
                 );
                 
                 if ( in_array( $screen->id, $plugin_pages ) ) {
                     // Only add public root if there are actual checklists that need drawer/floating buttons
-                    // MCL_Admin already creates the mcl-admin-root div in page content
-                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
-                        echo '<div id="mcl-public-root"></div>';
+                    // MAGICCL_Admin already creates the magiccl-admin-root div in page content
+                    if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
+                        echo '<div id="magiccl-public-root"></div>';
                         $roots_added = true;
                     }
                 } else {
                     // For non-plugin admin pages, check if we should add public root
-                    if ( $force_load_for_tours || $mcl_public_instance->should_load_assets() ) {
+                    if ( $force_load_for_tours || $magiccl_public_instance->should_load_assets() ) {
                         // Public React handles drawer/floating buttons on admin pages
-                        echo '<div id="mcl-public-root"></div>';
+                        echo '<div id="magiccl-public-root"></div>';
                         $roots_added = true;
                     }
                 }
@@ -1126,8 +1127,8 @@ class MCL_React_Dev {
         
         $plugin_pages = array(
             'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
-            'magicplugins_page_mcl_checklists',    // MagicChecklists main page
-            'magicplugins_page_mcl_manage_license' // License management page
+            'magicplugins_page_magiccl_checklists',    // MagicChecklists main page
+            'magicplugins_page_magiccl_manage_license' // License management page
         );
         
         if ( ! in_array( $screen->id, $plugin_pages ) ) {
@@ -1135,45 +1136,19 @@ class MCL_React_Dev {
         }
         
         ?>
-        <style>
-        #mcl-admin-root {
-            width: 100%;
-            min-height: 100%;
-            margin: 0;
-            padding: 0;
-            background: transparent;
-        }
-
-        .wrap #mcl-admin-root {
-            margin: 0;
-        }
-
-        @media screen and (max-width: 782px) {
-            #mcl-admin-root {
-                min-height: calc(100vh - 46px);
-            }
-        }
-
-        #wpfooter {
-            display: none !important;
-        }
-
-        #wpcontent {
-            padding: 0 !important;
-        }
-        #wpbody-content {
-            padding-bottom: 0 !important;
-        }
-        /* Theme-based WP admin background color overrides */
-        html:not(.dark) body,
-        html:not(.dark) #wpwrap {
-            background-color: #f4f4f4 !important;
-        }
-        html.dark body,
-        html.dark #wpwrap {
-            background-color: #011326 !important;
-        }
-        </style>
+        <?php
+        $admin_root_css = '#magiccl-admin-root { width: 100%; min-height: 100%; margin: 0; padding: 0; background: transparent; }
+        .wrap #magiccl-admin-root { margin: 0; }
+        @media screen and (max-width: 782px) { #magiccl-admin-root { min-height: calc(100vh - 46px); } }
+        #wpfooter { display: none !important; }
+        #wpcontent { padding: 0 !important; }
+        #wpbody-content { padding-bottom: 0 !important; }
+        html:not(.dark) body, html:not(.dark) #wpwrap { background-color: #f4f4f4 !important; }
+        html.dark body, html.dark #wpwrap { background-color: #011326 !important; }';
+        wp_register_style('magiccl-admin-root-inline', false);
+        wp_enqueue_style('magiccl-admin-root-inline');
+        wp_add_inline_style('magiccl-admin-root-inline', $admin_root_css);
+        ?>
         <?php
     }
 
@@ -1192,8 +1167,8 @@ class MCL_React_Dev {
         
         $plugin_pages = array(
             'toplevel_page_magic_plugins',        // Main MagicPlugins landing page
-            'magicplugins_page_mcl_checklists',    // MagicChecklists main page
-            'magicplugins_page_mcl_manage_license' // License management page
+            'magicplugins_page_magiccl_checklists',    // MagicChecklists main page
+            'magicplugins_page_magiccl_manage_license' // License management page
         );
         
         return in_array( $screen->id, $plugin_pages );
@@ -1201,12 +1176,12 @@ class MCL_React_Dev {
 
     private function should_load_tour_assets() {
         // Check for tour mode parameters
-        $is_tour_mode = isset($_GET['mcl_tour_mode']) && $_GET['mcl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['mcl_continue_tour']) ? intval($_GET['mcl_continue_tour']) : 0;
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
         
         // Check tour mode cookie as fallback
-        $tour_cookie = isset($_COOKIE['mcl_tour_mode']) && $_COOKIE['mcl_tour_mode'] == '1';
+        $tour_cookie = isset($_COOKIE['magiccl_tour_mode']) && sanitize_text_field(wp_unslash($_COOKIE['magiccl_tour_mode'])) === '1';
         
         return $is_tour_mode || $continue_tour_id || $has_tour_id || $tour_cookie;
     }
@@ -1217,7 +1192,7 @@ class MCL_React_Dev {
     private function enqueue_tour_assets() {
         // Only enqueue if not already loaded - check multiple possible handles
         if (wp_script_is('driver-js', 'enqueued') || wp_script_is('driver-js', 'done') ||
-            wp_script_is('mcl-driver-js', 'enqueued') || wp_script_is('mcl-driver-js', 'done')) {
+            wp_script_is('magiccl-driver-js', 'enqueued') || wp_script_is('magiccl-driver-js', 'done')) {
             return;
         }
         
@@ -1225,13 +1200,13 @@ class MCL_React_Dev {
         $handle_suffix = '';
         if (is_admin() && $this->is_plugin_admin_page()) {
             $handle_suffix = '-admin';
-        } elseif (isset($_GET['mcl_tour_mode']) || isset($_GET['mcl_continue_tour']) || isset($_GET['tour_id'])) {
+        } elseif (isset($_GET['magiccl_tour_mode']) || isset($_GET['magiccl_continue_tour']) || isset($_GET['tour_id'])) {
             $handle_suffix = '-tour';
         }
         
         // Enqueue driver.js with unique handle
         wp_enqueue_script(
-            'mcl-driver-js' . $handle_suffix,
+            'magiccl-driver-js' . $handle_suffix,
             MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.js.iife.js',
             array(),
             '1.3.1',
@@ -1239,9 +1214,9 @@ class MCL_React_Dev {
         );
 
         // Only enqueue CSS once globally (no conflicts with CSS)
-        if (!wp_style_is('mcl-driver-css', 'enqueued') && !wp_style_is('mcl-driver-css', 'done')) {
+        if (!wp_style_is('magiccl-driver-css', 'enqueued') && !wp_style_is('magiccl-driver-css', 'done')) {
             wp_enqueue_style(
-                'mcl-driver-css',
+                'magiccl-driver-css',
                 MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/js/vendor/driver.css',
                 array(),
                 '1.3.1'
@@ -1249,9 +1224,9 @@ class MCL_React_Dev {
 
             // Enqueue tour public styles
             wp_enqueue_style(
-                'mcl-tour-driver',
-                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/mcl-tour-driver.css',
-                array('mcl-driver-css'),
+                'magiccl-tour-driver',
+                MAGIC_CHECKLISTS_PUBLIC_URL . 'assets/css/magiccl-tour-driver.css',
+                array('magiccl-driver-css'),
                 MAGIC_CHECKLISTS_VERSION
             );
         }
@@ -1260,15 +1235,15 @@ class MCL_React_Dev {
     }
 
     private function is_iframe_like_request() {
-        if ( isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'iframe' ) {
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && sanitize_text_field(wp_unslash($_SERVER['HTTP_SEC_FETCH_DEST'])) === 'iframe' ) {
             return true;
         }
 
-        if ( isset( $_SERVER['HTTP_SEC_FETCH_MODE'] ) && $_SERVER['HTTP_SEC_FETCH_MODE'] === 'navigate' ) {
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_MODE'] ) && sanitize_text_field(wp_unslash($_SERVER['HTTP_SEC_FETCH_MODE'])) === 'navigate' ) {
             return false;
         }
 
-        if ( isset( $_SERVER['HTTP_SEC_FETCH_SITE'] ) && $_SERVER['HTTP_SEC_FETCH_SITE'] === 'same-origin' && isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'nested-document' ) {
+        if ( isset( $_SERVER['HTTP_SEC_FETCH_SITE'] ) && sanitize_text_field(wp_unslash($_SERVER['HTTP_SEC_FETCH_SITE'])) === 'same-origin' && isset( $_SERVER['HTTP_SEC_FETCH_DEST'] ) && sanitize_text_field(wp_unslash($_SERVER['HTTP_SEC_FETCH_DEST'])) === 'nested-document' ) {
             return true;
         }
 

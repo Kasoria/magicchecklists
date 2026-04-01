@@ -94,7 +94,7 @@ const LinkToolbar = ({
   onClose,
   isValidUrl
 }) => {
-  const i18n = (typeof window !== 'undefined' && (window.mclShortcode?.i18n)) || {}
+  const i18n = (typeof window !== 'undefined' && (window.magicclShortcode?.i18n)) || {}
 
   if (!isVisible) return null
 
@@ -310,7 +310,7 @@ const Modal = ({ isOpen, onClose, title, children, footer, size = 'md' }) => {
 // Deadline Modal Component
 const DeadlineModal = ({ isOpen, onClose, onSave, itemId, currentDeadline }) => {
   const [dateTime, setDateTime] = useState('')
-  const i18n = (typeof window !== 'undefined' && (window.mclShortcode?.i18n)) || {}
+  const i18n = (typeof window !== 'undefined' && (window.magicclShortcode?.i18n)) || {}
 
   useEffect(() => {
     if (isOpen && currentDeadline) {
@@ -520,8 +520,8 @@ const ShortcodeRenderer = ({
 
   // Initialize i18n
   useEffect(() => {
-    if (window.mclShortcode && window.mclShortcode.i18n && window.mclShortcode.i18n.shortcodeRenderer) {
-      setI18n(window.mclShortcode.i18n.shortcodeRenderer)
+    if (window.magicclShortcode && window.magicclShortcode.i18n && window.magicclShortcode.i18n.shortcodeRenderer) {
+      setI18n(window.magicclShortcode.i18n.shortcodeRenderer)
     }
   }, [])
 
@@ -531,11 +531,11 @@ const ShortcodeRenderer = ({
       // Clear localStorage for ALL shortcode instances AND the drawer (user might use both)
       try {
         // Drawer localStorage key
-        const drawerKey = `mcl_checked_${checklistId}`
+        const drawerKey = `magiccl_checked_${checklistId}`
         localStorage.removeItem(drawerKey)
 
         // Clear ALL shortcode localStorage keys for this checklist (any instance)
-        const shortcodePrefix = `mcl_shortcode_${checklistId}_`
+        const shortcodePrefix = `magiccl_shortcode_${checklistId}_`
         const keysToRemove = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
@@ -617,10 +617,10 @@ const ShortcodeRenderer = ({
       }
     }
 
-    window.addEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+    window.addEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
 
     return () => {
-      window.removeEventListener('mclChecklistDataChanged', handleChecklistDataChanged)
+      window.removeEventListener('magicclChecklistDataChanged', handleChecklistDataChanged)
     }
   }, [checklistId, settings.check_state])
 
@@ -688,11 +688,11 @@ const ShortcodeRenderer = ({
 
   const refreshCheckedStateFromServer = async () => {
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_get_checked_state')
+      formData.append('action', 'magiccl_get_checked_state')
       formData.append('nonce', nonce)
       formData.append('checklist_id', checklistId)
       formData.append('context', 'shortcode')
@@ -714,11 +714,11 @@ const ShortcodeRenderer = ({
 
   const refreshInProgressStateFromServer = async () => {
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_get_in_progress_state')
+      formData.append('action', 'magiccl_get_in_progress_state')
       formData.append('nonce', nonce)
       formData.append('checklist_id', checklistId)
       formData.append('context', 'shortcode')
@@ -739,7 +739,7 @@ const ShortcodeRenderer = ({
   }
 
   const getStorageKey = (type = 'checked') => {
-    return `mcl_shortcode_${checklistId}_${instanceId}_${type}`
+    return `magiccl_shortcode_${checklistId}_${instanceId}_${type}`
   }
 
   // Tooltip management
@@ -970,7 +970,7 @@ const ShortcodeRenderer = ({
     await saveItemsToServer(newItems)
 
     // Dispatch event to notify other views that in-progress state changed
-    window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+    window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
       detail: {
         checklistId: checklistId,
         action: 'in_progress_changed',
@@ -1096,11 +1096,11 @@ const ShortcodeRenderer = ({
     if (!checklistId) return
     setLoadingImages(true)
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_get_uploaded_images')
+      formData.append('action', 'magiccl_get_uploaded_images')
       formData.append('checklist_id', checklistId)
       if (nonce) {
         formData.append('nonce', nonce)
@@ -1137,11 +1137,11 @@ const ShortcodeRenderer = ({
     setImageError(null)
 
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_upload_image')
+      formData.append('action', 'magiccl_upload_image')
       formData.append('file', file)
       formData.append('checklist_id', checklistId || 0)
       if (nonce) {
@@ -1485,11 +1485,11 @@ const ShortcodeRenderer = ({
 
   const saveToServer = async (checkedItems) => {
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_save_checked_state')
+      formData.append('action', 'magiccl_save_checked_state')
       formData.append('nonce', nonce)
       formData.append('checklist_id', checklistId)
       formData.append('context', 'shortcode')
@@ -1507,7 +1507,7 @@ const ShortcodeRenderer = ({
         console.warn('Error saving state to server:', data)
       } else {
         // Dispatch event to notify other views (kanban, etc.)
-        window.dispatchEvent(new CustomEvent('mclChecklistDataChanged', {
+        window.dispatchEvent(new CustomEvent('magicclChecklistDataChanged', {
           detail: {
             checklistId: checklistId,
             action: 'checked_state_changed',
@@ -1524,11 +1524,11 @@ const ShortcodeRenderer = ({
     if (!permissions.can_edit) return
     
     try {
-      const ajaxUrl = window.mclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
-      const nonce = window.mclShortcode?.nonce || ''
+      const ajaxUrl = window.magicclShortcode?.ajaxurl || '/wp-admin/admin-ajax.php'
+      const nonce = window.magicclShortcode?.nonce || ''
 
       const formData = new FormData()
-      formData.append('action', 'mcl_update_checklist')
+      formData.append('action', 'magiccl_update_checklist')
       formData.append('checklist_id', checklistId)
       formData.append('items', JSON.stringify(items))
       formData.append('nonce', nonce)
@@ -1592,7 +1592,7 @@ const ShortcodeRenderer = ({
     const deadlineTime = parseInt(deadline) * 1000
 
     const updateCountdown = () => {
-      const countdownElement = containerRef.current?.querySelector('.mcl-countdown')
+      const countdownElement = containerRef.current?.querySelector('.magiccl-countdown')
       if (!countdownElement) return
 
       const now = Date.now()
@@ -1600,7 +1600,7 @@ const ShortcodeRenderer = ({
 
       if (remaining <= 0) {
         countdownElement.textContent = i18n.countdown?.expired || 'Expired'
-        countdownElement.classList.add('mcl-expired')
+        countdownElement.classList.add('magiccl-expired')
         if (countdownInterval) {
           clearInterval(countdownInterval)
           setCountdownInterval(null)
@@ -1619,11 +1619,11 @@ const ShortcodeRenderer = ({
 
       countdownElement.textContent = text
 
-      countdownElement.classList.remove('mcl-warning', 'mcl-urgent')
+      countdownElement.classList.remove('magiccl-warning', 'magiccl-urgent')
       if (remaining <= 2 * 60 * 60 * 1000) {
-        countdownElement.classList.add('mcl-urgent')
+        countdownElement.classList.add('magiccl-urgent')
       } else if (remaining <= 24 * 60 * 60 * 1000) {
-        countdownElement.classList.add('mcl-warning')
+        countdownElement.classList.add('magiccl-warning')
       }
     }
 
@@ -1667,7 +1667,7 @@ const ShortcodeRenderer = ({
 
       return (
         <span
-          className={`mcl-priority-indicator mcl-priority-number ${clickable ? 'cursor-pointer' : ''}`}
+          className={`magiccl-priority-indicator magiccl-priority-number ${clickable ? 'cursor-pointer' : ''}`}
           style={{
             backgroundColor: getPriorityColor(priority),
             color: '#ffffff',
@@ -1692,7 +1692,7 @@ const ShortcodeRenderer = ({
     } else {
       return (
         <span
-          className={`mcl-priority-indicator ${clickable ? 'cursor-pointer' : ''}`}
+          className={`magiccl-priority-indicator ${clickable ? 'cursor-pointer' : ''}`}
           style={{
             backgroundColor: getPriorityColor(priority),
             width: '8px',
@@ -1728,44 +1728,44 @@ const ShortcodeRenderer = ({
 
   // Build CSS variables for styling
   const cssVariables = {
-    '--mcl-shortcode-custom-width': `${settings.custom_width || 800}px`,
-    '--mcl-shortcode-title-text-color': settings.title_text_color || '#000000',
-    '--mcl-shortcode-description-text-color': settings.description_text_color || '#333333',
-    '--mcl-shortcode-deadline-text-color': settings.deadline_text_color || '#ff0000',
-    '--mcl-shortcode-list-item-text-color': settings.list_item_text_color || '#1a1a1a',
-    '--mcl-shortcode-border-color': settings.border_color || '#e2e8f0',
-    '--mcl-shortcode-checkbox-border-color': settings.checkbox_border_color || '#cccccc',
-    '--mcl-shortcode-checkbox-color-filled': settings.checkbox_color_filled || '#0ea5e9',
-    '--mcl-shortcode-checkbox-color-unfilled': settings.checkbox_color_unfilled || '#ffffff',
-    '--mcl-shortcode-checkmark-color': settings.checkmark_color || '#ffffff',
-    '--mcl-shortcode-bg': settings.bg_color || '#ffffff',
-    '--mcl-shortcode-title-font-size': `${settings.title_font_size || 18}px`,
-    '--mcl-shortcode-description-font-size': `${settings.description_font_size || 14}px`,
-    '--mcl-shortcode-list-item-font-size': `${settings.list_item_font_size || 16}px`,
-    '--mcl-shortcode-deadline-font-size': `${settings.deadline_font_size || 14}px`,
-    '--mcl-shortcode-padding-block': `${settings.padding_block || 32}px`,
-    '--mcl-shortcode-padding-inline': `${settings.padding_inline || 32}px`,
-    '--mcl-shortcode-container-gap': `${settings.container_gap || 10}px`,
-    '--mcl-shortcode-padding-block-mobile': `${Math.min(parseInt(settings.padding_block || 32), 24)}px`,
-    '--mcl-shortcode-padding-inline-mobile': `${Math.min(parseInt(settings.padding_inline || 32), 24)}px`,
-    '--mcl-shortcode-checkbox-dimensions': `${settings.checkbox_dimensions || 20}px`,
-    '--mcl-shortcode-checkbox-border-radius': `${settings.checkbox_border_radius || 4}px`,
-    '--mcl-shortcode-checkbox-border-thickness': `${settings.checkbox_border_thickness || 2}px`,
-    '--mcl-shortcode-border-radius': `${settings.border_radius || 6}px`,
-    '--mcl-shortcode-border-thickness': `${settings.border_thickness || 1}px`
+    '--magiccl-shortcode-custom-width': `${settings.custom_width || 800}px`,
+    '--magiccl-shortcode-title-text-color': settings.title_text_color || '#000000',
+    '--magiccl-shortcode-description-text-color': settings.description_text_color || '#333333',
+    '--magiccl-shortcode-deadline-text-color': settings.deadline_text_color || '#ff0000',
+    '--magiccl-shortcode-list-item-text-color': settings.list_item_text_color || '#1a1a1a',
+    '--magiccl-shortcode-border-color': settings.border_color || '#e2e8f0',
+    '--magiccl-shortcode-checkbox-border-color': settings.checkbox_border_color || '#cccccc',
+    '--magiccl-shortcode-checkbox-color-filled': settings.checkbox_color_filled || '#0ea5e9',
+    '--magiccl-shortcode-checkbox-color-unfilled': settings.checkbox_color_unfilled || '#ffffff',
+    '--magiccl-shortcode-checkmark-color': settings.checkmark_color || '#ffffff',
+    '--magiccl-shortcode-bg': settings.bg_color || '#ffffff',
+    '--magiccl-shortcode-title-font-size': `${settings.title_font_size || 18}px`,
+    '--magiccl-shortcode-description-font-size': `${settings.description_font_size || 14}px`,
+    '--magiccl-shortcode-list-item-font-size': `${settings.list_item_font_size || 16}px`,
+    '--magiccl-shortcode-deadline-font-size': `${settings.deadline_font_size || 14}px`,
+    '--magiccl-shortcode-padding-block': `${settings.padding_block || 32}px`,
+    '--magiccl-shortcode-padding-inline': `${settings.padding_inline || 32}px`,
+    '--magiccl-shortcode-container-gap': `${settings.container_gap || 10}px`,
+    '--magiccl-shortcode-padding-block-mobile': `${Math.min(parseInt(settings.padding_block || 32), 24)}px`,
+    '--magiccl-shortcode-padding-inline-mobile': `${Math.min(parseInt(settings.padding_inline || 32), 24)}px`,
+    '--magiccl-shortcode-checkbox-dimensions': `${settings.checkbox_dimensions || 20}px`,
+    '--magiccl-shortcode-checkbox-border-radius': `${settings.checkbox_border_radius || 4}px`,
+    '--magiccl-shortcode-checkbox-border-thickness': `${settings.checkbox_border_thickness || 2}px`,
+    '--magiccl-shortcode-border-radius': `${settings.border_radius || 6}px`,
+    '--magiccl-shortcode-border-thickness': `${settings.border_thickness || 1}px`
   }
 
   // Build container classes
   const containerClasses = [
-    'mcl-shortcode-container',
-    `mcl-spacing-${settings.item_spacing || 'comfortable'}`,
-    `mcl-border-${settings.border_type || 'none'}`
+    'magiccl-shortcode-container',
+    `magiccl-spacing-${settings.item_spacing || 'comfortable'}`,
+    `magiccl-border-${settings.border_type || 'none'}`
   ]
 
   if (settings.width === 'custom') {
-    containerClasses.push('mcl-width-custom')
+    containerClasses.push('magiccl-width-custom')
   } else if (settings.width === 'narrow') {
-    containerClasses.push('mcl-width-narrow')
+    containerClasses.push('magiccl-width-narrow')
   }
 
   return (
@@ -1820,20 +1820,20 @@ const ShortcodeRenderer = ({
       )}
 
       {!!settings.show_title && (
-        <h3 className="mcl-shortcode-title">
+        <h3 className="magiccl-shortcode-title">
           {checklist.title}
         </h3>
       )}
 
       {!!settings.show_description && !!checklist.content && (
         <div
-          className="mcl-shortcode-description"
+          className="magiccl-shortcode-description"
           dangerouslySetInnerHTML={{ __html: checklist.content }}
         />
       )}
 
       {!!settings.show_deadline && !!checklist.deadline && (
-        <div className="mcl-shortcode-deadline mcl-countdown" data-deadline={checklist.deadline}>
+        <div className="magiccl-shortcode-deadline magiccl-countdown" data-deadline={checklist.deadline}>
           {formatDate(parseInt(checklist.deadline) * 1000, 'date')}
         </div>
       )}
@@ -1844,7 +1844,7 @@ const ShortcodeRenderer = ({
             <ul
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className={`mcl-shortcode-items ${snapshot.isDraggingOver ? 'mcl-dragging-over' : ''}`}
+              className={`magiccl-shortcode-items ${snapshot.isDraggingOver ? 'magiccl-dragging-over' : ''}`}
             >
               {shortcodeItems.map((item, index) => {
                 const isChecked = checkedItems.has(item.id)
@@ -1862,7 +1862,7 @@ const ShortcodeRenderer = ({
                       <li
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={`mcl-shortcode-item group ${isChecked ? 'mcl-shortcode-checked' : ''} ${snapshot.isDragging ? 'mcl-dragging' : ''} ${isInProgress ? 'mcl-in-progress' : ''}`}
+                        className={`magiccl-shortcode-item group ${isChecked ? 'magiccl-shortcode-checked' : ''} ${snapshot.isDragging ? 'magiccl-dragging' : ''} ${isInProgress ? 'magiccl-in-progress' : ''}`}
                         data-item-id={item.id}
                         onMouseEnter={() => setHoveredItemId(item.id)}
                         onMouseLeave={() => setHoveredItemId(null)}
@@ -1879,7 +1879,7 @@ const ShortcodeRenderer = ({
                         {!!settings.enable_reorder && !!permissions.can_interact && (
                           <span
                             {...provided.dragHandleProps}
-                            className="mcl-item-drag-handle"
+                            className="magiccl-item-drag-handle"
                             style={{
                               display: 'inline-block',
                               cursor: snapshot.isDragging ? 'grabbing' : 'grab',
@@ -1896,20 +1896,20 @@ const ShortcodeRenderer = ({
                           </span>
                         )}
                         
-                        <div className="mcl-item-main" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+                        <div className="magiccl-item-main" style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
                           {/* Checkbox - standalone, not in label */}
                           <div style={{
                             position: 'relative',
                             flexShrink: 0,
-                            width: 'var(--mcl-shortcode-checkbox-dimensions)',
-                            height: 'var(--mcl-shortcode-checkbox-dimensions)',
+                            width: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                            height: 'var(--magiccl-shortcode-checkbox-dimensions)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}>
                             <input
                               type="checkbox"
-                              className="mcl-item-checkbox"
+                              className="magiccl-item-checkbox"
                               checked={isChecked}
                               onChange={(e) => {
                                 e.stopPropagation() // Prevent event bubbling
@@ -1920,15 +1920,15 @@ const ShortcodeRenderer = ({
                                 appearance: 'none',
                                 WebkitAppearance: 'none',
                                 MozAppearance: 'none',
-                                width: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                height: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                minWidth: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                minHeight: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                maxWidth: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                maxHeight: 'var(--mcl-shortcode-checkbox-dimensions)',
-                                border: 'var(--mcl-shortcode-checkbox-border-thickness) solid var(--mcl-shortcode-checkbox-border-color)',
-                                borderRadius: 'var(--mcl-shortcode-checkbox-border-radius)',
-                                backgroundColor: isChecked ? 'var(--mcl-shortcode-checkbox-color-filled)' : 'var(--mcl-shortcode-checkbox-color-unfilled)',
+                                width: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                height: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                minWidth: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                minHeight: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                maxWidth: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                maxHeight: 'var(--magiccl-shortcode-checkbox-dimensions)',
+                                border: 'var(--magiccl-shortcode-checkbox-border-thickness) solid var(--magiccl-shortcode-checkbox-border-color)',
+                                borderRadius: 'var(--magiccl-shortcode-checkbox-border-radius)',
+                                backgroundColor: isChecked ? 'var(--magiccl-shortcode-checkbox-color-filled)' : 'var(--magiccl-shortcode-checkbox-color-unfilled)',
                                 position: 'relative',
                                 cursor: permissions.can_interact ? 'pointer' : 'not-allowed',
                                 margin: '0',
@@ -1959,7 +1959,7 @@ const ShortcodeRenderer = ({
                                   width="60%"
                                   height="60%"
                                   viewBox="0 0 20 20"
-                                  fill="var(--mcl-shortcode-checkmark-color)"
+                                  fill="var(--magiccl-shortcode-checkmark-color)"
                                   style={{ flexShrink: 0, display: 'block' }}
                                 >
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1970,7 +1970,7 @@ const ShortcodeRenderer = ({
 
                           {/* Item number */}
                           {settings.show_numbers === true && (
-                            <span className="mcl-item-number" style={{ flexShrink: 0, opacity: '0.7' }}>
+                            <span className="magiccl-item-number" style={{ flexShrink: 0, opacity: '0.7' }}>
                               {index + 1}.
                             </span>
                           )}
@@ -1981,14 +1981,14 @@ const ShortcodeRenderer = ({
                           </div>
 
                           {/* Content area - completely separate from checkbox */}
-                          <div className="mcl-content-container" style={{ flex: '1', minWidth: '0' }}>
+                          <div className="magiccl-content-container" style={{ flex: '1', minWidth: '0' }}>
                             <div
                               ref={(el) => {
                                 if (el) {
                                   itemRefs.current[item.id] = el
                                 }
                               }}
-                              className="mcl-shortcode-item-content"
+                              className="magiccl-shortcode-item-content"
                               data-item-id={item.id}
                               contentEditable={permissions.can_edit && !item.locked}
                               suppressContentEditableWarning={true}
@@ -1997,7 +1997,7 @@ const ShortcodeRenderer = ({
                                 handleContentBlur(e, item.id)
                                 // Don't clear hover if we're clicking on action buttons
                                 setTimeout(() => {
-                                  if (!e.relatedTarget?.closest('.mcl-item-actions')) {
+                                  if (!e.relatedTarget?.closest('.magiccl-item-actions')) {
                                     setHoveredItemId(null)
                                   }
                                 }, 100)
@@ -2022,8 +2022,8 @@ const ShortcodeRenderer = ({
                               dangerouslySetInnerHTML={{ __html: item.content }}
                               style={{
                                 width: '100%',
-                                color: 'var(--mcl-shortcode-list-item-text-color)',
-                                fontSize: 'var(--mcl-shortcode-list-item-font-size)',
+                                color: 'var(--magiccl-shortcode-list-item-text-color)',
+                                fontSize: 'var(--magiccl-shortcode-list-item-font-size)',
                                 lineHeight: '1.5',
                                 transition: 'opacity 0.2s ease',
                                 opacity: isChecked ? '0.8' : '1',
@@ -2039,7 +2039,7 @@ const ShortcodeRenderer = ({
                             {/* Deadline Badge */}
                             {!!deadline && (
                               <div
-                                className="mcl-deadline-badge"
+                                className="magiccl-deadline-badge"
                                 style={{
                                   fontSize: '10px',
                                   padding: '2px 6px',
@@ -2060,7 +2060,7 @@ const ShortcodeRenderer = ({
                           {/* Action buttons - show on hover/focus when can edit */}
                           {!!permissions.can_edit && !item.locked && (
                             <div
-                              className="mcl-item-actions"
+                              className="magiccl-item-actions"
                               style={{
                                 position: 'absolute',
                                 top: '50%',
@@ -2221,10 +2221,10 @@ const ShortcodeRenderer = ({
               alignItems: 'center',
               gap: '8px',
               padding: '8px 16px',
-              backgroundColor: 'var(--mcl-shortcode-checkbox-color-filled)',
+              backgroundColor: 'var(--magiccl-shortcode-checkbox-color-filled)',
               color: 'white',
               border: 'none',
-              borderRadius: 'var(--mcl-shortcode-border-radius)',
+              borderRadius: 'var(--magiccl-shortcode-border-radius)',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: '500',
@@ -2235,7 +2235,7 @@ const ShortcodeRenderer = ({
               e.target.style.transform = 'translateY(-1px)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'var(--mcl-shortcode-checkbox-color-filled)'
+              e.target.style.backgroundColor = 'var(--magiccl-shortcode-checkbox-color-filled)'
               e.target.style.transform = 'translateY(0)'
             }}
           >
@@ -2260,7 +2260,7 @@ const ShortcodeRenderer = ({
               backgroundColor: '#f3f4f6',
               color: '#374151',
               border: '1px solid #d1d5db',
-              borderRadius: 'var(--mcl-shortcode-border-radius)',
+              borderRadius: 'var(--magiccl-shortcode-border-radius)',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: '500',

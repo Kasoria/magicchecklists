@@ -54,6 +54,36 @@ Yes. The plugin includes a locking mechanism so only one user can edit a checkli
 
 Yes. MagicChecklists provides REST API endpoints (v1 and v2) for managing checklists programmatically. Webhook integrations with Slack, Discord and custom endpoints are also available.
 
+== External Services ==
+
+This plugin allows users to configure webhook integrations with the following third-party services:
+
+= Slack =
+When configured by the site administrator, checklist events (item checked, deadline approaching, etc.) can send notifications to a Slack channel via incoming webhooks. The webhook URL is provided by the user and data is only sent when webhook notifications are enabled.
+* Data sent: checklist name, item text, event type, timestamp
+* [Slack Terms of Service](https://slack.com/terms-of-service)
+* [Slack Privacy Policy](https://slack.com/privacy-policy)
+
+= Discord =
+When configured by the site administrator, checklist events can send notifications to a Discord channel via webhooks. The webhook URL is provided by the user and data is only sent when webhook notifications are enabled.
+* Data sent: checklist name, item text, event type, timestamp
+* [Discord Terms of Service](https://discord.com/terms)
+* [Discord Privacy Policy](https://discord.com/privacy)
+
+No data is sent to any external service unless the site administrator explicitly configures and enables webhook integrations.
+
+== Source Code ==
+
+The compiled JavaScript files in the `dist/` directory are built from the source files in the `src/` directory using Vite.
+
+The full source code is available at: [https://github.com/Kasoria/magicchecklists](https://github.com/Kasoria/magicchecklists)
+
+To build from source:
+
+1. Clone the repository
+2. Run `npm install` to install dependencies
+3. Run `npm run build` to compile the production assets
+
 == Screenshots ==
 
 1. Checklist editor with drag-and-drop items

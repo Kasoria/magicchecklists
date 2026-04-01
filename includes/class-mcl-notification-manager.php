@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class MCL_Notification_Manager {
+class MAGICCL_Notification_Manager {
     private static $instance = null;
     private $default_batch_interval = 'fifteen_minutes';
     private $processing_notification = false;
@@ -25,24 +25,24 @@ class MCL_Notification_Manager {
         add_action('plugins_loaded', array($this, 'setup_deadline_checking'), 999);
         
         // Register notification processing hook
-        add_action('mcl_process_notifications', array($this, 'process_notification_queue'));
+        add_action('magiccl_process_notifications', array($this, 'process_notification_queue'));
         
         // Register all notification triggers
-        add_action('mcl_item_added', array($this, 'queue_item_added_notification'), 10, 2);
-        add_action('mcl_item_deleted', array($this, 'queue_item_deleted_notification'), 10, 2);
-        add_action('mcl_item_checked', array($this, 'queue_item_checked_notification'), 10, 3);
-        add_action('mcl_item_unchecked', array($this, 'queue_item_unchecked_notification'), 10, 3);
+        add_action('magiccl_item_added', array($this, 'queue_item_added_notification'), 10, 2);
+        add_action('magiccl_item_deleted', array($this, 'queue_item_deleted_notification'), 10, 2);
+        add_action('magiccl_item_checked', array($this, 'queue_item_checked_notification'), 10, 3);
+        add_action('magiccl_item_unchecked', array($this, 'queue_item_unchecked_notification'), 10, 3);
         
-        if (!wp_next_scheduled('mcl_cleanup_notification_queue')) {
-            wp_schedule_event(time(), 'daily', 'mcl_cleanup_notification_queue');
+        if (!wp_next_scheduled('magiccl_cleanup_notification_queue')) {
+            wp_schedule_event(time(), 'daily', 'magiccl_cleanup_notification_queue');
         }
-        add_action('mcl_cleanup_notification_queue', array($this, 'cleanup_notification_queue'));
+        add_action('magiccl_cleanup_notification_queue', array($this, 'cleanup_notification_queue'));
         
         // FORCE immediate check if we can
         if (did_action('init')) {
             $this->run_deadline_check_safely();
         } else {
-            error_log("MCL: init not fired yet, waiting for hooks");
+            error_log("MAGICCL: init not fired yet, waiting for hooks");
         }
     }
     
@@ -53,9 +53,9 @@ class MCL_Notification_Manager {
         global $wpdb;
         
         // Check if database tables exist
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}mcl_notification_settings'");
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}magiccl_notification_settings'");
         if (!$table_exists) {
-            error_log("MCL: Database tables not ready yet");
+            error_log("MAGICCL: Database tables not ready yet");
             return;
         }
         
@@ -78,21 +78,21 @@ class MCL_Notification_Manager {
     }
     
     public function init() {
-        error_log("MCL: init() called");
+        error_log("MAGICCL: init() called");
         
         // Add custom cron schedule
         add_filter('cron_schedules', array($this, 'add_cron_schedule'));
 
         // Schedule deadline check - more frequent for immediate notifications
-        if (!wp_next_scheduled('mcl_check_deadlines')) {
-            wp_schedule_event(time(), 'fifteen_minutes', 'mcl_check_deadlines');
+        if (!wp_next_scheduled('magiccl_check_deadlines')) {
+            wp_schedule_event(time(), 'fifteen_minutes', 'magiccl_check_deadlines');
         }
-        add_action('mcl_check_deadlines', array($this, 'check_deadlines'));
+        add_action('magiccl_check_deadlines', array($this, 'check_deadlines'));
         
         // Add manual trigger for testing
         add_action('admin_init', function() {
-            if (isset($_GET['test_mcl_deadlines']) && current_user_can('manage_options')) {
-                error_log("MCL: Manual deadline check triggered");
+            if (isset($_GET['test_magiccl_deadlines']) && current_user_can('manage_options')) {
+                error_log("MAGICCL: Manual deadline check triggered");
                 $this->check_deadlines();
                 wp_die('Deadline check completed. Check logs.');
             }
@@ -102,11 +102,11 @@ class MCL_Notification_Manager {
         });
         
         // Add AJAX endpoint for testing
-        add_action('wp_ajax_test_mcl_deadlines', array($this, 'ajax_test_deadlines'));
+        add_action('wp_ajax_test_magiccl_deadlines', array($this, 'ajax_test_deadlines'));
         
         // Schedule notification processing
-        if (!wp_next_scheduled('mcl_process_notifications')) {
-            wp_schedule_event(time(), 'fifteen_minutes', 'mcl_process_notifications');
+        if (!wp_next_scheduled('magiccl_process_notifications')) {
+            wp_schedule_event(time(), 'fifteen_minutes', 'magiccl_process_notifications');
         }
         
         // Check deadlines on every page load if we have immediate notifications and triggers are due
@@ -119,7 +119,7 @@ class MCL_Notification_Manager {
 
     public function cleanup_notification_queue() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'mcl_notification_queue';
+        $table_name = $wpdb->prefix . 'magiccl_notification_queue';
     
         // Delete all processed notifications that have a processed_at date
         $result = $wpdb->query("DELETE FROM $table_name WHERE processed = 1 AND processed_at IS NOT NULL");
@@ -134,7 +134,7 @@ class MCL_Notification_Manager {
     public function add_cron_schedule($schedules) {
         $schedules['fifteen_minutes'] = array(
             'interval' => 15 * 60,
-            'display' => __('Every 15 minutes', 'magic-checklists')
+            'display' => __('Every 15 minutes', 'magicchecklists')
         );
         return $schedules;
     }
@@ -158,9 +158,9 @@ class MCL_Notification_Manager {
      */
     public function queue_item_checked_notification($checklist_id, $item_id, $checked) {
         try {
-            // Since this method is hooked into mcl_item_checked, we know $checked is always true here.
+            // Since this method is hooked into magiccl_item_checked, we know $checked is always true here.
             $event = 'check-item';
-            $items = get_post_meta($checklist_id, '_mcl_items', true);
+            $items = get_post_meta($checklist_id, '_magiccl_items', true);
             $item_content = '';
     
             foreach ($items as $item) {
@@ -182,7 +182,7 @@ class MCL_Notification_Manager {
 
     public function queue_item_unchecked_notification($checklist_id, $item_id, $checked) {
         $event = 'uncheck-item';
-        $items = get_post_meta($checklist_id, '_mcl_items', true);
+        $items = get_post_meta($checklist_id, '_magiccl_items', true);
         $item_content = '';
     
         foreach ($items as $item) {
@@ -211,9 +211,9 @@ class MCL_Notification_Manager {
                    pm1.meta_value as deadline,
                    pm2.meta_value as notification_sent
             FROM {$wpdb->posts} p
-            INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_mcl_time_date'
-            LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_mcl_deadline_notification_sent'
-            WHERE p.post_type = 'mcl_checklist' 
+            INNER JOIN {$wpdb->postmeta} pm1 ON p.ID = pm1.post_id AND pm1.meta_key = '_magiccl_time_date'
+            LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_magiccl_deadline_notification_sent'
+            WHERE p.post_type = 'magiccl_checklist' 
             AND p.post_status = 'publish'
             AND pm1.meta_value != ''
         ";
@@ -266,7 +266,7 @@ class MCL_Notification_Manager {
                     ));
                     
                     // Mark as sent for THIS specific deadline
-                    update_post_meta($checklist->ID, '_mcl_deadline_notification_sent', $deadline_timestamp);
+                    update_post_meta($checklist->ID, '_magiccl_deadline_notification_sent', $deadline_timestamp);
                 }
             }
         }
@@ -279,12 +279,12 @@ class MCL_Notification_Manager {
     public function update_deadline_trigger_time($checklist_id, $deadline = null, $threshold_hours = null) {
         // Clear any old notification sent markers when deadline changes
         if ($deadline !== null) {
-            delete_post_meta($checklist_id, '_mcl_deadline_notification_sent');
+            delete_post_meta($checklist_id, '_magiccl_deadline_notification_sent');
         }
         
         // We don't need to calculate or store trigger times anymore
         // The check_deadlines function will calculate them on the fly
-        delete_post_meta($checklist_id, '_mcl_deadline_trigger_time');
+        delete_post_meta($checklist_id, '_magiccl_deadline_trigger_time');
     }
     
     /**
@@ -294,7 +294,7 @@ class MCL_Notification_Manager {
         // Check if any checklist has immediate notification settings
         global $wpdb;
         $immediate_settings = $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}mcl_notification_settings 
+            "SELECT COUNT(*) FROM {$wpdb->prefix}magiccl_notification_settings 
              WHERE notifications_enabled = 1 
              AND notify_on_deadline = 1 
              AND batch_interval = 'immediate'"
@@ -303,10 +303,10 @@ class MCL_Notification_Manager {
         if ($immediate_settings > 0) {
             // If there are immediate notifications, check every 5 minutes
             $next_check = time() + (5 * 60);
-            if (!wp_next_scheduled('mcl_check_deadlines') || wp_next_scheduled('mcl_check_deadlines') > $next_check) {
-                wp_clear_scheduled_hook('mcl_check_deadlines');
-                wp_schedule_single_event($next_check, 'mcl_check_deadlines');
-                error_log("MCL: Scheduled next deadline check in 5 minutes due to immediate notifications");
+            if (!wp_next_scheduled('magiccl_check_deadlines') || wp_next_scheduled('magiccl_check_deadlines') > $next_check) {
+                wp_clear_scheduled_hook('magiccl_check_deadlines');
+                wp_schedule_single_event($next_check, 'magiccl_check_deadlines');
+                error_log("MAGICCL: Scheduled next deadline check in 5 minutes due to immediate notifications");
             }
         }
     }
@@ -321,7 +321,7 @@ class MCL_Notification_Manager {
         }
         
         // Use a very short cache - 10 seconds
-        $last_check = get_transient('mcl_force_deadline_check');
+        $last_check = get_transient('magiccl_force_deadline_check');
         $now = time();
         
         if ($last_check && ($now - $last_check) < 10) {
@@ -332,7 +332,7 @@ class MCL_Notification_Manager {
         $this->check_deadlines();
         
         // Update the last check time
-        set_transient('mcl_force_deadline_check', $now, 10);
+        set_transient('magiccl_force_deadline_check', $now, 10);
     }
     
     /**
@@ -341,7 +341,7 @@ class MCL_Notification_Manager {
      */
     public function check_immediate_deadlines() {
         // Check more frequently - every 30 seconds
-        $last_check = get_transient('mcl_last_immediate_deadline_check');
+        $last_check = get_transient('magiccl_last_immediate_deadline_check');
         $now = time();
         
         // Check at most every 30 seconds
@@ -353,15 +353,16 @@ class MCL_Notification_Manager {
         $this->check_deadlines();
         
         // Update the last check time
-        set_transient('mcl_last_immediate_deadline_check', $now, 60); // 1 minute expiry
+        set_transient('magiccl_last_immediate_deadline_check', $now, 60); // 1 minute expiry
     }
 
     public function ajax_test_deadlines() {
+        check_ajax_referer('magiccl_admin_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
             wp_die('Permission denied');
         }
         
-        error_log("MCL: AJAX deadline check triggered");
+        error_log("MAGICCL: AJAX deadline check triggered");
         $this->check_deadlines();
         
         echo "Deadline check completed. Check debug.log for results.";
@@ -388,7 +389,7 @@ class MCL_Notification_Manager {
     
         global $wpdb;
         $result = $wpdb->insert(
-            $wpdb->prefix . 'mcl_notification_queue',
+            $wpdb->prefix . 'magiccl_notification_queue',
             array(
                 'checklist_id' => $checklist_id,
                 'type'         => $type,
@@ -431,7 +432,7 @@ class MCL_Notification_Manager {
         
         // Get unprocessed notifications that are ready to be sent
         $notifications = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mcl_notification_queue 
+            "SELECT * FROM {$wpdb->prefix}magiccl_notification_queue 
             WHERE processed = 0 
             AND process_after <= %s 
             ORDER BY checklist_id, created_at ASC",
@@ -480,7 +481,7 @@ class MCL_Notification_Manager {
             
             // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders are generated safely via array_fill with %d
             $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}mcl_notification_queue
+                "UPDATE {$wpdb->prefix}magiccl_notification_queue
                 SET processed = 1,
                     processed_at = %s
                 WHERE id IN (" . implode(',', $placeholders) . ")", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Placeholders generated via array_fill
@@ -500,12 +501,12 @@ class MCL_Notification_Manager {
         }
         
         $subject = sprintf(
-            __('[%s] Checklist Update Notification', 'magic-checklists'),
+            __('[%s] Checklist Update Notification', 'magicchecklists'),
             get_bloginfo('name')
         );
         
         $message = sprintf(
-            __("Updates for checklist: %s\n\n", 'magic-checklists'),
+            __("Updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
         
@@ -522,13 +523,13 @@ class MCL_Notification_Manager {
     
     private function send_slack_notifications($settings, $notifications) {
         if (empty($settings->slack_webhook_url)) {
-            error_log("MCL: Slack webhook URL is empty");
+            error_log("MAGICCL: Slack webhook URL is empty");
             return;
         }
         
         $checklist = get_post($settings->checklist_id);
         if (!$checklist) {
-            error_log("MCL: Could not find checklist post for ID: " . $settings->checklist_id);
+            error_log("MAGICCL: Could not find checklist post for ID: " . $settings->checklist_id);
             return;
         }
         
@@ -560,25 +561,25 @@ class MCL_Notification_Manager {
         ));
         
         if (is_wp_error($response)) {
-            error_log("MCL: Slack webhook failed: " . $response->get_error_message());
+            error_log("MAGICCL: Slack webhook failed: " . $response->get_error_message());
         } else {
             $response_code = wp_remote_retrieve_response_code($response);
             if ($response_code !== 200) {
                 $body = wp_remote_retrieve_body($response);
-                error_log("MCL: Slack webhook error response: " . $body);
+                error_log("MAGICCL: Slack webhook error response: " . $body);
             }
         }
     }
     
     private function send_discord_notifications($settings, $notifications) {
         if (empty($settings->discord_webhook_url)) {
-            error_log("MCL: Discord webhook URL is empty");
+            error_log("MAGICCL: Discord webhook URL is empty");
             return;
         }
         
         $checklist = get_post($settings->checklist_id);
         if (!$checklist) {
-            error_log("MCL: Could not find checklist post for ID: " . $settings->checklist_id);
+            error_log("MAGICCL: Could not find checklist post for ID: " . $settings->checklist_id);
             return;
         }
         
@@ -596,19 +597,19 @@ class MCL_Notification_Manager {
         ));
         
         if (is_wp_error($response)) {
-            error_log("MCL: Discord webhook failed: " . $response->get_error_message());
+            error_log("MAGICCL: Discord webhook failed: " . $response->get_error_message());
         } else {
             $response_code = wp_remote_retrieve_response_code($response);
             if ($response_code !== 204) {
                 $body = wp_remote_retrieve_body($response);
-                error_log("MCL: Discord webhook error response: " . $body);
+                error_log("MAGICCL: Discord webhook error response: " . $body);
             }
         }
     }
 
     private function format_email_content($notifications, $checklist) {
         $content = sprintf(
-            __("Updates for checklist: %s\n\n", 'magic-checklists'),
+            __("Updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
         
@@ -618,8 +619,8 @@ class MCL_Notification_Manager {
         }
         
         $content .= sprintf(
-            __("\nView checklist: %s", 'magic-checklists'),
-            admin_url('admin.php?page=mcl_checklists&checklist_id=' . $checklist->ID)
+            __("\nView checklist: %s", 'magicchecklists'),
+            admin_url('admin.php?page=magiccl_checklists&checklist_id=' . $checklist->ID)
         );
         
         return $content;
@@ -631,7 +632,7 @@ class MCL_Notification_Manager {
                 'type' => 'header',
                 'text' => array(
                     'type' => 'plain_text',
-                    'text' => sprintf(__('Updates for Checklist: %s', 'magic-checklists'), $checklist->post_title)
+                    'text' => sprintf(__('Updates for Checklist: %s', 'magicchecklists'), $checklist->post_title)
                 )
             )
         );
@@ -652,8 +653,8 @@ class MCL_Notification_Manager {
             'text' => array(
                 'type' => 'mrkdwn',
                 'text' => sprintf(
-                    __('*<<%s|View Checklist>>*', 'magic-checklists'),
-                    admin_url('admin.php?page=mcl_checklists&checklist_id=' . $checklist->ID)
+                    __('*<<%s|View Checklist>>*', 'magicchecklists'),
+                    admin_url('admin.php?page=magiccl_checklists&checklist_id=' . $checklist->ID)
                 )
             )
         );
@@ -664,7 +665,7 @@ class MCL_Notification_Manager {
     private function format_discord_payload($notifications, $checklist) {
         $content = sprintf(
             "**%s**\n\n",
-            sprintf(__('Updates for Checklist: %s', 'magic-checklists'), $checklist->post_title)
+            sprintf(__('Updates for Checklist: %s', 'magicchecklists'), $checklist->post_title)
         );
         
         foreach ($notifications as $notification) {
@@ -674,41 +675,41 @@ class MCL_Notification_Manager {
         
         $content .= sprintf(
             "\n[%s](%s)",
-            __('View Checklist', 'magic-checklists'),
-            admin_url('admin.php?page=mcl_checklists&checklist_id=' . $checklist->ID)
+            __('View Checklist', 'magicchecklists'),
+            admin_url('admin.php?page=magiccl_checklists&checklist_id=' . $checklist->ID)
         );
         
         return array('content' => $content);
     }
     
     private function format_notification_message($event, $data, $platform = 'email') {
-        $user = isset($data['user']) ? $data['user'] : __('Someone', 'magic-checklists');
+        $user = isset($data['user']) ? $data['user'] : __('Someone', 'magicchecklists');
         
         switch ($event) {
             case 'new-item':
                 return sprintf(
-                    __('✨ %s added new item: %s', 'magic-checklists'),
+                    __('✨ %s added new item: %s', 'magicchecklists'),
                     $user,
                     $data['item']['content']
                 );
                 
             case 'delete-item':
                 return sprintf(
-                    __('🗑️ %s deleted item: %s', 'magic-checklists'),
+                    __('🗑️ %s deleted item: %s', 'magicchecklists'),
                     $user,
                     $data['item']['content']
                 );
                 
             case 'check-item':
                 return sprintf(
-                    __('✅ %s checked off: %s', 'magic-checklists'),
+                    __('✅ %s checked off: %s', 'magicchecklists'),
                     $user,
                     $data['item_content']
                 );
                 
             case 'uncheck-item':
                 return sprintf(
-                    __('↩️ %s unchecked: %s', 'magic-checklists'),
+                    __('↩️ %s unchecked: %s', 'magicchecklists'),
                     $user,
                     $data['item_content']
                 );
@@ -716,7 +717,7 @@ class MCL_Notification_Manager {
             case 'deadline':
                 $hours = ceil($data['hours_remaining']);
                 return sprintf(
-                    __('⏰ Deadline approaching! %d hours remaining', 'magic-checklists'),
+                    __('⏰ Deadline approaching! %d hours remaining', 'magicchecklists'),
                     $hours
                 );
                 
@@ -724,7 +725,7 @@ class MCL_Notification_Manager {
                 $item_context = isset($data['item_content']) ? ' on "' . wp_strip_all_tags($data['item_content']) . '"' : '';
                 if (isset($data['reply_comment_id'])) {
                     return sprintf(
-                        __('💬 %s replied to a comment%s', 'magic-checklists'),
+                        __('💬 %s replied to a comment%s', 'magicchecklists'),
                         $user,
                         $item_context
                     );
@@ -732,7 +733,7 @@ class MCL_Notification_Manager {
                     $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : 'a comment';
                     $preview = strlen($content) > 50 ? substr($content, 0, 50) . '...' : $content;
                     return sprintf(
-                        __('💬 %s added a comment%s: "%s"', 'magic-checklists'),
+                        __('💬 %s added a comment%s: "%s"', 'magicchecklists'),
                         $user,
                         $item_context,
                         $preview
@@ -741,7 +742,7 @@ class MCL_Notification_Manager {
                 
             default:
                 return sprintf(
-                    __('Update event: %s', 'magic-checklists'),
+                    __('Update event: %s', 'magicchecklists'),
                     $event
                 );
         }
@@ -749,33 +750,33 @@ class MCL_Notification_Manager {
     
     public function get_notification_settings($checklist_id) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'mcl_notification_settings';
+        $table_name = $wpdb->prefix . 'magiccl_notification_settings';
         
         // Check if table exists first
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
         if (!$table_exists) {
-            error_log("MCL: Notification settings table does not exist! Attempting to create tables...");
+            error_log("MAGICCL: Notification settings table does not exist! Attempting to create tables...");
             // Force table creation
-            $db_manager = MCL_DB_Manager::get_instance();
+            $db_manager = MAGICCL_DB_Manager::get_instance();
             $db_manager->install();
-            error_log("MCL: Tables creation attempted. Checking again...");
+            error_log("MAGICCL: Tables creation attempted. Checking again...");
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
-            error_log("MCL: Table exists after creation attempt: " . ($table_exists ? 'YES' : 'NO'));
+            error_log("MAGICCL: Table exists after creation attempt: " . ($table_exists ? 'YES' : 'NO'));
         }
         
         // Check if notify_on_comments column exists
         if ($table_exists) {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'notify_on_comments'");
             if (empty($column_exists)) {
-                error_log("MCL: notify_on_comments column missing! Forcing database upgrade...");
-                $db_manager = MCL_DB_Manager::get_instance();
+                error_log("MAGICCL: notify_on_comments column missing! Forcing database upgrade...");
+                $db_manager = MAGICCL_DB_Manager::get_instance();
                 $db_manager->force_upgrade();
-                error_log("MCL: Database upgrade completed.");
+                error_log("MAGICCL: Database upgrade completed.");
             }
         }
         
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mcl_notification_settings WHERE checklist_id = %d",
+            "SELECT * FROM {$wpdb->prefix}magiccl_notification_settings WHERE checklist_id = %d",
             $checklist_id
         ));
     }
@@ -807,27 +808,27 @@ class MCL_Notification_Manager {
         
         if ($existing) {
             $result = $wpdb->update(
-                $wpdb->prefix . 'mcl_notification_settings',
+                $wpdb->prefix . 'magiccl_notification_settings',
                 $data,
                 array('checklist_id' => $checklist_id)
             );
             if ($result === false) {
-                error_log("MCL: Update failed. Error: " . $wpdb->last_error);
+                error_log("MAGICCL: Update failed. Error: " . $wpdb->last_error);
             }
         } else {
             $result = $wpdb->insert(
-                $wpdb->prefix . 'mcl_notification_settings',
+                $wpdb->prefix . 'magiccl_notification_settings',
                 $data
             );
             if ($result === false) {
-                error_log("MCL: Insert failed. Error: " . $wpdb->last_error);
+                error_log("MAGICCL: Insert failed. Error: " . $wpdb->last_error);
             }
         }
         
         // Clear any old notification sent markers when settings change
         if (!empty($settings['notify_on_deadline'])) {
             // Clear the sent marker so notification can be re-sent with new settings
-            delete_post_meta($checklist_id, '_mcl_deadline_notification_sent');
+            delete_post_meta($checklist_id, '_magiccl_deadline_notification_sent');
         }
     }
 
@@ -858,4 +859,4 @@ class MCL_Notification_Manager {
     }
 }
 
-MCL_Notification_Manager::get_instance();
+MAGICCL_Notification_Manager::get_instance();

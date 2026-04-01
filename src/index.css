@@ -7,7 +7,7 @@
 @layer base {
   
   /* Apply Nunito Sans globally to the React app */
-  #mcl-admin-root {
+  #magiccl-admin-root {
     font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
@@ -19,21 +19,21 @@
   }
 
   /* Ensure all child elements inherit the font */
-  #mcl-admin-root *,
-  #mcl-admin-root *::before,
-  #mcl-admin-root *::after {
+  #magiccl-admin-root *,
+  #magiccl-admin-root *::before,
+  #magiccl-admin-root *::after {
     font-family: inherit;
   }
 
   /* Scope font overrides to our React app roots */
-  #mcl-admin-root button,
-  #mcl-admin-root input,
-  #mcl-admin-root textarea,
-  #mcl-admin-root select,
-  #mcl-public-root button,
-  #mcl-public-root input,
-  #mcl-public-root textarea,
-  #mcl-public-root select {
+  #magiccl-admin-root button,
+  #magiccl-admin-root input,
+  #magiccl-admin-root textarea,
+  #magiccl-admin-root select,
+  #magiccl-public-root button,
+  #magiccl-public-root input,
+  #magiccl-public-root textarea,
+  #magiccl-public-root select {
     font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   }
 
@@ -61,7 +61,7 @@
   }
 
   /* Sticky header support */
-  #mcl-admin-root header.sticky {
+  #magiccl-admin-root header.sticky {
     position: sticky;
     top: 32px;
     z-index: 40;
@@ -70,7 +70,7 @@
   }
 
   /* Ensure content flows properly under sticky header */
-  #mcl-admin-root .main-content-area {
+  #magiccl-admin-root .main-content-area {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -78,7 +78,7 @@
   }
 
   /* Ensure the main flex container works properly on all screen sizes */
-  #mcl-admin-root .main-flex-container {
+  #magiccl-admin-root .main-flex-container {
     display: flex;
     height: 100%; /* Fill the root container height */
     position: relative;
@@ -92,7 +92,7 @@
     #wpcontent {
       padding: 0 !important;
     }
-    #mcl-admin-root .sidebar-container {
+    #magiccl-admin-root .sidebar-container {
       position: fixed !important;
       top: 0;
       left: 0;
@@ -102,11 +102,11 @@
       transition: transform 0.3s ease-in-out;
     }
 
-    #mcl-admin-root .sidebar-container.open {
+    #magiccl-admin-root .sidebar-container.open {
       transform: translateX(0);
     }
 
-    #mcl-admin-root .main-content-container {
+    #magiccl-admin-root .main-content-container {
       width: 100%;
       margin-left: 0 !important;
     }
@@ -117,7 +117,7 @@
     }
 
     /* Mobile overlay backdrop */
-    #mcl-admin-root .mobile-overlay {
+    #magiccl-admin-root .mobile-overlay {
       position: fixed;
       top: 0;
       left: 0;
@@ -130,7 +130,7 @@
       transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
     }
 
-    #mcl-admin-root .mobile-overlay.show {
+    #magiccl-admin-root .mobile-overlay.show {
       opacity: 1;
       visibility: visible;
     }
@@ -138,18 +138,18 @@
 
   /* Large screen layout - sidebar always visible */
   @media (min-width: 1024px) {
-    #mcl-admin-root .sidebar-container {
+    #magiccl-admin-root .sidebar-container {
       position: relative !important;
       transform: translateX(0) !important;
       height: auto;
     }
 
-    #mcl-admin-root .main-content-container {
+    #magiccl-admin-root .main-content-container {
       margin-left: 0;
     }
 
     /* Hide mobile overlay on large screens */
-    #mcl-admin-root .mobile-overlay {
+    #magiccl-admin-root .mobile-overlay {
       display: none !important;
     }
   }
@@ -158,12 +158,12 @@
 /* WordPress admin bar responsive adjustments */
 @media screen and (max-width: 782px) {
   /* WordPress changes admin bar height to 46px on screens ≤782px */
-  #mcl-admin-root {
+  #magiccl-admin-root {
     min-height: calc(100vh - 46px) !important; /* Account for mobile admin bar height */
     max-height: calc(100vh - 46px) !important;
   }
   
-  #mcl-admin-root .main-flex-container {
+  #magiccl-admin-root .main-flex-container {
     height: 100% !important;
   }
 }
@@ -171,17 +171,17 @@
 /* Additional mobile admin bar adjustments for very small screens */
 @media screen and (max-width: 600px) {
   /* On very small screens, WordPress admin bar might have different behavior */
-  #mcl-admin-root {
+  #magiccl-admin-root {
     min-height: calc(100vh - 46px) !important;
     max-height: calc(100vh - 46px) !important;
   }
   
-  #mcl-admin-root .main-flex-container {
+  #magiccl-admin-root .main-flex-container {
     height: 100% !important;
   }
   
   /* Ensure sidebar covers full height including admin bar adjustment */
-  #mcl-admin-root .sidebar-container {
+  #magiccl-admin-root .sidebar-container {
     height: calc(100vh - 46px) !important;
     top: 46px !important;
   }
@@ -189,7 +189,7 @@
 
 /* Ensure sidebar positioning accounts for admin bar on mobile */
 @media screen and (max-width: 782px) {
-  #mcl-admin-root .sidebar-container {
+  #magiccl-admin-root .sidebar-container {
     height: calc(100vh - 46px) !important;
     top: 46px !important;
   }
@@ -218,18 +218,18 @@
   }
 
   /* Typography with Nunito Sans font weights (scoped to React app roots) */
-  #mcl-admin-root h1,
-  #mcl-admin-root h2,
-  #mcl-admin-root h3,
-  #mcl-admin-root h4,
-  #mcl-admin-root h5,
-  #mcl-admin-root h6,
-  #mcl-public-root h1,
-  #mcl-public-root h2,
-  #mcl-public-root h3,
-  #mcl-public-root h4,
-  #mcl-public-root h5,
-  #mcl-public-root h6 {
+  #magiccl-admin-root h1,
+  #magiccl-admin-root h2,
+  #magiccl-admin-root h3,
+  #magiccl-admin-root h4,
+  #magiccl-admin-root h5,
+  #magiccl-admin-root h6,
+  #magiccl-public-root h1,
+  #magiccl-public-root h2,
+  #magiccl-public-root h3,
+  #magiccl-public-root h4,
+  #magiccl-public-root h5,
+  #magiccl-public-root h6 {
     font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     font-weight: 700;
   }
@@ -394,7 +394,7 @@
 }
 
 /* WordPress admin specific styles - ensure React app fits within admin layout */
-.wrap #mcl-admin-root {
+.wrap #magiccl-admin-root {
   margin: 0;
   background: transparent;
   font-family: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -402,17 +402,17 @@
 
 /* Responsive layout fixes for mobile and tablet breakpoints */
 @media screen and (max-width: 1023px) {
-  #mcl-admin-root {
+  #magiccl-admin-root {
     position: relative;
   }
   
   /* Ensure main content takes full width on mobile */
-  #mcl-admin-root .main-flex-container {
+  #magiccl-admin-root .main-flex-container {
     position: relative;
   }
   
   /* Mobile sidebar should not affect main content layout */
-  #mcl-admin-root .main-content-area {
+  #magiccl-admin-root .main-content-area {
     width: 100%;
     margin-left: 0 !important;
     flex: 1;
@@ -424,7 +424,7 @@
 
 /* Tablet specific adjustments */
 @media screen and (min-width: 768px) and (max-width: 1023px) {
-  #mcl-admin-root .container {
+  #magiccl-admin-root .container {
     padding-left: 1rem;
     padding-right: 1rem;
   }
@@ -432,7 +432,7 @@
 
 /* Large screen optimizations */
 @media screen and (min-width: 1024px) {
-  #mcl-admin-root {
+  #magiccl-admin-root {
     overflow-x: visible;
   }
 }
@@ -440,90 +440,90 @@
 /* Additional responsive utilities for edge cases */
 @media screen and (max-width: 640px) {
   /* Extra small screen adjustments */
-  #mcl-admin-root .container {
+  #magiccl-admin-root .container {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
   
   /* Ensure proper spacing on very small screens */
-  #mcl-admin-root .px-6 {
+  #magiccl-admin-root .px-6 {
     padding-left: 1rem;
     padding-right: 1rem;
   }
   
   /* Adjust header text on mobile */
-  #mcl-admin-root h1 {
+  #magiccl-admin-root h1 {
     font-size: 1.5rem;
     line-height: 1.3;
   }
   
   /* Stack header content on very small screens */
-  #mcl-admin-root header > div:first-child {
+  #magiccl-admin-root header > div:first-child {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
   
-  #mcl-admin-root header > div:first-child > div:last-child {
+  #magiccl-admin-root header > div:first-child > div:last-child {
     margin-left: 0;
   }
 }
 
 /* Prevent layout shift during sidebar animations */
 @media (max-width: 1023px) {
-  #mcl-admin-root .main-content-area {
+  #magiccl-admin-root .main-content-area {
     min-width: 0; /* Prevents flex item from growing beyond container */
   }
 }
 
 /* Ensure proper z-index stacking */
-#mcl-admin-root .sidebar-container {
+#magiccl-admin-root .sidebar-container {
   z-index: 50;
 }
 
 @media (max-width: 1023px) {
-  #mcl-admin-root .sidebar-container {
+  #magiccl-admin-root .sidebar-container {
     z-index: 50;
   }
   
-  #mcl-admin-root .mobile-overlay {
+  #magiccl-admin-root .mobile-overlay {
     z-index: 40;
   }
 }
 
 /* Fix any potential overflow issues */
-#mcl-admin-root {
+#magiccl-admin-root {
   max-width: 100vw;
 }
 
 /* Improve touch targets on mobile */
 @media (max-width: 1023px) {
-  #mcl-admin-root button {
+  #magiccl-admin-root button {
     min-height: 44px; /* Apple's recommended touch target size */
   }
   
-  #mcl-admin-root .sidebar-container nav button {
+  #magiccl-admin-root .sidebar-container nav button {
     padding: 0.875rem; /* Increase padding for better touch targets */
   }
 
   /* Mobile header specific improvements */
-  #mcl-admin-root header {
+  #magiccl-admin-root header {
     position: relative;
   }
   
   /* Prevent button text from causing overflow */
-  #mcl-admin-root header button {
+  #magiccl-admin-root header button {
     white-space: nowrap;
     overflow: hidden;
   }
   
   /* Ensure proper spacing in mobile header rows */
-  #mcl-admin-root header .flex {
+  #magiccl-admin-root header .flex {
     min-width: 0; /* Allows flex items to shrink below their content size */
   }
   
   /* Mobile title responsive sizing */
-  #mcl-admin-root header h1 {
+  #magiccl-admin-root header h1 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -533,22 +533,22 @@
 
 /* Extra small screen header adjustments */
 @media (max-width: 640px) {
-  #mcl-admin-root header h1 {
+  #magiccl-admin-root header h1 {
     font-size: 1rem;
     max-width: calc(100vw - 120px); /* Smaller button on mobile */
   }
   
   /* Tighter spacing for very small screens */
-  #mcl-admin-root header .gap-2 {
+  #magiccl-admin-root header .gap-2 {
     gap: 0.25rem;
   }
   
   /* Smaller buttons on very small screens */
-  #mcl-admin-root header button {
+  #magiccl-admin-root header button {
     padding: 0.5rem;
   }
   
-  #mcl-admin-root header button svg {
+  #magiccl-admin-root header button svg {
     width: 0.875rem;
     height: 0.875rem;
   }
@@ -556,7 +556,7 @@
 
 /* Tablet-specific header adjustments */
 @media (min-width: 641px) and (max-width: 1023px) {
-  #mcl-admin-root header h1 {
+  #magiccl-admin-root header h1 {
     max-width: calc(100vw - 220px); /* More space for larger buttons */
   }
 }
@@ -754,11 +754,11 @@ input[type="color"]::-moz-color-swatch {
 }
 
 /* Layout switcher specific styles */
-.mcl-layout-stacked .mcl-form-container {
+.magiccl-layout-stacked .magiccl-form-container {
   display: block;
 }
 
-.mcl-layout-side-by-side .mcl-form-container {
+.magiccl-layout-side-by-side .magiccl-form-container {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
@@ -766,24 +766,24 @@ input[type="color"]::-moz-color-swatch {
 
 /* Responsive layout switching */
 @media (max-width: 1024px) {
-  .mcl-layout-side-by-side .mcl-form-container {
+  .magiccl-layout-side-by-side .magiccl-form-container {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 }
 
 /* Layout transition animations */
-.mcl-form-container {
+.magiccl-form-container {
   transition: all 0.3s ease-in-out;
 }
 
 /* Better form section spacing for both layouts */
-.mcl-form-section {
+.magiccl-form-section {
   margin-bottom: 2rem;
   transition: margin 0.3s ease-in-out;
 }
 
-.mcl-form-section:last-child {
+.magiccl-form-section:last-child {
   margin-bottom: 0;
 }
 
@@ -837,26 +837,26 @@ div[data-floating-ui-portal] {
 }
 
 /* Form grid improvements */
-.mcl-form-grid-stacked {
+.magiccl-form-grid-stacked {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
 }
 
-.mcl-form-grid-side-by-side {
+.magiccl-form-grid-side-by-side {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
 }
 
 @media (max-width: 1024px) {
-  .mcl-form-grid-side-by-side {
+  .magiccl-form-grid-side-by-side {
     grid-template-columns: 1fr;
   }
 }
 
 /* Layout switcher button styles */
-.mcl-layout-toggle-btn {
+.magiccl-layout-toggle-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -868,38 +868,38 @@ div[data-floating-ui-portal] {
   transition: all 0.2s ease-in-out;
 }
 
-.mcl-layout-toggle-btn:hover {
+.magiccl-layout-toggle-btn:hover {
   background-color: #f3f4f6;
   border-color: #9ca3af;
 }
 
-.dark .mcl-layout-toggle-btn {
+.dark .magiccl-layout-toggle-btn {
   background-color: #374151;
   border-color: #4b5563;
   color: #d1d5db;
 }
 
-.dark .mcl-layout-toggle-btn:hover {
+.dark .magiccl-layout-toggle-btn:hover {
   background-color: #4b5563;
   border-color: #6b7280;
 }
 
 /* Better toggle styling to match the design system */
-.mcl-toggle {
+.magiccl-toggle {
   position: relative;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
 }
 
-.mcl-toggle input[type="checkbox"] {
+.magiccl-toggle input[type="checkbox"] {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.mcl-toggle-slider {
+.magiccl-toggle-slider {
   position: relative;
   width: 2.75rem;
   height: 1.5rem;
@@ -908,11 +908,11 @@ div[data-floating-ui-portal] {
   transition: background-color 0.2s ease-in-out;
 }
 
-.mcl-toggle input[type="checkbox"]:checked + .mcl-toggle-slider {
+.magiccl-toggle input[type="checkbox"]:checked + .magiccl-toggle-slider {
   background-color: #f2da22;
 }
 
-.mcl-toggle-slider::before {
+.magiccl-toggle-slider::before {
   content: '';
   position: absolute;
   top: 0.125rem;
@@ -924,11 +924,11 @@ div[data-floating-ui-portal] {
   transition: transform 0.2s ease-in-out;
 }
 
-.mcl-toggle input[type="checkbox"]:checked + .mcl-toggle-slider::before {
+.magiccl-toggle input[type="checkbox"]:checked + .magiccl-toggle-slider::before {
   transform: translateX(1.25rem);
 }
 
-.mcl-priority-indicator {
+.magiccl-priority-indicator {
   position: absolute;
   top: -6px;
   right: -6px;
@@ -939,7 +939,7 @@ div[data-floating-ui-portal] {
   z-index: 2;
 }
 
-.mcl-priority-indicator {
+.magiccl-priority-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -948,39 +948,39 @@ div[data-floating-ui-portal] {
   transition: all 0.2s ease-in-out;
 }
 
-.mcl-priority-indicator:hover {
+.magiccl-priority-indicator:hover {
   transform: scale(1.1);
   border-color: #9ca3af;
 }
 
 /* Shortcode settings styling */
-.mcl-shortcode-settings {
+.magiccl-shortcode-settings {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 1rem;
 }
 
-.dark .mcl-shortcode-settings {
+.dark .magiccl-shortcode-settings {
   background: #374151;
   border-color: #4b5563;
 }
 
 /* Custom image resize handle styles */
-.mcl-item-image-container {
+.magiccl-item-image-container {
   position: relative;
   display: inline-block;
   margin: 8px 0;
 }
 
-.mcl-item-image-container img {
+.magiccl-item-image-container img {
   border-radius: 4px;
   max-width: 100%;
   height: auto;
   display: block;
 }
 
-.mcl-resize-handle {
+.magiccl-resize-handle {
   position: absolute;
   bottom: 0;
   right: 0;
@@ -995,11 +995,11 @@ div[data-floating-ui-portal] {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.mcl-item-image-container:hover .mcl-resize-handle {
+.magiccl-item-image-container:hover .magiccl-resize-handle {
   opacity: 1;
 }
 
-.mcl-resize-handle:before {
+.magiccl-resize-handle:before {
   content: '';
   position: absolute;
   bottom: 2px;
@@ -1010,7 +1010,7 @@ div[data-floating-ui-portal] {
   border-bottom: 4px solid white;
 }
 
-.mcl-resize-handle:after {
+.magiccl-resize-handle:after {
   content: '';
   position: absolute;
   bottom: 4px;

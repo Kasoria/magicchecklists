@@ -42,13 +42,13 @@ const ShortcodeSettings = ({ formData, onChange, checklistId, adminData }) => {
     if (adminData?.i18n) {
       i18nData = adminData.i18n;
     }
-    // Then try window.mclAdminData
-    else if (typeof window !== 'undefined' && window.mclAdminData?.i18n) {
-      i18nData = window.mclAdminData.i18n;
+    // Then try window.magicclAdminData
+    else if (typeof window !== 'undefined' && window.magicclAdminData?.i18n) {
+      i18nData = window.magicclAdminData.i18n;
     }
-    // Finally try window.mcl_checklists
-    else if (typeof window !== 'undefined' && window.mcl_checklists?.i18n) {
-      i18nData = window.mcl_checklists.i18n;
+    // Finally try window.magiccl_checklists
+    else if (typeof window !== 'undefined' && window.magiccl_checklists?.i18n) {
+      i18nData = window.magiccl_checklists.i18n;
     }
     
     if (i18nData?.shortcodeSettings) {

@@ -34,13 +34,13 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
   const [editFormRef, setEditFormRef] = useState(null)
   const [editingTour, setEditingTour] = useState(null)
   // Get i18n data directly like AnalyticsDashboard does
-  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.mclAdminData?.i18n) || {}
+  const i18n = adminData?.i18n || (typeof window !== 'undefined' && window.magicclAdminData?.i18n) || {}
 
   // Initialize dark mode from localStorage or system preference
   useEffect(() => {
     // Initialize dark mode from localStorage or system preference
     const serverTheme = adminData.savedTheme
-    const clientTheme = localStorage.getItem('mcl-theme')
+    const clientTheme = localStorage.getItem('magiccl-theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     
     if (serverTheme && (serverTheme === 'dark' || serverTheme === 'light')) {
@@ -158,7 +158,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     setDarkMode(!darkMode)
     
     // Save to localStorage for immediate persistence
-    localStorage.setItem('mcl-theme', newTheme)
+    localStorage.setItem('magiccl-theme', newTheme)
 
     // Apply dark mode to document immediately
     if (!darkMode) {
@@ -168,11 +168,11 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     }
 
     // Save to server for cross-session persistence
-    if (adminData.ajaxurl && adminData.nonces?.mcl_save_theme_mode) {
+    if (adminData.ajaxurl && adminData.nonces?.magiccl_save_theme_mode) {
       const formData = new FormData()
-      formData.append('action', 'mcl_save_theme_mode')
+      formData.append('action', 'magiccl_save_theme_mode')
       formData.append('mode', newTheme)
-      formData.append('_ajax_nonce', adminData.nonces.mcl_save_theme_mode)
+      formData.append('_ajax_nonce', adminData.nonces.magiccl_save_theme_mode)
 
       fetch(adminData.ajaxurl, {
         method: 'POST',
@@ -249,7 +249,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     
     // Update URL without page reload - use new structure
     const url = new URL(window.location)
-    url.searchParams.set('page', 'mcl_checklists')
+    url.searchParams.set('page', 'magiccl_checklists')
     url.searchParams.set('view', 'edit')
     url.searchParams.set('checklist_id', checklistId)
     url.searchParams.set('type', checklistType)
@@ -262,7 +262,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
     
     // Update URL without page reload - clean up view parameters
     const url = new URL(window.location)
-    url.searchParams.set('page', 'mcl_checklists')
+    url.searchParams.set('page', 'magiccl_checklists')
     url.searchParams.delete('view')
     url.searchParams.delete('checklist_id')
     url.searchParams.delete('type')
@@ -309,7 +309,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       
       // Update URL
       const url = new URL(window.location)
-      url.searchParams.set('page', 'mcl_checklists')
+      url.searchParams.set('page', 'magiccl_checklists')
       url.searchParams.set('view', 'tours')
       url.searchParams.set('action', 'add')
       window.history.pushState({}, '', url)
@@ -320,7 +320,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
       
       // Update URL
       const url = new URL(window.location)
-      url.searchParams.set('page', 'mcl_checklists')
+      url.searchParams.set('page', 'magiccl_checklists')
       url.searchParams.set('view', 'add-new')
       url.searchParams.set('type', type)
       window.history.pushState({}, '', url)
@@ -398,7 +398,7 @@ const AdminApp = ({ adminData, initialTab = 'checklists' }) => {
                       }
                       // Update URL to reflect the current view
                       const url = new URL(window.location)
-                      url.searchParams.set('page', 'mcl_checklists')
+                      url.searchParams.set('page', 'magiccl_checklists')
                       if (item.id !== 'checklists') {
                         url.searchParams.set('view', item.id)
                       } else {
