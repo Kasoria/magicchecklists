@@ -72,3 +72,7 @@ wp-config.php
 wp-content/uploads/
 wp-content/cache/
 wp-content/debug.log 
+
+review.md
+svn.md
+plugin-check-results.csv
