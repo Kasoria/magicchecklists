@@ -101,9 +101,10 @@ class MAGICCL_CPT {
     }
 
     public function enqueue_color_picker($hook) {
-        if (!in_array($hook, ['edit-tags.php', 'term.php']) || 
-            !isset($_GET['taxonomy']) || 
-            $_GET['taxonomy'] !== 'magiccl_tag') {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking taxonomy query parameter for conditional asset loading.
+        if (!in_array($hook, ['edit-tags.php', 'term.php']) ||
+            !isset($_GET['taxonomy']) || // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking taxonomy query parameter for conditional asset loading.
+            sanitize_text_field(wp_unslash($_GET['taxonomy'])) !== 'magiccl_tag') { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking taxonomy query parameter for conditional asset loading.
             return;
         }
 
@@ -162,8 +163,9 @@ class MAGICCL_CPT {
     }
 
     public function save_color_meta($term_id) {
-        if (isset($_POST['tag_color'])) {
-            $color = sanitize_hex_color($_POST['tag_color']);
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress core taxonomy term save handler.
+        if (isset($_POST['tag_color'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress core taxonomy term save handler.
+            $color = sanitize_hex_color(wp_unslash($_POST['tag_color'])); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified by WordPress core taxonomy term save handler.
             update_term_meta($term_id, 'tag_color', $color);
         }
     }

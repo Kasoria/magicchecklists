@@ -270,11 +270,13 @@ class MAGICCL_Global_Notification_Manager {
         }
         
         $subject = sprintf(
+            /* translators: %s: site name */
             __('[%s] Checklist Comment Notifications', 'magicchecklists'),
             get_bloginfo('name')
         );
         
         $message = sprintf(
+            /* translators: %s: checklist title */
             __("Comment updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
@@ -361,29 +363,33 @@ class MAGICCL_Global_Notification_Manager {
                 $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : '';
                 $preview = strlen($content) > 100 ? substr($content, 0, 100) . '...' : $content;
                 return sprintf(
-                    __('💬 %s added a comment%s: "%s"', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item context, 3: comment preview */
+                    __('💬 %1$s added a comment%2$s: "%3$s"', 'magicchecklists'),
                     $user,
                     $item_context,
                     $preview
                 );
-                
+
             case 'comment-liked':
                 return sprintf(
-                    __('👍 %s liked a comment%s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item context */
+                    __('👍 %1$s liked a comment%2$s', 'magicchecklists'),
                     $user,
                     $item_context
                 );
-                
+
             case 'comment-replied':
                 return sprintf(
-                    __('↩️ %s replied to a comment%s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item context */
+                    __('↩️ %1$s replied to a comment%2$s', 'magicchecklists'),
                     $user,
                     $item_context
                 );
-                
+
             default:
                 return sprintf(
-                    __('Comment event: %s by %s%s', 'magicchecklists'),
+                    /* translators: 1: event name, 2: user name, 3: item context */
+                    __('Comment event: %1$s by %2$s%3$s', 'magicchecklists'),
                     $event,
                     $user,
                     $item_context

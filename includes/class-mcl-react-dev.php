@@ -109,27 +109,25 @@ class MAGICCL_React_Dev {
             return; // MAGICCL_Public not loaded yet
         }
         
-        // Check for tour mode parameters first - if present, always load React
-        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
-        
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public/admin page routing parameters from bookmarkable URLs; all sanitized with absint().
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
         // Check for active tours via Tour CPT
         $has_active_tours = false;
         if (class_exists('MAGICCL_Tour_CPT')) {
             $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
             $has_active_tours = !empty($active_tours);
         }
-        
+
         // Force React loading for tour mode, regardless of checklist conditions
         $force_load_for_tours = $is_tour_mode || $continue_tour_id || $has_tour_id || $has_active_tours;
-        
+
         // Check tour mode cookie as fallback
         if (!$force_load_for_tours && isset($_COOKIE['magiccl_tour_mode']) && sanitize_text_field(wp_unslash($_COOKIE['magiccl_tour_mode'])) === '1') {
             $force_load_for_tours = true;
-        }
-        
-        if ($force_load_for_tours) {
         }
         
         // Determine which React app to load based on context
@@ -616,9 +614,14 @@ class MAGICCL_React_Dev {
      */
     private function localize_admin_data() {
         $handle = $this->is_dev_mode ? 'magiccl-react-admin-dev' : 'magiccl-react-admin';
-        
+
         // Check if script has already been localized to prevent duplicates
         if ( wp_script_is( $handle, 'done' ) ) {
+            return;
+        }
+
+        // Authorization: only proceed for users allowed on plugin admin pages.
+        if ( ! current_user_can( 'manage_options' ) ) {
             return;
         }
         
@@ -633,17 +636,21 @@ class MAGICCL_React_Dev {
                     break;
                 case 'magicchecklists_page_magiccl_add_new':
                     $current_page = 'add_new';
+                    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Admin page routing parameters set by WordPress menu system; all values sanitized.
                     $page_params = array(
-                        'type' => isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '',
-                        'checklist_id' => isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0,
+                        'type' => isset($_GET['type']) ? sanitize_text_field(wp_unslash($_GET['type'])) : '',
+                        'checklist_id' => isset($_GET['checklist_id']) ? absint($_GET['checklist_id']) : 0,
                     );
+                    // phpcs:enable WordPress.Security.NonceVerification.Recommended
                     break;
                 case 'magicchecklists_page_magiccl_tours':
                     $current_page = 'tours';
+                    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Admin page routing parameters set by WordPress menu system; all values sanitized.
                     $page_params = array(
-                        'edit' => isset($_GET['edit']) ? intval($_GET['edit']) : 0,
+                        'edit' => isset($_GET['edit']) ? absint($_GET['edit']) : 0,
                         'create' => isset($_GET['create']) ? true : false,
                     );
+                    // phpcs:enable WordPress.Security.NonceVerification.Recommended
                     break;
                 case 'magicchecklists_page_magiccl_import':
                     $current_page = 'import';
@@ -742,10 +749,12 @@ class MAGICCL_React_Dev {
             return;
         }
         
-        // Check if we're in tour mode to provide additional admin data
-        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Admin/public page routing parameters from bookmarkable URLs; all sanitized with absint/sanitize_text_field.
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
+        $continue_step = isset($_GET['magiccl_continue_step']) ? absint($_GET['magiccl_continue_step']) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         $tour_mode_detected = $is_tour_mode || $continue_tour_id || $has_tour_id;
         
         // Base public data
@@ -791,7 +800,7 @@ class MAGICCL_React_Dev {
         }
         
         // Always add tour data if tours are available for the current page
-        $tour_data = $this->get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id);
+        $tour_data = $this->get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id, $continue_step);
         if (!empty($tour_data['tours'])) {
             
             // Use the same object name that TourPlayback expects
@@ -804,13 +813,12 @@ class MAGICCL_React_Dev {
     /**
      * Get tour data for JavaScript localization
      */
-    private function get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id) {
-        
+    private function get_tour_data_for_js($is_tour_mode, $continue_tour_id, $has_tour_id, $continue_step = 0) {
+
         $tours_data = array();
-        
+
         // Handle tour continuation
         if ($continue_tour_id) {
-            $continue_step = isset($_GET['magiccl_continue_step']) ? intval($_GET['magiccl_continue_step']) : 0;
             $tour = get_post($continue_tour_id);
             if ($tour && $tour->post_type === 'magiccl_tour') {
                 $steps = get_post_meta($continue_tour_id, '_magiccl_tour_steps', true) ?: array();
@@ -916,7 +924,7 @@ class MAGICCL_React_Dev {
         if (is_admin()) {
             // For admin pages, use the full URL including query parameters
             $protocol = is_ssl() ? 'https://' : 'http://';
-            $current_url = $protocol . sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) . esc_url_raw(wp_unslash($_SERVER['REQUEST_URI']));
+            $current_url = $protocol . sanitize_text_field(wp_unslash(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')) . esc_url_raw(wp_unslash(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''));
         } else {
             // For frontend pages, use WordPress functions
             global $wp;
@@ -1035,7 +1043,7 @@ class MAGICCL_React_Dev {
             . 'RefreshRuntime.injectIntoGlobalHook(window);'
             . 'window.$RefreshReg$ = () => {};'
             . 'window.$RefreshSig$ = () => type => type;';
-        wp_register_script( 'magiccl-vite-refresh', false, array(), false, false );
+        wp_register_script( 'magiccl-vite-refresh', false, array(), '1.0.0', false );
         wp_enqueue_script( 'magiccl-vite-refresh' );
         wp_add_inline_script( 'magiccl-vite-refresh', $refresh_script );
     }
@@ -1056,11 +1064,12 @@ class MAGICCL_React_Dev {
             return; // No point adding roots if MAGICCL_Public isn't even loaded
         }
         
-        // Check for tour mode parameters first - if present, always add React roots
-        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
-        
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public/admin page routing parameters from bookmarkable URLs; all sanitized with absint().
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
         // Check for active tours via Tour CPT
         $has_active_tours = false;
         if (class_exists('MAGICCL_Tour_CPT')) {
@@ -1175,10 +1184,11 @@ class MAGICCL_React_Dev {
     }
 
     private function should_load_tour_assets() {
-        // Check for tour mode parameters
-        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public/admin page routing parameters from bookmarkable URLs; all sanitized with absint().
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+        $has_tour_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         
         // Check tour mode cookie as fallback
         $tour_cookie = isset($_COOKIE['magiccl_tour_mode']) && sanitize_text_field(wp_unslash($_COOKIE['magiccl_tour_mode'])) === '1';
@@ -1200,7 +1210,7 @@ class MAGICCL_React_Dev {
         $handle_suffix = '';
         if (is_admin() && $this->is_plugin_admin_page()) {
             $handle_suffix = '-admin';
-        } elseif (isset($_GET['magiccl_tour_mode']) || isset($_GET['magiccl_continue_tour']) || isset($_GET['tour_id'])) {
+        } elseif (isset($_GET['magiccl_tour_mode']) || isset($_GET['magiccl_continue_tour']) || isset($_GET['tour_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Existence check only for handle suffix; no values used.
             $handle_suffix = '-tour';
         }
         

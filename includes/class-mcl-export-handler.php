@@ -117,7 +117,7 @@ class MAGICCL_Export_Handler {
         wp_die(esc_html__('Security check failed', 'magicchecklists'));
     }
 
-    $export_id = isset($_POST['export_id']) ? sanitize_text_field($_POST['export_id']) : '';
+    $export_id = isset($_POST['export_id']) ? sanitize_text_field(wp_unslash($_POST['export_id'])) : '';
 
     if (!$export_id) {
         wp_die(esc_html__('Export ID missing', 'magicchecklists'));
@@ -166,6 +166,11 @@ class MAGICCL_Export_Handler {
       $contact_info = $settings['contact_info'] ?? '';
       $footer_text = $settings['footer_text'] ?? '';
 
+      wp_register_style('mcl-print-export', plugins_url('assets/css/mcl-print-export.css', dirname(__FILE__)), array(), MAGIC_CHECKLISTS_VERSION);
+      wp_register_script('mcl-print-export', plugins_url('assets/js/mcl-print-export.js', dirname(__FILE__)), array(), MAGIC_CHECKLISTS_VERSION, false);
+      wp_enqueue_style('mcl-print-export');
+      wp_enqueue_script('mcl-print-export');
+
       ob_start();
       ?>
       <!DOCTYPE html>
@@ -175,131 +180,8 @@ class MAGICCL_Export_Handler {
           <title><?php echo esc_html($checklist->post_title); ?></title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <meta name="format-detection" content="telephone=no">
-          <style>
-              @media print {
-                  @page {
-                    margin: 1.5cm;
-                    size: A4;
-                  }
-                  @page :first {
-                      margin-top: 0;
-                  }
-                  html {
-                      margin: 0;
-                  }
-                  body {
-                      margin: 0;
-                      -webkit-print-color-adjust: exact !important;
-                      print-color-adjust: exact !important;
-                  }
-              }
-              body {
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-                  line-height: 1.6;
-                  color: black;
-                  padding: 20px;
-                  max-width: 800px;
-                  margin: 0 auto;
-              }
-              .magiccl-button {
-                border: 0;
-                border-radius: 10px;
-                font-size: 20px;
-                background: green;
-                color: white;
-                cursor: pointer;
-                padding: 10px;
-              }
-              .header {
-                  text-align: center;
-                  border-bottom: 2px solid #bcbcbc;
-                  margin-bottom: 15px;
-              }
-              .header-upper-wrapper {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                align-items: center;
-                gap: 50px;
-              }
-              .logo {
-                  max-width: 300px;
-                  margin-bottom: 20px;
-              }
-              .header-text {
-                  font-size: 14px;
-                  margin: 10px 0;
-                  text-align: left;
-              }
-              .title {
-                  font-size: 24px;
-                  margin: 0 0 10px 0;
-              }
-              .description {
-                  margin: 10px 0;
-              }
-              .item {
-                  margin: 15px 0;
-                  padding-left: 25px;
-                  position: relative;
-                  page-break-inside: avoid;
-              }
-              .item:before {
-                  content: "□";
-                  position: absolute;
-                  left: 0;
-                  color: #1e1e1e;
-              }
-              .footer {
-                  margin-top: auto;
-                  text-align: center;
-                  border-top: 2px solid #bcbcbc;
-                  font-size: 12px;
-                  color: #1e1e1e;
-              }
-              
-              @media screen {
-                  body {
-                      background: #f5f5f5;
-                  }
-                  .container {
-                      background: white;
-                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                      border-radius: 8px;
-                  }
-              }
-
-              @media print {
-                .print-controls {
-                    display: none !important;
-                }
-              }
-
-            
-              @media screen {
-                .print-controls {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    z-index: 1000;
-                    background: white;
-                    padding: 10px;
-                    border-radius: 5px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                }
-              }
-          </style>
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    window.print();
-                    
-                    window.onafterprint = function() {
-                        window.close();
-                    };
-                    
-                }, 1000);
-            });
-        </script>
+          <?php wp_print_styles('mcl-print-export'); ?>
+          <?php wp_print_scripts('mcl-print-export'); ?>
       </head>
       <body>
           <div class="container">
@@ -337,7 +219,9 @@ class MAGICCL_Export_Handler {
                   <?php endif; ?>
   
                   <div class="generation-info">
-                      <?php printf(
+                      <?php
+                      printf(
+                          /* translators: %s: plugin name */
                           esc_html__('Generated by %s', 'magicchecklists'),
                           'MagicChecklists'
                       ); ?>
@@ -416,10 +300,10 @@ class MAGICCL_Export_Handler {
   
       // Sanitize and prepare settings
       $settings = array(
-          'logo_url' => esc_url_raw($_POST['pdf_logo_url'] ?? ''),
-          'header_text' => wp_kses_post(wp_unslash($_POST['pdf_header_text'] ?? '')),
-          'contact_info' => wp_kses_post(wp_unslash($_POST['pdf_contact_info'] ?? '')),
-          'footer_text' => wp_kses_post(wp_unslash($_POST['pdf_footer_text'] ?? ''))
+          'logo_url' => isset($_POST['pdf_logo_url']) ? esc_url_raw(wp_unslash($_POST['pdf_logo_url'])) : '',
+          'header_text' => isset($_POST['pdf_header_text']) ? wp_kses_post(wp_unslash($_POST['pdf_header_text'])) : '',
+          'contact_info' => isset($_POST['pdf_contact_info']) ? wp_kses_post(wp_unslash($_POST['pdf_contact_info'])) : '',
+          'footer_text' => isset($_POST['pdf_footer_text']) ? wp_kses_post(wp_unslash($_POST['pdf_footer_text'])) : ''
       );
   
       error_log('Settings to save: ' . print_r($settings, true));

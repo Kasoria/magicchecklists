@@ -132,12 +132,20 @@ class MAGICCL_Analytics {
      * Track a checklist view
      */
     public function track_view() {
-        // Verify request
+        // Verify nonce
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce') && !wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
+            wp_send_json_error('Security check failed');
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
         if (!isset($_POST['checklist_id'])) {
             wp_send_json_error('Missing checklist ID');
             return;
         }
-        
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
         $checklist_id = intval($_POST['checklist_id']);
         $this->track_checklist_view($checklist_id);
         
@@ -183,15 +191,25 @@ class MAGICCL_Analytics {
      * Track a checkbox check/uncheck event from AJAX
      */
     public function track_item_check() {
-        // Verify request
+        // Verify nonce
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'magiccl_ajax_nonce') && !wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')) {
+            wp_send_json_error('Security check failed');
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
         if (!isset($_POST['checklist_id'], $_POST['item_id'], $_POST['checked'])) {
             wp_send_json_error('Missing required data');
             return;
         }
-        
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
         $checklist_id = intval($_POST['checklist_id']);
-        $item_id = sanitize_text_field($_POST['item_id']);
-        $checked = filter_var($_POST['checked'], FILTER_VALIDATE_BOOLEAN);
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $item_id = sanitize_text_field(wp_unslash($_POST['item_id']));
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $checked = filter_var(wp_unslash($_POST['checked']), FILTER_VALIDATE_BOOLEAN);
         
         if ($checked) {
             $this->track_item_checked($checklist_id, $item_id, true);
@@ -836,11 +854,17 @@ class MAGICCL_Analytics {
     public function ajax_get_comprehensive_analytics() {
         // Verify nonce
         check_ajax_referer('magiccl_get_comprehensive_analytics', '_ajax_nonce');
-        
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+            return;
+        }
+
+
         // Only ensure tables exist, don't seed test data
         $this->create_tables();
         
-        // Get time filter from request (default to 7 days)
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified via check_ajax_referer above.
         $time_filter = isset($_POST['time_filter']) ? intval($_POST['time_filter']) : 7;
         
         $data = $this->get_comprehensive_analytics($time_filter);

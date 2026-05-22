@@ -416,6 +416,7 @@ class MAGICCL_REST_Controller extends WP_REST_Controller {
             return new WP_Error(
                 'rest_rate_limit_exceeded',
                 sprintf(
+                    /* translators: %d: number of minutes until rate limit resets */
                     __('Rate limit exceeded. Please try again in %d minutes.', 'magicchecklists'),
                     ceil($retry_after / 60)
                 ),
@@ -458,9 +459,9 @@ class MAGICCL_REST_Controller extends WP_REST_Controller {
     private function get_client_ip() {
         $ip = '';
         
-        if (!empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP'])))) {
+        if (isset($_SERVER['HTTP_CLIENT_IP']) && !empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP'])))) {
             $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP']));
-        } elseif (!empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])))) {
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && !empty(sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])))) {
             $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
         } else {
             $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';

@@ -29,12 +29,14 @@ class MAGICCL_Image_Handler {
             // Create .htaccess to protect direct access
             $htaccess = $this->upload_dir . '/.htaccess';
             if (!file_exists($htaccess)) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing security file during plugin init; WP_Filesystem not available yet.
                 file_put_contents($htaccess, 'deny from all');
             }
 
             // Create index.php for extra security
             $index = $this->upload_dir . '/index.php';
             if (!file_exists($index)) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing security file during plugin init; WP_Filesystem not available yet.
                 file_put_contents($index, '<?php // Silence is golden');
             }
         }
@@ -49,6 +51,19 @@ class MAGICCL_Image_Handler {
         add_action('init', array($this, 'add_rewrite_rules'));
         add_filter('query_vars', array($this, 'add_query_vars'));
         add_action('template_redirect', array($this, 'serve_image'));
+    }
+
+    /**
+     * Verify nonce from any accepted image-handler AJAX context.
+     */
+    private function verify_nonce() {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        return (
+            wp_verify_nonce($nonce, 'magiccl_ajax_nonce')
+            || wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')
+            || wp_verify_nonce($nonce, 'magiccl_admin_nonce')
+            || wp_verify_nonce($nonce, 'magiccl_shortcode_nonce')
+        );
     }
 
     public function add_rewrite_rules() {
@@ -92,8 +107,13 @@ class MAGICCL_Image_Handler {
     public function handle_upload() {
       // First, prevent any output
       ob_clean();
-      
+
       try {
+          if ( ! $this->verify_nonce() ) {
+              wp_send_json_error(array('message' => 'Security check failed'));
+              return;
+          }
+
           // Check if file was uploaded
           if (empty($_FILES['file'])) {
               wp_send_json_error(array('message' => 'No file uploaded'));
@@ -109,22 +129,25 @@ class MAGICCL_Image_Handler {
 
           // Initialize Public class for permission check
           $public = new MAGICCL_Public();
-          
+
           // Handle stored token for invite users
           if (isset($_POST['stored_token'])) {
-              $public->set_stored_token($_POST['stored_token']);
+              $public->set_stored_token(sanitize_text_field(wp_unslash($_POST['stored_token'])));
           }
-          
+
           // Check if user has edit permission
           if (!$public->has_permission($checklist_id, 'edit')) {
               wp_send_json_error(array('message' => 'Permission denied'));
               return;
           }
 
+          // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- File array; name sanitized below, content handled by wp_handle_upload().
           $file = $_FILES['file'];
+          $file['name'] = sanitize_file_name($file['name']);
+          $file['type'] = sanitize_mime_type($file['type']);
 
           // Validate file type
-          if (!in_array($file['type'], $this->allowed_mime_types)) {
+          if (!in_array($file['type'], $this->allowed_mime_types, true)) {
               wp_send_json_error(array(
                   'message' => 'Invalid file type',
                   'debug' => array(
@@ -266,19 +289,24 @@ class MAGICCL_Image_Handler {
 
     public function get_uploaded_images() {
         try {
+            if ( ! $this->verify_nonce() ) {
+                wp_send_json_error(array('message' => 'Security check failed'));
+                return;
+            }
+
             // Verify checklist access
             $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
             if (!$checklist_id) {
                 wp_send_json_error(array('message' => 'Invalid checklist ID'));
                 return;
             }
-    
+
             // Initialize Public class for permission check
             $public = new MAGICCL_Public();
-            
+
             // Handle stored token for invite users
             if (isset($_POST['stored_token'])) {
-                $public->set_stored_token($_POST['stored_token']);
+                $public->set_stored_token(sanitize_text_field(wp_unslash($_POST['stored_token'])));
             }
             
             // Check if user has edit permission
@@ -327,6 +355,7 @@ class MAGICCL_Image_Handler {
     }
 
     private function scanImageContent($file_path) {
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading local file for security scanning, not a remote URL.
         $content = file_get_contents($file_path);
         $suspicious_patterns = array(
             '<?php',
@@ -352,6 +381,11 @@ class MAGICCL_Image_Handler {
      */
     public function get_account_images() {
         try {
+            if ( ! $this->verify_nonce() ) {
+                wp_send_json_error(array('message' => 'Security check failed'));
+                return;
+            }
+
             // Verify checklist access
             $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
             if (!$checklist_id) {
@@ -364,7 +398,7 @@ class MAGICCL_Image_Handler {
 
             // Handle stored token for invite users
             if (isset($_POST['stored_token'])) {
-                $public->set_stored_token($_POST['stored_token']);
+                $public->set_stored_token(sanitize_text_field(wp_unslash($_POST['stored_token'])));
             }
 
             // Check if user has edit permission

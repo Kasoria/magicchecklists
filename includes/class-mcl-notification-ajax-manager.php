@@ -30,8 +30,8 @@ class MAGICCL_Notification_Ajax_Handler {
             return;
         }
     
-        $platform = sanitize_text_field($_POST['platform'] ?? '');
-        $webhook_url = esc_url_raw($_POST['webhook_url'] ?? '');
+        $platform = isset($_POST['platform']) ? sanitize_text_field(wp_unslash($_POST['platform'])) : '';
+        $webhook_url = isset($_POST['webhook_url']) ? esc_url_raw(wp_unslash($_POST['webhook_url'])) : '';
     
         if (empty($webhook_url)) {
             wp_send_json_error([
@@ -44,12 +44,14 @@ class MAGICCL_Notification_Ajax_Handler {
         $test_payload = [
             'slack' => [
                 'text' => sprintf(
+                    /* translators: %s: site name */
                     __('🔔 Test notification from %s - Your Slack integration is working!', 'magicchecklists'),
                     get_bloginfo('name')
                 )
             ],
             'discord' => [
                 'content' => sprintf(
+                    /* translators: %s: site name */
                     __('🔔 Test notification from %s - Your Discord integration is working!', 'magicchecklists'),
                     get_bloginfo('name')
                 )
@@ -79,13 +81,15 @@ class MAGICCL_Notification_Ajax_Handler {
         $response_code = wp_remote_retrieve_response_code($response);
         if ($platform === 'slack' && $response_code !== 200) {
             wp_send_json_error([
+                /* translators: %d: HTTP status code */
                 'message' => sprintf(__('Webhook test failed with status code: %d', 'magicchecklists'), $response_code)
             ]);
             return;
         }
-    
+
         if ($platform === 'discord' && $response_code !== 204) {
             wp_send_json_error([
+                /* translators: %d: HTTP status code */
                 'message' => sprintf(__('Webhook test failed with status code: %d', 'magicchecklists'), $response_code)
             ]);
             return;
@@ -108,7 +112,7 @@ class MAGICCL_Notification_Ajax_Handler {
             return;
         }
 
-        $recipients = sanitize_text_field($_POST['recipients'] ?? '');
+        $recipients = isset($_POST['recipients']) ? sanitize_text_field(wp_unslash($_POST['recipients'])) : '';
         
         if (empty($recipients)) {
             wp_send_json_error([
@@ -126,6 +130,7 @@ class MAGICCL_Notification_Ajax_Handler {
         );
         
         $message = sprintf(
+            /* translators: %s: site name */
             __("Hello!\n\nThis is a test notification from %s to verify your email notification settings are working correctly.\n\nIf you received this email, your notification settings are properly configured.\n\nBest regards,\nMagicChecklists", 'magicchecklists'),
             $site_name
         );
@@ -177,6 +182,7 @@ class MAGICCL_Notification_Ajax_Handler {
         } else {
             wp_send_json_error([
                 'message' => sprintf(
+                    /* translators: %s: comma-separated list of failed email addresses */
                     __('Failed to send test email to: %s', 'magicchecklists'),
                     implode(', ', $failed_emails)
                 ),
@@ -193,6 +199,7 @@ class MAGICCL_Notification_Ajax_Handler {
                     'text' => array(
                         'type' => 'mrkdwn',
                         'text' => sprintf(
+                            /* translators: %s: site name */
                             __('🔔 *Test notification from %s*\nYour Slack integration is working correctly!', 'magicchecklists'),
                             get_bloginfo('name')
                         )
@@ -215,7 +222,11 @@ class MAGICCL_Notification_Ajax_Handler {
         if ($response_code !== 200) {
             return new WP_Error(
                 'webhook_test_failed',
-                sprintf(__('Webhook test failed with response code: %d', 'magicchecklists'), $response_code)
+                sprintf(
+                    /* translators: %d: HTTP response code */
+                    __('Webhook test failed with response code: %d', 'magicchecklists'),
+                    $response_code
+                )
             );
         }
 
@@ -225,6 +236,7 @@ class MAGICCL_Notification_Ajax_Handler {
     private function test_discord_webhook($webhook_url) {
         $test_message = array(
             'content' => sprintf(
+                /* translators: %s: site name */
                 __('🔔 **Test notification from %s**\nYour Discord integration is working correctly!', 'magicchecklists'),
                 get_bloginfo('name')
             )
@@ -244,7 +256,11 @@ class MAGICCL_Notification_Ajax_Handler {
         if ($response_code !== 204) { // Discord returns 204 for success
             return new WP_Error(
                 'webhook_test_failed',
-                sprintf(__('Webhook test failed with response code: %d', 'magicchecklists'), $response_code)
+                sprintf(
+                    /* translators: %d: HTTP response code */
+                    __('Webhook test failed with response code: %d', 'magicchecklists'),
+                    $response_code
+                )
             );
         }
 

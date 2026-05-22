@@ -378,57 +378,57 @@ class MAGICCL_Tour_CPT {
      * Get current page URL
      */
     public static function get_current_page_url() {
-        
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- URL construction for tour matching, no data processing
         if (is_admin()) {
             global $pagenow;
-            
+
             // For admin pages, construct the path
             $path = '/wp-admin/';
-            
+
             // Special handling for dashboard - both index.php and empty should match /wp-admin/
             if ($pagenow === 'index.php') {
                 // Keep path as /wp-admin/ for dashboard
             } else {
                 $path .= $pagenow;
             }
-            
+
             if (!empty($_GET)) {
-                $params = $_GET;
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used for URL path matching only
+                $params = wp_unslash($_GET);
                 // Remove tour-specific parameters
                 unset($params['magiccl_tour_mode'], $params['tour_id'], $params['magiccl_continue_tour'], $params['magiccl_tour_step'], $params['magiccl_preview_step']);
-                
+
                 if (!empty($params)) {
                     $path .= '?' . http_build_query($params);
                 }
             }
-            
 
-            
+            // phpcs:enable WordPress.Security.NonceVerification.Recommended
             return $path;
         }
-        
+
         // Frontend URL
         global $wp;
-        
+
         $path = '/' . ltrim($wp->request, '/');
-        
+
         // Ensure path starts with /
         if (empty($path) || $path === '/') {
             $path = '/';
         }
-        
+
         // Add query string if present
-        if (!empty($_GET)) {
-            $params = $_GET;
+        if (!empty($_GET)) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading query parameters for URL path matching only.
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used for URL path matching only
+            $params = wp_unslash($_GET); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading query parameters for URL path matching only.
             unset($params['magiccl_tour_mode'], $params['tour_id'], $params['magiccl_continue_tour'], $params['magiccl_tour_step'], $params['magiccl_preview_step']);
-            
+
             if (!empty($params)) {
                 $path .= '?' . http_build_query($params);
             }
         }
-        
 
-        
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         return $path;
     }
 

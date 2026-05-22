@@ -35,13 +35,13 @@ class MAGICCL_Admin_Integration {
             wp_die(esc_html__('Insufficient permissions', 'magicchecklists'));
         }
         
-        $checklist_id = intval($_POST['checklist_id']);
-        $title = sanitize_text_field($_POST['title']);
-        $description = wp_kses_post($_POST['description']);
-        $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', $_POST['post_types']) : array();
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $description = isset($_POST['description']) ? wp_kses_post(wp_unslash($_POST['description'])) : '';
+        $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', wp_unslash($_POST['post_types'])) : array();
         $active = isset($_POST['active']) ? 1 : 0;
         $show_tips = isset($_POST['show_tips']) ? 1 : 0;
-        $requirements_data = isset($_POST['requirements']) ? $_POST['requirements'] : array();
+        $requirements_data = isset($_POST['requirements']) ? map_deep(wp_unslash($_POST['requirements']), 'sanitize_text_field') : array();
         
         // Validate required fields
         if (empty($title)) {
@@ -174,20 +174,23 @@ class MAGICCL_Admin_Integration {
             return;
         }
         
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reading query parameters for display; no data modification.
         // Only show notices on publisher checklist pages
-        if (!isset($_GET['type']) || $_GET['type'] !== 'publisher') {
+        if (!isset($_GET['type']) || sanitize_text_field(wp_unslash($_GET['type'])) !== 'publisher') { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reading query parameters for display; no data modification.
             return;
         }
-        
-        if (isset($_GET['message']) && $_GET['message'] === 'saved') {
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reading query parameters for display; no data modification.
+        if (isset($_GET['message']) && sanitize_text_field(wp_unslash($_GET['message'])) === 'saved') {
             echo '<div class="notice notice-success is-dismissible"><p>' . 
                  esc_html__('Publisher checklist saved successfully!', 'magicchecklists') . 
                  '</p></div>';
         }
         
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reading query parameters for display; no data modification.
         if (isset($_GET['error'])) {
             echo '<div class="notice notice-error is-dismissible"><p>' . 
-                 esc_html(sanitize_text_field(wp_unslash($_GET['error']))) .
+                 esc_html(sanitize_text_field(wp_unslash($_GET['error']))) . // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only reading query parameters for display; no data modification.
                  '</p></div>';
         }
     }
@@ -243,8 +246,8 @@ class MAGICCL_Admin_Integration {
                     
                     if ($count > 0) {
                         echo esc_html( sprintf(
-                            /* translators: 1: total count, 2: required count */
-                            __('%d total (%d required)', 'magicchecklists'),
+                            /* translators: 1: total item count, 2: required item count */
+                            __('%1$d total (%2$d required)', 'magicchecklists'),
                             $count,
                             $required_count
                         ) );

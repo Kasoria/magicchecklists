@@ -235,7 +235,7 @@ class MAGICCL_Admin {
 
     public function magic_plugins_landing_page() {
         // Handle form submission
-        if (isset($_POST['submit']) && check_admin_referer('magic_plugins_settings', 'magic_plugins_nonce')) {
+        if (isset($_POST['submit']) && check_admin_referer('magic_plugins_settings', 'magic_plugins_nonce')) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Data passed to save_shared_settings which sanitizes each field
             $this->save_shared_settings($_POST);
             echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved successfully!', 'magicchecklists') . '</p></div>';
         }
@@ -294,23 +294,25 @@ class MAGICCL_Admin {
 
     private function save_shared_settings($post_data) {
         $settings = array();
-        
+
         // Menu position settings
-        $settings['menu_position_type'] = sanitize_text_field($post_data['menu_position_type']);
+        $settings['menu_position_type'] = isset($post_data['menu_position_type']) ? sanitize_text_field(wp_unslash($post_data['menu_position_type'])) : 'default';
         if ($settings['menu_position_type'] === 'relative') {
-            $settings['menu_position_relative_to'] = sanitize_text_field($post_data['menu_position_relative_to']);
-            $settings['menu_position'] = in_array($post_data['menu_position'], ['before', 'after']) ? $post_data['menu_position'] : 'after';
+            $settings['menu_position_relative_to'] = isset($post_data['menu_position_relative_to']) ? sanitize_text_field(wp_unslash($post_data['menu_position_relative_to'])) : '';
+            $menu_pos_value = isset($post_data['menu_position']) ? sanitize_text_field(wp_unslash($post_data['menu_position'])) : 'after';
+            $settings['menu_position'] = in_array($menu_pos_value, array('before', 'after'), true) ? $menu_pos_value : 'after';
         } elseif ($settings['menu_position_type'] === 'custom') {
-            $settings['custom_position'] = max(1, min(99, intval($post_data['custom_position'])));
+            $settings['custom_position'] = isset($post_data['custom_position']) ? max(1, min(99, intval($post_data['custom_position']))) : 26;
         }
-        
+
         // Date format
         $allowed_formats = array('us', 'eu', 'iso', 'compact', 'long');
-        $settings['date_format'] = in_array($post_data['date_format'], $allowed_formats) ? $post_data['date_format'] : 'us';
-        
+        $date_format_value = isset($post_data['date_format']) ? sanitize_text_field(wp_unslash($post_data['date_format'])) : 'us';
+        $settings['date_format'] = in_array($date_format_value, $allowed_formats, true) ? $date_format_value : 'us';
+
         // Submenu order
         if (isset($post_data['submenu_order']) && is_array($post_data['submenu_order'])) {
-            $settings['submenu_order'] = array_map('sanitize_text_field', $post_data['submenu_order']);
+            $settings['submenu_order'] = array_map('sanitize_text_field', wp_unslash($post_data['submenu_order']));
         }
         
         update_option('magic_plugins_settings', $settings);
@@ -497,7 +499,7 @@ class MAGICCL_Admin {
                     'magiccl_save_theme_mode' => wp_create_nonce('magiccl_save_theme_mode'),
                 ),
                 'savedTheme' => get_user_meta(get_current_user_id(), 'magiccl_theme', true) ?: '',
-                'currentChecklistId' => isset($_GET['checklist_id']) ? intval($_GET['checklist_id']) : 0,
+                'currentChecklistId' => isset($_GET['checklist_id']) ? absint($_GET['checklist_id']) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin page routing parameter set by WordPress menu system; sanitized with absint().
                 'pluginUrl' => plugin_dir_url(dirname(__FILE__)) . '../',
                 'admin_url' => admin_url(),
             ));
@@ -752,9 +754,9 @@ class MAGICCL_Admin {
         }
 
         $checklist_id = isset( $_POST['checklist_id'] ) ? intval( $_POST['checklist_id'] ) : 0;
-        $checklist_type = isset( $_POST['checklist_type'] ) ? sanitize_text_field( $_POST['checklist_type'] ) : 'classic';
-        $title = sanitize_text_field( $_POST['title'] );
-        $description = sanitize_textarea_field( $_POST['description'] );
+        $checklist_type = isset( $_POST['checklist_type'] ) ? sanitize_text_field( wp_unslash( $_POST['checklist_type'] ) ) : 'classic';
+        $title = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+        $description = isset( $_POST['description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['description'] ) ) : '';
         
         // Handle boolean fields explicitly - if the field is '1', set to 1, otherwise set to 0
         $show_description = (isset($_POST['show_description']) && $_POST['show_description'] === '1') ? 1 : 0;
@@ -773,38 +775,40 @@ class MAGICCL_Admin {
         // Handle time_date with proper WordPress timezone conversion
         $time_date = '';
         if (!empty($_POST['time_date'])) {
+            $time_date_input = sanitize_text_field(wp_unslash($_POST['time_date']));
             // Get WordPress timezone
             $wp_timezone = wp_timezone();
-            
+
             try {
                 // Create DateTime object from the input, treating it as WordPress local time
-                $datetime = new DateTime($_POST['time_date'], $wp_timezone);
+                $datetime = new DateTime($time_date_input, $wp_timezone);
                 // Convert to UTC timestamp for storage
                 $time_date = $datetime->getTimestamp();
             } catch (Exception $e) {
                 // Fallback to original behavior if DateTime creation fails
-                $time_date = strtotime($_POST['time_date']);
+                $time_date = strtotime($time_date_input);
             }
         }
-        $keyboard_shortcut = sanitize_text_field( $_POST['keyboard_shortcut'] );
-        $checked_state_handling = sanitize_text_field( $_POST['checked_state'] );
-        $theme = sanitize_text_field( $_POST['theme'] );
-        $priority = sanitize_text_field( $_POST['priority'] );
-        
-        $short_title = isset($_POST['short_title']) ? sanitize_text_field($_POST['short_title']) : '';
-        $button_position = isset($_POST['button_position']) ? sanitize_text_field($_POST['button_position']) : 'bottom-right';
+        $keyboard_shortcut = isset( $_POST['keyboard_shortcut'] ) ? sanitize_text_field( wp_unslash( $_POST['keyboard_shortcut'] ) ) : '';
+        $checked_state_handling = isset( $_POST['checked_state'] ) ? sanitize_text_field( wp_unslash( $_POST['checked_state'] ) ) : 'global';
+        $theme = isset( $_POST['theme'] ) ? sanitize_text_field( wp_unslash( $_POST['theme'] ) ) : 'light';
+        $priority = isset( $_POST['priority'] ) ? sanitize_text_field( wp_unslash( $_POST['priority'] ) ) : 'none';
 
-        $priority_display_type = isset( $_POST['priority_display_type'] ) ? 
-            sanitize_text_field( $_POST['priority_display_type'] ) : 'color';
+        $short_title = isset($_POST['short_title']) ? sanitize_text_field(wp_unslash($_POST['short_title'])) : '';
+        $button_position = isset($_POST['button_position']) ? sanitize_text_field(wp_unslash($_POST['button_position'])) : 'bottom-right';
 
-        $public_permission = isset($_POST['public_permission']) ? sanitize_text_field($_POST['public_permission']) : 'interact';
-        $public_checked_state_handling = sanitize_text_field($_POST['public_checked_state']);
-        $public_description = isset($_POST['public_description']) ? sanitize_textarea_field($_POST['public_description']) : '';
+        $priority_display_type = isset( $_POST['priority_display_type'] ) ?
+            sanitize_text_field( wp_unslash( $_POST['priority_display_type'] ) ) : 'color';
+
+        $public_permission = isset($_POST['public_permission']) ? sanitize_text_field(wp_unslash($_POST['public_permission'])) : 'interact';
+        $public_checked_state_handling = isset($_POST['public_checked_state']) ? sanitize_text_field(wp_unslash($_POST['public_checked_state'])) : 'per_user';
+        $public_description = isset($_POST['public_description']) ? sanitize_textarea_field(wp_unslash($_POST['public_description'])) : '';
 
         // Role Permission Rules (new granular structure)
         $role_permission_rules = array();
         if (isset($_POST['role_permission_rules']) && is_array($_POST['role_permission_rules'])) {
-            foreach ($_POST['role_permission_rules'] as $rule) {
+            $raw_role_rules = wp_unslash($_POST['role_permission_rules']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized per-field in the loop below.
+            foreach ($raw_role_rules as $rule) {
                 if (isset($rule['permission']) && isset($rule['roles']) && is_array($rule['roles'])) {
                     $role_permission_rules[] = array(
                         'permission' => sanitize_text_field($rule['permission']),
@@ -817,7 +821,8 @@ class MAGICCL_Admin {
         // User Permission Rules (new granular structure)
         $user_permission_rules = array();
         if (isset($_POST['user_permission_rules']) && is_array($_POST['user_permission_rules'])) {
-            foreach ($_POST['user_permission_rules'] as $rule) {
+            $raw_user_rules = wp_unslash($_POST['user_permission_rules']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized per-field in the loop below.
+            foreach ($raw_user_rules as $rule) {
                 if (isset($rule['permission']) && isset($rule['users']) && is_array($rule['users'])) {
                     $user_permission_rules[] = array(
                         'permission' => sanitize_text_field($rule['permission']),
@@ -828,16 +833,16 @@ class MAGICCL_Admin {
         }
 
         // Legacy fields (kept for backwards compatibility, but will be deprecated)
-        $access_roles = isset($_POST['access_roles']) && is_array($_POST['access_roles']) ? array_map('sanitize_text_field', $_POST['access_roles']) : array();
-        $access_roles_permission = isset($_POST['access_roles_permission']) ? sanitize_text_field($_POST['access_roles_permission']) : 'interact';
-        $access_users = isset($_POST['access_users']) && is_array($_POST['access_users']) ? array_map('intval', $_POST['access_users']) : array();
-        $access_users_permission = isset($_POST['access_users_permission']) ? sanitize_text_field($_POST['access_users_permission']) : 'interact';
+        $access_roles = isset($_POST['access_roles']) && is_array($_POST['access_roles']) ? array_map('sanitize_text_field', wp_unslash($_POST['access_roles'])) : array();
+        $access_roles_permission = isset($_POST['access_roles_permission']) ? sanitize_text_field(wp_unslash($_POST['access_roles_permission'])) : 'interact';
+        $access_users = isset($_POST['access_users']) && is_array($_POST['access_users']) ? array_map('intval', wp_unslash($_POST['access_users'])) : array();
+        $access_users_permission = isset($_POST['access_users_permission']) ? sanitize_text_field(wp_unslash($_POST['access_users_permission'])) : 'interact';
 
-        $allowed_pages = isset($_POST['allowed_pages']) && is_array($_POST['allowed_pages']) ? array_map('sanitize_text_field', $_POST['allowed_pages']) : array();
-        $allowed_urls = isset($_POST['allowed_urls']) && is_array($_POST['allowed_urls']) ? array_map('sanitize_text_field', $_POST['allowed_urls']) : array();
+        $allowed_pages = isset($_POST['allowed_pages']) && is_array($_POST['allowed_pages']) ? array_map('sanitize_text_field', wp_unslash($_POST['allowed_pages'])) : array();
+        $allowed_urls = isset($_POST['allowed_urls']) && is_array($_POST['allowed_urls']) ? array_map('sanitize_text_field', wp_unslash($_POST['allowed_urls'])) : array();
     
         // Process items with priorities and parent relationships
-        $items = isset($_POST['items']) ? $_POST['items'] : array();
+        $items = isset($_POST['items']) ? wp_unslash($_POST['items']) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized per-field in the loop below.
         $processed_items = array();
         foreach ($items as $item) {
             if (isset($item['id'], $item['content'])) {
@@ -870,17 +875,17 @@ class MAGICCL_Admin {
             'notifications_enabled' => (isset($_POST['notifications_enabled']) && $_POST['notifications_enabled'] === '1'),
             'email_enabled' => (isset($_POST['email_enabled']) && $_POST['email_enabled'] === '1'),
             'integration_enabled' => (isset($_POST['integration_enabled']) && $_POST['integration_enabled'] === '1'),
-            'email_recipients' => sanitize_text_field($_POST['email_recipients'] ?? ''),
-            'slack_webhook_url' => esc_url_raw($_POST['slack_webhook_url'] ?? ''),
-            'discord_webhook_url' => esc_url_raw($_POST['discord_webhook_url'] ?? ''),
+            'email_recipients' => isset($_POST['email_recipients']) ? sanitize_text_field(wp_unslash($_POST['email_recipients'])) : '',
+            'slack_webhook_url' => isset($_POST['slack_webhook_url']) ? esc_url_raw(wp_unslash($_POST['slack_webhook_url'])) : '',
+            'discord_webhook_url' => isset($_POST['discord_webhook_url']) ? esc_url_raw(wp_unslash($_POST['discord_webhook_url'])) : '',
             'notify_on_new_item' => (isset($_POST['notify_on_new_item']) && $_POST['notify_on_new_item'] === '1'),
             'notify_on_delete_item' => (isset($_POST['notify_on_delete_item']) && $_POST['notify_on_delete_item'] === '1'),
             'notify_on_check_item' => (isset($_POST['notify_on_check_item']) && $_POST['notify_on_check_item'] === '1'),
             'notify_on_uncheck_item' => (isset($_POST['notify_on_uncheck_item']) && $_POST['notify_on_uncheck_item'] === '1'),
             'notify_on_deadline' => (isset($_POST['notify_on_deadline']) && $_POST['notify_on_deadline'] === '1'),
             'notify_on_comments' => (isset($_POST['notify_on_comments']) && $_POST['notify_on_comments'] === '1'),
-            'deadline_threshold_hours' => absint($_POST['deadline_threshold_hours'] ?? 24),
-            'batch_interval' => sanitize_text_field($_POST['batch_interval'] ?? 'fifteen_minutes')
+            'deadline_threshold_hours' => isset($_POST['deadline_threshold_hours']) ? absint($_POST['deadline_threshold_hours']) : 24,
+            'batch_interval' => isset($_POST['batch_interval']) ? sanitize_text_field(wp_unslash($_POST['batch_interval'])) : 'fifteen_minutes'
         );
         // Notification settings will be saved after deadline is updated
 
@@ -890,7 +895,7 @@ class MAGICCL_Admin {
         if ($enable_shortcode) {
             $shortcode_settings = array(
                 // Display Options
-                'display_mode'     => sanitize_text_field($_POST['shortcode_display_mode'] ?? 'list'),
+                'display_mode'     => isset($_POST['shortcode_display_mode']) ? sanitize_text_field(wp_unslash($_POST['shortcode_display_mode'])) : 'list',
                 'show_title'       => (isset($_POST['shortcode_show_title']) && $_POST['shortcode_show_title'] === '1') ? 1 : 0,
                 'show_description' => (isset($_POST['shortcode_show_description']) && $_POST['shortcode_show_description'] === '1') ? 1 : 0,
                 'show_deadline'    => (isset($_POST['shortcode_show_deadline']) && $_POST['shortcode_show_deadline'] === '1') ? 1 : 0,
@@ -898,41 +903,41 @@ class MAGICCL_Admin {
                 'show_numbers'     => (isset($_POST['shortcode_show_numbers']) && $_POST['shortcode_show_numbers'] === '1') ? 1 : 0,
             
                 // Style Options Part 1: Colors
-                'title_text_color'           => sanitize_hex_color($_POST['shortcode_title_text_color'] ?? '#000000'),
-                'description_text_color'     => sanitize_hex_color($_POST['shortcode_description_text_color'] ?? '#333333'),
-                'deadline_text_color'        => sanitize_hex_color($_POST['shortcode_deadline_text_color'] ?? '#ff0000'),
-                'list_item_text_color'       => sanitize_hex_color($_POST['shortcode_list_item_text_color'] ?? '#1a1a1a'),
-                'bg_color'                   => sanitize_hex_color($_POST['shortcode_bg_color'] ?? '#ffffff'),
-                'border_color'               => sanitize_hex_color($_POST['shortcode_border_color'] ?? '#e2e8f0'),
-                'checkbox_border_color'      => sanitize_hex_color($_POST['shortcode_checkbox_border_color'] ?? '#cccccc'),
-                'checkbox_color_filled'      => sanitize_hex_color($_POST['shortcode_checkbox_color_filled'] ?? '#0ea5e9'),
-                'checkbox_color_unfilled'    => sanitize_hex_color($_POST['shortcode_checkbox_color_unfilled'] ?? '#ffffff'),
-                'checkmark_color'            => sanitize_hex_color($_POST['shortcode_checkmark_color'] ?? '#ffffff'),
-    
+                'title_text_color'           => isset($_POST['shortcode_title_text_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_title_text_color'])) : '#000000',
+                'description_text_color'     => isset($_POST['shortcode_description_text_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_description_text_color'])) : '#333333',
+                'deadline_text_color'        => isset($_POST['shortcode_deadline_text_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_deadline_text_color'])) : '#ff0000',
+                'list_item_text_color'       => isset($_POST['shortcode_list_item_text_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_list_item_text_color'])) : '#1a1a1a',
+                'bg_color'                   => isset($_POST['shortcode_bg_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_bg_color'])) : '#ffffff',
+                'border_color'               => isset($_POST['shortcode_border_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_border_color'])) : '#e2e8f0',
+                'checkbox_border_color'      => isset($_POST['shortcode_checkbox_border_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_checkbox_border_color'])) : '#cccccc',
+                'checkbox_color_filled'      => isset($_POST['shortcode_checkbox_color_filled']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_checkbox_color_filled'])) : '#0ea5e9',
+                'checkbox_color_unfilled'    => isset($_POST['shortcode_checkbox_color_unfilled']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_checkbox_color_unfilled'])) : '#ffffff',
+                'checkmark_color'            => isset($_POST['shortcode_checkmark_color']) ? sanitize_hex_color(wp_unslash($_POST['shortcode_checkmark_color'])) : '#ffffff',
+
                 // Style Options Part 2: Spacing and Dimensions
-                'width'                          => sanitize_text_field($_POST['shortcode_width'] ?? 'full'),
-                'custom_width'                   => absint($_POST['shortcode_custom_width'] ?? 800),
-                'checkbox_dimensions'            => absint($_POST['shortcode_checkbox_dimensions'] ?? 20),
-                'checkbox_border_radius'         => absint($_POST['shortcode_checkbox_border_radius'] ?? 4),
-                'checkbox_border_thickness'      => absint($_POST['shortcode_checkbox_border_thickness'] ?? 2),
-                'border_type'                    => sanitize_text_field($_POST['shortcode_border_type'] ?? 'none'),
-                'border_radius'                  => absint($_POST['shortcode_border_radius'] ?? 6),
-                'border_thickness'               => absint($_POST['shortcode_border_thickness'] ?? 1),
-                'item_spacing'                   => sanitize_text_field($_POST['shortcode_item_spacing'] ?? 'comfortable'),
-                'padding_block'                  => absint($_POST['shortcode_padding_block'] ?? 32),
-                'padding_inline'                 => absint($_POST['shortcode_padding_inline'] ?? 32),
-                'container_gap'                 => absint($_POST['shortcode_container_gap'] ?? 10),
-    
+                'width'                          => isset($_POST['shortcode_width']) ? sanitize_text_field(wp_unslash($_POST['shortcode_width'])) : 'full',
+                'custom_width'                   => isset($_POST['shortcode_custom_width']) ? absint($_POST['shortcode_custom_width']) : 800,
+                'checkbox_dimensions'            => isset($_POST['shortcode_checkbox_dimensions']) ? absint($_POST['shortcode_checkbox_dimensions']) : 20,
+                'checkbox_border_radius'         => isset($_POST['shortcode_checkbox_border_radius']) ? absint($_POST['shortcode_checkbox_border_radius']) : 4,
+                'checkbox_border_thickness'      => isset($_POST['shortcode_checkbox_border_thickness']) ? absint($_POST['shortcode_checkbox_border_thickness']) : 2,
+                'border_type'                    => isset($_POST['shortcode_border_type']) ? sanitize_text_field(wp_unslash($_POST['shortcode_border_type'])) : 'none',
+                'border_radius'                  => isset($_POST['shortcode_border_radius']) ? absint($_POST['shortcode_border_radius']) : 6,
+                'border_thickness'               => isset($_POST['shortcode_border_thickness']) ? absint($_POST['shortcode_border_thickness']) : 1,
+                'item_spacing'                   => isset($_POST['shortcode_item_spacing']) ? sanitize_text_field(wp_unslash($_POST['shortcode_item_spacing'])) : 'comfortable',
+                'padding_block'                  => isset($_POST['shortcode_padding_block']) ? absint($_POST['shortcode_padding_block']) : 32,
+                'padding_inline'                 => isset($_POST['shortcode_padding_inline']) ? absint($_POST['shortcode_padding_inline']) : 32,
+                'container_gap'                 => isset($_POST['shortcode_container_gap']) ? absint($_POST['shortcode_container_gap']) : 10,
+
                 // Style Options Part 3: Typography
-                'title_font_size'          => absint($_POST['shortcode_title_font_size'] ?? 18),
-                'description_font_size'    => absint($_POST['shortcode_description_font_size'] ?? 14),
-                'list_item_font_size'      => absint($_POST['shortcode_list_item_font_size'] ?? 16),
-                'deadline_font_size'       => absint($_POST['shortcode_deadline_font_size'] ?? 14),
-    
+                'title_font_size'          => isset($_POST['shortcode_title_font_size']) ? absint($_POST['shortcode_title_font_size']) : 18,
+                'description_font_size'    => isset($_POST['shortcode_description_font_size']) ? absint($_POST['shortcode_description_font_size']) : 14,
+                'list_item_font_size'      => isset($_POST['shortcode_list_item_font_size']) ? absint($_POST['shortcode_list_item_font_size']) : 16,
+                'deadline_font_size'       => isset($_POST['shortcode_deadline_font_size']) ? absint($_POST['shortcode_deadline_font_size']) : 14,
+
                 // Behavior Options
                 'disable_drawer' => (isset($_POST['shortcode_disable_drawer']) && $_POST['shortcode_disable_drawer'] === '1') ? 1 : 0,
                 'enable_reorder' => (isset($_POST['shortcode_enable_reorder']) && $_POST['shortcode_enable_reorder'] === '1') ? 1 : 0,
-                'check_state'    => sanitize_text_field($_POST['shortcode_check_state'] ?? 'session')
+                'check_state'    => isset($_POST['shortcode_check_state']) ? sanitize_text_field(wp_unslash($_POST['shortcode_check_state'])) : 'session'
             );
     
             // Custom width validation
@@ -947,8 +952,8 @@ class MAGICCL_Admin {
     
         if ( ! is_wp_error( $checklist_id ) ) {
             if (isset($_POST['magiccl_tags']) && isset($_POST['magiccl_tag_colors'])) {
-                $tags = array_map('sanitize_text_field', $_POST['magiccl_tags']);
-                $colors = array_map('sanitize_hex_color', $_POST['magiccl_tag_colors']);
+                $tags = array_map('sanitize_text_field', wp_unslash($_POST['magiccl_tags']));
+                $colors = array_map('sanitize_hex_color', wp_unslash($_POST['magiccl_tag_colors']));
                 
                 $saved_tags = array();
                 foreach ($tags as $index => $tag) {
@@ -1002,16 +1007,40 @@ class MAGICCL_Admin {
             update_post_meta( $checklist_id, '_magiccl_load_everywhere', $load_everywhere);
             update_post_meta( $checklist_id, '_magiccl_allowed_pages', $allowed_pages);
             update_post_meta( $checklist_id, '_magiccl_allowed_urls', $allowed_urls);
-            $this->save_reset_schedule($checklist_id, $auto_reset);
+            $reset_data = array(
+                'reset_interval' => isset($_POST['reset_interval']) ? sanitize_text_field(wp_unslash($_POST['reset_interval'])) : 'daily',
+                'reset_time'     => isset($_POST['reset_time']) ? sanitize_text_field(wp_unslash($_POST['reset_time'])) : '00:00',
+                'week_day'       => isset($_POST['week_day']) ? intval($_POST['week_day']) : 1,
+                'month_day'      => isset($_POST['month_day']) ? intval($_POST['month_day']) : 1,
+                'custom_months'  => isset($_POST['custom_months']) ? intval($_POST['custom_months']) : 0,
+                'custom_weeks'   => isset($_POST['custom_weeks']) ? intval($_POST['custom_weeks']) : 0,
+                'custom_days'    => isset($_POST['custom_days']) ? intval($_POST['custom_days']) : 0,
+            );
+            $this->save_reset_schedule($checklist_id, $auto_reset, $reset_data);
             update_post_meta($checklist_id, '_magiccl_disable_in_builders', $disable_in_builders);
             // Always save custom theme settings regardless of selected theme
-            $this->save_custom_theme_settings($checklist_id);
+            $theme_data = array();
+            foreach (array(
+                'drawer_bg_color', 'list_item_bg_color', 'text_color', 'heading_font_size',
+                'description_text_color', 'description_font_size', 'list_item_font_size',
+                'primary_button_bg', 'primary_button_text_color', 'secondary_button_bg',
+                'secondary_button_text_color', 'drawer_width', 'drawer_height',
+                'float_button_bg', 'float_button_text_color', 'float_button_font_size',
+                'show_float_button_icon', 'drawer_border_radius', 'checkbox_bg_color',
+                'checkbox_border_radius', 'checkbox_style', 'checkbox_custom_icon',
+                'checkbox_checkmark_color'
+            ) as $theme_key) {
+                if (isset($_POST[$theme_key])) {
+                    $theme_data[$theme_key] = sanitize_text_field(wp_unslash($_POST[$theme_key]));
+                }
+            }
+            $this->save_custom_theme_settings($checklist_id, $theme_data);
             update_post_meta($checklist_id, '_magiccl_show_description', $show_description);
             
             // Save icon settings
-            $checklist_icon_type = isset($_POST['checklist_icon_type']) ? sanitize_text_field($_POST['checklist_icon_type']) : 'preset';
-            $checklist_icon_preset = isset($_POST['checklist_icon_preset']) ? sanitize_text_field($_POST['checklist_icon_preset']) : 'checklist-1';
-            $checklist_icon_custom = isset($_POST['checklist_icon_custom']) ? esc_url_raw($_POST['checklist_icon_custom']) : '';
+            $checklist_icon_type = isset($_POST['checklist_icon_type']) ? sanitize_text_field(wp_unslash($_POST['checklist_icon_type'])) : 'preset';
+            $checklist_icon_preset = isset($_POST['checklist_icon_preset']) ? sanitize_text_field(wp_unslash($_POST['checklist_icon_preset'])) : 'checklist-1';
+            $checklist_icon_custom = isset($_POST['checklist_icon_custom']) ? esc_url_raw(wp_unslash($_POST['checklist_icon_custom'])) : '';
             
             update_post_meta($checklist_id, '_magiccl_checklist_icon_type', $checklist_icon_type);
             update_post_meta($checklist_id, '_magiccl_checklist_icon_preset', $checklist_icon_preset);
@@ -1078,48 +1107,47 @@ class MAGICCL_Admin {
         return array();
     }
 
-    private function save_reset_schedule($checklist_id, $auto_reset) {
-        // Save auto reset settings - use the already processed $auto_reset variable
+    private function save_reset_schedule($checklist_id, $auto_reset, $reset_data = array()) {
         update_post_meta($checklist_id, '_magiccl_auto_reset', $auto_reset);
-    
+
         if ($auto_reset) {
-            $reset_interval = sanitize_text_field($_POST['reset_interval']);
-            $reset_time = sanitize_text_field($_POST['reset_time']);
-            
+            $reset_interval = isset($reset_data['reset_interval']) ? $reset_data['reset_interval'] : 'daily';
+            $reset_time = isset($reset_data['reset_time']) ? $reset_data['reset_time'] : '00:00';
+
             update_post_meta($checklist_id, '_magiccl_reset_interval', $reset_interval);
             update_post_meta($checklist_id, '_magiccl_reset_time', $reset_time);
-    
+
             // Save interval-specific settings
             switch ($reset_interval) {
                 case 'weekly':
-                    $week_day = intval($_POST['week_day']);
+                    $week_day = isset($reset_data['week_day']) ? intval($reset_data['week_day']) : 1;
                     if ($week_day >= 1 && $week_day <= 7) {
                         update_post_meta($checklist_id, '_magiccl_week_day', $week_day);
                     }
                     break;
-    
+
                 case 'monthly':
-                    $month_day = intval($_POST['month_day']);
+                    $month_day = isset($reset_data['month_day']) ? intval($reset_data['month_day']) : 1;
                     if ($month_day >= 1 && $month_day <= 31) {
                         update_post_meta($checklist_id, '_magiccl_month_day', $month_day);
                     }
                     break;
-    
+
                 case 'custom':
-                    $custom_months = max(0, min(12, intval($_POST['custom_months'])));
-                    $custom_weeks = max(0, min(52, intval($_POST['custom_weeks'])));
-                    $custom_days = max(0, min(31, intval($_POST['custom_days'])));
-                    
+                    $custom_months = max(0, min(12, isset($reset_data['custom_months']) ? intval($reset_data['custom_months']) : 0));
+                    $custom_weeks = max(0, min(52, isset($reset_data['custom_weeks']) ? intval($reset_data['custom_weeks']) : 0));
+                    $custom_days = max(0, min(31, isset($reset_data['custom_days']) ? intval($reset_data['custom_days']) : 0));
+
                     update_post_meta($checklist_id, '_magiccl_custom_months', $custom_months);
                     update_post_meta($checklist_id, '_magiccl_custom_weeks', $custom_weeks);
                     update_post_meta($checklist_id, '_magiccl_custom_days', $custom_days);
                     break;
             }
-    
+
             // Calculate and set next reset time
             $next_reset = $this->calculate_next_reset_time($checklist_id, $reset_interval, $reset_time);
             update_post_meta($checklist_id, '_magiccl_reset_next', $next_reset);
-            
+
             // Initialize reset counter if not set
             $reset_counter = get_post_meta($checklist_id, '_magiccl_reset_counter', true);
             if (!$reset_counter) {
@@ -1197,62 +1225,62 @@ class MAGICCL_Admin {
         return $next->getTimestamp();
     }
 
-    private function validate_reset_schedule($checklist_id) {
-        $reset_interval = sanitize_text_field($_POST['reset_interval']);
+    private function validate_reset_schedule($reset_data = array()) {
+        $reset_interval = isset($reset_data['reset_interval']) ? $reset_data['reset_interval'] : 'daily';
         $is_valid = true;
         $errors = array();
-    
+
         switch ($reset_interval) {
             case 'weekly':
-                $week_day = intval($_POST['week_day']);
+                $week_day = isset($reset_data['week_day']) ? intval($reset_data['week_day']) : 0;
                 if ($week_day < 1 || $week_day > 7) {
                     $is_valid = false;
                     $errors[] = __('Invalid day of week selected.', 'magicchecklists');
                 }
                 break;
-    
+
             case 'monthly':
-                $month_day = intval($_POST['month_day']);
+                $month_day = isset($reset_data['month_day']) ? intval($reset_data['month_day']) : 0;
                 if ($month_day < 1 || $month_day > 31) {
                     $is_valid = false;
                     $errors[] = __('Invalid day of month selected.', 'magicchecklists');
                 }
                 break;
-    
+
             case 'custom':
-                $custom_months = intval($_POST['custom_months']);
-                $custom_weeks = intval($_POST['custom_weeks']);
-                $custom_days = intval($_POST['custom_days']);
-    
+                $custom_months = isset($reset_data['custom_months']) ? intval($reset_data['custom_months']) : 0;
+                $custom_weeks = isset($reset_data['custom_weeks']) ? intval($reset_data['custom_weeks']) : 0;
+                $custom_days = isset($reset_data['custom_days']) ? intval($reset_data['custom_days']) : 0;
+
                 if ($custom_months < 0 || $custom_months > 12) {
                     $is_valid = false;
                     $errors[] = __('Months must be between 0 and 12.', 'magicchecklists');
                 }
-    
+
                 if ($custom_weeks < 0 || $custom_weeks > 52) {
                     $is_valid = false;
                     $errors[] = __('Weeks must be between 0 and 52.', 'magicchecklists');
                 }
-    
+
                 if ($custom_days < 0 || $custom_days > 31) {
                     $is_valid = false;
                     $errors[] = __('Days must be between 0 and 31.', 'magicchecklists');
                 }
-    
+
                 if ($custom_months === 0 && $custom_weeks === 0 && $custom_days === 0) {
                     $is_valid = false;
                     $errors[] = __('At least one time period must be specified for custom intervals.', 'magicchecklists');
                 }
                 break;
         }
-    
+
         // Validate time format
-        $reset_time = sanitize_text_field($_POST['reset_time']);
+        $reset_time = isset($reset_data['reset_time']) ? $reset_data['reset_time'] : '';
         if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $reset_time)) {
             $is_valid = false;
             $errors[] = __('Invalid time format.', 'magicchecklists');
         }
-    
+
         return array(
             'is_valid' => $is_valid,
             'errors' => $errors
@@ -1361,8 +1389,8 @@ class MAGICCL_Admin {
     public function check_shortcut() {
         check_ajax_referer( 'magiccl_check_shortcut_nonce', '_ajax_nonce' );
 
-        $shortcut = sanitize_text_field( $_POST['shortcut'] );
-        $checklist_id = intval( $_POST['checklist_id'] );
+        $shortcut = isset( $_POST['shortcut'] ) ? sanitize_text_field( wp_unslash( $_POST['shortcut'] ) ) : '';
+        $checklist_id = isset( $_POST['checklist_id'] ) ? intval( $_POST['checklist_id'] ) : 0;
 
         $args = array(
             'post_type'      => 'magiccl_checklist',
@@ -1425,8 +1453,7 @@ class MAGICCL_Admin {
             wp_die( esc_html__( 'You are not allowed to perform this action', 'magicchecklists' ) );
         }
     
-        $checklist_items = isset( $_POST['checklist_items'] ) ? $_POST['checklist_items'] : '';
-        $checklist_items = sanitize_textarea_field( $checklist_items );
+        $checklist_items = isset( $_POST['checklist_items'] ) ? sanitize_textarea_field( wp_unslash( $_POST['checklist_items'] ) ) : '';
     
         // Split the items by line
         $items_array = explode( "\n", $checklist_items );
@@ -1490,7 +1517,7 @@ class MAGICCL_Admin {
         }
         
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $permissions = isset($_POST['permissions']) ? sanitize_text_field($_POST['permissions']) : 'view';
+        $permissions = isset($_POST['permissions']) ? sanitize_text_field(wp_unslash($_POST['permissions'])) : 'view';
         $expiry_days = isset($_POST['expiry_days']) ? intval($_POST['expiry_days']) : 7;
         $usage_limit = isset($_POST['usage_limit']) ? intval($_POST['usage_limit']) : 0;
         
@@ -1573,7 +1600,7 @@ class MAGICCL_Admin {
                 wp_send_json_error(array(
                     'message' => __('Invalid checklist ID', 'magicchecklists'),
                     'debug' => array(
-                        'provided_id' => $_POST['checklist_id'] ?? 'not set'
+                        'provided_id' => isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 'not set'
                     )
                 ));
                 return;
@@ -1680,7 +1707,7 @@ class MAGICCL_Admin {
         }
         
         $link_id = isset($_POST['link_id']) ? intval($_POST['link_id']) : 0;
-        $new_permission = isset($_POST['permission']) ? sanitize_text_field($_POST['permission']) : '';
+        $new_permission = isset($_POST['permission']) ? sanitize_text_field(wp_unslash($_POST['permission'])) : '';
         
         if (!$link_id || !in_array($new_permission, array('view', 'interact', 'edit'))) {
             wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
@@ -1792,18 +1819,20 @@ class MAGICCL_Admin {
         }
 
         // Check if file was uploaded
-        if (!isset($_FILES['json_file']) || $_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
+        if (!isset($_FILES['json_file']) || !isset($_FILES['json_file']['error']) || $_FILES['json_file']['error'] !== UPLOAD_ERR_OK) {
             wp_die(esc_html__('No file uploaded or upload failed', 'magicchecklists'));
         }
 
         // Verify file type
-        $file_type = wp_check_filetype($_FILES['json_file']['name'], array('json' => 'application/json'));
+        $file_name = isset($_FILES['json_file']['name']) ? sanitize_file_name(wp_unslash($_FILES['json_file']['name'])) : '';
+        $file_type = wp_check_filetype($file_name, array('json' => 'application/json'));
         if ($file_type['ext'] !== 'json') {
             wp_die(esc_html__('Invalid file type. Please upload a JSON file.', 'magicchecklists'));
         }
 
         // Read and decode JSON
-        $json_content = file_get_contents($_FILES['json_file']['tmp_name']);
+        $tmp_file = isset($_FILES['json_file']['tmp_name']) ? sanitize_text_field(wp_unslash($_FILES['json_file']['tmp_name'])) : '';
+        $json_content = file_get_contents($tmp_file); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
         $checklist_data = json_decode($json_content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -1855,7 +1884,7 @@ class MAGICCL_Admin {
         exit;
     }
 
-    private function save_custom_theme_settings($checklist_id) {
+    private function save_custom_theme_settings($checklist_id, $theme_data = array()) {
         // Theme-related settings to save
         $theme_settings = array(
             // Existing settings
@@ -1886,19 +1915,20 @@ class MAGICCL_Admin {
     
         // Validate and sanitize each setting
         foreach ($theme_settings as $setting) {
-            if (isset($_POST[$setting])) {
-                $value = $_POST[$setting];
-                
+            if (isset($theme_data[$setting])) {
+                $raw_value = sanitize_text_field($theme_data[$setting]);
+                $value = $raw_value;
+
                 // Sanitize based on setting type
                 if (strpos($setting, 'color') !== false) {
                     // Sanitize color values
-                    $value = sanitize_hex_color($_POST[$setting]);
-                } elseif (strpos($setting, 'font_size') !== false || 
-                          strpos($setting, 'width') !== false || 
+                    $value = sanitize_hex_color($raw_value);
+                } elseif (strpos($setting, 'font_size') !== false ||
+                          strpos($setting, 'width') !== false ||
                           strpos($setting, 'height') !== false) {
                     // Sanitize numeric values
-                    $value = absint($_POST[$setting]);
-                    
+                    $value = absint($raw_value);
+
                     // Apply min/max constraints
                     switch ($setting) {
                         case 'heading_font_size':
@@ -1917,8 +1947,8 @@ class MAGICCL_Admin {
                             break;
                     }
                 } elseif (strpos($setting, 'border_radius') !== false) {
-                    $value = intval($_POST[$setting]);
-                    
+                    $value = intval($raw_value);
+
                     // Apply min/max constraints
                     switch ($setting) {
                         case 'drawer_border_radius':
@@ -1930,12 +1960,12 @@ class MAGICCL_Admin {
                     }
 
                 } elseif ($setting === 'show_float_button_icon') {
-                    $value = $_POST[$setting] === '1' ? '1' : '0';
+                    $value = $raw_value === '1' ? '1' : '0';
                 } elseif ($setting === 'checkbox_style') {
-                    $value = in_array($_POST[$setting], array('standard', 'custom')) ? 
-                        $_POST[$setting] : 'standard';
+                    $value = in_array($raw_value, array('standard', 'custom')) ?
+                        $raw_value : 'standard';
                 } elseif ($setting === 'checkbox_custom_icon') {
-                    $value = esc_url_raw($_POST[$setting]);
+                    $value = esc_url_raw($raw_value);
                     
                     if ($value && !$this->is_valid_media_url($value)) {
                         $value = '';
@@ -1947,7 +1977,7 @@ class MAGICCL_Admin {
             }
         }
     }
-    
+
     /**
      * Helper function to verify if a URL is from the WordPress media library
      */
@@ -2205,7 +2235,7 @@ class MAGICCL_Admin {
         }
         
         // Validate and sanitize the mode
-        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : '';
+        $mode = isset($_POST['mode']) ? sanitize_text_field(wp_unslash($_POST['mode'])) : '';
         if (!in_array($mode, array('light', 'dark'), true)) {
             wp_send_json_error(array(
                 'message' => 'Invalid theme mode',
@@ -2997,7 +3027,7 @@ class MAGICCL_Admin {
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
-        $column_id = isset($_POST['column_id']) ? sanitize_text_field($_POST['column_id']) : '';
+        $column_id = isset($_POST['column_id']) ? sanitize_text_field(wp_unslash($_POST['column_id'])) : '';
         $position = isset($_POST['position']) ? intval($_POST['position']) : 0;
 
         if (!$checklist_id || $item_id === false || !$column_id) {
@@ -3062,7 +3092,7 @@ class MAGICCL_Admin {
         }
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $columns = isset($_POST['columns']) ? json_decode(wp_unslash($_POST['columns']), true) : array();
+        $columns = isset($_POST['columns']) ? json_decode(sanitize_text_field(wp_unslash($_POST['columns'])), true) : array();
 
         if (!$checklist_id || !is_array($columns)) {
             wp_send_json_error('Invalid parameters');
@@ -3168,7 +3198,7 @@ class MAGICCL_Admin {
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
-        $due_date = isset($_POST['due_date']) ? sanitize_text_field($_POST['due_date']) : null;
+        $due_date = isset($_POST['due_date']) ? sanitize_text_field(wp_unslash($_POST['due_date'])) : null;
 
         if (!$checklist_id || $item_id === false) {
             wp_send_json_error('Invalid parameters');
@@ -3220,7 +3250,7 @@ class MAGICCL_Admin {
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
-        $content = isset($_POST['content']) ? wp_kses_post($_POST['content']) : '';
+        $content = isset($_POST['content']) ? wp_kses_post(wp_unslash($_POST['content'])) : '';
 
         if (!$checklist_id || !$item_id) {
             wp_send_json_error('Invalid parameters');
@@ -3312,14 +3342,14 @@ class MAGICCL_Admin {
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
         $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
-        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post(wp_unslash($_POST['comment_content'])) : '';
 
         if (!$checklist_id || !$item_id || empty($comment_content)) {
             wp_send_json_error('Invalid parameters');
         }
 
         $current_user = wp_get_current_user();
-        
+
         global $wpdb;
         $comments_table = $wpdb->prefix . 'magiccl_task_comments';
 
@@ -3369,7 +3399,7 @@ class MAGICCL_Admin {
         }
 
         $comment_id = isset($_POST['comment_id']) ? intval($_POST['comment_id']) : 0;
-        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post(wp_unslash($_POST['comment_content'])) : '';
 
         if (!$comment_id || empty($comment_content)) {
             wp_send_json_error('Invalid parameters');
@@ -3452,10 +3482,10 @@ class MAGICCL_Admin {
         }
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
-        $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
-        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
-        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
+        $comment_content = isset($_POST['comment_content']) ? wp_kses_post(wp_unslash($_POST['comment_content'])) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field(wp_unslash($_POST['user_name'])) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email(wp_unslash($_POST['user_email'])) : '';
 
         if (!$checklist_id || empty($item_id)) {
             wp_send_json_error('Invalid parameters');
@@ -3635,7 +3665,7 @@ class MAGICCL_Admin {
             $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
             $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
             $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
-            $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+            $comment_content = isset($_POST['comment_content']) ? wp_kses_post(wp_unslash($_POST['comment_content'])) : '';
 
             if (!$checklist_id || !$item_id || empty($comment_content)) {
                 wp_send_json_error('Invalid parameters');
@@ -4066,14 +4096,14 @@ class MAGICCL_Admin {
         // Settings are sent directly in POST, not as a nested 'settings' array
         $settings = array(
             'enabled' => isset($_POST['enabled']) && ($_POST['enabled'] === 'true' || $_POST['enabled'] === '1'),
-            'upvote_mode' => isset($_POST['upvote_mode']) ? sanitize_text_field($_POST['upvote_mode']) : 'logged_in',
+            'upvote_mode' => isset($_POST['upvote_mode']) ? sanitize_text_field(wp_unslash($_POST['upvote_mode'])) : 'logged_in',
             'upvote_require_email_verification' => isset($_POST['upvote_require_email_verification']) && ($_POST['upvote_require_email_verification'] === 'true' || $_POST['upvote_require_email_verification'] === '1'),
             'upvote_anon_check_localstorage' => isset($_POST['upvote_anon_check_localstorage']) && ($_POST['upvote_anon_check_localstorage'] === 'true' || $_POST['upvote_anon_check_localstorage'] === '1'),
             'upvote_anon_check_ip' => isset($_POST['upvote_anon_check_ip']) && ($_POST['upvote_anon_check_ip'] === 'true' || $_POST['upvote_anon_check_ip'] === '1'),
-            'comments_mode' => isset($_POST['comments_mode']) ? sanitize_text_field($_POST['comments_mode']) : 'logged_in',
+            'comments_mode' => isset($_POST['comments_mode']) ? sanitize_text_field(wp_unslash($_POST['comments_mode'])) : 'logged_in',
             'idea_submission_enabled' => isset($_POST['idea_submission_enabled']) && ($_POST['idea_submission_enabled'] === 'true' || $_POST['idea_submission_enabled'] === '1'),
-            'idea_submission_mode' => isset($_POST['idea_submission_mode']) ? sanitize_text_field($_POST['idea_submission_mode']) : 'logged_in',
-            'idea_default_column' => isset($_POST['idea_default_column']) ? sanitize_text_field($_POST['idea_default_column']) : '',
+            'idea_submission_mode' => isset($_POST['idea_submission_mode']) ? sanitize_text_field(wp_unslash($_POST['idea_submission_mode'])) : 'logged_in',
+            'idea_default_column' => isset($_POST['idea_default_column']) ? sanitize_text_field(wp_unslash($_POST['idea_default_column'])) : '',
             'idea_moderation_enabled' => isset($_POST['idea_moderation_enabled']) && ($_POST['idea_moderation_enabled'] === 'true' || $_POST['idea_moderation_enabled'] === '1'),
             'show_upvote_count' => isset($_POST['show_upvote_count']) && ($_POST['show_upvote_count'] === 'true' || $_POST['show_upvote_count'] === '1'),
             'show_comment_count' => isset($_POST['show_comment_count']) && ($_POST['show_comment_count'] === 'true' || $_POST['show_comment_count'] === '1'),
@@ -4123,41 +4153,28 @@ class MAGICCL_Admin {
      * Get column sync settings for a checklist
      */
     public function get_column_sync_settings() {
-        error_log('[ColumnSync PHP] get_column_sync_settings called');
-        error_log('[ColumnSync PHP] POST data: ' . print_r($_POST, true));
-
         if (!check_ajax_referer('magiccl_admin_nonce', 'nonce', false)) {
-            error_log('[ColumnSync PHP] Nonce verification FAILED');
-            error_log('[ColumnSync PHP] Expected action: magiccl_admin_nonce');
-            error_log('[ColumnSync PHP] Received nonce: ' . (isset($_POST['nonce']) ? $_POST['nonce'] : 'NOT SET'));
             wp_send_json_error(array('message' => 'Invalid nonce'));
             return;
         }
-        error_log('[ColumnSync PHP] Nonce verification PASSED');
 
         if (!current_user_can('manage_options')) {
-            error_log('[ColumnSync PHP] User capability check FAILED');
             wp_send_json_error(array('message' => 'Unauthorized'));
             return;
         }
-        error_log('[ColumnSync PHP] User capability check PASSED');
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        error_log('[ColumnSync PHP] Checklist ID: ' . $checklist_id);
 
         if (!$checklist_id) {
-            error_log('[ColumnSync PHP] Invalid checklist ID');
             wp_send_json_error(array('message' => 'Invalid checklist ID'));
             return;
         }
 
         // Get settings from post meta
         $settings = get_post_meta($checklist_id, '_magiccl_column_sync_settings', true);
-        error_log('[ColumnSync PHP] Raw settings from DB: ' . print_r($settings, true));
 
         // Return default settings if none exist
         if (!$settings || !is_array($settings)) {
-            error_log('[ColumnSync PHP] No settings found, returning defaults');
             $settings = array(
                 'enabled' => false,
                 'done_column' => '',
@@ -4167,10 +4184,8 @@ class MAGICCL_Admin {
         } else {
             // Ensure boolean for enabled field
             $settings['enabled'] = !empty($settings['enabled']);
-            error_log('[ColumnSync PHP] Settings found, enabled = ' . ($settings['enabled'] ? 'true' : 'false'));
         }
 
-        error_log('[ColumnSync PHP] Returning settings: ' . print_r($settings, true));
         wp_send_json_success(array('settings' => $settings));
     }
 
@@ -4178,53 +4193,32 @@ class MAGICCL_Admin {
      * Save column sync settings for a checklist
      */
     public function save_column_sync_settings() {
-        error_log('[ColumnSync PHP] save_column_sync_settings called');
-        error_log('[ColumnSync PHP] POST data: ' . print_r($_POST, true));
-
         if (!check_ajax_referer('magiccl_admin_nonce', 'nonce', false)) {
-            error_log('[ColumnSync PHP] SAVE - Nonce verification FAILED');
-            error_log('[ColumnSync PHP] SAVE - Expected action: magiccl_admin_nonce');
-            error_log('[ColumnSync PHP] SAVE - Received nonce: ' . (isset($_POST['nonce']) ? $_POST['nonce'] : 'NOT SET'));
             wp_send_json_error(array('message' => 'Invalid nonce'));
             return;
         }
-        error_log('[ColumnSync PHP] SAVE - Nonce verification PASSED');
 
         if (!current_user_can('manage_options')) {
-            error_log('[ColumnSync PHP] SAVE - User capability check FAILED');
             wp_send_json_error(array('message' => 'Unauthorized'));
             return;
         }
-        error_log('[ColumnSync PHP] SAVE - User capability check PASSED');
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        error_log('[ColumnSync PHP] SAVE - Checklist ID: ' . $checklist_id);
 
         if (!$checklist_id) {
-            error_log('[ColumnSync PHP] SAVE - Invalid checklist ID');
             wp_send_json_error(array('message' => 'Invalid checklist ID'));
             return;
         }
 
-        error_log('[ColumnSync PHP] SAVE - enabled POST value: ' . (isset($_POST['enabled']) ? $_POST['enabled'] : 'NOT SET'));
-        error_log('[ColumnSync PHP] SAVE - done_column POST value: ' . (isset($_POST['done_column']) ? $_POST['done_column'] : 'NOT SET'));
-        error_log('[ColumnSync PHP] SAVE - todo_column POST value: ' . (isset($_POST['todo_column']) ? $_POST['todo_column'] : 'NOT SET'));
-
+        $enabled_value = isset($_POST['enabled']) ? sanitize_text_field(wp_unslash($_POST['enabled'])) : '';
         $settings = array(
-            'enabled' => isset($_POST['enabled']) && ($_POST['enabled'] === 'true' || $_POST['enabled'] === '1'),
-            'done_column' => isset($_POST['done_column']) ? sanitize_text_field($_POST['done_column']) : '',
-            'in_progress_column' => isset($_POST['in_progress_column']) ? sanitize_text_field($_POST['in_progress_column']) : '',
-            'todo_column' => isset($_POST['todo_column']) ? sanitize_text_field($_POST['todo_column']) : ''
+            'enabled' => ($enabled_value === 'true' || $enabled_value === '1'),
+            'done_column' => isset($_POST['done_column']) ? sanitize_text_field(wp_unslash($_POST['done_column'])) : '',
+            'in_progress_column' => isset($_POST['in_progress_column']) ? sanitize_text_field(wp_unslash($_POST['in_progress_column'])) : '',
+            'todo_column' => isset($_POST['todo_column']) ? sanitize_text_field(wp_unslash($_POST['todo_column'])) : ''
         );
-        error_log('[ColumnSync PHP] SAVE - Parsed settings: ' . print_r($settings, true));
 
-        // Save to post meta
-        $result = update_post_meta($checklist_id, '_magiccl_column_sync_settings', $settings);
-        error_log('[ColumnSync PHP] SAVE - update_post_meta result: ' . ($result ? 'success/updated' : 'no change or failed'));
-
-        // Verify it was saved
-        $saved = get_post_meta($checklist_id, '_magiccl_column_sync_settings', true);
-        error_log('[ColumnSync PHP] SAVE - Verification read: ' . print_r($saved, true));
+        update_post_meta($checklist_id, '_magiccl_column_sync_settings', $settings);
 
         wp_send_json_success(array('message' => 'Column sync settings saved successfully'));
     }
@@ -4244,7 +4238,7 @@ class MAGICCL_Admin {
         }
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : 'pending';
+        $status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : 'pending';
 
         global $wpdb;
         $table = $wpdb->prefix . 'magiccl_idea_submissions';
@@ -4286,7 +4280,7 @@ class MAGICCL_Admin {
 
         // Accept both 'idea_id' (from frontend) and 'submission_id' (legacy)
         $submission_id = isset($_POST['idea_id']) ? intval($_POST['idea_id']) : (isset($_POST['submission_id']) ? intval($_POST['submission_id']) : 0);
-        $target_column = isset($_POST['target_column']) ? sanitize_text_field($_POST['target_column']) : '';
+        $target_column = isset($_POST['target_column']) ? sanitize_text_field(wp_unslash($_POST['target_column'])) : '';
 
         if (!$submission_id) {
             wp_send_json_error(array('message' => 'Invalid submission ID'));
@@ -4352,7 +4346,7 @@ class MAGICCL_Admin {
 
         // Accept both 'idea_id' (from frontend) and 'submission_id' (legacy)
         $submission_id = isset($_POST['idea_id']) ? intval($_POST['idea_id']) : (isset($_POST['submission_id']) ? intval($_POST['submission_id']) : 0);
-        $reason = isset($_POST['reason']) ? sanitize_textarea_field($_POST['reason']) : '';
+        $reason = isset($_POST['reason']) ? sanitize_textarea_field(wp_unslash($_POST['reason'])) : '';
 
         if (!$submission_id) {
             wp_send_json_error(array('message' => 'Invalid submission ID'));

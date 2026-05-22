@@ -245,16 +245,16 @@ class MAGICCL_Publisher_Checklist {
     public function ajax_check_requirements() {
         check_ajax_referer('magiccl_publisher_nonce', 'nonce');
         
-        $post_id = intval($_POST['post_id']);
-        $post_content = wp_kses_post($_POST['post_content']);
-        $post_title = sanitize_text_field($_POST['post_title']);
-        $post_excerpt = wp_kses_post($_POST['post_excerpt']);
-        $featured_media_id = intval($_POST['featured_media_id'] ?? 0);
-        $categories = json_decode(wp_unslash($_POST['categories'] ?? '[]'), true);
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+        $post_content = isset($_POST['post_content']) ? wp_kses_post(wp_unslash($_POST['post_content'])) : '';
+        $post_title = isset($_POST['post_title']) ? sanitize_text_field(wp_unslash($_POST['post_title'])) : '';
+        $post_excerpt = isset($_POST['post_excerpt']) ? wp_kses_post(wp_unslash($_POST['post_excerpt'])) : '';
+        $featured_media_id = isset($_POST['featured_media_id']) ? intval($_POST['featured_media_id']) : 0;
+        $categories = json_decode(sanitize_text_field(wp_unslash(isset($_POST['categories']) ? $_POST['categories'] : '[]')), true);
         $categories = is_array($categories) ? array_map('intval', $categories) : array();
-        $tags = json_decode(wp_unslash($_POST['tags'] ?? '[]'), true);
+        $tags = json_decode(sanitize_text_field(wp_unslash(isset($_POST['tags']) ? $_POST['tags'] : '[]')), true);
         $tags = is_array($tags) ? array_map('sanitize_text_field', $tags) : array();
-        $post_meta_raw = json_decode(wp_unslash($_POST['post_meta'] ?? '{}'), true);
+        $post_meta_raw = json_decode(sanitize_text_field(wp_unslash(isset($_POST['post_meta']) ? $_POST['post_meta'] : '{}')), true);
         $post_meta = array();
         if (is_array($post_meta_raw)) {
             foreach ($post_meta_raw as $meta_key => $meta_value) {
@@ -386,12 +386,14 @@ class MAGICCL_Publisher_Checklist {
         if ($word_count >= $min_words) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Word count: %d (required: %d+)', 'magicchecklists'), $word_count, $min_words)
+                'message' => /* translators: %1$d: current word count, %2$d: minimum required word count */
+                sprintf(__('Word count: %1$d (required: %2$d+)', 'magicchecklists'), $word_count, $min_words)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Word count: %d (required: %d+)', 'magicchecklists'), $word_count, $min_words)
+                'message' => /* translators: %1$d: current word count, %2$d: minimum required word count */
+                sprintf(__('Word count: %1$d (required: %2$d+)', 'magicchecklists'), $word_count, $min_words)
             );
         }
     }
@@ -419,25 +421,29 @@ class MAGICCL_Publisher_Checklist {
         if (empty($excerpt_text)) {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Excerpt is missing (required: %d-%d characters)', 'magicchecklists'), $min_length, $max_length)
+                'message' => /* translators: %1$d: minimum excerpt length, %2$d: maximum excerpt length */
+                sprintf(__('Excerpt is missing (required: %1$d-%2$d characters)', 'magicchecklists'), $min_length, $max_length)
             );
         }
         
         if ($length >= $min_length && $length <= $max_length) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Excerpt length: %d characters (required: %d-%d)', 'magicchecklists'), $length, $min_length, $max_length)
+                'message' => /* translators: %1$d: current excerpt length, %2$d: minimum length, %3$d: maximum length */
+                sprintf(__('Excerpt length: %1$d characters (required: %2$d-%3$d)', 'magicchecklists'), $length, $min_length, $max_length)
             );
         } else {
             if ($length < $min_length) {
                 return array(
                     'status' => 'failed',
-                    'message' => sprintf(__('Excerpt too short: %d characters (required: %d-%d)', 'magicchecklists'), $length, $min_length, $max_length)
+                    'message' => /* translators: %1$d: current excerpt length, %2$d: minimum length, %3$d: maximum length */
+                    sprintf(__('Excerpt too short: %1$d characters (required: %2$d-%3$d)', 'magicchecklists'), $length, $min_length, $max_length)
                 );
             } else {
                 return array(
                     'status' => 'failed',
-                    'message' => sprintf(__('Excerpt too long: %d characters (required: %d-%d)', 'magicchecklists'), $length, $min_length, $max_length)
+                    'message' => /* translators: %1$d: current excerpt length, %2$d: minimum length, %3$d: maximum length */
+                    sprintf(__('Excerpt too long: %1$d characters (required: %2$d-%3$d)', 'magicchecklists'), $length, $min_length, $max_length)
                 );
             }
         }
@@ -450,12 +456,14 @@ class MAGICCL_Publisher_Checklist {
         if ($count >= $min_categories) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Categories: %d (required: %d+)', 'magicchecklists'), $count, $min_categories)
+                'message' => /* translators: %1$d: current category count, %2$d: minimum required categories */
+                sprintf(__('Categories: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_categories)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Categories: %d (required: %d+)', 'magicchecklists'), $count, $min_categories)
+                'message' => /* translators: %1$d: current category count, %2$d: minimum required categories */
+                sprintf(__('Categories: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_categories)
             );
         }
     }
@@ -467,12 +475,14 @@ class MAGICCL_Publisher_Checklist {
         if ($count >= $min_tags) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Tags: %d (required: %d+)', 'magicchecklists'), $count, $min_tags)
+                'message' => /* translators: %1$d: current tag count, %2$d: minimum required tags */
+                sprintf(__('Tags: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_tags)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Tags: %d (required: %d+)', 'magicchecklists'), $count, $min_tags)
+                'message' => /* translators: %1$d: current tag count, %2$d: minimum required tags */
+                sprintf(__('Tags: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_tags)
             );
         }
     }
@@ -500,12 +510,14 @@ class MAGICCL_Publisher_Checklist {
         if ($external_links >= $min_links) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('External links: %d (required: %d+)', 'magicchecklists'), $external_links, $min_links)
+                'message' => /* translators: %1$d: current external link count, %2$d: minimum required external links */
+                sprintf(__('External links: %1$d (required: %2$d+)', 'magicchecklists'), $external_links, $min_links)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('External links: %d (required: %d+)', 'magicchecklists'), $external_links, $min_links)
+                'message' => /* translators: %1$d: current external link count, %2$d: minimum required external links */
+                sprintf(__('External links: %1$d (required: %2$d+)', 'magicchecklists'), $external_links, $min_links)
             );
         }
     }
@@ -533,12 +545,14 @@ class MAGICCL_Publisher_Checklist {
         if ($internal_links >= $min_links) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Internal links: %d (required: %d+)', 'magicchecklists'), $internal_links, $min_links)
+                'message' => /* translators: %1$d: current internal link count, %2$d: minimum required internal links */
+                sprintf(__('Internal links: %1$d (required: %2$d+)', 'magicchecklists'), $internal_links, $min_links)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Internal links: %d (required: %d+)', 'magicchecklists'), $internal_links, $min_links)
+                'message' => /* translators: %1$d: current internal link count, %2$d: minimum required internal links */
+                sprintf(__('Internal links: %1$d (required: %2$d+)', 'magicchecklists'), $internal_links, $min_links)
             );
         }
     }
@@ -572,12 +586,14 @@ class MAGICCL_Publisher_Checklist {
         if ($length >= $min_length && $length <= $max_length) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Title length: %d characters (required: %d-%d)', 'magicchecklists'), $length, $min_length, $max_length)
+                'message' => /* translators: %1$d: current title length, %2$d: minimum length, %3$d: maximum length */
+                sprintf(__('Title length: %1$d characters (required: %2$d-%3$d)', 'magicchecklists'), $length, $min_length, $max_length)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Title length: %d characters (required: %d-%d)', 'magicchecklists'), $length, $min_length, $max_length)
+                'message' => /* translators: %1$d: current title length, %2$d: minimum length, %3$d: maximum length */
+                sprintf(__('Title length: %1$d characters (required: %2$d-%3$d)', 'magicchecklists'), $length, $min_length, $max_length)
             );
         }
     }
@@ -593,12 +609,14 @@ class MAGICCL_Publisher_Checklist {
         if ($manual_state === '1') {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('%s - Complete', 'magicchecklists'), $item_title)
+                'message' => /* translators: %s: custom item title */
+                sprintf(__('%s - Complete', 'magicchecklists'), $item_title)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('%s - Manual verification required', 'magicchecklists'), $item_title)
+                'message' => /* translators: %s: custom item title */
+                sprintf(__('%s - Manual verification required', 'magicchecklists'), $item_title)
             );
         }
     }
@@ -606,11 +624,11 @@ class MAGICCL_Publisher_Checklist {
     public function ajax_save_checklist_state() {
         check_ajax_referer('magiccl_publisher_nonce', 'nonce');
         
-        $post_id = intval($_POST['post_id']);
-        $checklist_id = intval($_POST['checklist_id']);
-        $requirement_type = sanitize_text_field($_POST['requirement_type'] ?? '');
-        $instance_id = sanitize_text_field($_POST['instance_id'] ?? '');
-        $checked = isset($_POST['checked']) && $_POST['checked'];
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $requirement_type = isset($_POST['requirement_type']) ? sanitize_text_field(wp_unslash($_POST['requirement_type'])) : '';
+        $instance_id = isset($_POST['instance_id']) ? sanitize_text_field(wp_unslash($_POST['instance_id'])) : '';
+        $checked = isset($_POST['checked']) && sanitize_text_field(wp_unslash($_POST['checked']));
         
         if (!$post_id || !$checklist_id || !$requirement_type) {
             wp_send_json_error('Invalid data');
@@ -628,8 +646,8 @@ class MAGICCL_Publisher_Checklist {
     
     public function ajax_get_checklist_data() {
         check_ajax_referer('magiccl_publisher_nonce', 'nonce');
-        
-        $post_id = intval($_POST['post_id']);
+
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         
         if (!$post_id) {
             wp_send_json_error('Invalid post ID');
@@ -650,8 +668,8 @@ class MAGICCL_Publisher_Checklist {
     
     public function ajax_get_publisher_checklist_data() {
         check_ajax_referer('magiccl_publisher_nonce', 'nonce');
-        
-        $post_id = intval($_POST['post_id']);
+
+        $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         
         if (!$post_id) {
             wp_send_json_error('Invalid post ID');
@@ -701,7 +719,8 @@ class MAGICCL_Publisher_Checklist {
                 
                 if ($status['status'] === 'failed') {
                     $blocking_issues[] = sprintf(
-                        __('Checklist "%s": %s', 'magicchecklists'),
+                        /* translators: %1$s: checklist title, %2$s: requirement status message */
+                        __('Checklist "%1$s": %2$s', 'magicchecklists'),
                         $checklist->post_title,
                         $status['message']
                     );
@@ -755,12 +774,14 @@ class MAGICCL_Publisher_Checklist {
         if ($count >= $min_categories) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Categories: %d (required: %d+)', 'magicchecklists'), $count, $min_categories)
+                'message' => /* translators: %1$d: current category count, %2$d: minimum required categories */
+                sprintf(__('Categories: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_categories)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Categories: %d (required: %d+)', 'magicchecklists'), $count, $min_categories)
+                'message' => /* translators: %1$d: current category count, %2$d: minimum required categories */
+                sprintf(__('Categories: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_categories)
             );
         }
     }
@@ -773,12 +794,14 @@ class MAGICCL_Publisher_Checklist {
         if ($count >= $min_tags) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Tags: %d (required: %d+)', 'magicchecklists'), $count, $min_tags)
+                'message' => /* translators: %1$d: current tag count, %2$d: minimum required tags */
+                sprintf(__('Tags: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_tags)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Tags: %d (required: %d+)', 'magicchecklists'), $count, $min_tags)
+                'message' => /* translators: %1$d: current tag count, %2$d: minimum required tags */
+                sprintf(__('Tags: %1$d (required: %2$d+)', 'magicchecklists'), $count, $min_tags)
             );
         }
     }
@@ -847,15 +870,19 @@ class MAGICCL_Publisher_Checklist {
         if ($length >= $min_length && $length <= $max_length) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Meta description: %d characters (required: %d-%d) - %s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected)
+                'message' => /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta description: %1$d characters (required: %2$d-%3$d) - %4$s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected)
             );
         } else {
             if ($length === 0) {
-                $message = sprintf(__('No meta description found (required: %d-%d characters). Please add one using your SEO plugin.', 'magicchecklists'), $min_length, $max_length);
+                $message = /* translators: %1$d: minimum length, %2$d: maximum length */
+                sprintf(__('No meta description found (required: %1$d-%2$d characters). Please add one using your SEO plugin.', 'magicchecklists'), $min_length, $max_length);
             } elseif ($length < $min_length) {
-                $message = sprintf(__('Meta description too short: %d characters (required: %d-%d) - %s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
+                $message = /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta description too short: %1$d characters (required: %2$d-%3$d) - %4$s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
             } else {
-                $message = sprintf(__('Meta description too long: %d characters (required: %d-%d) - %s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
+                $message = /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta description too long: %1$d characters (required: %2$d-%3$d) - %4$s detected', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
             }
                 
             return array(
@@ -935,13 +962,16 @@ class MAGICCL_Publisher_Checklist {
         if ($length >= $min_length && $length <= $max_length) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Meta title: %d characters (required: %d-%d) - %s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected)
+                'message' => /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta title: %1$d characters (required: %2$d-%3$d) - %4$s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected)
             );
         } else {
             if ($length < $min_length) {
-                $message = sprintf(__('Meta title too short: %d characters (required: %d-%d) - %s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
+                $message = /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta title too short: %1$d characters (required: %2$d-%3$d) - %4$s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
             } else {
-                $message = sprintf(__('Meta title too long: %d characters (required: %d-%d) - %s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
+                $message = /* translators: %1$d: current length, %2$d: minimum length, %3$d: maximum length, %4$s: detected SEO plugin name */
+                sprintf(__('Meta title too long: %1$d characters (required: %2$d-%3$d) - %4$s', 'magicchecklists'), $length, $min_length, $max_length, $plugin_detected);
             }
             
             return array(
@@ -987,12 +1017,14 @@ class MAGICCL_Publisher_Checklist {
         if ($problematic_images === 0) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('All %d images have alt text', 'magicchecklists'), $total_images)
+                'message' => /* translators: %d: total number of images */
+                sprintf(__('All %d images have alt text', 'magicchecklists'), $total_images)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('%d of %d images missing alt text (accessibility issue)', 'magicchecklists'), $problematic_images, $total_images)
+                'message' => /* translators: %1$d: number of images missing alt text, %2$d: total number of images */
+                sprintf(__('%1$d of %2$d images missing alt text (accessibility issue)', 'magicchecklists'), $problematic_images, $total_images)
             );
         }
     }
@@ -1014,24 +1046,29 @@ class MAGICCL_Publisher_Checklist {
         
         // Check each heading type requirement
         if ($h2_count < $min_h2_headings) {
-            $issues[] = sprintf(__('H2: %d/%d', 'magicchecklists'), $h2_count, $min_h2_headings);
+            $issues[] = /* translators: %1$d: current H2 count, %2$d: required H2 count */
+            sprintf(__('H2: %1$d/%2$d', 'magicchecklists'), $h2_count, $min_h2_headings);
         }
         if ($h3_count < $min_h3_headings) {
-            $issues[] = sprintf(__('H3: %d/%d', 'magicchecklists'), $h3_count, $min_h3_headings);
+            $issues[] = /* translators: %1$d: current H3 count, %2$d: required H3 count */
+            sprintf(__('H3: %1$d/%2$d', 'magicchecklists'), $h3_count, $min_h3_headings);
         }
         if ($h4_count < $min_h4_headings) {
-            $issues[] = sprintf(__('H4: %d/%d', 'magicchecklists'), $h4_count, $min_h4_headings);
+            $issues[] = /* translators: %1$d: current H4 count, %2$d: required H4 count */
+            sprintf(__('H4: %1$d/%2$d', 'magicchecklists'), $h4_count, $min_h4_headings);
         }
         
         if (empty($issues)) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Headings found - H2: %d, H3: %d, H4: %d', 'magicchecklists'), $h2_count, $h3_count, $h4_count)
+                'message' => /* translators: %1$d: H2 heading count, %2$d: H3 heading count, %3$d: H4 heading count */
+                sprintf(__('Headings found - H2: %1$d, H3: %2$d, H4: %3$d', 'magicchecklists'), $h2_count, $h3_count, $h4_count)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Heading requirements not met: %s', 'magicchecklists'), implode(', ', $issues))
+                'message' => /* translators: %s: list of unmet heading requirements */
+                sprintf(__('Heading requirements not met: %s', 'magicchecklists'), implode(', ', $issues))
             );
         }
     }
@@ -1048,12 +1085,14 @@ class MAGICCL_Publisher_Checklist {
         if ($image_count >= $min_images) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('Images found: %d (required: %d+)', 'magicchecklists'), $image_count, $min_images)
+                'message' => /* translators: %1$d: current image count, %2$d: minimum required images */
+                sprintf(__('Images found: %1$d (required: %2$d+)', 'magicchecklists'), $image_count, $min_images)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('Images found: %d (required: %d+)', 'magicchecklists'), $image_count, $min_images)
+                'message' => /* translators: %1$d: current image count, %2$d: minimum required images */
+                sprintf(__('Images found: %1$d (required: %2$d+)', 'magicchecklists'), $image_count, $min_images)
             );
         }
     }
@@ -1074,7 +1113,8 @@ class MAGICCL_Publisher_Checklist {
             $display_name = !empty($field_label) ? $field_label : $field_name;
             return array(
                 'status' => 'pending',
-                'message' => sprintf(__('💡 Save post as draft first to check "%s" field. Custom fields are saved to database when post is saved.', 'magicchecklists'), $display_name)
+                'message' => /* translators: %s: custom field display name */
+                sprintf(__('💡 Save post as draft first to check "%s" field. Custom fields are saved to database when post is saved.', 'magicchecklists'), $display_name)
             );
         }
         
@@ -1084,12 +1124,14 @@ class MAGICCL_Publisher_Checklist {
         if (!empty($field_value)) {
             return array(
                 'status' => 'passed',
-                'message' => sprintf(__('%s is filled.', 'magicchecklists'), $display_name)
+                'message' => /* translators: %s: custom field display name */
+                sprintf(__('%s is filled.', 'magicchecklists'), $display_name)
             );
         } else {
             return array(
                 'status' => 'failed',
-                'message' => sprintf(__('%s is empty.', 'magicchecklists'), $display_name)
+                'message' => /* translators: %s: custom field display name */
+                sprintf(__('%s is empty.', 'magicchecklists'), $display_name)
             );
         }
     }
@@ -1109,10 +1151,10 @@ class MAGICCL_Publisher_Checklist {
         $post_types = array();
         if (isset($_POST['post_types'])) {
             if (is_array($_POST['post_types'])) {
-                $post_types = array_map('sanitize_text_field', $_POST['post_types']);
+                $post_types = array_map('sanitize_text_field', wp_unslash($_POST['post_types']));
             } else {
                 // Try to decode as JSON if it's a string
-                $decoded = json_decode(wp_unslash($_POST['post_types']), true);
+                $decoded = json_decode(sanitize_text_field(wp_unslash($_POST['post_types'])), true);
                 if (is_array($decoded)) {
                     $post_types = array_map('sanitize_text_field', $decoded);
                 }
@@ -1334,12 +1376,12 @@ class MAGICCL_Publisher_Checklist {
         }
         
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $title = sanitize_text_field($_POST['title'] ?? '');
-        $description = wp_kses_post($_POST['description'] ?? '');
-        $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', $_POST['post_types']) : array();
-        $active = isset($_POST['active']) && $_POST['active'] === '1';
-        $show_tips = isset($_POST['show_tips']) && $_POST['show_tips'] === '1';
-        $requirements = isset($_POST['requirements']) ? $_POST['requirements'] : array();
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $description = isset($_POST['description']) ? wp_kses_post(wp_unslash($_POST['description'])) : '';
+        $post_types = isset($_POST['post_types']) ? array_map('sanitize_text_field', wp_unslash($_POST['post_types'])) : array();
+        $active = isset($_POST['active']) && sanitize_text_field(wp_unslash($_POST['active'])) === '1';
+        $show_tips = isset($_POST['show_tips']) && sanitize_text_field(wp_unslash($_POST['show_tips'])) === '1';
+        $requirements = isset($_POST['requirements']) ? map_deep(wp_unslash($_POST['requirements']), 'sanitize_text_field') : array();
         
         // Validation
         if (empty($title)) {

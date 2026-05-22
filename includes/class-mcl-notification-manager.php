@@ -91,18 +91,19 @@ class MAGICCL_Notification_Manager {
         
         // Add manual trigger for testing
         add_action('admin_init', function() {
-            if (isset($_GET['test_magiccl_deadlines']) && current_user_can('manage_options')) {
+            if (isset($_GET['magiccl_test_deadlines']) && current_user_can('manage_options')) {
+                check_admin_referer('magiccl_test_deadlines');
                 error_log("MAGICCL: Manual deadline check triggered");
                 $this->check_deadlines();
                 wp_die('Deadline check completed. Check logs.');
             }
-            
+
             // Also run check on every admin_init
             $this->force_deadline_check();
         });
-        
+
         // Add AJAX endpoint for testing
-        add_action('wp_ajax_test_magiccl_deadlines', array($this, 'ajax_test_deadlines'));
+        add_action('wp_ajax_magiccl_test_deadlines', array($this, 'ajax_test_deadlines'));
         
         // Schedule notification processing
         if (!wp_next_scheduled('magiccl_process_notifications')) {
@@ -112,9 +113,9 @@ class MAGICCL_Notification_Manager {
         // Check deadlines on every page load if we have immediate notifications and triggers are due
         add_action('wp_loaded', array($this, 'check_immediate_deadlines'));
         
-        // Also check on admin AJAX calls for more frequent checking
-        add_action('wp_ajax_nopriv_heartbeat', array($this, 'check_immediate_deadlines'));
-        add_action('wp_ajax_heartbeat', array($this, 'check_immediate_deadlines'));
+        // Also check on WordPress heartbeat for more frequent checking
+        add_filter('heartbeat_received', array($this, 'heartbeat_check_deadlines'), 10, 2);
+        add_filter('heartbeat_nopriv_received', array($this, 'heartbeat_check_deadlines'), 10, 2);
     }
 
     public function cleanup_notification_queue() {
@@ -356,6 +357,18 @@ class MAGICCL_Notification_Manager {
         set_transient('magiccl_last_immediate_deadline_check', $now, 60); // 1 minute expiry
     }
 
+    /**
+     * Hook into WordPress heartbeat API to check deadlines.
+     *
+     * @param array $response Heartbeat response data.
+     * @param array $data     Heartbeat request data.
+     * @return array
+     */
+    public function heartbeat_check_deadlines($response, $data) {
+        $this->check_immediate_deadlines();
+        return $response;
+    }
+
     public function ajax_test_deadlines() {
         check_ajax_referer('magiccl_admin_nonce', 'nonce');
         if (!current_user_can('manage_options')) {
@@ -501,15 +514,17 @@ class MAGICCL_Notification_Manager {
         }
         
         $subject = sprintf(
+            /* translators: %s: site name */
             __('[%s] Checklist Update Notification', 'magicchecklists'),
             get_bloginfo('name')
         );
-        
+
         $message = sprintf(
+            /* translators: %s: checklist title */
             __("Updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
-        
+
         foreach ($notifications as $notification) {
             $data = maybe_unserialize($notification->data);
             $message .= $this->format_notification_message($notification->event, $data) . "\n";
@@ -609,16 +624,18 @@ class MAGICCL_Notification_Manager {
 
     private function format_email_content($notifications, $checklist) {
         $content = sprintf(
+            /* translators: %s: checklist title */
             __("Updates for checklist: %s\n\n", 'magicchecklists'),
             $checklist->post_title
         );
-        
+
         foreach ($notifications as $notification) {
             $data = maybe_unserialize($notification->data);
             $content .= $this->format_notification_message($notification->event, $data) . "\n\n";
         }
-        
+
         $content .= sprintf(
+            /* translators: %s: checklist URL */
             __("\nView checklist: %s", 'magicchecklists'),
             admin_url('admin.php?page=magiccl_checklists&checklist_id=' . $checklist->ID)
         );
@@ -632,11 +649,12 @@ class MAGICCL_Notification_Manager {
                 'type' => 'header',
                 'text' => array(
                     'type' => 'plain_text',
+                    /* translators: %s: checklist title */
                     'text' => sprintf(__('Updates for Checklist: %s', 'magicchecklists'), $checklist->post_title)
                 )
             )
         );
-        
+
         foreach ($notifications as $notification) {
             $data = maybe_unserialize($notification->data);
             $blocks[] = array(
@@ -647,12 +665,13 @@ class MAGICCL_Notification_Manager {
                 )
             );
         }
-        
+
         $blocks[] = array(
             'type' => 'section',
             'text' => array(
                 'type' => 'mrkdwn',
                 'text' => sprintf(
+                    /* translators: %s: checklist URL */
                     __('*<<%s|View Checklist>>*', 'magicchecklists'),
                     admin_url('admin.php?page=magiccl_checklists&checklist_id=' . $checklist->ID)
                 )
@@ -665,14 +684,15 @@ class MAGICCL_Notification_Manager {
     private function format_discord_payload($notifications, $checklist) {
         $content = sprintf(
             "**%s**\n\n",
+            /* translators: %s: checklist title */
             sprintf(__('Updates for Checklist: %s', 'magicchecklists'), $checklist->post_title)
         );
-        
+
         foreach ($notifications as $notification) {
             $data = maybe_unserialize($notification->data);
             $content .= $this->format_notification_message($notification->event, $data, 'discord') . "\n";
         }
-        
+
         $content .= sprintf(
             "\n[%s](%s)",
             __('View Checklist', 'magicchecklists'),
@@ -688,44 +708,50 @@ class MAGICCL_Notification_Manager {
         switch ($event) {
             case 'new-item':
                 return sprintf(
-                    __('✨ %s added new item: %s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item content */
+                    __('✨ %1$s added new item: %2$s', 'magicchecklists'),
                     $user,
                     $data['item']['content']
                 );
-                
+
             case 'delete-item':
                 return sprintf(
-                    __('🗑️ %s deleted item: %s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item content */
+                    __('🗑️ %1$s deleted item: %2$s', 'magicchecklists'),
                     $user,
                     $data['item']['content']
                 );
-                
+
             case 'check-item':
                 return sprintf(
-                    __('✅ %s checked off: %s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item content */
+                    __('✅ %1$s checked off: %2$s', 'magicchecklists'),
                     $user,
                     $data['item_content']
                 );
-                
+
             case 'uncheck-item':
                 return sprintf(
-                    __('↩️ %s unchecked: %s', 'magicchecklists'),
+                    /* translators: 1: user name, 2: item content */
+                    __('↩️ %1$s unchecked: %2$s', 'magicchecklists'),
                     $user,
                     $data['item_content']
                 );
-                
+
             case 'deadline':
                 $hours = ceil($data['hours_remaining']);
                 return sprintf(
+                    /* translators: %d: number of hours remaining */
                     __('⏰ Deadline approaching! %d hours remaining', 'magicchecklists'),
                     $hours
                 );
-                
+
             case 'comments':
                 $item_context = isset($data['item_content']) ? ' on "' . wp_strip_all_tags($data['item_content']) . '"' : '';
                 if (isset($data['reply_comment_id'])) {
                     return sprintf(
-                        __('💬 %s replied to a comment%s', 'magicchecklists'),
+                        /* translators: 1: user name, 2: item context */
+                        __('💬 %1$s replied to a comment%2$s', 'magicchecklists'),
                         $user,
                         $item_context
                     );
@@ -733,15 +759,17 @@ class MAGICCL_Notification_Manager {
                     $content = isset($data['comment_content']) ? wp_strip_all_tags($data['comment_content']) : 'a comment';
                     $preview = strlen($content) > 50 ? substr($content, 0, 50) . '...' : $content;
                     return sprintf(
-                        __('💬 %s added a comment%s: "%s"', 'magicchecklists'),
+                        /* translators: 1: user name, 2: item context, 3: comment preview */
+                        __('💬 %1$s added a comment%2$s: "%3$s"', 'magicchecklists'),
                         $user,
                         $item_context,
                         $preview
                     );
                 }
-                
+
             default:
                 return sprintf(
+                    /* translators: %s: event name */
                     __('Update event: %s', 'magicchecklists'),
                     $event
                 );

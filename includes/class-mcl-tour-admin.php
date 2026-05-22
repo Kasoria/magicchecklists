@@ -49,12 +49,15 @@ class MAGICCL_Tour_Admin {
 
     public function handle_tour_redirects() {
         // Only handle redirects on the tours page
-        if (!isset($_GET['page']) || $_GET['page'] !== 'magiccl_tours') {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin menu page routing, no data processing
+        if (!isset($_GET['page']) || sanitize_text_field(wp_unslash($_GET['page'])) !== 'magiccl_tours') {
             return;
         }
 
         // Check if we're in creation or edit mode
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin menu page routing, no data processing
         $creation_mode = isset($_GET['create']) ? true : false;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin menu page routing, no data processing
         $edit_id = isset($_GET['edit']) ? intval($_GET['edit']) : 0;
         
         // No redirects needed - we'll handle routing in render_tours_page
@@ -134,9 +137,9 @@ class MAGICCL_Tour_Admin {
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
-        $title = sanitize_text_field($_POST['title']);
-        $steps_raw = json_decode(wp_unslash($_POST['steps']), true);
-        $settings_raw = json_decode(wp_unslash($_POST['settings']), true);
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $steps_raw = isset($_POST['steps']) ? json_decode(sanitize_text_field(wp_unslash($_POST['steps'])), true) : array();
+        $settings_raw = isset($_POST['settings']) ? json_decode(sanitize_text_field(wp_unslash($_POST['settings'])), true) : array();
 
         // Sanitize steps array
         $steps = array();
@@ -209,12 +212,12 @@ class MAGICCL_Tour_Admin {
         }
 
         $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
-        $title = sanitize_text_field($_POST['title']);
-        $description = sanitize_textarea_field($_POST['description']);
-        
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+
         // Parse JSON settings from frontend
         // Strip slashes in case of escaped quotes
-        $settings_unescaped = wp_unslash($_POST['settings'] ?? '{}');
+        $settings_unescaped = isset($_POST['settings']) ? sanitize_text_field(wp_unslash($_POST['settings'])) : '{}';
         // Debug: log the unescaped settings JSON
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('MCL Tour Settings Debug: Unescaped settings_json: ' . $settings_unescaped);
@@ -234,12 +237,12 @@ class MAGICCL_Tour_Admin {
         }
         
         // Get trigger settings
-        $trigger_type = sanitize_text_field($_POST['trigger_type'] ?? 'page');
-        $trigger_value = sanitize_text_field($_POST['trigger_value'] ?? '');
-        $user_condition = sanitize_text_field($_POST['user_condition'] ?? 'all_users');
-        
+        $trigger_type = isset($_POST['trigger_type']) ? sanitize_text_field(wp_unslash($_POST['trigger_type'])) : 'page';
+        $trigger_value = isset($_POST['trigger_value']) ? sanitize_text_field(wp_unslash($_POST['trigger_value'])) : '';
+        $user_condition = isset($_POST['user_condition']) ? sanitize_text_field(wp_unslash($_POST['user_condition'])) : 'all_users';
+
         // Parse JSON arrays from frontend
-        $specific_users_json = wp_unslash($_POST['specific_users'] ?? '[]');
+        $specific_users_json = isset($_POST['specific_users']) ? sanitize_text_field(wp_unslash($_POST['specific_users'])) : '[]';
         if (is_string($specific_users_json)) {
             $specific_users = json_decode($specific_users_json, true);
         } else {
@@ -247,7 +250,7 @@ class MAGICCL_Tour_Admin {
         }
         $specific_users = is_array($specific_users) ? array_map('intval', $specific_users) : array();
         
-        $specific_roles_json = wp_unslash($_POST['specific_roles'] ?? '[]');
+        $specific_roles_json = isset($_POST['specific_roles']) ? sanitize_text_field(wp_unslash($_POST['specific_roles'])) : '[]';
         if (is_string($specific_roles_json)) {
             $specific_roles = json_decode($specific_roles_json, true);
         } else {
@@ -364,7 +367,7 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
 
         if (wp_delete_post($tour_id, true)) {
             // Clear tour existence cache when deleting a tour
@@ -382,9 +385,10 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
         $tour = get_post($tour_id);
-        
+
         if (!$tour || $tour->post_type !== 'magiccl_tour') {
             wp_send_json_error(__('Tour not found', 'magicchecklists'));
         }
@@ -423,7 +427,7 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
         $current_status = get_post_meta($tour_id, '_magiccl_tour_active', true);
         $new_status = $current_status ? 0 : 1;
 
@@ -465,9 +469,9 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
         $user_id = get_current_user_id();
-        
+
         // Remove from user's completed tours
         $completed_tours = get_user_meta($user_id, '_magiccl_completed_tours', true) ?: array();
         $completed_tours = array_diff($completed_tours, array($tour_id));
@@ -486,19 +490,34 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
-        
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
+
         // Handle both old format (step_order as indices) and new format (steps as JSON)
         if (isset($_POST['steps'])) {
             // New format: steps as JSON string containing the reordered step objects
-            $reordered_steps = json_decode(wp_unslash($_POST['steps']), true);
-            
-            if (!$tour_id || !is_array($reordered_steps)) {
+            $reordered_steps_raw = json_decode(sanitize_text_field(wp_unslash($_POST['steps'])), true);
+
+            if (!$tour_id || !is_array($reordered_steps_raw)) {
                 wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
+            }
+
+            // Sanitize each step
+            $reordered_steps = array();
+            foreach ($reordered_steps_raw as $step) {
+                $reordered_steps[] = array(
+                    'title'        => isset($step['title']) ? sanitize_text_field($step['title']) : '',
+                    'content'      => isset($step['content']) ? wp_kses_post($step['content']) : '',
+                    'element'      => isset($step['element']) ? sanitize_text_field($step['element']) : '',
+                    'page'         => isset($step['page']) ? sanitize_text_field($step['page']) : '',
+                    'position'     => isset($step['position']) ? sanitize_text_field($step['position']) : 'bottom',
+                    'checklist_id' => isset($step['checklist_id']) ? intval($step['checklist_id']) : 0,
+                    'item_id'      => isset($step['item_id']) ? sanitize_text_field($step['item_id']) : '',
+                );
             }
         } else {
             // Old format: step_order as array of indices (for backward compatibility)
-            $step_order = isset($_POST['step_order']) ? array_map('intval', $_POST['step_order']) : array();
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- values are cast to int via array_map intval
+            $step_order = isset($_POST['step_order']) ? array_map('intval', wp_unslash($_POST['step_order'])) : array();
             
             if (!$tour_id || empty($step_order)) {
                 wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
@@ -534,28 +553,19 @@ class MAGICCL_Tour_Admin {
      * Handle checking/unchecking checklist items from tour steps
      */
     public function tour_step_check_item() {
-        // Check for tour nonces or checklist nonces
-        $nonce_verified = false;
-        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
-            $nonce_verified = true;
-        }
-        
-        if (!$nonce_verified) {
+        if ( ! $this->verify_tour_ajax_nonce() ) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('MCL Tour Admin: tour_step_check_item - Invalid nonce');
             }
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
-        $checklist_id = intval($_POST['checklist_id']);
-        $item_id = sanitize_text_field($_POST['item_id']);
-        $checked = filter_var($_POST['checked'], FILTER_VALIDATE_BOOLEAN);
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via wp_verify_nonce() calls against magiccl_tour_admin/magiccl_tour_public/magiccl_ajax_nonce/magiccl_ajax_nopriv_nonce actions.
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $checked = isset($_POST['checked']) ? filter_var(wp_unslash($_POST['checked']), FILTER_VALIDATE_BOOLEAN) : false;
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('MCL Tour Admin: tour_step_check_item called with checklist_id=' . $checklist_id . ', item_id=' . $item_id . ', checked=' . ($checked ? 'true' : 'false'));
@@ -681,6 +691,20 @@ class MAGICCL_Tour_Admin {
     }
 
     /**
+     * Verify nonce from any accepted tour/checklist AJAX context.
+     */
+    private function verify_tour_ajax_nonce() {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        return (
+            wp_verify_nonce($nonce, 'magiccl_tour_admin')
+            || wp_verify_nonce($nonce, 'magiccl_tour_public')
+            || wp_verify_nonce($nonce, 'magiccl_ajax_nonce')
+            || wp_verify_nonce($nonce, 'magiccl_ajax_nopriv_nonce')
+            || wp_verify_nonce($nonce, 'magiccl_admin_nonce')
+        );
+    }
+
+    /**
      * Check if user can interact with checklist (similar to dashboard widget)
      */
     private function can_user_interact_with_checklist($checklist_id) {
@@ -696,24 +720,18 @@ class MAGICCL_Tour_Admin {
      * Get tour connections for a checklist item
      */
     public function get_item_tour_connections() {
-        // Check for tour nonces or checklist nonces
-        $nonce_verified = false;
-        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
-            $nonce_verified = true;
-        }
-        
-        if (!$nonce_verified) {
+        if ( ! $this->verify_tour_ajax_nonce() ) {
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
-        $checklist_id = intval($_POST['checklist_id']);
-        $item_id = sanitize_text_field($_POST['item_id']);
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via wp_verify_nonce() calls against magiccl_tour_admin/magiccl_tour_public/magiccl_ajax_nonce/magiccl_ajax_nopriv_nonce actions.
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
 
         if (!$checklist_id || !$item_id) {
             wp_send_json_error(__('Invalid parameters', 'magicchecklists'));
@@ -752,6 +770,7 @@ class MAGICCL_Tour_Admin {
                         'tour_id' => $tour->ID,
                         'tour_title' => $tour->post_title,
                         'step_index' => $step_index,
+                        /* translators: %d: step number */
                         'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magicchecklists'), $step_index + 1),
                         'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                     );
@@ -770,21 +789,7 @@ class MAGICCL_Tour_Admin {
      * Check if any active tours exist in the system (early exit optimization)
      */
     public function has_active_tours() {
-        // Check for tour nonces or checklist nonces
-        $nonce_verified = false;
-        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_admin_nonce')) {
-            $nonce_verified = true;
-        }
-
-        if (!$nonce_verified) {
+        if ( ! $this->verify_tour_ajax_nonce() ) {
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
@@ -829,26 +834,18 @@ class MAGICCL_Tour_Admin {
      * Get tour connections for multiple checklist items at once (batch optimization)
      */
     public function get_batch_tour_connections() {
-        // Check for tour nonces or checklist nonces
-        $nonce_verified = false;
-        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_ajax_nopriv_nonce')) {
-            $nonce_verified = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_admin_nonce')) {
-            $nonce_verified = true;
-        }
-
-        if (!$nonce_verified) {
+        if ( ! $this->verify_tour_ajax_nonce() ) {
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
 
-        $checklist_id = intval($_POST['checklist_id']);
-        $item_ids_json = $_POST['item_ids'] ?? '[]';
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error(__('Permission denied', 'magicchecklists'));
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above via wp_verify_nonce() calls.
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+        $item_ids_json = isset($_POST['item_ids']) ? sanitize_text_field(wp_unslash($_POST['item_ids'])) : '[]';
 
         // Parse item IDs
         if (is_string($item_ids_json)) {
@@ -902,7 +899,8 @@ class MAGICCL_Tour_Admin {
                             'tour_id' => $tour->ID,
                             'tour_title' => $tour->post_title,
                             'step_index' => $step_index,
-                            'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magicchecklists'), $step_index + 1),
+                            /* translators: %d: step number */
+                        'step_title' => !empty($step['title']) ? $step['title'] : sprintf(__('Step %d', 'magicchecklists'), $step_index + 1),
                             'step_content' => !empty($step['content']) ? wp_trim_words(wp_strip_all_tags($step['content']), 10) : ''
                         );
                     }
@@ -969,7 +967,7 @@ class MAGICCL_Tour_Admin {
             wp_send_json_error(__('Permission denied', 'magicchecklists'));
         }
 
-        $tour_id = intval($_POST['tour_id']);
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
         $original_tour = get_post($tour_id);
         
         if (!$original_tour || $original_tour->post_type !== 'magiccl_tour') {

@@ -31,15 +31,17 @@ class MAGICCL_Permissions {
      */
     public function get_invite_token_data() {
         // First check if we have a token in the URL
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token validation is the security mechanism for invite links.
         if (isset($_GET['magiccl_invite'])) {
-            $token = sanitize_text_field($_GET['magiccl_invite']);
+            $token = sanitize_text_field(wp_unslash($_GET['magiccl_invite'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token validation is the security mechanism for invite links.
             // Use the internal validation logic which also handles caching and usage increment
             return $this->validate_invite_token($token);
         }
 
         // Check for stored token in AJAX request
         if (wp_doing_ajax()) {
-            $stored_token = isset($_POST['stored_token']) ? sanitize_text_field($_POST['stored_token']) : '';
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Token validation is the security mechanism for invite links.
+            $stored_token = isset($_POST['stored_token']) ? sanitize_text_field(wp_unslash($_POST['stored_token'])) : '';
             if ($stored_token) {
                 return $this->validate_invite_token($stored_token);
             }

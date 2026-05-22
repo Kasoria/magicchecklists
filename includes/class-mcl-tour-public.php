@@ -48,6 +48,7 @@ class MAGICCL_Tour_Public {
      * Based on main plugin's is_inside_pagebuilder method but more comprehensive
      */
     private function is_likely_iframe() {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- pagebuilder detection, no data processing
         // Check pagebuilder-specific indicators (matches main plugin logic)
         $pagebuilder_indicators = array(
             // Elementor
@@ -84,6 +85,7 @@ class MAGICCL_Tour_Public {
             isset($_SERVER['HTTP_X_FRAME_OPTIONS']), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only checking existence
         );
         
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         return in_array(true, array_merge($pagebuilder_indicators, $header_indicators), true);
     }
 
@@ -91,6 +93,7 @@ class MAGICCL_Tour_Public {
      * Check if we're inside a pagebuilder (matches main plugin's method)
      */
     private function is_inside_pagebuilder() {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- pagebuilder detection, no data processing
         // Elementor
         if (isset($_GET['elementor-preview']) || 
             (defined('ELEMENTOR_VERSION') && class_exists('\Elementor\Plugin') && 
@@ -111,12 +114,13 @@ class MAGICCL_Tour_Public {
             (function_exists('et_core_is_fb_enabled') && et_core_is_fb_enabled())) {
             return true;
         }
-    
+
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         return false;
     }
 
     public function enqueue_tour_assets($hook = '') {
-        // Add extensive debugging to understand when this is called
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Public tour URL parameters (tour_id, tour_mode, etc.) are read-only display routing params from shared/bookmarkable URLs where nonces cannot be used. All values sanitized with absint().
 
         
         // Skip if WordPress is serving assets, or during AJAX/REST requests
@@ -153,12 +157,13 @@ class MAGICCL_Tour_Public {
             }
             
             // Check if we're in tour creation mode
-            $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-            $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-            $continue_step = isset($_GET['magiccl_tour_step']) ? intval($_GET['magiccl_tour_step']) : 0;
-            
+            $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+            $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+            $continue_step = isset($_GET['magiccl_tour_step']) ? absint($_GET['magiccl_tour_step']) : 0;
+            $tour_mode_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
+
             self::$assets_loaded = true;
-            $this->load_tour_assets($is_tour_mode, array(), $continue_tour_id, $continue_step);
+            $this->load_tour_assets($is_tour_mode, array(), $continue_tour_id, $continue_step, $tour_mode_id);
             return;
         }
         
@@ -194,11 +199,12 @@ class MAGICCL_Tour_Public {
         }
         
         // Check if we're in tour creation mode
-        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
-        
+        $is_tour_mode = isset($_GET['magiccl_tour_mode']) && absint($_GET['magiccl_tour_mode']) === 1;
+
         // Check if we're continuing a tour
-        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        $continue_step = isset($_GET['magiccl_tour_step']) ? intval($_GET['magiccl_tour_step']) : 0;
+        $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? absint($_GET['magiccl_continue_tour']) : 0;
+        $continue_step = isset($_GET['magiccl_tour_step']) ? absint($_GET['magiccl_tour_step']) : 0;
+        $tour_mode_id = isset($_GET['tour_id']) ? absint($_GET['tour_id']) : 0;
         
         // We already checked pagebuilder status above, use it consistently
         // $is_inside_pagebuilder is already set above
@@ -206,10 +212,10 @@ class MAGICCL_Tour_Public {
         // For tour creation mode, always load assets everywhere (pagebuilders use iframes)
         if ($is_tour_mode) {
             $this->set_assets_loaded($is_inside_pagebuilder);
-            $this->load_tour_assets($is_tour_mode, array(), $continue_tour_id, $continue_step);
+            $this->load_tour_assets($is_tour_mode, array(), $continue_tour_id, $continue_step, $tour_mode_id);
             return;
         }
-        
+
         // For continuing tours, always load assets
         if ($continue_tour_id) {
             $this->set_assets_loaded($is_inside_pagebuilder);
@@ -230,7 +236,7 @@ class MAGICCL_Tour_Public {
             }
             
             // Also check for tour-related GET parameters that might have been passed through
-            if (isset($_GET['tour_id']) || isset($_GET['magiccl_preview_step'])) {
+            if ($tour_mode_id > 0 || isset($_GET['magiccl_preview_step'])) {
                 $should_load_for_pagebuilder = true;
             }
             
@@ -252,15 +258,13 @@ class MAGICCL_Tour_Public {
             
             if ($should_load_for_pagebuilder) {
                 // Load with tour mode indicators from referrer/params
-                $tour_id = 0;
-                if (isset($_GET['tour_id'])) {
-                    $tour_id = intval($_GET['tour_id']);
-                } elseif ($referrer && preg_match('/[?&]tour_id=(\d+)/', $referrer, $matches)) {
-                    $tour_id = intval($matches[1]);
+                $pagebuilder_tour_id = $tour_mode_id;
+                if (!$pagebuilder_tour_id && $referrer && preg_match('/[?&]tour_id=(\d+)/', $referrer, $matches)) {
+                    $pagebuilder_tour_id = absint($matches[1]);
                 }
-                
+
                 $this->set_assets_loaded(true); // Always use transient for pagebuilder
-                $this->load_tour_assets(true, array(), $tour_id, 0);
+                $this->load_tour_assets(true, array(), $pagebuilder_tour_id, 0, $pagebuilder_tour_id);
                 return;
             }
         }
@@ -284,7 +288,7 @@ class MAGICCL_Tour_Public {
 
 
         $this->set_assets_loaded($is_inside_pagebuilder);
-        $this->load_tour_assets($is_tour_mode, $active_tours, $continue_tour_id, $continue_step);
+        $this->load_tour_assets($is_tour_mode, $active_tours, $continue_tour_id, $continue_step, $tour_mode_id);
     }
 
     /**
@@ -309,8 +313,7 @@ class MAGICCL_Tour_Public {
         }
     }
 
-    private function load_tour_assets($is_tour_mode, $active_tours, $continue_tour_id = 0, $continue_step = 0) {
-        
+    private function load_tour_assets($is_tour_mode, $active_tours, $continue_tour_id = 0, $continue_step = 0, $tour_mode_id = 0) {
         // Additional safety check before loading assets
         if (wp_script_is('driver-js', 'enqueued') || wp_script_is('driver-js', 'done')) {
             return;
@@ -358,8 +361,8 @@ class MAGICCL_Tour_Public {
         } 
         
         // Handle tour creator mode - load specific tour if provided
-        if ($is_tour_mode && isset($_GET['tour_id']) && !$continue_tour_id) {
-            $tour_id = intval($_GET['tour_id']);
+        if ($is_tour_mode && $tour_mode_id > 0 && !$continue_tour_id) {
+            $tour_id = $tour_mode_id;
             if ($tour_id > 0) {
                 $tour = get_post($tour_id);
                 if ($tour && $tour->post_type === 'magiccl_tour') {
@@ -433,7 +436,7 @@ class MAGICCL_Tour_Public {
             'nonce' => $is_tour_mode ? wp_create_nonce('magiccl_tour_admin') : wp_create_nonce('magiccl_tour_public'),
             'tours' => $tours_data,
             'is_tour_mode' => $is_tour_mode,
-            'tour_id' => isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0,
+            'tour_id' => $tour_mode_id,
             'continue_tour_id' => $continue_tour_id,
             'continue_step' => $continue_step,
             'is_likely_iframe' => $this->is_likely_iframe(),
@@ -487,6 +490,7 @@ class MAGICCL_Tour_Public {
             wp_enqueue_editor();
             wp_enqueue_media();
         }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
     }
 
     public function render_tour_ui() {
@@ -495,9 +499,11 @@ class MAGICCL_Tour_Public {
             return;
         }
         
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- front-end tour mode detection, no data processing
         $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- front-end tour continuation detection, no data processing
         $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
-        
+
         // Check if tours are active on this page
         $has_tours = $is_tour_mode || $continue_tour_id || MAGICCL_Tour_CPT::has_tours_for_current_page();
         
@@ -521,19 +527,20 @@ class MAGICCL_Tour_Public {
     public function mark_tour_complete() {
         // Try both nonces since tours can be completed in both admin and public contexts
         $nonce_valid = false;
-        
-        if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_public')) {
+        $nonce_value = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+
+        if (wp_verify_nonce($nonce_value, 'magiccl_tour_public')) {
             $nonce_valid = true;
-        } elseif (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])) ?? '', 'magiccl_tour_admin')) {
+        } elseif (wp_verify_nonce($nonce_value, 'magiccl_tour_admin')) {
             $nonce_valid = true;
         }
-        
+
         if (!$nonce_valid) {
             wp_send_json_error(__('Invalid nonce', 'magicchecklists'));
         }
-        
-        $tour_id = intval($_POST['tour_id']);
-        $is_first_login = isset($_POST['is_first_login']) && $_POST['is_first_login'];
+
+        $tour_id = isset($_POST['tour_id']) ? intval($_POST['tour_id']) : 0;
+        $is_first_login = isset($_POST['is_first_login']) && rest_sanitize_boolean(wp_unslash($_POST['is_first_login']));
         
         if (is_user_logged_in()) {
             $user_id = get_current_user_id();
@@ -612,6 +619,7 @@ class MAGICCL_Tour_Public {
         }
         
         // Check for common query parameters that indicate asset requests
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- asset detection, no data processing
         if (isset($_GET['ver']) && count($_GET) === 1) {
             return true; // Likely a WordPress asset with version parameter
         }
@@ -643,8 +651,10 @@ class MAGICCL_Tour_Public {
             if ($pagenow && $pagenow !== 'index.php') {
                 $url .= $pagenow;
             }
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- debug URL construction, no data processing
             if (!empty($_GET)) {
-                $url .= '?' . http_build_query($_GET);
+                // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- debug URL construction
+                $url .= '?' . http_build_query(wp_unslash($_GET));
             }
             return $url;
         } else {
@@ -661,7 +671,8 @@ class MAGICCL_Tour_Public {
         if ($this->is_asset_request() || $this->is_ajax_request() || $this->is_rest_request()) {
             return false;
         }
-        
+
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- front-end tour mode detection, no data processing
         // Check for tour mode parameters
         $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
         $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
@@ -684,6 +695,7 @@ class MAGICCL_Tour_Public {
         
         // Get active tours for current context
         $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         return !empty($active_tours);
     }
 

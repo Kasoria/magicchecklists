@@ -187,8 +187,11 @@ class MAGICCL_Public {
      */
     public function should_load_assets() {
         // Check for tour mode parameters first - if present, always load assets for tours
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
         $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
         $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
         $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
 
         // Check for active tours that match the current context
@@ -328,7 +331,7 @@ class MAGICCL_Public {
         $current_page = '';
         $current_pagenow = $pagenow;
         $current_plugin_page = $plugin_page;
-        $get_params = $_GET;
+        $get_params = $_GET; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading GET params to determine current admin page context.
 
         // For AJAX requests, parse the referer URL to get the actual admin page
         if ($this->is_ajax_request() && !empty(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])))) {
@@ -865,10 +868,13 @@ class MAGICCL_Public {
         // First check if tours are active - tours don't show floating buttons but indicate assets should be loaded
         if (class_exists('MAGICCL_Tour_CPT')) {
             $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
             $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
             $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for asset loading decision, no data modification.
             $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
-            
+
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
 
             }
@@ -886,8 +892,7 @@ class MAGICCL_Public {
                     'value' => '1'
                 )
             ),
-            'posts_per_page' => -1, // Get all matching
-
+            'posts_per_page' => -1,
         );
     
         if ($this->is_inside_pagebuilder_context()) {
@@ -1129,9 +1134,10 @@ class MAGICCL_Public {
             )
         );
 
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Reading invite token from shared URL, no data modification.
         if (isset($_GET['magiccl_invite'])) {
-            $token_from_url = sanitize_text_field($_GET['magiccl_invite']);
-            $token_data_obj = $this->get_invite_token_data(); 
+            $token_from_url = sanitize_text_field(wp_unslash($_GET['magiccl_invite']));
+            $token_data_obj = $this->get_invite_token_data();
             if ($token_data_obj && $token_data_obj->token === $token_from_url) {
                 $localized_data['invite_token'] = array(
                     'token' => $token_from_url,
@@ -1141,6 +1147,7 @@ class MAGICCL_Public {
                 );
             }
         }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if (is_user_logged_in()) {
             $localized_data['nonce'] = wp_create_nonce('magiccl_ajax_nonce');
@@ -1169,10 +1176,13 @@ class MAGICCL_Public {
         // Check if tours are active first - tours might need shortcuts too
         if (class_exists('MAGICCL_Tour_CPT')) {
             $active_tours = MAGICCL_Tour_CPT::get_active_tours_for_context();
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for shortcut loading decision, no data modification.
             $is_tour_mode = isset($_GET['magiccl_tour_mode']) && $_GET['magiccl_tour_mode'] == '1';
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for shortcut loading decision, no data modification.
             $continue_tour_id = isset($_GET['magiccl_continue_tour']) ? intval($_GET['magiccl_continue_tour']) : 0;
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading URL params for shortcut loading decision, no data modification.
             $has_tour_id = isset($_GET['tour_id']) ? intval($_GET['tour_id']) : 0;
-            
+
             if (!empty($active_tours) || $is_tour_mode || $continue_tour_id || $has_tour_id) {
 
             }
@@ -1374,6 +1384,12 @@ class MAGICCL_Public {
     }
 
     public function update_checklist() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         if (!isset($_POST['checklist_id'], $_POST['items'])) {
             wp_send_json_error('Missing required data');
             return;
@@ -1390,7 +1406,7 @@ class MAGICCL_Public {
                 wp_send_json_error('Permission denied');
                 return;
             }
-            $items = json_decode(wp_unslash($_POST['items']), true);
+            $items = json_decode(sanitize_text_field(wp_unslash($_POST['items'])), true);
             if (!is_array($items)) {
                 wp_send_json_error('Invalid items data');
                 return;
@@ -1446,7 +1462,7 @@ class MAGICCL_Public {
             return;
         }
 
-        $items = json_decode(wp_unslash($_POST['items']), true);
+        $items = json_decode(sanitize_text_field(wp_unslash($_POST['items'])), true);
         if (!is_array($items)) {
             wp_send_json_error('Invalid items data');
             return;
@@ -1603,20 +1619,18 @@ class MAGICCL_Public {
     }
 
     public function save_checked_state() {
-        $checklist_id = intval($_POST['checklist_id']);
-        $context = sanitize_text_field($_POST['context'] ?? 'drawer');
-
-        if (is_user_logged_in()) {
-            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'magiccl_ajax_nonce')) {
-                wp_send_json_error('Invalid nonce', 403);
-                return;
-            }
-        } else {
-            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'magiccl_ajax_nopriv_nonce')) {
-                wp_send_json_error('Invalid nonce', 403);
-                return;
-            }
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
         }
+
+        if (!isset($_POST['checklist_id'])) {
+            wp_send_json_error('Missing checklist ID', 400);
+            return;
+        }
+        $checklist_id = intval($_POST['checklist_id']);
+        $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'drawer';
         
         if (!$this->has_permission($checklist_id, 'interact')) {
             wp_send_json_error('You do not have permission to interact with this checklist', 403);
@@ -1624,8 +1638,8 @@ class MAGICCL_Public {
         }
     
         // Handle checked_items as JSON string (consistent with other endpoints)
-        $checked_items = isset($_POST['checked_items']) ? 
-            json_decode(wp_unslash($_POST['checked_items']), true) : array();
+        $checked_items = isset($_POST['checked_items']) ?
+            json_decode(sanitize_text_field(wp_unslash($_POST['checked_items'])), true) : array();
         
         if (!is_array($checked_items)) {
             $checked_items = array();
@@ -1671,8 +1685,18 @@ class MAGICCL_Public {
      * Get checked state via AJAX
      */
     public function ajax_get_checked_state() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
+        if (!isset($_POST['checklist_id'])) {
+            wp_send_json_error('Missing checklist ID', 400);
+            return;
+        }
         $checklist_id = intval($_POST['checklist_id']);
-        $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+        $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'drawer';
 
         if (!$checklist_id) {
             wp_send_json_error('Invalid checklist ID');
@@ -1689,8 +1713,18 @@ class MAGICCL_Public {
     }
 
     public function ajax_get_in_progress_state() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
+        if (!isset($_POST['checklist_id'])) {
+            wp_send_json_error('Missing checklist ID', 400);
+            return;
+        }
         $checklist_id = intval($_POST['checklist_id']);
-        $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+        $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'drawer';
 
         if (!$checklist_id) {
             wp_send_json_error('Invalid checklist ID');
@@ -1715,7 +1749,7 @@ class MAGICCL_Public {
              check_ajax_referer('magiccl_ajax_nonce', 'nonce');
         } 
         
-        $token_str = isset($_POST['token']) ? sanitize_text_field($_POST['token']) : '';
+        $token_str = isset($_POST['token']) ? sanitize_text_field(wp_unslash($_POST['token'])) : '';
         $link = $this->permissions->validate_token_string($token_str);
         
         if (!$link) {
@@ -1733,8 +1767,10 @@ class MAGICCL_Public {
     }
 
     public function maybe_set_invite_token_cookie() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading invite token from shared URL on init hook, no data modification.
         if (isset($_GET['magiccl_invite'])) {
-            $token = sanitize_text_field($_GET['magiccl_invite']);
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading invite token from shared URL on init hook.
+            $token = sanitize_text_field(wp_unslash($_GET['magiccl_invite']));
             if ($this->permissions->validate_token_string($token, false)) { 
                 setcookie('magiccl_invite_token', $token, time() + (7 * DAY_IN_SECONDS), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
                 error_log('MCL: Valid invite token found in URL. Cookie set.');
@@ -1941,6 +1977,10 @@ class MAGICCL_Public {
 
     private function detect_pagebuilder_context() {
         $param_sets = array();
+        // Read-only URL detection for page builder preview modes (Elementor, Bricks, Breakdance, Divi, etc.).
+        // No data is modified or acted upon; we only toggle a display flag. A nonce is not applicable
+        // because these query strings are issued by third-party page builders outside our control.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Passive detection only; values are normalized/sanitized in normalize_param_array() and never written to the database or echoed.
         $param_sets[] = $this->normalize_param_array($_GET);
 
         if (isset($_SERVER['HTTP_REFERER'])) {
@@ -2039,13 +2079,19 @@ class MAGICCL_Public {
 
     public function save_in_progress_state() {
         try {
+            $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+            if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+                wp_send_json_error('Invalid nonce', 403);
+                return;
+            }
+
             if (!isset($_POST['checklist_id'])) {
                 wp_send_json_error('Missing checklist ID');
                 return;
             }
 
             $checklist_id = intval($_POST['checklist_id']);
-            $context = sanitize_text_field($_POST['context'] ?? 'drawer');
+            $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'drawer';
 
             if (!$this->has_permission($checklist_id, 'interact')) {
                 wp_send_json_error('Permission denied');
@@ -2053,7 +2099,7 @@ class MAGICCL_Public {
             }
 
             $items_in_progress = isset($_POST['items_in_progress']) ?
-                json_decode(wp_unslash($_POST['items_in_progress']), true) : array();
+                json_decode(sanitize_text_field(wp_unslash($_POST['items_in_progress'])), true) : array();
 
             if (!is_array($items_in_progress)) {
                 $items_in_progress = array();
@@ -2080,13 +2126,19 @@ class MAGICCL_Public {
     }
 
     public function save_item_deadline() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         if (!isset($_POST['checklist_id'], $_POST['item_id'], $_POST['deadline'])) {
             wp_send_json_error('Missing required data');
             return;
         }
 
         $checklist_id = intval($_POST['checklist_id']);
-        $item_id = sanitize_text_field($_POST['item_id']);
+        $item_id = sanitize_text_field(wp_unslash($_POST['item_id']));
         $deadline = intval($_POST['deadline']);
 
         if (!$this->has_permission($checklist_id, 'edit')) {
@@ -2102,13 +2154,19 @@ class MAGICCL_Public {
     }
 
     public function clear_item_deadline() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         if (!isset($_POST['checklist_id'], $_POST['item_id'])) {
             wp_send_json_error('Missing required data');
             return;
         }
 
         $checklist_id = intval($_POST['checklist_id']);
-        $item_id = sanitize_text_field($_POST['item_id']);
+        $item_id = sanitize_text_field(wp_unslash($_POST['item_id']));
 
         if (!$this->has_permission($checklist_id, 'edit')) {
             wp_send_json_error('Permission denied');
@@ -2116,7 +2174,7 @@ class MAGICCL_Public {
         }
 
         $deadlines = get_post_meta($checklist_id, '_magiccl_item_deadlines', true) ?: array();
-    
+
         if (isset($deadlines[$item_id])) {
             unset($deadlines[$item_id]);
             update_post_meta($checklist_id, '_magiccl_item_deadlines', $deadlines);
@@ -2198,17 +2256,23 @@ class MAGICCL_Public {
      * Add an item to a checklist with notifications
      */
     public function add_item() {
-        $checklist_id = intval($_POST['checklist_id'] ?? 0);
-        $item_data = $_POST['item'] ?? null;
-        
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_data = isset($_POST['item']) ? sanitize_text_field(wp_unslash($_POST['item'])) : null;
+
         if (!$checklist_id || !$item_data) {
             wp_send_json_error('Missing required data');
             return;
         }
-        
+
         // Decode JSON if it's a string
         if (is_string($item_data)) {
-            $item_data = json_decode(wp_unslash($item_data), true);
+            $item_data = json_decode($item_data, true);
         }
         
         if (!is_array($item_data)) {
@@ -2256,8 +2320,8 @@ class MAGICCL_Public {
             return;
         }
 
-        $checklist_id = intval($_POST['checklist_id'] ?? 0);
-        $item_id = sanitize_text_field($_POST['item_id'] ?? '');
+        $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
 
         if (!$checklist_id || !$item_id) {
             wp_send_json_error('Missing required data');
@@ -2303,8 +2367,14 @@ class MAGICCL_Public {
      * Get kanban board structure for a checklist
      */
     public function get_kanban_board() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $context = isset($_POST['context']) ? sanitize_text_field($_POST['context']) : 'admin';
+        $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'admin';
 
         if (!$checklist_id) {
             wp_send_json_error('Invalid checklist ID');
@@ -2543,9 +2613,15 @@ class MAGICCL_Public {
      * Save kanban board structure for a checklist
      */
     public function save_kanban_board() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error('Invalid nonce', 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $board = isset($_POST['board']) ? json_decode(wp_unslash($_POST['board']), true) : null;
-        $context = isset($_POST['context']) ? sanitize_text_field($_POST['context']) : 'admin';
+        $board = isset($_POST['board']) ? json_decode(sanitize_text_field(wp_unslash($_POST['board'])), true) : null;
+        $context = isset($_POST['context']) ? sanitize_text_field(wp_unslash($_POST['context'])) : 'admin';
 
         if (!$checklist_id || !$board) {
             wp_send_json_error('Missing required data');
@@ -2802,7 +2878,7 @@ class MAGICCL_Public {
             $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
             $item_id = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
             $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? intval($_POST['parent_id']) : null;
-            $comment_content = isset($_POST['comment_content']) ? wp_kses_post($_POST['comment_content']) : '';
+            $comment_content = isset($_POST['comment_content']) ? wp_kses_post(wp_unslash($_POST['comment_content'])) : '';
 
             if (!$checklist_id || !$item_id || empty($comment_content)) {
                 wp_send_json_error('Invalid parameters');
@@ -3183,6 +3259,12 @@ class MAGICCL_Public {
      * Get feature board settings for a checklist
      */
     public function get_feature_board_settings() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'), 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
 
         if (!$checklist_id) {
@@ -3241,6 +3323,12 @@ class MAGICCL_Public {
      * Get column sync settings for shortcode kanban (public handler)
      */
     public function get_column_sync_settings_public() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'), 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
 
         if (!$checklist_id) {
@@ -3280,9 +3368,9 @@ class MAGICCL_Public {
         }
 
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
-        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
-        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email(wp_unslash($_POST['user_email'])) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field(wp_unslash($_POST['user_name'])) : '';
 
         if (!$checklist_id || !$item_id) {
             wp_send_json_error(array('message' => 'Invalid checklist or item ID'));
@@ -3425,8 +3513,14 @@ class MAGICCL_Public {
      * Get upvotes for items in a checklist
      */
     public function get_item_upvotes() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'), 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $item_ids = isset($_POST['item_ids']) ? array_map('sanitize_text_field', (array) $_POST['item_ids']) : array();
+        $item_ids = isset($_POST['item_ids']) ? array_map('sanitize_text_field', wp_unslash((array) $_POST['item_ids'])) : array();
 
         if (!$checklist_id) {
             wp_send_json_error(array('message' => 'Invalid checklist ID'));
@@ -3525,11 +3619,17 @@ class MAGICCL_Public {
      * Submit a new idea to the feature board
      */
     public function submit_idea() {
+        $nonce_action = is_user_logged_in() ? 'magiccl_ajax_nonce' : 'magiccl_ajax_nopriv_nonce';
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), $nonce_action)) {
+            wp_send_json_error(array('message' => 'Invalid nonce'), 403);
+            return;
+        }
+
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $title = isset($_POST['title']) ? sanitize_text_field($_POST['title']) : '';
-        $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
-        $user_email = isset($_POST['user_email']) ? sanitize_email($_POST['user_email']) : '';
-        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $description = isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '';
+        $user_email = isset($_POST['user_email']) ? sanitize_email(wp_unslash($_POST['user_email'])) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field(wp_unslash($_POST['user_name'])) : '';
 
         if (!$checklist_id || !$title) {
             wp_send_json_error(array('message' => 'Checklist ID and title are required'));
@@ -3722,8 +3822,10 @@ class MAGICCL_Public {
      * Verify email for upvote or idea submission
      */
     public function verify_email() {
-        $token = isset($_GET['token']) ? sanitize_text_field($_GET['token']) : '';
-        $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : '';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Email verification links use token-based auth, nonce not applicable.
+        $token = isset($_GET['token']) ? sanitize_text_field(wp_unslash($_GET['token'])) : '';
+        $type = isset($_GET['type']) ? sanitize_text_field(wp_unslash($_GET['type'])) : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if (!$token || !$type) {
             wp_send_json_error(array('message' => 'Invalid verification link'));
@@ -3811,16 +3913,20 @@ class MAGICCL_Public {
         $checklist_title = get_the_title($checklist_id);
 
         if ($type === 'upvote') {
+            /* translators: %s: checklist title */
             $subject = sprintf(__('Verify your upvote - %s', 'magicchecklists'), $checklist_title);
             $message = sprintf(
-                __("Hi %s,\n\nPlease click the link below to verify your upvote:\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
+                /* translators: %1$s: user name, %2$s: verification URL */
+                __("Hi %1\$s,\n\nPlease click the link below to verify your upvote:\n\n%2\$s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
                 $name,
                 $verify_url
             );
         } else {
+            /* translators: %s: checklist title */
             $subject = sprintf(__('Verify your idea submission - %s', 'magicchecklists'), $checklist_title);
             $message = sprintf(
-                __("Hi %s,\n\nPlease click the link below to verify your idea submission: \"%s\"\n\n%s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
+                /* translators: %1$s: user name, %2$s: idea title, %3$s: verification URL */
+                __("Hi %1\$s,\n\nPlease click the link below to verify your idea submission: \"%2\$s\"\n\n%3\$s\n\nThis link will expire in 24 hours.\n\nThank you!", 'magicchecklists'),
                 $name,
                 $idea_title,
                 $verify_url

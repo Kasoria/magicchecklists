@@ -159,7 +159,7 @@ class MAGICCL_API_Integration {
       }
 
       // Get and validate endpoint
-      $endpoint = isset($_POST['endpoint']) ? esc_url_raw($_POST['endpoint']) : '';
+      $endpoint = isset($_POST['endpoint']) ? esc_url_raw(wp_unslash($_POST['endpoint'])) : '';
       if (empty($endpoint)) {
           wp_send_json_error(array(
               'message' => 'Invalid endpoint URL'

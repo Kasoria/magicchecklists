@@ -527,8 +527,8 @@ class MAGICCL_Dashboard_Widget {
         check_ajax_referer('magiccl_widget_nonce', 'nonce');
         
         $checklist_id = isset($_POST['checklist_id']) ? intval($_POST['checklist_id']) : 0;
-        $item_id = isset($_POST['item_id']) ? sanitize_text_field($_POST['item_id']) : '';
-        $checked = isset($_POST['checked']) ? (bool) $_POST['checked'] : false;
+        $item_id = isset($_POST['item_id']) ? sanitize_text_field(wp_unslash($_POST['item_id'])) : '';
+        $checked = isset($_POST['checked']) ? rest_sanitize_boolean(wp_unslash($_POST['checked'])) : false;
         
         if (!$checklist_id || !$item_id) {
             wp_send_json_error(array(

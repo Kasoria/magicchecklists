@@ -533,11 +533,11 @@ class MAGICCL_Settings {
         
         // Encrypt API keys before saving
         if (isset($input['mainwp_api_key'])) {
-            $sanitized['mainwp_api_key'] = $this->encrypt_api_key(sanitize_text_field($input['mainwp_api_key']));
+            $sanitized['mainwp_api_key'] = $this->encrypt_api_key(wp_unslash($input['mainwp_api_key']));
         }
-        
+
         if (isset($input['magiccl_api_key'])) {
-            $sanitized['magiccl_api_key'] = $this->encrypt_api_key(sanitize_text_field($input['magiccl_api_key']));
+            $sanitized['magiccl_api_key'] = $this->encrypt_api_key(wp_unslash($input['magiccl_api_key']));
         }
         
         return $sanitized;
@@ -644,23 +644,21 @@ class MAGICCL_Settings {
         <?php
         $hide_label = esc_js(__('Hide', 'magicchecklists'));
         $show_label = esc_js(__('Show', 'magicchecklists'));
-        $toggle_js = <<<JSEOF
-jQuery(document).ready(function($) {
-    $('.toggle-api-key').on('click', function() {
-        var input = $(this).prev('input');
-        var icon = $(this).find('i');
-        if (input.attr('type') === 'password') {
-            input.attr('type', 'text');
-            icon.removeClass('eye').addClass('eye slash');
-            $(this).html('<i class="eye slash icon"></i> {$hide_label}');
-        } else {
-            input.attr('type', 'password');
-            icon.removeClass('eye slash').addClass('eye');
-            $(this).html('<i class="eye icon"></i> {$show_label}');
-        }
-    });
-});
-JSEOF;
+        $toggle_js = 'jQuery(document).ready(function($) {'
+            . '$(".toggle-api-key").on("click", function() {'
+            . 'var input = $(this).prev("input");'
+            . 'var icon = $(this).find("i");'
+            . 'if (input.attr("type") === "password") {'
+            . 'input.attr("type", "text");'
+            . 'icon.removeClass("eye").addClass("eye slash");'
+            . '$(this).html(\'<i class="eye slash icon"></i> ' . $hide_label . '\');'
+            . '} else {'
+            . 'input.attr("type", "password");'
+            . 'icon.removeClass("eye slash").addClass("eye");'
+            . '$(this).html(\'<i class="eye icon"></i> ' . $show_label . '\');'
+            . '}'
+            . '});'
+            . '});';
         wp_add_inline_script('jquery', $toggle_js);
         ?>
         <?php
@@ -726,53 +724,51 @@ JSEOF;
         $regenerate_msg = esc_js(__('Regenerate API Key', 'magicchecklists'));
         $hide_msg = esc_js(__('Hide', 'magicchecklists'));
         $show_msg = esc_js(__('Show', 'magicchecklists'));
-        $api_key_js = <<<JSEOF
-jQuery(document).ready(function($) {
-    function generateApiKey() {
-        const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const prefix = 'magiccl_';
-        let key = prefix;
-        for (let i = 0; i < 32; i++) { key += chars.charAt(Math.floor(Math.random() * chars.length)); }
-        return key;
-    }
-    $('#generate_api_key').on('click', function() {
-        if ($('#magiccl_api_key').val() !== '') {
-            if (!confirm('{$confirm_msg}')) { return; }
-        }
-        const newKey = generateApiKey();
-        $('#magiccl_api_key').val(newKey);
-        $(this).text('{$regenerate_msg}');
-        $('#copy_api_key').show();
-    });
-    $('.toggle-magiccl-api-key').on('click', function() {
-        var input = $('#magiccl_api_key');
-        var icon = $(this).find('.dashicons');
-        if (input.attr('type') === 'password') {
-            input.attr('type', 'text');
-            icon.removeClass('dashicons-visibility').addClass('dashicons-hidden');
-            $(this).html('<span class="dashicons dashicons-hidden"></span> {$hide_msg}');
-        } else {
-            input.attr('type', 'password');
-            icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
-            $(this).html('<span class="dashicons dashicons-visibility"></span> {$show_msg}');
-        }
-    });
-    $('#copy_api_key').on('click', function() {
-        const apiKeyInput = document.getElementById('magiccl_api_key');
-        const currentType = apiKeyInput.type;
-        const copyIcon = $(this).find('.magiccl-copy-icon');
-        const successIcon = $(this).find('.magiccl-copy-success-icon');
-        apiKeyInput.type = 'text';
-        apiKeyInput.select();
-        document.execCommand('copy');
-        apiKeyInput.type = currentType;
-        copyIcon.hide();
-        successIcon.show();
-        successIcon.css('color', '#00a32a');
-        setTimeout(() => { successIcon.hide(); copyIcon.show(); }, 2000);
-    });
-});
-JSEOF;
+        $api_key_js = 'jQuery(document).ready(function($) {'
+            . 'function generateApiKey() {'
+            . 'var chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";'
+            . 'var prefix = "magiccl_";'
+            . 'var key = prefix;'
+            . 'for (var i = 0; i < 32; i++) { key += chars.charAt(Math.floor(Math.random() * chars.length)); }'
+            . 'return key;'
+            . '}'
+            . '$("#generate_api_key").on("click", function() {'
+            . 'if ($("#magiccl_api_key").val() !== "") {'
+            . 'if (!confirm("' . $confirm_msg . '")) { return; }'
+            . '}'
+            . 'var newKey = generateApiKey();'
+            . '$("#magiccl_api_key").val(newKey);'
+            . '$(this).text("' . $regenerate_msg . '");'
+            . '$("#copy_api_key").show();'
+            . '});'
+            . '$(".toggle-magiccl-api-key").on("click", function() {'
+            . 'var input = $("#magiccl_api_key");'
+            . 'var icon = $(this).find(".dashicons");'
+            . 'if (input.attr("type") === "password") {'
+            . 'input.attr("type", "text");'
+            . 'icon.removeClass("dashicons-visibility").addClass("dashicons-hidden");'
+            . '$(this).html(\'<span class="dashicons dashicons-hidden"></span> ' . $hide_msg . '\');'
+            . '} else {'
+            . 'input.attr("type", "password");'
+            . 'icon.removeClass("dashicons-hidden").addClass("dashicons-visibility");'
+            . '$(this).html(\'<span class="dashicons dashicons-visibility"></span> ' . $show_msg . '\');'
+            . '}'
+            . '});'
+            . '$("#copy_api_key").on("click", function() {'
+            . 'var apiKeyInput = document.getElementById("magiccl_api_key");'
+            . 'var currentType = apiKeyInput.type;'
+            . 'var copyIcon = $(this).find(".magiccl-copy-icon");'
+            . 'var successIcon = $(this).find(".magiccl-copy-success-icon");'
+            . 'apiKeyInput.type = "text";'
+            . 'apiKeyInput.select();'
+            . 'document.execCommand("copy");'
+            . 'apiKeyInput.type = currentType;'
+            . 'copyIcon.hide();'
+            . 'successIcon.show();'
+            . 'successIcon.css("color", "#00a32a");'
+            . 'setTimeout(function() { successIcon.hide(); copyIcon.show(); }, 2000);'
+            . '});'
+            . '});';
         wp_register_script('magiccl-settings-inline', false, array('jquery'));
         wp_enqueue_script('magiccl-settings-inline');
         wp_add_inline_script('magiccl-settings-inline', $api_key_js);
@@ -893,6 +889,7 @@ JSEOF;
                         esc_html_e('No checklists selected. All checklists will be displayed.', 'magicchecklists');
                     } else {
                         echo sprintf(
+                            /* translators: %d: number of selected checklists */
                             esc_html(_n('%d checklist selected.', '%d checklists selected.', $selected_count, 'magicchecklists')),
                             intval($selected_count)
                         );
@@ -1157,14 +1154,17 @@ JSEOF;
 
         check_ajax_referer('magiccl_admin_nonce', 'nonce');
 
-        $section = sanitize_text_field($_POST['section']);
-        $settings_json = wp_unslash($_POST['settings']);
+        $section = isset($_POST['section']) ? sanitize_text_field(wp_unslash($_POST['section'])) : '';
+        $settings_json = isset($_POST['settings']) ? wp_unslash($_POST['settings']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw JSON string; applying sanitize_text_field before decode would corrupt JSON structure. All decoded values are sanitized via map_deep and sanitize_settings() below.
         $settings = json_decode($settings_json, true);
 
-        if (!$settings) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($settings)) {
             wp_send_json_error(array('message' => 'Invalid settings data'));
             return;
         }
+
+        // Sanitize all decoded values before processing
+        $settings = map_deep($settings, 'sanitize_text_field');
 
         switch ($section) {
             case 'general':
@@ -1223,7 +1223,7 @@ JSEOF;
 
         check_ajax_referer('magiccl_admin_nonce', 'nonce');
 
-        $endpoint = esc_url_raw($_POST['endpoint']);
+        $endpoint = isset($_POST['endpoint']) ? esc_url_raw(wp_unslash($_POST['endpoint'])) : '';
         
         if (!$endpoint) {
             wp_send_json_error(array('message' => 'Invalid endpoint URL'));
